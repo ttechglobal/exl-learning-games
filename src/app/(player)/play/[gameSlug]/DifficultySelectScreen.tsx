@@ -10,12 +10,12 @@ export interface DifficultySelectScreenProps {
 }
 
 const ORDER: PlayerDifficulty[] = ["EASY", "MEDIUM", "HARD"];
+const INTENSITY: Record<PlayerDifficulty, number> = { EASY: 1, MEDIUM: 2, HARD: 3 };
 
 /** Explicit map instead of building the class name via template-literal
- *  string construction (`styles[\`tier${tier}\`]`) — same reasoning as the
- *  badge-class fix in HomePage.tsx: CSS Modules class names are
- *  hashed/typed, so a dynamically-built key is fragile even when, like
- *  here, the union is closed and the construction is currently correct. */
+ *  string construction — same reasoning as the badge-class fix in
+ *  HomePage.tsx: CSS Modules class names are hashed/typed, so a
+ *  dynamically-built key is fragile even when the union is closed. */
 const TIER_CLASS: Record<PlayerDifficulty, string> = {
   EASY: styles.tierEASY,
   MEDIUM: styles.tierMEDIUM,
@@ -23,13 +23,14 @@ const TIER_CLASS: Record<PlayerDifficulty, string> = {
 };
 
 /**
- * Per the product brief: "Difficulty should become a player choice rather
- * than a fixed label... This makes every game replayable and suitable for
- * different levels of confidence." Shown only for engines with real
- * difficulty modifiers defined (see engineSupportsDifficultyChoice in
- * difficultyModifiers.ts) — PlayClient skips this screen entirely for an
- * engine with nothing genuine to vary, rather than showing a choice that
- * silently does nothing.
+ * Restyled per direct feedback: the original version rendered three
+ * identical-shaped rows that only differed by border color, reading more
+ * like a settings list than a meaningful choice between three different
+ * intensities. Now each tier card actually grows (padding, icon size,
+ * label size) and saturates (background/border color-mix percentage)
+ * from Easy to Hard, and a row of small "intensity bars" per tier fills
+ * up more as difficulty increases — the escalation should be visible at
+ * a glance, not just read off three same-shaped labels.
  */
 export function DifficultySelectScreen({ accentColor, onSelect }: DifficultySelectScreenProps) {
   return (
@@ -38,23 +39,34 @@ export function DifficultySelectScreen({ accentColor, onSelect }: DifficultySele
         <Mascot pose="idle" widthPx={92} />
       </div>
 
-      <div className={styles.card}>
-        <div className={styles.cardLabel}>Choose Your Difficulty</div>
+      <div className={styles.heading}>
+        <div className={styles.headingLabel}>Before You Begin</div>
+        <div className={styles.headingTitle}>Choose Your Difficulty</div>
+      </div>
 
-        <div className={styles.tierList}>
-          {ORDER.map((tier) => {
-            const info = DIFFICULTY_INFO[tier];
-            return (
-              <button key={tier} className={`${styles.tierButton} ${TIER_CLASS[tier]}`} onClick={() => onSelect(tier)}>
+      <div className={styles.tierList}>
+        {ORDER.map((tier) => {
+          const info = DIFFICULTY_INFO[tier];
+          const filledBars = INTENSITY[tier];
+          return (
+            <button key={tier} className={`${styles.tierButton} ${TIER_CLASS[tier]}`} onClick={() => onSelect(tier)}>
+              <div className={styles.tierIconWrap}>
                 <span className={styles.tierEmoji}>{info.emoji}</span>
-                <span className={styles.tierText}>
+              </div>
+              <div className={styles.tierBody}>
+                <div className={styles.tierTopRow}>
                   <span className={styles.tierLabel}>{info.label}</span>
-                  <span className={styles.tierDesc}>{info.description}</span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
+                  <span className={styles.intensityBars}>
+                    {[1, 2, 3].map((i) => (
+                      <span key={i} className={`${styles.intensityBar} ${i <= filledBars ? styles.filled : ""}`} />
+                    ))}
+                  </span>
+                </div>
+                <span className={styles.tierDesc}>{info.description}</span>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

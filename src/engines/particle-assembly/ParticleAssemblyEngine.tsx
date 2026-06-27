@@ -208,6 +208,7 @@ export function ParticleAssemblyEngine({
               generator={generator}
               count={composition[generator.id] ?? 0}
               target={mission.target[generator.id] ?? 0}
+              hideTarget={shared.hideTargetNumbers}
               pressed={pressedGenerator === generator.id}
               onPressStart={() => setPressedGenerator(generator.id)}
               onPressEnd={() => setPressedGenerator(null)}
@@ -318,6 +319,7 @@ export function ParticleAssemblyEngine({
                 generator={generator}
                 count={composition[generator.id] ?? 0}
                 target={mission.target[generator.id] ?? 0}
+                hideTarget={shared.hideTargetNumbers}
                 pressed={pressedGenerator === generator.id}
                 onPressStart={() => setPressedGenerator(generator.id)}
                 onPressEnd={() => setPressedGenerator(null)}
@@ -345,6 +347,7 @@ function GeneratorPanel({
   generator,
   count,
   target,
+  hideTarget,
   pressed,
   onPressStart,
   onPressEnd,
@@ -354,6 +357,7 @@ function GeneratorPanel({
   generator: Generator;
   count: number;
   target: number;
+  hideTarget: boolean;
   pressed: boolean;
   onPressStart: () => void;
   onPressEnd: () => void;
@@ -381,7 +385,12 @@ function GeneratorPanel({
       </div>
       <div className={`${styles.counterRow} ${met ? styles.met : ""}`} style={{ "--p-color": generator.color } as React.CSSProperties}>
         <span className={styles.counterCurrent}>{count}</span>
-        <span className={styles.counterTarget}>/ {target}</span>
+        {/* HARD difficulty (see particleAssembly.config.ts's hideTargetNumbers):
+            the player still gets the "met" glow/state when correct — only the
+            visible "/ N" number is hidden, so they have to track or derive the
+            right total themselves instead of watching it tick up to a number
+            on screen. */}
+        {!hideTarget && <span className={styles.counterTarget}>/ {target}</span>}
       </div>
       <button className={styles.removeHit} onClick={onRemove}>
         remove one

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import type { GameRow } from "@/types/db";
 import { SiteHeader } from "@/components/ui/SiteHeader";
+import { useTheme } from "@/components/ui/ThemeProvider";
 import { SUBJECT_META } from "@/lib/content/subjects";
 import { GAME_CARD_ART, GAME_CARD_DESC } from "@/lib/content/gameCardMeta";
 import styles from "@/app/HomePage.module.css";
@@ -34,8 +34,11 @@ import styles from "@/app/HomePage.module.css";
  *
  * Subject metadata and game card art/descriptions used to be local
  * constants here — promoted to lib/content/subjects.ts and
- * lib/content/gameCardMeta.ts since /worlds and /worlds/[subject] now need
- * the exact same data and a second hand-copied duplicate would drift.
+ * lib/content/gameCardMeta.ts since /worlds needs the exact same data and
+ * a second hand-copied duplicate would drift. (A /worlds/[subject]
+ * "Choose Game" split briefly existed and was reverted — /worlds is a
+ * single combined page again; these shared modules stayed since the
+ * homepage needs them regardless of how /worlds is structured.)
  */
 
 const SUBJECTS = Object.entries(SUBJECT_META).map(([key, meta]) => ({ key, ...meta }));
@@ -91,11 +94,7 @@ export interface HomePageProps {
 }
 
 export function HomePage({ gamesBySubject, featuredGames, leaderboard, currentStudentXp }: HomePageProps) {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-
-  function toggleTheme() {
-    setTheme((t) => (t === "light" ? "dark" : "light"));
-  }
+  const { theme, toggleTheme } = useTheme();
 
   const champion = leaderboard?.[0];
   const rest = leaderboard?.slice(1, 4) ?? [];
@@ -170,7 +169,7 @@ export function HomePage({ gamesBySubject, featuredGames, leaderboard, currentSt
               </div>
             );
             return isLive ? (
-              <Link key={subject.key} href={`/worlds/${subject.key}`}>
+              <Link key={subject.key} href={`/worlds#${subject.key}`}>
                 {chip}
               </Link>
             ) : (

@@ -59,7 +59,18 @@ export const ParticleAssemblySharedConfigSchema = z.object({
   // lookup table used for failure feedback ("you created Nitrogen"); chemistry-specific
   // but kept generic (Record<number,string>) so a non-chemistry particle-assembly
   // game wouldn't need this field shape changed, just left empty.
-  elementsByProtonCount: z.record(z.string(), z.string()).default({})
+  elementsByProtonCount: z.record(z.string(), z.string()).default({}),
+  /**
+   * Difficulty lever added alongside lib/content/difficultyModifiers.ts's
+   * HARD tier for this engine: when true, GeneratorPanel hides each
+   * counter's "/ N" target number, showing only the player's current
+   * count — they have to track or derive the right total themselves
+   * instead of watching it tick up to a number on screen. Defaults to
+   * false so every mission's authored content (and every mission that
+   * predates this field) keeps showing target numbers exactly as before;
+   * only the HARD difficulty modifier sets this to true.
+   */
+  hideTargetNumbers: z.boolean().default(false)
 });
 
 export const ParticleAssemblyMissionPayloadSchema = z.object({

@@ -111,6 +111,8 @@
       "xpReward": 60,
       "topicId": "periodic-table",
       "subtopicId": "atomic-number-and-groups",
+      "learningGoal": "Spot elements by atomic number first, then by group, then by valence electrons as the clues get harder.",
+      "estimatedMinutes": 2,
       "payload": {}
     }
   ]

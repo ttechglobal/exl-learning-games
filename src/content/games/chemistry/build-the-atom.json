@@ -105,6 +105,8 @@
       "xpReward": 30,
       "topicId": "atomic-structure",
       "subtopicId": "protons-neutrons-electrons",
+      "learningGoal": "The simplest atom: one proton, one electron, no neutrons at all.",
+      "estimatedMinutes": 2,
       "payload": {
         "target": {
           "proton": 1,
@@ -122,6 +124,8 @@
       "xpReward": 30,
       "topicId": "atomic-structure",
       "subtopicId": "protons-neutrons-electrons",
+      "learningGoal": "A balanced atom needs equal protons and electrons \u2014 neutrons are separate.",
+      "estimatedMinutes": 2,
       "payload": {
         "target": {
           "proton": 2,
@@ -139,6 +143,8 @@
       "xpReward": 50,
       "topicId": "atomic-structure",
       "subtopicId": "isotopes",
+      "learningGoal": "Isotopes share the same proton count but differ in neutrons \u2014 Carbon-14 has 2 more neutrons than standard Carbon-12.",
+      "estimatedMinutes": 4,
       "payload": {
         "target": {
           "proton": 6,
@@ -156,6 +162,8 @@
       "xpReward": 60,
       "topicId": "atomic-structure",
       "subtopicId": "protons-neutrons-electrons",
+      "learningGoal": "Atomic number 8 means 8 protons, and a neutral atom needs 8 electrons to match.",
+      "estimatedMinutes": 3,
       "payload": {
         "target": {
           "proton": 8,
@@ -173,6 +181,8 @@
       "xpReward": 60,
       "topicId": "atomic-structure",
       "subtopicId": "protons-neutrons-electrons",
+      "learningGoal": "Sodium's proton count (11) is one more than neon's stable 10 \u2014 that's what makes it reactive.",
+      "estimatedMinutes": 3,
       "payload": {
         "target": {
           "proton": 11,
@@ -190,6 +200,8 @@
       "xpReward": 70,
       "topicId": "atomic-structure",
       "subtopicId": "protons-neutrons-electrons",
+      "learningGoal": "Magnesium has equal protons, neutrons, and electrons \u2014 12 of each.",
+      "estimatedMinutes": 3,
       "payload": {
         "target": {
           "proton": 12,

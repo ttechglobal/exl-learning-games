@@ -1,27 +1,33 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { DepthBackdrop } from "@/motion/DepthBackdrop";
-import { SiteHeader } from "@/components/ui/SiteHeader";
+import { useTheme } from "@/components/ui/ThemeProvider";
+import { subjectMeta } from "@/lib/content/subjects";
+import { GAME_CARD_ART, GAME_CARD_DESC } from "@/lib/content/gameCardMeta";
 import type { GameRow, Difficulty } from "@/types/db";
 import styles from "@/app/(player)/worlds/WorldsClient.module.css";
 
 /**
  * WorldsClient.tsx
  *
- * Full game catalog, grouped by subject. As of this revision, each card
- * shows real per-game metadata (mission count, XP range, difficulty
- * spread, estimated total time) computed server-side in page.tsx from
- * that game's missions — see summarizeMissions() there for exactly how
- * each field is derived and what it means when data is partial/missing.
- * This component never invents a number; if page.tsx couldn't compute one
- * (e.g. totalEstimatedMinutes is null because no mission has that field
- * yet), the card omits that row instead of showing a placeholder.
+ * REVERTED a "Choose Subject" / "Choose Game" two-page split that
+ * previously lived here (a /worlds/[subject] route, now deleted) — by
+ * direct instruction, back to ONE /worlds page: every subject as its own
+ * section, each with its games shown as rich cards directly underneath,
+ * no intermediate subject-tile screen.
  *
- * THEME STATE NOTE: still a local `useState`, same gap noted previously —
- * see HomePage.tsx for the ThemeProvider follow-up this should eventually
- * move to.
+ * Card visual language (art + difficulty badge + title + one-sentence
+ * description + meta row + XP) is carried over from the deleted subject
+ * page rather than rebuilt from scratch — same lib/content/gameCardMeta.ts
+ * lookups the homepage's Popular Games section uses, so a card looks like
+ * the same kind of object everywhere it appears in the app.
+ *
+ * Theme comes from the shared ThemeProvider (app/layout.tsx via
+ * components/ui/ThemeProvider.tsx) — no local useState here. SiteHeader
+ * itself now lives once in app/(player)/layout.tsx, wrapping this page
+ * automatically, so it's intentionally NOT rendered again inside this
+ * component.
  */
 
 export interface GameSummary {
@@ -38,26 +44,8 @@ export interface WorldsClientProps {
   bySubject: Record<string, GameSummary[]>;
 }
 
-const SUBJECT_META: Record<string, { name: string; emoji: string; color: string; tint: string }> = {
-  chemistry: { name: "Chemistry", emoji: "\u{1F9EA}", color: "var(--eg-subject-chemistry)", tint: "color-mix(in srgb, var(--eg-subject-chemistry) 14%, white)" },
-  mathematics: { name: "Mathematics", emoji: "\u{1F4D0}", color: "var(--eg-subject-mathematics)", tint: "color-mix(in srgb, var(--eg-subject-mathematics) 14%, white)" },
-  physics: { name: "Physics", emoji: "\u26A1", color: "var(--eg-subject-physics)", tint: "color-mix(in srgb, var(--eg-subject-physics) 14%, white)" },
-  biology: { name: "Biology", emoji: "\u{1F9EC}", color: "var(--eg-subject-biology)", tint: "color-mix(in srgb, var(--eg-subject-biology) 14%, white)" }
-};
-
 const DIFFICULTY_LABEL: Record<Difficulty, string> = { EASY: "Easy", MEDIUM: "Medium", HARD: "Hard" };
 const DIFFICULTY_DOTS: Record<Difficulty, number> = { EASY: 1, MEDIUM: 2, HARD: 3 };
-
-function subjectMeta(key: string) {
-  return (
-    SUBJECT_META[key] ?? {
-      name: key.charAt(0).toUpperCase() + key.slice(1),
-      emoji: "\u{1F4D6}",
-      color: "var(--eg-brand)",
-      tint: "var(--eg-brand-tint)"
-    }
-  );
-}
 
 /** "Easy" when min===max, "Easy–Medium" when a game's missions span a range. */
 function difficultyLabel(min: Difficulty | null, max: Difficulty | null): string | null {
@@ -72,15 +60,13 @@ function xpLabel(min: number, max: number): string {
 }
 
 export function WorldsClient({ bySubject }: WorldsClientProps) {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const { theme } = useTheme();
   const subjects = Object.entries(bySubject);
   const primaryAccent = subjects.length > 0 ? subjectMeta(subjects[0][0]).color : "var(--eg-brand)";
   const totalGames = subjects.reduce((sum, [, games]) => sum + games.length, 0);
 
   return (
     <div className={styles.page} data-theme={theme}>
-      <SiteHeader theme={theme} onToggleTheme={() => setTheme((t) => (t === "light" ? "dark" : "light"))} active="games" />
-
       <div className={styles.titleRow}>
         <DepthBackdrop accentColor={primaryAccent} />
         <div className={styles.container}>
@@ -113,6 +99,9 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
                   const { game } = summary;
                   const diffLabel = difficultyLabel(summary.difficultyMin, summary.difficultyMax);
                   const dotCount = summary.difficultyMax ? DIFFICULTY_DOTS[summary.difficultyMax] : 0;
+                  const art = GAME_CARD_ART[game.slug];
+                  const desc = GAME_CARD_DESC[game.slug];
+
                   return (
                     <Link
                       key={game.id}
@@ -121,7 +110,11 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
                       style={{ "--c": meta.color, "--c-tint": meta.tint } as React.CSSProperties}
                     >
                       <div className={styles.gameCardArt}>
-                        <span className={styles.gameCardEmoji}>{meta.emoji}</span>
+                        {art ? (
+                          <img className={styles.gameCardArtImg} src={art} alt="" />
+                        ) : (
+                          <span className={styles.gameCardEmoji}>{meta.emoji}</span>
+                        )}
                         {dotCount > 0 && (
                           <span className={styles.difficultyBadge} aria-label={diffLabel ?? undefined}>
                             {Array.from({ length: dotCount }).map((_, i) => (
@@ -133,6 +126,7 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
                       <div className={styles.gameCardBody}>
                         <div className={styles.gameCardSubject}>{meta.name}</div>
                         <div className={styles.gameCardTitle}>{game.title}</div>
+                        {desc && <p className={styles.gameCardDesc}>{desc}</p>}
                         <div className={styles.gameCardMeta}>
                           <span>
                             {summary.missionCount} mission{summary.missionCount === 1 ? "" : "s"}

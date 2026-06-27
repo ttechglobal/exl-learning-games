@@ -34,21 +34,16 @@ export interface EntryScreenProps {
 }
 
 /**
- * Mission Briefing screen. Per the latest product brief (Version 3,
- * section 3): "Reduce unnecessary information that competes for
- * attention... let the briefing take centre stage. The screen should
- * communicate one thing: 'What is my mission?'" Learning Goal stays (the
- * brief explicitly keeps it, since it reinforces the educational purpose);
- * Reward/Difficulty/Time are simplified into one quiet line rather than
- * three separate boxed-feeling meta items, and the game-title banner that
- * used to dominate the top of the screen (a 3.4rem display heading) is
- * now a small identifier instead of competing with the briefing itself.
- * The element-glyph badge moved from its own top-row slot to sit quietly
- * beside the mission title instead of acting as a second focal point.
+ * Mission Briefing screen. Per direct instruction: Reward/Difficulty/Time
+ * are REMOVED from this screen entirely (an earlier revision simplified
+ * them into one quiet line — that wasn't enough; they don't belong here
+ * at all). The screen now shows only: game/subject kicker, mascot,
+ * narrative briefing, mission title (+ element glyph when relevant),
+ * Learning Goal, and the Start Mission button. Nothing else competes for
+ * attention.
  *
  * Still does the periodic-table-glyph preview for particle-assembly-style
- * missions (target.proton in payload) — unaffected by this revision,
- * just relocated.
+ * missions (target.proton in payload) — unaffected by this revision.
  */
 export function EntryScreen({ gameTitle, gameSlug, subject, mission, onStart }: EntryScreenProps) {
   const target = (mission.payload as { target?: Record<string, number> }).target;
@@ -89,11 +84,6 @@ export function EntryScreen({ gameTitle, gameSlug, subject, mission, onStart }: 
         <div className={styles.goalRow}>
           <div className={styles.goalLabel}>Learning Goal</div>
           <div className={styles.goalText}>{learningGoal}</div>
-        </div>
-
-        <div className={styles.metaLine}>
-          +{mission.xp_reward} XP · {mission.difficulty}
-          {mission.estimated_minutes != null ? ` · ~${mission.estimated_minutes} min` : ""}
         </div>
 
         <button className={styles.startButton} onClick={onStart}>

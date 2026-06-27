@@ -1,13 +1,18 @@
 import { listGames, getMissionsForGames } from "@/lib/db/queries/games";
 import { WorldsClient, type GameSummary } from "@/app/(player)/worlds/WorldsClient";
-import type { MissionRow } from "@/types/db";
+import type { MissionRow, Difficulty } from "@/types/db";
 
 // Needs a live DB connection per-request; not meaningful to prerender at build time.
 export const dynamic = "force-dynamic";
 
-const DIFFICULTY_ORDER = { EASY: 0, MEDIUM: 1, HARD: 2 } as const;
+const DIFFICULTY_ORDER: Record<Difficulty, number> = { EASY: 0, MEDIUM: 1, HARD: 2 };
 
 /**
+ * REVERTED a "Choose Subject" / "Choose Game" two-page split that
+ * previously lived here (a /worlds/[subject] route) — by direct
+ * instruction, back to one /worlds page showing every subject's games
+ * directly, with real per-game metadata.
+ *
  * Difficulty/XP/estimated-time all live on MissionRow, not GameRow — a
  * "game" (e.g. Atom Forge) is really a set of missions (Level 1..4), each
  * with its own difficulty and reward. So "per-game metadata" on the
@@ -15,16 +20,15 @@ const DIFFICULTY_ORDER = { EASY: 0, MEDIUM: 1, HARD: 2 } as const;
  * single flat number that doesn't actually exist at the game level.
  *
  * - missionCount: how many active missions this game has
- * - xpRange: min..max XP reward across its missions (often equal, when
- *   every mission pays the same XP — shown as a single number in that case)
- * - difficultyRange: the lowest..highest difficulty among its missions,
- *   using mission order rather than alphabetical (EASY < MEDIUM < HARD)
+ * - xpMin/xpMax: range of XP reward across its missions (often equal,
+ *   when every mission pays the same XP)
+ * - difficultyMin/difficultyMax: the lowest..highest difficulty among its
+ *   missions, using mission order rather than alphabetical (EASY < MEDIUM < HARD)
  * - totalEstimatedMinutes: sum of estimated_minutes across missions, or
  *   null if NONE of them have it set yet (most games predate that column
- *   — see MissionRow.estimated_minutes migration caveat). Partial data
- *   (some missions have it, some don't) still sums what's there rather
- *   than discarding the whole estimate, since an undercount is more
- *   honest than hiding a real number because of one missing field.
+ *   — see MissionRow.estimated_minutes migration caveat in types/db.ts).
+ *   Partial data (some missions have it, some don't) still sums what's
+ *   there rather than discarding the whole estimate.
  */
 function summarizeMissions(missions: MissionRow[]): Omit<GameSummary, "game"> {
   const xpValues = missions.map((m) => m.xp_reward);

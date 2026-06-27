@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import type { TileMatchConfig, TileMatchOutcome, Tier } from "@/engines/tile-match/tileMatch.config";
 import { generateClueForTier, buildTileGrid, poolFromSymbols, type Clue } from "@/engines/tile-match/tileMatch.logic";
+import { resolveTeachingHint } from "@/engines/tile-match/teachingHints";
 import type { HunterElement } from "@/engines/tile-match/elementData";
 import { Mascot } from "@/motion/Mascot";
 import { playSound } from "@/motion/sound/playSound";
@@ -34,9 +35,17 @@ export function TileMatchEngine({ config, onComplete }: EngineRuntimeProps<TileM
   const [roundsCorrect, setRoundsCorrect] = useState(0);
   const [tierIndex, setTierIndex] = useState(0);
   const [wrongAttemptsOnClue, setWrongAttemptsOnClue] = useState(0);
-  const [eliminatedSymbols, setEliminatedSymbols] = useState<Set<string>>(new Set());
   const [bannerShift, setBannerShift] = useState(false);
   const [mascotPose, setMascotPose] = useState<"idle" | "celebrate" | "encourage" | null>(null);
+  /**
+   * Replaces the old eliminatedSymbols mechanic (hint = remove one wrong
+   * tile from the board) — that was an answer-revealing hint, exactly
+   * the pattern flagged as wrong since the platform's original design
+   * philosophy doc. Now a hint shows TEACHING TEXT (see
+   * teachingHints.ts) explaining the rule behind the current clue, and
+   * never touches which tiles are visible or tappable.
+   */
+  const [activeHintText, setActiveHintText] = useState<string | null>(null);
 
   const [clue, setClue] = useState<Clue | null>(null);
   const [tiles, setTiles] = useState<HunterElement[]>([]);
@@ -54,8 +63,8 @@ export function TileMatchEngine({ config, onComplete }: EngineRuntimeProps<TileM
     setClue(newClue);
     setTiles(grid);
     setTileState({});
-    setEliminatedSymbols(new Set());
     setWrongAttemptsOnClue(0);
+    setActiveHintText(null);
     setBannerShift(false);
     requestAnimationFrame(() => setBannerShift(true));
   }, [currentTier, pool, shared.tileCount]);
@@ -139,20 +148,31 @@ export function TileMatchEngine({ config, onComplete }: EngineRuntimeProps<TileM
 
   const handleHintTap = useCallback(() => {
     if (!clue) return;
-    const remaining = tiles.filter(
-      (t) => !clue.isMatch(t) && !eliminatedSymbols.has(t.symbol) && tileState[t.symbol] !== "wrong"
-    );
-    if (remaining.length === 0) return;
-    const toEliminate = remaining[Math.floor(Math.random() * remaining.length)];
-    setEliminatedSymbols((prev) => new Set(prev).add(toEliminate.symbol));
+    setActiveHintText(resolveTeachingHint(clue));
     applyTimePenalty(shared.scoring.hintTimePenaltySec);
     playSound("particleRemove");
-  }, [clue, tiles, eliminatedSymbols, tileState, shared.scoring.hintTimePenaltySec, applyTimePenalty]);
+  }, [clue, shared.scoring.hintTimePenaltySec, applyTimePenalty]);
 
   const showHintButton = shared.hints.enabled && wrongAttemptsOnClue >= shared.hints.showAfterWrongAttempts;
 
   return (
     <div className={styles.screen}>
+      {/* Environment background layer — see docs/ELEMENT_HUNTER_ENVIRONMENT_BRIEF.md
+          for the full art spec. Falls back to a plain CSS gradient (no
+          real art file required) until /public/mascot/scene-element-hunter.png
+          exists — this <img> simply renders nothing visible if the file
+          is missing, so there's no broken-image icon while waiting on
+          the asset; the CSS gradient on .screen behind it covers that gap. */}
+      <img
+        src="/mascot/scene-element-hunter.png"
+        alt=""
+        role="presentation"
+        className={styles.environmentBackdrop}
+        onError={(e) => {
+          (e.currentTarget as HTMLImageElement).style.display = "none";
+        }}
+      />
+
       <div className={styles.hud}>
         <div className={styles.hudCard}>
           <div className={styles.statLabel}>Time</div>
@@ -171,27 +191,44 @@ export function TileMatchEngine({ config, onComplete }: EngineRuntimeProps<TileM
         <div className={styles.missionText}>{clue?.text}</div>
       </div>
 
-      <div className={styles.tileGrid}>
-        {tiles.map((el, i) => (
-          <div
-            key={el.symbol}
-            className={[
-              styles.elementTile,
-              tileState[el.symbol] === "correct" ? styles.correct : "",
-              tileState[el.symbol] === "wrong" ? styles.wrong : "",
-              eliminatedSymbols.has(el.symbol) ? styles.eliminated : ""
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            style={{ "--el-color": el.hex, animationDelay: `${i * 0.03}s` } as React.CSSProperties}
-            onPointerDown={() => handleTileTap(el)}
-          >
-            <div className={styles.tileSymbol}>{el.symbol}</div>
-            <div className={styles.tileNumber}>#{el.number}</div>
-            <div className={styles.tileName}>{el.name}</div>
-          </div>
-        ))}
+      {/* Backing panel enforces "stay quiet behind the tiles" in code,
+          not just by trusting the background image to leave this area
+          empty — a solid-ish panel always sits between the environment
+          art and the tile grid regardless of what the art actually
+          contains. */}
+      <div className={styles.tileGridPanel}>
+        <div className={styles.tileGrid}>
+          {tiles.map((el, i) => (
+            <div
+              key={el.symbol}
+              className={[
+                styles.elementTile,
+                tileState[el.symbol] === "correct" ? styles.correct : "",
+                tileState[el.symbol] === "wrong" ? styles.wrong : ""
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              style={{ "--el-color": el.hex, animationDelay: `${i * 0.03}s` } as React.CSSProperties}
+              onPointerDown={() => handleTileTap(el)}
+            >
+              <div className={styles.tileSymbol}>{el.symbol}</div>
+              <div className={styles.tileNumber}>#{el.number}</div>
+              <div className={styles.tileName}>{el.name}</div>
+            </div>
+          ))}
+        </div>
       </div>
+
+      {/* Teaching hint card — replaces the old tile-elimination mechanic.
+          Shows the RULE behind the current clue, never which tile is
+          correct. Dismissible by tapping it again or starting the next
+          round (cleared automatically by startNewRound). */}
+      {activeHintText && (
+        <div className={styles.hintCard} onClick={() => setActiveHintText(null)}>
+          <span className={styles.hintCardIcon}>💡</span>
+          <span className={styles.hintCardText}>{activeHintText}</span>
+        </div>
+      )}
 
       <div className={styles.hintButtonWrap}>
         {showHintButton && (

@@ -7,6 +7,45 @@
   justify-content: center;
   font-family: var(--eg-font-body);
   color: var(--eg-text-bright);
+  overflow: hidden;
+  /*
+   * Fallback gradient — cool lab-lighting blues, matching the brief's
+   * "night-shift lab, scientific lighting" direction — shows whenever
+   * the real environment image (scene-element-hunter.png, see
+   * docs/ELEMENT_HUNTER_ENVIRONMENT_BRIEF.md) hasn't been added yet,
+   * since the <img> element renders nothing when missing/erroring.
+   */
+  background: radial-gradient(ellipse 90% 70% at 50% 0%, #2A3A5C 0%, #1B2438 55%, #11162A 100%);
+}
+
+.environmentBackdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/*
+ * Backing panel — keeps the area directly behind the tile grid visually
+ * quiet REGARDLESS of what the environment image contains (per the
+ * brief's non-negotiable constraint: the center must stay low-contrast
+ * so element symbols/numbers read instantly). A semi-opaque card, not a
+ * fully solid one, so the environment is still visible through it at the
+ * edges rather than looking like a separate floating box.
+ */
+.tileGridPanel {
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 22px;
+  padding: 18px;
+  box-shadow: 0 16px 36px -14px rgba(0, 0, 0, 0.35);
+}
+[data-theme="dark"] .tileGridPanel {
+  background: rgba(17, 20, 30, 0.88);
 }
 
 .hud {
@@ -148,10 +187,6 @@
   25% { transform: translateX(-5px); }
   75% { transform: translateX(5px); }
 }
-.elementTile.eliminated {
-  opacity: 0.25;
-  pointer-events: none;
-}
 .tileSymbol {
   font-family: var(--eg-font-display);
   font-weight: 800;
@@ -166,6 +201,36 @@
 .tileName {
   font-size: 0.56rem;
   color: var(--eg-text-dim);
+}
+
+.hintCard {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(440px, 90vw);
+  margin: 14px auto 0;
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--eg-gold) 14%, white);
+  border: 2px solid var(--eg-gold);
+  border-radius: 14px;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(6px);
+  animation: hintCardIn 0.3s var(--eg-ease-pop) forwards;
+}
+@keyframes hintCardIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+.hintCardIcon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.hintCardText {
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--eg-text-bright);
 }
 
 .hintButtonWrap {

@@ -1,0 +1,96 @@
+.wrap {
+  width: 100%;
+  max-width: 420px;
+  margin: 24px auto 0;
+}
+
+.eyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--eg-text-dim);
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(18, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.cell {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: var(--eg-glass);
+  border: 1px solid var(--eg-glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--eg-font-display);
+  font-size: 0.5rem;
+  font-weight: 600;
+  color: var(--eg-text-dim);
+  transition: transform 0.3s var(--eg-ease-pop), box-shadow 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.cellEmpty {
+  background: transparent;
+  border: none;
+}
+
+.cellTarget {
+  border-color: color-mix(in srgb, var(--cell-color) 60%, transparent);
+  color: var(--eg-text-bright);
+}
+
+.cellTarget.lit {
+  animation: cellLightUp 0.6s var(--eg-ease-pop) forwards;
+  background: color-mix(in srgb, var(--cell-color) 22%, transparent);
+  border-color: var(--cell-color);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--cell-color) 70%, transparent);
+  color: var(--eg-text-bright);
+}
+
+@keyframes cellLightUp {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35); box-shadow: 0 0 28px var(--cell-color); }
+  100% { transform: scale(1); }
+}
+
+.calloutLabel {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  white-space: nowrap;
+  color: var(--cell-color);
+  opacity: 0;
+}
+.calloutLabel.lit {
+  animation: calloutFadeIn 0.5s ease-out 0.3s forwards;
+}
+@keyframes calloutFadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.legend {
+  text-align: center;
+  margin-top: 14px;
+  font-size: 0.82rem;
+  color: var(--eg-text-dim);
+}
+.legend b {
+  color: var(--eg-text-bright);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cellTarget.lit,
+  .calloutLabel.lit {
+    animation: none !important;
+    opacity: 1;
+  }
+}

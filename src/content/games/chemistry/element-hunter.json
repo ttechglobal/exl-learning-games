@@ -1,0 +1,117 @@
+{
+  "slug": "element-hunter",
+  "title": "Element Hunter",
+  "engineType": "tile-match",
+  "subject": "chemistry",
+  "topicId": "periodic-table",
+  "sharedConfig": {
+    "sessionDurationSec": 60,
+    "tileCount": 6,
+    "tiers": [
+      {
+        "tier": 1,
+        "clueTypes": [
+          "atomic_number"
+        ],
+        "advanceAfterCorrect": 8,
+        "advanceAfterSec": 20
+      },
+      {
+        "tier": 2,
+        "clueTypes": [
+          "atomic_number",
+          "group"
+        ],
+        "advanceAfterCorrect": 8,
+        "advanceAfterSec": 20
+      },
+      {
+        "tier": 3,
+        "clueTypes": [
+          "atomic_number",
+          "group",
+          "valence"
+        ],
+        "advanceAfterCorrect": 999,
+        "advanceAfterSec": 999
+      }
+    ],
+    "scoring": {
+      "baseCorrectPoints": 10,
+      "streakBonusPerLevel": 2,
+      "streakBonusCap": 5,
+      "wrongAnswerTimePenaltySec": 2,
+      "hintTimePenaltySec": 3
+    },
+    "hints": {
+      "enabled": true,
+      "showAfterWrongAttempts": 1
+    },
+    "elementPool": [
+      "H",
+      "He",
+      "Li",
+      "Be",
+      "B",
+      "C",
+      "N",
+      "O",
+      "F",
+      "Ne",
+      "Na",
+      "Mg",
+      "Al",
+      "Si",
+      "P",
+      "S",
+      "Cl",
+      "Ar",
+      "K",
+      "Ca",
+      "Sc",
+      "Ti",
+      "V",
+      "Cr",
+      "Mn",
+      "Fe",
+      "Co",
+      "Ni",
+      "Cu",
+      "Zn",
+      "Ga",
+      "Ge",
+      "As",
+      "Se",
+      "Br",
+      "Kr"
+    ]
+  },
+  "snapshot": {
+    "cards": [
+      {
+        "title": "Element Groups",
+        "body": "Elements are grouped by shared properties \u2014 like noble gases or alkali metals."
+      },
+      {
+        "title": "Atomic Number",
+        "body": "Atomic number equals the number of protons in an atom."
+      },
+      {
+        "title": "Valence Electrons",
+        "body": "Valence electrons live in the outermost shell and decide how an element bonds."
+      }
+    ]
+  },
+  "missions": [
+    {
+      "missionKey": "hunt-session-1",
+      "title": "Element Hunt",
+      "difficulty": "EASY",
+      "sequenceIndex": 1,
+      "xpReward": 60,
+      "topicId": "periodic-table",
+      "subtopicId": "atomic-number-and-groups",
+      "payload": {}
+    }
+  ]
+}

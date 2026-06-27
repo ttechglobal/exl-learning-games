@@ -1,0 +1,470 @@
+/* ParticleAssemblyEngine.module.css — illustrated style.
+   The "chamber" is now a friendly glass beaker sitting on a warm backdrop,
+   not an energy-field containment ring. Subject-color variables are passed
+   in as inline style vars from the component since they come from the
+   game's shared_config, not hardcoded here. */
+
+.screen {
+  position: relative;
+  z-index: 1;
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  font-family: var(--eg-font-body);
+  color: var(--eg-text-bright);
+}
+
+.hidden {
+  display: none !important;
+}
+
+.snapshotCard {
+  width: min(460px, 90vw);
+  text-align: center;
+  background: #ffffff;
+  border: 3px solid var(--accent-color, var(--eg-subject-chemistry));
+  border-radius: 22px;
+  padding: 28px;
+  box-shadow: 0 10px 0 rgba(0, 0, 0, 0.05), 0 14px 30px rgba(43, 28, 74, 0.1);
+}
+.snapshotEyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-color, var(--eg-subject-chemistry));
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+.snapshotLine {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--eg-text-bright);
+  margin-bottom: 6px;
+}
+
+.lab {
+  width: 100%;
+  max-width: 920px;
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 20px;
+  align-items: center;
+}
+.labHeader {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.labMissionTitle {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--eg-text-bright);
+}
+.labMissionTitle span {
+  color: var(--eg-text-dim);
+  font-size: 0.78rem;
+  font-weight: 400;
+  margin-left: 8px;
+}
+.labXp {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--eg-gold);
+  position: relative;
+}
+.xpPop {
+  position: absolute;
+  right: 0;
+  top: -2px;
+  color: var(--eg-gold);
+  font-size: 0.9rem;
+  font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
+}
+.xpPop.popping {
+  animation: xpPop 1.1s ease-out forwards;
+}
+@keyframes xpPop {
+  0% { opacity: 0; transform: translateY(4px) scale(0.8); }
+  20% { opacity: 1; transform: translateY(-6px) scale(1.05); }
+  70% { opacity: 1; transform: translateY(-18px) scale(1); }
+  100% { opacity: 0; transform: translateY(-30px) scale(0.95); }
+}
+
+.panel {
+  background: #ffffff;
+  border: 2px solid color-mix(in srgb, var(--p-color) 35%, #eee);
+  border-radius: 18px;
+  padding: 18px;
+  text-align: center;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.04), 0 8px 18px rgba(43, 28, 74, 0.07);
+}
+.panelLabel {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--eg-text-dim);
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.generatorHit {
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.generatorBtn {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: none;
+  background: var(--p-color);
+  color: #ffffff;
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 1.7rem;
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--p-color) 65%, black);
+  transition: transform var(--eg-duration-press) var(--eg-ease-pop), box-shadow var(--eg-duration-press) ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.generatorHit.pressed .generatorBtn {
+  transform: translateY(3px) scale(0.94);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--p-color) 65%, black);
+}
+
+.counterRow {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 5px;
+  font-family: var(--eg-font-display);
+}
+.counterCurrent {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--eg-text-bright);
+  transition: transform var(--eg-duration-counter-bump) ease-out;
+}
+.counterCurrent.bump {
+  animation: counterBump var(--eg-duration-counter-bump) ease-out;
+}
+@keyframes counterBump {
+  0% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+.counterTarget {
+  font-size: 0.95rem;
+  color: var(--eg-text-dim);
+  font-weight: 600;
+}
+.counterRow.met .counterCurrent {
+  color: var(--p-color);
+}
+
+.removeHit {
+  margin-top: 4px;
+  padding: 8px 10px;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.74rem;
+  color: var(--eg-text-dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  touch-action: manipulation;
+  font-weight: 600;
+}
+
+.chamberWrap {
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+}
+
+.chamberGlowField {
+  position: absolute;
+  top: 30px;
+  left: 50%;
+  width: 260px;
+  height: 260px;
+  transform: translate(-50%, 0);
+  pointer-events: none;
+  z-index: 0;
+}
+.chamberGlowRing1 {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-color, var(--eg-subject-chemistry)) 0%, transparent 65%);
+  opacity: 0.1;
+  animation: chamberGlowPulse1 6s ease-in-out infinite;
+}
+.chamberGlowRing2 {
+  position: absolute;
+  inset: 20%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--eg-gold) 0%, transparent 70%);
+  opacity: 0.12;
+  animation: chamberGlowPulse2 4.5s ease-in-out infinite reverse;
+}
+@keyframes chamberGlowPulse1 {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+@keyframes chamberGlowPulse2 {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.chamber {
+  width: 220px;
+  height: 240px;
+  position: relative;
+  border: 4px solid #d8d2e8;
+  border-top: none;
+  border-radius: 0 0 36px 36px;
+  background: linear-gradient(180deg, rgba(123, 79, 203, 0.04), rgba(123, 79, 203, 0.09));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+.chamber::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: -10px;
+  right: -10px;
+  height: 14px;
+  border-radius: 8px;
+  background: #d8d2e8;
+}
+.chamber.stabilized {
+  border-color: var(--eg-gold);
+  background: linear-gradient(180deg, rgba(255, 178, 60, 0.08), rgba(255, 178, 60, 0.16));
+}
+.chamber.stabilized::before {
+  background: var(--eg-gold);
+}
+.chamber.stabilized .nucleusCore {
+  animation: stabilizeFlash 1.4s ease-out;
+}
+@keyframes stabilizeFlash {
+  0% { transform: scale(1); filter: brightness(1); }
+  15% { transform: scale(1.6); filter: brightness(1.6); }
+  40% { transform: scale(1.15); filter: brightness(1.25); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+.chamber.shakingLocal {
+  animation: nucleusJitter 0.35s ease-in-out;
+}
+@keyframes nucleusJitter {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-3px, 2px); }
+  50% { transform: translate(3px, -2px); }
+  75% { transform: translate(-2px, -1px); }
+}
+
+.nucleusCore {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--eg-gold);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--eg-gold) 60%, transparent);
+  opacity: 0.9;
+  position: relative;
+  z-index: 5;
+}
+
+.orbitRing {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border: 2px dashed color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 30%, transparent);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.nucleon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.15);
+  z-index: 3;
+  animation: nucleonJitter 2.4s ease-in-out infinite;
+}
+@keyframes nucleonJitter {
+  0%, 100% { margin-top: -1px; margin-left: 1px; }
+  50% { margin-top: 1px; margin-left: -1px; }
+}
+
+.nucleonTrailDot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  z-index: 2;
+}
+
+.electronOrbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  animation: orbitSpin linear infinite;
+}
+@keyframes orbitSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.electronDot {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  top: -5.5px;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.15);
+}
+
+.shockwave {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid var(--eg-gold);
+  opacity: 0;
+  z-index: 6;
+}
+.shockwave.fire {
+  animation: shockwaveAnim 1s ease-out forwards;
+}
+@keyframes shockwaveAnim {
+  0% { transform: scale(1); opacity: 0.7; border-width: 4px; }
+  100% { transform: scale(1.9); opacity: 0; border-width: 0px; }
+}
+.shockwave2 {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--accent-color, var(--eg-subject-chemistry));
+  opacity: 0;
+  z-index: 6;
+}
+.shockwave2.fire {
+  animation: shockwaveAnim2 1.3s ease-out forwards;
+  animation-delay: 0.15s;
+}
+@keyframes shockwaveAnim2 {
+  0% { transform: scale(1); opacity: 0.7; border-width: 3px; }
+  100% { transform: scale(1.9); opacity: 0; border-width: 0px; }
+}
+
+.submitBtn {
+  width: 220px;
+  min-height: 52px;
+  padding: 13px;
+  border-radius: 16px;
+  border: none;
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  background: var(--eg-gold);
+  color: #4a2e06;
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--eg-gold) 70%, black);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  touch-action: manipulation;
+  z-index: 1;
+}
+.submitBtn:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--eg-gold) 70%, black);
+}
+
+.warningRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: min(460px, 92vw);
+  margin: 18px auto 0;
+}
+.warningMascot {
+  flex-shrink: 0;
+}
+.warningCard {
+  flex: 1;
+  background: #fff4f0;
+  border: 2px solid color-mix(in srgb, var(--eg-danger) 40%, transparent);
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+.warningCard.entering {
+  animation: slideIn 0.25s ease-out;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.warningEyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--eg-danger);
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+.warningText {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--eg-text-bright);
+}
+
+@media (max-width: 720px) {
+  .lab {
+    grid-template-columns: 1fr;
+  }
+  .chamberWrap {
+    grid-row: auto;
+    order: -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chamber.stabilized .nucleusCore,
+  .shockwave.fire,
+  .shockwave2.fire,
+  .electronOrbit,
+  .nucleon,
+  .chamber.shakingLocal,
+  .chamberGlowRing1,
+  .chamberGlowRing2 {
+    animation: none !important;
+  }
+}

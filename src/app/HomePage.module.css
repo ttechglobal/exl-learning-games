@@ -1,0 +1,607 @@
+/**
+ * HomePage.module.css
+ *
+ * "Learning arcade lobby" redesign — replaces the previous mascot-hero
+ * homepage. No traditional marketing hero: a minimal top bar, one bold
+ * typographic statement, a compact subject rail acting as navigation, a
+ * promoted games grid (games are the main event, subjects are just a
+ * filter), and a closing panel that restates the platform's purpose before
+ * the final CTA.
+ *
+ * Deliberately consumes ONLY the shared --eg-* tokens from motion/tokens.css
+ * (extended for this redesign with --eg-brand-* and --eg-surface-* values) —
+ * no parallel token system. Light/dark is opt-in via [data-theme] on .page;
+ * gameplay screens never set this attribute, so they're unaffected.
+ */
+
+.page {
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-family: var(--eg-font-body);
+  background: var(--eg-surface-bg);
+  color: var(--eg-surface-text);
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.page :global(a) {
+  text-decoration: none;
+  color: inherit;
+}
+.page :global(button) {
+  font-family: inherit;
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.fd {
+  font-family: var(--eg-font-display);
+}
+
+/* ============ AMBIENT BACKGROUND LAYER ============ */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background-image: linear-gradient(var(--eg-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--eg-grid-line) 1px, transparent 1px);
+  background-size: 46px 46px;
+}
+.ambientBlob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: var(--eg-ambient-opacity);
+}
+.ambientSymbol {
+  position: absolute;
+  opacity: 0.5;
+}
+.driftA {
+  animation: driftA 14s ease-in-out infinite;
+}
+.driftB {
+  animation: driftB 17s ease-in-out infinite;
+}
+.driftC {
+  animation: driftA 20s ease-in-out infinite reverse;
+}
+@keyframes driftA {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(14px, -18px) rotate(8deg); }
+}
+@keyframes driftB {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(-16px, 14px) rotate(-6deg); }
+}
+
+/* Header chrome now lives in components/ui/SiteHeader.module.css — see
+   SiteHeader.tsx, used here and on /worlds so the top bar can't drift
+   between pages. */
+
+/* ============ HERO TYPOGRAPHY ============ */
+.playHero {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 54px 0 30px;
+}
+.playHero h1 {
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  letter-spacing: -1px;
+  font-size: clamp(34px, 6vw, 64px);
+  line-height: 1.05;
+  text-transform: uppercase;
+  margin: 0;
+}
+.w1 {
+  color: var(--eg-surface-text);
+}
+.w2 {
+  color: var(--eg-brand);
+}
+.w3 {
+  color: var(--eg-gold);
+}
+.playHero p {
+  color: var(--eg-surface-text-dim);
+  font-size: 15px;
+  margin: 14px auto 0;
+  max-width: 460px;
+}
+.playHeroMotifs {
+  position: relative;
+  height: 0;
+}
+.phMotif {
+  position: absolute;
+  animation: floaty 4s ease-in-out infinite;
+}
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+
+/* ============ SUBJECT RAIL ============ */
+.railHead {
+  display: flex;
+  align-items: center;
+  padding: 6px 0 14px;
+}
+.railTag {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--eg-surface-text);
+}
+.subjectRail {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+.chip {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--eg-surface-card);
+  border: 1px solid var(--eg-surface-border);
+  border-radius: 30px;
+  padding: 10px 16px 10px 10px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.chip:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--eg-surface-shadow-soft);
+  border-color: transparent;
+}
+.chipIco {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--c-tint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+.chipName {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--eg-surface-text);
+}
+.chipCount {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c);
+  background: var(--c-tint);
+  padding: 3px 8px;
+  border-radius: 7px;
+}
+.chipLocked {
+  opacity: 0.55;
+}
+
+/* ============ GAME ZONE (section mood) ============ */
+.gameZone {
+  position: relative;
+  z-index: 1;
+  margin-top: 24px;
+  padding: 36px 0 56px;
+  background: linear-gradient(180deg, var(--eg-brand-tint) 0%, transparent 100%);
+}
+
+.popularGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+.pgCard {
+  background: var(--eg-surface-card);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: var(--eg-surface-shadow-soft);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  display: block;
+}
+.pgCard:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--eg-surface-shadow-card);
+}
+.pgArt {
+  position: relative;
+  height: 140px;
+  overflow: hidden;
+}
+.pgArtImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.pgBadge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  padding: 4px 9px;
+  border-radius: 7px;
+  color: #fff;
+}
+.badgeFeatured {
+  background: var(--eg-gold);
+  color: #4a2e00;
+}
+.badgeNew {
+  background: var(--eg-subject-biology);
+}
+.badgeTrending {
+  background: var(--eg-subject-physics);
+}
+.badgePopular {
+  background: var(--eg-subject-mathematics);
+}
+.badgeSoon {
+  background: var(--eg-surface-card);
+  color: var(--eg-surface-text-dim);
+  box-shadow: var(--eg-surface-shadow-soft);
+}
+.pgBody {
+  padding: 15px 16px 17px;
+}
+.pgTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+.pgTitle {
+  font-weight: 700;
+  font-size: 15.5px;
+  color: var(--eg-surface-text);
+}
+.pgStars {
+  font-size: 11px;
+  color: var(--eg-gold);
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.pgDesc {
+  font-size: 12.5px;
+  color: var(--eg-surface-text-dim);
+  line-height: 1.5;
+  margin: 0 0 12px;
+  min-height: 38px;
+}
+.pgMeta {
+  display: flex;
+  gap: 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--eg-surface-text-dim);
+}
+
+@media (max-width: 980px) {
+  .popularGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .popularGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============ LEADERBOARD PANEL ============ */
+.lbZone {
+  position: relative;
+  z-index: 1;
+  padding: 40px 0 70px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--eg-gold) 14%, transparent) 0%, transparent 100%);
+}
+.lbPanel {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 22px;
+}
+.championCard {
+  position: relative;
+  background: linear-gradient(160deg, var(--eg-gold) 0%, color-mix(in srgb, var(--eg-gold) 60%, black) 100%);
+  border-radius: 22px;
+  padding: 28px 22px;
+  text-align: center;
+  overflow: hidden;
+  color: #fff;
+}
+.championGlow {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  filter: blur(20px);
+}
+.championCrown {
+  font-size: 30px;
+  position: relative;
+  z-index: 1;
+}
+.championAvatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  margin: 8px auto 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  position: relative;
+  z-index: 1;
+  border: 3px solid rgba(255, 255, 255, 0.5);
+}
+.championName {
+  font-weight: 700;
+  font-size: 18px;
+  position: relative;
+  z-index: 1;
+}
+.championLabel {
+  font-size: 11.5px;
+  font-weight: 700;
+  opacity: 0.85;
+  margin-top: 2px;
+  position: relative;
+  z-index: 1;
+  letter-spacing: 0.3px;
+}
+.championStats {
+  display: flex;
+  justify-content: center;
+  gap: 26px;
+  margin-top: 18px;
+  position: relative;
+  z-index: 1;
+}
+.championStats b {
+  font-family: var(--eg-font-display);
+  font-size: 19px;
+  display: block;
+}
+.championStats span {
+  font-size: 10.5px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.lbList {
+  background: var(--eg-surface-card);
+  border-radius: 22px;
+  padding: 8px;
+  box-shadow: var(--eg-surface-shadow-soft);
+}
+.lbRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+}
+.lbRowYou {
+  background: color-mix(in srgb, var(--eg-gold) 16%, transparent);
+}
+.lbRank {
+  width: 20px;
+  font-weight: 800;
+  color: var(--eg-surface-text-faint);
+  font-family: var(--eg-font-display);
+  text-align: center;
+}
+.lbAvatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--eg-surface-card-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+}
+.lbInfo {
+  flex: 1;
+}
+.lbName {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--eg-surface-text);
+}
+.lbSub {
+  font-size: 11px;
+  color: var(--eg-surface-text-faint);
+  margin-top: 1px;
+}
+.lbXp {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--eg-surface-text);
+  white-space: nowrap;
+}
+.lbXp span {
+  font-size: 10px;
+  color: var(--eg-surface-text-faint);
+  font-weight: 600;
+}
+.lbEmpty {
+  padding: 28px 14px;
+  text-align: center;
+  color: var(--eg-surface-text-dim);
+  font-size: 13px;
+}
+
+@media (max-width: 760px) {
+  .lbPanel {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============ CLOSING SECTION ============ */
+.finaleZone {
+  position: relative;
+  z-index: 1;
+  padding: 20px 0 70px;
+}
+.finalePanel {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--eg-brand) 0%, var(--eg-brand-deep) 100%);
+  border-radius: 28px;
+  padding: 64px 30px;
+  text-align: center;
+}
+.finaleGlow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(50px);
+  opacity: 0.35;
+}
+.finaleGlowG1 {
+  width: 280px;
+  height: 280px;
+  top: -80px;
+  left: -60px;
+  background: var(--eg-subject-mathematics);
+}
+.finaleGlowG2 {
+  width: 240px;
+  height: 240px;
+  bottom: -80px;
+  right: -40px;
+  background: var(--eg-gold);
+}
+.finalePanel h2 {
+  position: relative;
+  z-index: 1;
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: clamp(26px, 4.4vw, 38px);
+  color: #fff;
+  line-height: 1.22;
+  margin: 0;
+}
+.finaleSub {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 14.5px;
+  margin: 12px auto 0;
+  max-width: 520px;
+}
+.finaleGrid {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 34px 0 36px;
+}
+.finaleItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 30px;
+  padding: 9px 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+}
+.fiIco {
+  font-size: 14px;
+}
+.btnFinale {
+  position: relative;
+  z-index: 1;
+  background: #fff;
+  color: var(--eg-brand);
+  border: none;
+  cursor: pointer;
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 15px;
+  padding: 15px 34px;
+  border-radius: 14px;
+  box-shadow: 0 10px 24px -8px rgba(0, 0, 0, 0.35);
+  transition: transform 0.12s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btnFinale:hover {
+  transform: translateY(-2px);
+}
+
+/* ============ FOOTER ============ */
+.siteFooter {
+  position: relative;
+  z-index: 1;
+  padding: 26px 0;
+  border-top: 1px solid var(--eg-surface-border);
+  margin-top: 10px;
+}
+.footerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.footerBrand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--eg-surface-text-dim);
+}
+.footerMark {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--eg-brand);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+.footerTag {
+  font-size: 12px;
+  color: var(--eg-surface-text-faint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phMotif,
+  .driftA,
+  .driftB,
+  .driftC {
+    animation: none !important;
+  }
+}

@@ -1,0 +1,108 @@
+<svg width="240" height="440" viewBox="0 0 240 440" xmlns="http://www.w3.org/2000/svg">
+  <title>ExamPrep mascot — idle pose</title>
+
+  <!-- ground shadow -->
+  <ellipse cx="120" cy="424" rx="58" ry="10" fill="#000000" opacity="0.12"/>
+
+  <!-- back ponytail (behind head, swinging right) -->
+  <path d="M158 72
+           C 184 76, 198 104, 192 132
+           C 188 150, 176 162, 166 160
+           C 174 142, 174 116, 160 92
+           C 156 84, 152 78, 146 74 Z"
+        fill="#2E1B14"/>
+  <path d="M172 92 C 184 104, 186 122, 178 138" fill="none" stroke="#42291E" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- legs (slight stance, weight on left) -->
+  <path d="M100 282 L94 388 C94 395, 100 399, 107 399 C114 399, 119 395, 118 388 L122 282 Z" fill="#4B2E83"/>
+  <path d="M140 282 L146 388 C146 395, 140 399, 133 399 C126 399, 121 395, 122 388 L118 282 Z" fill="#4B2E83"/>
+  <path d="M100 282 L96 354 L111 354 L112 282 Z" fill="#3E2569" opacity="0.5"/>
+  <path d="M140 282 L144 354 L129 354 L128 282 Z" fill="#3E2569" opacity="0.3"/>
+
+  <!-- shoes -->
+  <g>
+    <path d="M88 388 C85 388, 80 393, 83 400 C86 407, 100 409, 113 406 C120 404, 119 396, 112 393 L102 388 Z" fill="#E3E7EB"/>
+    <path d="M83 400 C86 407, 100 409, 113 406" fill="none" stroke="#9CA6B0" stroke-width="2"/>
+    <path d="M88 388 L102 388 L112 393" fill="none" stroke="#C5CCD3" stroke-width="2"/>
+    <circle cx="93" cy="399" r="2" fill="#9CA6B0"/><circle cx="100" cy="401" r="2" fill="#9CA6B0"/>
+  </g>
+  <g>
+    <path d="M152 388 C155 388, 160 393, 157 400 C154 407, 140 409, 127 406 C120 404, 121 396, 128 393 L138 388 Z" fill="#E3E7EB"/>
+    <path d="M157 400 C154 407, 140 409, 127 406" fill="none" stroke="#9CA6B0" stroke-width="2"/>
+    <path d="M152 388 L138 388 L128 393" fill="none" stroke="#C5CCD3" stroke-width="2"/>
+    <circle cx="147" cy="399" r="2" fill="#9CA6B0"/><circle cx="140" cy="401" r="2" fill="#9CA6B0"/>
+  </g>
+
+  <!-- torso / shirt -->
+  <path d="M84 196 C84 172, 99 156, 120 156 C141 156, 156 172, 156 196 L160 270 C160 284, 142 292, 120 292 C98 292, 80 284, 80 270 Z"
+        fill="#7B4FCB"/>
+  <path d="M84 196 C84 172, 99 156, 120 156 L120 292 C98 292, 80 284, 80 270 L84 196 Z" fill="#6B3FB8" opacity="0.4"/>
+  <!-- collar -->
+  <path d="M104 158 L120 172 L136 158 L130 152 L120 158 L110 152 Z" fill="#F4EBFF"/>
+
+  <!-- chest badge -->
+  <circle cx="100" cy="200" r="12" fill="#F4E9FF" stroke="#FFD66B" stroke-width="2.5"/>
+  <path d="M100 193 L104 200 L100 207 L96 200 Z" fill="#FFB23C"/>
+  <circle cx="100" cy="200" r="2.6" fill="#7B4FCB"/>
+
+  <!-- RIGHT arm: elbow out, hand on hip (viewer's left side of image) -->
+  <path d="M86 188
+           C 62 188, 48 206, 52 226
+           C 54 238, 66 244, 76 238
+           C 70 226, 70 208, 88 196 Z"
+        fill="#8158D6"/>
+  <path d="M86 188 C 66 190, 53 204, 52 220" fill="none" stroke="#6B3FB8" stroke-width="3" stroke-linecap="round" opacity="0.4"/>
+  <!-- hand resting on hip -->
+  <ellipse cx="72" cy="234" rx="13" ry="11" fill="#A9744E"/>
+
+  <!-- LEFT arm: elbow out, hand on hip (viewer's right side of image) -->
+  <path d="M154 188
+           C 178 188, 192 206, 188 226
+           C 186 238, 174 244, 164 238
+           C 170 226, 170 208, 152 196 Z"
+        fill="#8158D6"/>
+  <path d="M154 188 C 174 190, 187 204, 188 220" fill="none" stroke="#6B3FB8" stroke-width="3" stroke-linecap="round" opacity="0.4"/>
+  <ellipse cx="168" cy="234" rx="13" ry="11" fill="#A9744E"/>
+
+  <!-- neck -->
+  <rect x="108" y="140" width="24" height="20" rx="9" fill="#A9744E"/>
+
+  <!-- head -->
+  <circle cx="120" cy="98" r="50" fill="#B5805A"/>
+
+  <!-- ears -->
+  <circle cx="69" cy="102" r="8" fill="#A9744E"/>
+  <circle cx="171" cy="102" r="8" fill="#A9744E"/>
+
+  <!-- hair: top + sides, single continuous shape (no clip artifacts) -->
+  <path d="M70 100
+           C 64 60, 90 38, 120 38
+           C 150 38, 176 60, 170 100
+           C 168 78, 158 56, 138 50
+           C 142 62, 138 74, 128 78
+           C 124 66, 116 60, 104 62
+           C 108 70, 104 80, 94 82
+           C 88 70, 78 66, 72 78
+           C 70 84, 70 92, 70 100 Z"
+        fill="#2E1B14"/>
+  <!-- a few loose strands over forehead for texture -->
+  <path d="M88 66 C 94 62, 102 61, 108 64" fill="none" stroke="#231310" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+  <path d="M130 60 C 140 60, 150 66, 156 76" fill="none" stroke="#231310" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+
+  <!-- front ponytail strand crossing over shoulder -->
+  <path d="M156 66 C 176 64, 190 84, 182 106 C 178 94, 168 82, 154 76 Z" fill="#2E1B14"/>
+
+  <!-- face -->
+  <ellipse cx="98" cy="102" rx="7" ry="8.5" fill="#1A1A1A"/>
+  <ellipse cx="142" cy="102" rx="7" ry="8.5" fill="#1A1A1A"/>
+  <circle cx="100.5" cy="98.5" r="2" fill="#ffffff"/>
+  <circle cx="144.5" cy="98.5" r="2" fill="#ffffff"/>
+  <path d="M86 87 C 90 83, 98 82, 104 85" fill="none" stroke="#2E1B14" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M136 85 C 142 82, 150 83, 154 87" fill="none" stroke="#2E1B14" stroke-width="3.5" stroke-linecap="round"/>
+  <ellipse cx="97" cy="116" rx="6" ry="3.5" fill="#C98A63" opacity="0.5"/>
+  <ellipse cx="143" cy="116" rx="6" ry="3.5" fill="#C98A63" opacity="0.5"/>
+
+  <!-- big confident open smile -->
+  <path d="M99 124 C 108 138, 132 138, 141 124 C 137 144, 103 144, 99 124 Z" fill="#7A2E1E"/>
+  <path d="M103 126 C 112 133, 128 133, 137 126 L 136 129 C 127 135, 113 135, 104 129 Z" fill="#ffffff"/>
+</svg>

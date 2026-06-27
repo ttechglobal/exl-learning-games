@@ -1,0 +1,59 @@
+<svg width="100%" height="100%" viewBox="0 0 1400 800" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+  <title>ExamPrep Games homepage hero — a world made of many subjects</title>
+  <defs>
+    <linearGradient id="heroSky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFF3DA"/>
+      <stop offset="55%" stop-color="#FFE9C7"/>
+      <stop offset="100%" stop-color="#FFDCA8"/>
+    </linearGradient>
+    <radialGradient id="glowPurple" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#7B4FCB" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#7B4FCB" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowBlue" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#2F9BD6" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#2F9BD6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowGreen" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4CAF6E" stop-opacity="0.13"/>
+      <stop offset="100%" stop-color="#4CAF6E" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowPink" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FF6F91" stop-opacity="0.13"/>
+      <stop offset="100%" stop-color="#FF6F91" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1400" height="800" fill="url(#heroSky)"/>
+
+  <circle cx="220" cy="220" r="260" fill="url(#glowPurple)"/>
+  <circle cx="1150" cy="180" r="280" fill="url(#glowBlue)"/>
+  <circle cx="1220" cy="560" r="240" fill="url(#glowGreen)"/>
+  <circle cx="160" cy="600" r="220" fill="url(#glowPink)"/>
+
+  <g fill="#7B4FCB" opacity="0.08">
+    <circle cx="500" cy="120" r="30"/>
+    <circle cx="900" cy="90" r="22"/>
+  </g>
+
+  <path d="M0 560 C 250 540, 500 575, 750 555 C 950 540, 1180 565, 1400 545 L1400 800 L0 800 Z" fill="#F2C98C" opacity="0.55"/>
+  <path d="M0 600 C 300 588, 600 615, 900 598 C 1100 587, 1280 605, 1400 595 L1400 800 L0 800 Z" fill="#E3A463" opacity="0.4"/>
+
+  <g transform="translate(190,500)">
+    <path d="M0 60 L20 0 L40 30 L55 -10 L70 60 Z" fill="#C9A6FF" opacity="0.85"/>
+  </g>
+  <g transform="translate(1180,510)" opacity="0.8">
+    <rect x="-18" y="-18" width="36" height="36" fill="none" stroke="#2F9BD6" stroke-width="3" transform="rotate(15)"/>
+    <circle cx="0" cy="0" r="10" fill="#2F9BD6" opacity="0.5"/>
+  </g>
+  <g transform="translate(1280,470)" opacity="0.8">
+    <path d="M0 30 C -20 10, -16 -25, 0 -35 C 16 -25, 20 10, 0 30 Z" fill="#4CAF6E"/>
+    <line x1="0" y1="-30" x2="0" y2="25" stroke="#3a8a55" stroke-width="2"/>
+  </g>
+  <g transform="translate(90,470)" opacity="0.8">
+    <ellipse cx="0" cy="0" rx="30" ry="12" fill="none" stroke="#FF6F91" stroke-width="2.5" transform="rotate(-20)"/>
+    <circle cx="0" cy="0" r="6" fill="#FF6F91"/>
+  </g>
+
+  <path d="M0 660 C 280 645, 560 680, 840 660 C 1080 643, 1250 665, 1400 650 L1400 800 L0 800 Z" fill="#FBD9A5"/>
+</svg>

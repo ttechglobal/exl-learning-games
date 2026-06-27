@@ -1,0 +1,203 @@
+{
+  "slug": "build-the-atom",
+  "title": "Build The Atom",
+  "engineType": "particle-assembly",
+  "subject": "chemistry",
+  "topicId": "atomic-structure",
+  "sharedConfig": {
+    "entry": {
+      "title": "BUILD THE ATOM",
+      "missionLabel": "Today's Challenge"
+    },
+    "generators": [
+      {
+        "id": "proton",
+        "label": "Proton Generator",
+        "particleLabel": "Proton",
+        "color": "#00E5FF",
+        "panel": "left"
+      },
+      {
+        "id": "neutron",
+        "label": "Neutron Generator",
+        "particleLabel": "Neutron",
+        "color": "#B6FF3C",
+        "panel": "right"
+      },
+      {
+        "id": "electron",
+        "label": "Electron Generator",
+        "particleLabel": "Electron",
+        "color": "#FF3CF0",
+        "panel": "bottom"
+      }
+    ],
+    "feedbackRules": [
+      {
+        "when": "proton_count_mismatch",
+        "message": "This atom has {protonCount} protons. Hint: {targetElement} contains {targetProtonCount} protons."
+      },
+      {
+        "when": "any_mismatch",
+        "message": "Close \u2014 your proton count is right, but check your neutron and electron counts against the mission card."
+      }
+    ],
+    "review": {
+      "successLines": [
+        "Atomic Number = Number of Protons.",
+        "Remember what made this isotope/element distinct as you move to the next mission."
+      ]
+    },
+    "achievements": [
+      {
+        "id": "atom-builder-1",
+        "title": "Atom Builder I",
+        "description": "Created 10 atoms."
+      },
+      {
+        "id": "master-of-carbon",
+        "title": "Master of Carbon",
+        "description": "Completed all Carbon missions."
+      },
+      {
+        "id": "isotope-expert",
+        "title": "Isotope Expert",
+        "description": "Completed all isotope challenges."
+      }
+    ],
+    "elementsByProtonCount": {
+      "1": "Hydrogen",
+      "2": "Helium",
+      "3": "Lithium",
+      "4": "Beryllium",
+      "5": "Boron",
+      "6": "Carbon",
+      "7": "Nitrogen",
+      "8": "Oxygen",
+      "9": "Fluorine",
+      "10": "Neon",
+      "11": "Sodium",
+      "12": "Magnesium"
+    }
+  },
+  "snapshot": {
+    "cards": [
+      {
+        "title": "Atomic Number",
+        "body": "The atomic number determines which element you're building."
+      },
+      {
+        "title": "Carbon's Protons",
+        "body": "Carbon always has 6 protons \u2014 that never changes."
+      },
+      {
+        "title": "Isotopes",
+        "body": "Different numbers of neutrons create different isotopes of the same element."
+      }
+    ]
+  },
+  "missions": [
+    {
+      "missionKey": "hydrogen-1",
+      "title": "Create Hydrogen",
+      "difficulty": "EASY",
+      "sequenceIndex": 1,
+      "xpReward": 30,
+      "topicId": "atomic-structure",
+      "subtopicId": "protons-neutrons-electrons",
+      "payload": {
+        "target": {
+          "proton": 1,
+          "neutron": 0,
+          "electron": 1
+        },
+        "resultLabel": "Hydrogen"
+      }
+    },
+    {
+      "missionKey": "helium-1",
+      "title": "Create Helium",
+      "difficulty": "EASY",
+      "sequenceIndex": 2,
+      "xpReward": 30,
+      "topicId": "atomic-structure",
+      "subtopicId": "protons-neutrons-electrons",
+      "payload": {
+        "target": {
+          "proton": 2,
+          "neutron": 2,
+          "electron": 2
+        },
+        "resultLabel": "Helium"
+      }
+    },
+    {
+      "missionKey": "carbon-14",
+      "title": "Create Carbon-14",
+      "difficulty": "EASY",
+      "sequenceIndex": 3,
+      "xpReward": 50,
+      "topicId": "atomic-structure",
+      "subtopicId": "isotopes",
+      "payload": {
+        "target": {
+          "proton": 6,
+          "neutron": 8,
+          "electron": 6
+        },
+        "resultLabel": "Carbon-14"
+      }
+    },
+    {
+      "missionKey": "oxygen-1",
+      "title": "Create Oxygen",
+      "difficulty": "MEDIUM",
+      "sequenceIndex": 4,
+      "xpReward": 60,
+      "topicId": "atomic-structure",
+      "subtopicId": "protons-neutrons-electrons",
+      "payload": {
+        "target": {
+          "proton": 8,
+          "neutron": 8,
+          "electron": 8
+        },
+        "resultLabel": "Oxygen"
+      }
+    },
+    {
+      "missionKey": "sodium-1",
+      "title": "Create Sodium",
+      "difficulty": "MEDIUM",
+      "sequenceIndex": 5,
+      "xpReward": 60,
+      "topicId": "atomic-structure",
+      "subtopicId": "protons-neutrons-electrons",
+      "payload": {
+        "target": {
+          "proton": 11,
+          "neutron": 12,
+          "electron": 11
+        },
+        "resultLabel": "Sodium"
+      }
+    },
+    {
+      "missionKey": "magnesium-1",
+      "title": "Create Magnesium",
+      "difficulty": "MEDIUM",
+      "sequenceIndex": 6,
+      "xpReward": 70,
+      "topicId": "atomic-structure",
+      "subtopicId": "protons-neutrons-electrons",
+      "payload": {
+        "target": {
+          "proton": 12,
+          "neutron": 12,
+          "electron": 12
+        },
+        "resultLabel": "Magnesium"
+      }
+    }
+  ]
+}

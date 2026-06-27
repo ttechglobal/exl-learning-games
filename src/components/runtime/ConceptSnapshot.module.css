@@ -1,0 +1,117 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+}
+
+.mascotRow {
+  margin-bottom: -14px;
+}
+
+.card {
+  width: min(440px, 90vw);
+  text-align: center;
+  background: #ffffff;
+  border: 3px solid var(--accent-color, var(--eg-subject-chemistry));
+  border-radius: 22px;
+  padding: 26px;
+  box-shadow: 0 10px 0 rgba(0, 0, 0, 0.05), 0 14px 30px rgba(43, 28, 74, 0.1);
+}
+
+.cardTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.cardLabel {
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-color, var(--eg-subject-chemistry));
+  font-weight: 700;
+}
+
+.skipButton {
+  background: none;
+  border: none;
+  color: var(--eg-text-dim);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 22%, white);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.dotActive {
+  background: var(--accent-color, var(--eg-subject-chemistry));
+  transform: scale(1.2);
+}
+
+.title {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--eg-text-bright);
+  margin-bottom: 10px;
+}
+.body {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--eg-text-bright);
+  margin-bottom: 24px;
+  min-height: 64px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.backButton {
+  flex: 0 0 auto;
+  min-height: 54px;
+  padding: 0 18px;
+  border-radius: 14px;
+  border: 2px solid var(--accent-color, var(--eg-subject-chemistry));
+  background: transparent;
+  color: var(--accent-color, var(--eg-subject-chemistry));
+  font-family: var(--eg-font-display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.continueButton {
+  flex: 1;
+  min-height: 54px;
+  border-radius: 14px;
+  border: none;
+  background: var(--accent-color, var(--eg-subject-chemistry));
+  color: #ffffff;
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 70%, black);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.continueButton:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 70%, black);
+}

@@ -1,0 +1,133 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+}
+
+.mascotRow {
+  margin-bottom: -22px;
+}
+
+.card {
+  width: min(460px, 90vw);
+  text-align: center;
+  background: #ffffff;
+  border: 3px solid var(--accent-color, var(--eg-subject-chemistry));
+  border-radius: 22px;
+  padding: 28px;
+  padding-top: 36px;
+  box-shadow: 0 10px 0 rgba(0, 0, 0, 0.05), 0 14px 30px rgba(43, 28, 74, 0.1);
+}
+
+.title {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 1.3rem;
+  margin-bottom: 14px;
+  color: var(--eg-text-bright);
+}
+
+.rewardChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: color-mix(in srgb, var(--eg-gold) 16%, white);
+  border: 2px solid var(--eg-gold);
+  border-radius: 30px;
+  padding: 9px 20px;
+  margin-bottom: 18px;
+  opacity: 0;
+  transform: scale(0.7) translateY(6px);
+  animation: rewardPop var(--eg-duration-payoff-primary, 1.1s) var(--eg-ease-pop) var(--eg-duration-payoff-secondary-delay, 0.35s) forwards;
+}
+@keyframes rewardPop {
+  60% { opacity: 1; transform: scale(1.08) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.rewardIcon {
+  font-size: 1.1rem;
+}
+.rewardText {
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: color-mix(in srgb, var(--eg-gold) 55%, black);
+}
+
+.lines {
+  margin-bottom: 4px;
+}
+.line {
+  font-size: 0.98rem;
+  line-height: 1.7;
+  margin-bottom: 4px;
+  color: var(--eg-text-bright);
+}
+
+.actions {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.primaryButton {
+  width: 100%;
+  min-height: 54px;
+  border-radius: 14px;
+  border: none;
+  background: var(--accent-color, var(--eg-subject-chemistry));
+  color: #ffffff;
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 70%, black);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.primaryButton:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 70%, black);
+}
+.primaryButtonDisabled {
+  background: #d8d2e8;
+  box-shadow: none;
+  cursor: default;
+}
+.primaryButtonDisabled:active {
+  transform: none;
+}
+
+.secondaryButton {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 14px;
+  border: 2px solid var(--accent-color, var(--eg-subject-chemistry));
+  background: transparent;
+  color: var(--accent-color, var(--eg-subject-chemistry));
+  font-family: var(--eg-font-display);
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.linkButton {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 14px;
+  border: none;
+  background: transparent;
+  color: var(--eg-text-dim);
+  font-size: 0.88rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rewardChip {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+}

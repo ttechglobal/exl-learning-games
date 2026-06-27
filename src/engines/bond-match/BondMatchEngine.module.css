@@ -1,0 +1,399 @@
+.screen {
+  position: relative;
+  min-height: 70vh;
+  font-family: var(--eg-font-body);
+  color: var(--eg-text-bright);
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  z-index: 6;
+}
+.hudCard {
+  background: rgba(255, 255, 255, 0.93);
+  border: 2.5px solid var(--accent-color, var(--eg-subject-chemistry));
+  border-radius: 16px;
+  padding: 10px 16px;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.05), 0 8px 16px rgba(58, 42, 85, 0.12);
+}
+.missionLabel {
+  font-family: var(--eg-font-display);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--eg-text-dim);
+  margin-bottom: 3px;
+}
+.missionFormula {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--accent-color, var(--eg-subject-chemistry));
+}
+.missionName {
+  font-size: 0.74rem;
+  color: var(--eg-text-bright);
+}
+.bondHint {
+  font-size: 0.66rem;
+  color: var(--eg-text-dim);
+  margin-top: 2px;
+  max-width: 220px;
+}
+.statRow {
+  display: flex;
+  gap: 12px;
+}
+.statBlock {
+  text-align: center;
+}
+.statLabel {
+  font-family: var(--eg-font-display);
+  font-size: 0.56rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--eg-text-dim);
+}
+.statValue {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.statValue.timer {
+  color: var(--eg-danger);
+}
+.statValue.timer.urgent {
+  animation: timerPulse 0.5s ease-in-out infinite;
+}
+@keyframes timerPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+.statValue.xp {
+  color: #4caf6e;
+}
+
+.platformScene {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 110px 16px 130px;
+  min-height: 70vh;
+}
+.platformSurface {
+  position: relative;
+  width: min(680px, 92vw);
+  height: min(300px, 42vw);
+  background: radial-gradient(ellipse at 50% 30%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.15) 70%);
+  border-radius: 50% / 30%;
+  border: 4px dashed rgba(123, 79, 203, 0.25);
+}
+.connectorSvg {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  overflow: visible;
+}
+.connectorLine {
+  stroke-width: 5;
+  fill: none;
+  stroke-linecap: round;
+}
+.connectorLine.valid {
+  stroke: #4caf6e;
+}
+.connectorLine.invalid {
+  stroke: var(--eg-danger);
+}
+
+.atomLayer {
+  position: absolute;
+  inset: 0;
+}
+.atomNode {
+  position: absolute;
+  width: 92px;
+  height: 92px;
+  margin-left: -46px;
+  margin-top: -46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+  z-index: 3;
+}
+.atomNode.dragging {
+  cursor: grabbing;
+  z-index: 10;
+}
+.atomNode.dropping {
+  animation: atomDrop 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+@keyframes atomDrop {
+  0% { transform: translateY(-60px) scale(0.6); opacity: 0; }
+  70% { transform: translateY(6px) scale(1.05); opacity: 1; }
+  100% { transform: translateY(0) scale(1); }
+}
+.atomNode.exploding {
+  animation: atomExplode 0.5s ease-out forwards;
+}
+@keyframes atomExplode {
+  0% { transform: scale(1) rotate(0deg); }
+  100% { transform: scale(0.2) rotate(40deg); opacity: 0; }
+}
+.atomNucleus {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--el-color);
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--el-color) 65%, black), 0 6px 10px rgba(58, 42, 85, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #fff;
+  animation: nucleusBreathe 3s ease-in-out infinite;
+}
+@keyframes nucleusBreathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+.shellRing {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border: 2px dashed color-mix(in srgb, var(--el-color) 45%, transparent);
+  border-radius: 50%;
+}
+.electronOrbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  animation: orbitSpin linear infinite;
+}
+@keyframes orbitSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.electronDot {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--el-color);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.atomLabel {
+  position: absolute;
+  bottom: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  color: var(--eg-text-dim);
+  font-family: var(--eg-font-display);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.compoundCard {
+  position: fixed;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.4);
+  z-index: 40;
+  width: 230px;
+  background: #fff;
+  border: 3px solid var(--eg-gold);
+  border-radius: 20px;
+  padding: 20px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 10px 0 rgba(0, 0, 0, 0.06), 0 16px 32px rgba(58, 42, 85, 0.2);
+}
+.compoundCard.showing {
+  animation: compoundPop 1.5s cubic-bezier(0.3, 1.6, 0.5, 1) forwards;
+}
+@keyframes compoundPop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  20% { opacity: 1; transform: translate(-50%, -50%) scale(1.12); }
+  35% { transform: translate(-50%, -50%) scale(1); }
+  78% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1) translateY(-20px); }
+}
+.compoundFormula {
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 1.6rem;
+  color: var(--accent-color, var(--eg-subject-chemistry));
+  margin-bottom: 3px;
+}
+.compoundName {
+  font-size: 0.8rem;
+  color: var(--eg-text-dim);
+  margin-bottom: 6px;
+}
+.compoundBondType {
+  font-size: 0.72rem;
+  color: #4caf6e;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.compoundXp {
+  font-family: var(--eg-font-display);
+  font-size: 0.9rem;
+  color: #4caf6e;
+}
+
+.poofEmoji {
+  position: fixed;
+  font-size: 2.2rem;
+  z-index: 26;
+  pointer-events: none;
+  animation: poofPop 0.7s cubic-bezier(0.3, 1.6, 0.5, 1) forwards;
+}
+@keyframes poofPop {
+  0% { transform: translate(-50%, -50%) scale(0.3) rotate(0deg); opacity: 0; }
+  40% { transform: translate(-50%, -50%) scale(1.3) rotate(15deg); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(0.9) rotate(-10deg) translateY(-20px); opacity: 0; }
+}
+
+.hintRow {
+  position: fixed;
+  bottom: 156px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  z-index: 35;
+  opacity: 0;
+  max-width: min(440px, 90vw);
+}
+.hintRow.showing {
+  animation: hintShow 2.8s ease-out forwards;
+}
+@keyframes hintShow {
+  0% { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  85% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+}
+.hintCard {
+  background: #fff4f0;
+  border: 2px solid color-mix(in srgb, var(--eg-danger) 40%, transparent);
+  border-radius: 14px;
+  padding: 9px 13px;
+  font-size: 0.8rem;
+  color: var(--eg-text-bright);
+  text-align: left;
+}
+
+.appShakeWrap.shaking {
+  animation: appShake 0.3s ease-in-out;
+}
+@keyframes appShake {
+  0%, 100% { transform: translateX(0); }
+  30% { transform: translateX(-5px); }
+  60% { transform: translateX(5px); }
+}
+
+.dockWrap {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 8;
+  display: flex;
+  justify-content: center;
+  padding-bottom: 16px;
+}
+.dock {
+  display: flex;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.93);
+  border: 2.5px solid var(--accent-color, var(--eg-subject-chemistry));
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.05), 0 10px 20px rgba(58, 42, 85, 0.12);
+  overflow-x: auto;
+  max-width: 95vw;
+}
+.dockCapsule {
+  flex-shrink: 0;
+  width: 56px;
+  height: 74px;
+  border-radius: 28px;
+  background: linear-gradient(180deg, #fff, #f7f3ff);
+  border: 2px solid var(--el-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: grab;
+  touch-action: none;
+  position: relative;
+  animation: capsuleFloat 3.2s ease-in-out infinite;
+}
+@keyframes capsuleFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.miniNucleus {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--el-color);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--el-color) 65%, black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.58rem;
+  color: #fff;
+}
+.miniSymbol {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.56rem;
+  color: var(--eg-text-dim);
+}
+
+@media (max-width: 720px) {
+  .platformSurface {
+    width: 94vw;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atomNode.dropping, .electronOrbit, .dockCapsule, .appShakeWrap.shaking, .hintRow.showing {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

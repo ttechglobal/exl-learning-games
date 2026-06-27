@@ -1,0 +1,95 @@
+<svg width="240" height="440" viewBox="0 0 240 440" xmlns="http://www.w3.org/2000/svg">
+  <title>ExamPrep mascot — thinking, encouraging pose</title>
+
+  <ellipse cx="120" cy="424" rx="58" ry="10" fill="#000000" opacity="0.12"/>
+
+  <path d="M158 72
+           C 184 76, 198 104, 192 132
+           C 188 150, 176 162, 166 160
+           C 174 142, 174 116, 160 92
+           C 156 84, 152 78, 146 74 Z"
+        fill="#2E1B14"/>
+
+  <path d="M100 282 L94 388 C94 395, 100 399, 107 399 C114 399, 119 395, 118 388 L122 282 Z" fill="#4B2E83"/>
+  <path d="M140 282 L146 388 C146 395, 140 399, 133 399 C126 399, 121 395, 122 388 L118 282 Z" fill="#4B2E83"/>
+  <path d="M100 282 L96 354 L111 354 L112 282 Z" fill="#3E2569" opacity="0.5"/>
+  <path d="M140 282 L144 354 L129 354 L128 282 Z" fill="#3E2569" opacity="0.3"/>
+
+  <g>
+    <path d="M88 388 C85 388, 80 393, 83 400 C86 407, 100 409, 113 406 C120 404, 119 396, 112 393 L102 388 Z" fill="#E3E7EB"/>
+    <path d="M83 400 C86 407, 100 409, 113 406" fill="none" stroke="#9CA6B0" stroke-width="2"/>
+    <circle cx="93" cy="399" r="2" fill="#9CA6B0"/><circle cx="100" cy="401" r="2" fill="#9CA6B0"/>
+  </g>
+  <g>
+    <path d="M152 388 C155 388, 160 393, 157 400 C154 407, 140 409, 127 406 C120 404, 121 396, 128 393 L138 388 Z" fill="#E3E7EB"/>
+    <path d="M157 400 C154 407, 140 409, 127 406" fill="none" stroke="#9CA6B0" stroke-width="2"/>
+    <circle cx="147" cy="399" r="2" fill="#9CA6B0"/><circle cx="140" cy="401" r="2" fill="#9CA6B0"/>
+  </g>
+
+  <path d="M84 196 C84 172, 99 156, 120 156 C141 156, 156 172, 156 196 L160 270 C160 284, 142 292, 120 292 C98 292, 80 284, 80 270 Z"
+        fill="#7B4FCB"/>
+  <path d="M84 196 C84 172, 99 156, 120 156 L120 292 C98 292, 80 284, 80 270 L84 196 Z" fill="#6B3FB8" opacity="0.4"/>
+  <path d="M104 158 L120 172 L136 158 L130 152 L120 158 L110 152 Z" fill="#F4EBFF"/>
+
+  <circle cx="100" cy="200" r="12" fill="#F4E9FF" stroke="#FFD66B" stroke-width="2.5"/>
+  <path d="M100 193 L104 200 L100 207 L96 200 Z" fill="#FFB23C"/>
+  <circle cx="100" cy="200" r="2.6" fill="#7B4FCB"/>
+
+  <!-- RIGHT arm relaxed at side (viewer's left) -->
+  <path d="M86 192
+           C 68 198, 58 214, 62 232
+           C 64 240, 74 244, 80 238
+           C 78 226, 80 212, 92 200 Z"
+        fill="#8158D6"/>
+  <ellipse cx="70" cy="236" rx="12" ry="10" fill="#A9744E"/>
+
+  <!-- LEFT arm raised, hand near chin (thinking gesture) -->
+  <path d="M154 190
+           C 168 182, 178 168, 176 154
+           C 175 146, 167 144, 162 150
+           C 162 160, 158 172, 148 182 Z"
+        fill="#8158D6"/>
+  <ellipse cx="168" cy="150" rx="12" ry="10" fill="#A9744E" transform="rotate(-15 168 150)"/>
+
+  <rect x="108" y="140" width="24" height="20" rx="9" fill="#A9744E"/>
+
+  <!-- head, tilted slightly with curiosity -->
+  <g transform="rotate(5 120 98)">
+    <circle cx="120" cy="98" r="50" fill="#B5805A"/>
+    <circle cx="69" cy="102" r="8" fill="#A9744E"/>
+    <circle cx="171" cy="102" r="8" fill="#A9744E"/>
+
+    <path d="M70 100
+             C 64 60, 90 38, 120 38
+             C 150 38, 176 60, 170 100
+             C 168 78, 158 56, 138 50
+             C 142 62, 138 74, 128 78
+             C 124 66, 116 60, 104 62
+             C 108 70, 104 80, 94 82
+             C 88 70, 78 66, 72 78
+             C 70 84, 70 92, 70 100 Z"
+          fill="#2E1B14"/>
+    <path d="M88 66 C 94 62, 102 61, 108 64" fill="none" stroke="#231310" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+    <path d="M130 60 C 140 60, 150 66, 156 76" fill="none" stroke="#231310" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+    <path d="M156 66 C 176 64, 190 84, 182 106 C 178 94, 168 82, 154 76 Z" fill="#2E1B14"/>
+
+    <!-- soft, curious eyes looking up-ish -->
+    <ellipse cx="98" cy="100" rx="6.5" ry="8" fill="#1A1A1A"/>
+    <ellipse cx="142" cy="100" rx="6.5" ry="8" fill="#1A1A1A"/>
+    <circle cx="100" cy="96" r="1.8" fill="#ffffff"/>
+    <circle cx="144" cy="96" r="1.8" fill="#ffffff"/>
+    <!-- one eyebrow raised slightly for "hmm" -->
+    <path d="M86 86 C 90 81, 99 80, 105 84" fill="none" stroke="#2E1B14" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M136 87 C 142 84, 150 85, 154 89" fill="none" stroke="#2E1B14" stroke-width="3.5" stroke-linecap="round"/>
+    <ellipse cx="97" cy="116" rx="6" ry="3.5" fill="#C98A63" opacity="0.5"/>
+    <ellipse cx="143" cy="116" rx="6" ry="3.5" fill="#C98A63" opacity="0.5"/>
+
+    <!-- small encouraging closed-mouth smile, not a frown -->
+    <path d="M102 128 C 110 134, 130 134, 138 128" fill="none" stroke="#7A2E1E" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <!-- small "thought" dots near raised hand -->
+  <circle cx="186" cy="138" r="3" fill="#C9D6FF" opacity="0.8"/>
+  <circle cx="194" cy="126" r="4" fill="#C9D6FF" opacity="0.8"/>
+  <circle cx="204" cy="112" r="5.5" fill="#C9D6FF" opacity="0.8"/>
+</svg>

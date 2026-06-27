@@ -1,0 +1,252 @@
+{
+  "slug": "atom-forge",
+  "title": "Atom Forge",
+  "engineType": "bond-match",
+  "subject": "chemistry",
+  "topicId": "chemical-bonding",
+  "sharedConfig": {},
+  "snapshot": {
+    "cards": [
+      {
+        "title": "Ionic Bonds",
+        "body": "A metal GIVES an electron to a non-metal."
+      },
+      {
+        "title": "Covalent Bonds",
+        "body": "Two non-metals SHARE electrons instead."
+      },
+      {
+        "title": "How to Play",
+        "body": "Drag two atoms close together to bond them."
+      }
+    ]
+  },
+  "missions": [
+    {
+      "missionKey": "level-1-ionic",
+      "title": "Level 1: Ionic Bonds",
+      "difficulty": "EASY",
+      "sequenceIndex": 1,
+      "xpReward": 80,
+      "topicId": "chemical-bonding",
+      "subtopicId": "ionic-bonds",
+      "learningGoal": "Ionic bonds form when a metal gives up an electron to a non-metal.",
+      "estimatedMinutes": 4,
+      "payload": {
+        "elementPool": [
+          "Na",
+          "Cl",
+          "Mg",
+          "O",
+          "K",
+          "F"
+        ],
+        "showBondTypeHint": true,
+        "missions": [
+          {
+            "key": "nacl",
+            "formula": "NaCl",
+            "name": "Sodium Chloride",
+            "bondType": "ionic",
+            "pair": [
+              "Na",
+              "Cl"
+            ],
+            "xpReward": 80
+          },
+          {
+            "key": "mgo",
+            "formula": "MgO",
+            "name": "Magnesium Oxide",
+            "bondType": "ionic",
+            "pair": [
+              "Mg",
+              "O"
+            ],
+            "xpReward": 90
+          },
+          {
+            "key": "kf",
+            "formula": "KF",
+            "name": "Potassium Fluoride",
+            "bondType": "ionic",
+            "pair": [
+              "K",
+              "F"
+            ],
+            "xpReward": 85
+          }
+        ]
+      }
+    },
+    {
+      "missionKey": "level-2-covalent",
+      "title": "Level 2: Covalent Bonds",
+      "difficulty": "MEDIUM",
+      "sequenceIndex": 2,
+      "xpReward": 90,
+      "topicId": "chemical-bonding",
+      "subtopicId": "covalent-bonds",
+      "learningGoal": "Covalent bonds form when two non-metals share electrons instead.",
+      "estimatedMinutes": 4,
+      "payload": {
+        "elementPool": [
+          "H",
+          "O",
+          "N"
+        ],
+        "showBondTypeHint": true,
+        "missions": [
+          {
+            "key": "h2",
+            "formula": "H2",
+            "name": "Hydrogen Gas",
+            "bondType": "covalent",
+            "pair": [
+              "H",
+              "H"
+            ],
+            "xpReward": 90
+          },
+          {
+            "key": "o2",
+            "formula": "O2",
+            "name": "Oxygen Gas",
+            "bondType": "covalent",
+            "pair": [
+              "O",
+              "O"
+            ],
+            "xpReward": 95
+          },
+          {
+            "key": "n2",
+            "formula": "N2",
+            "name": "Nitrogen Gas",
+            "bondType": "covalent",
+            "pair": [
+              "N",
+              "N"
+            ],
+            "xpReward": 100
+          }
+        ]
+      }
+    },
+    {
+      "missionKey": "level-3-mixed",
+      "title": "Level 3: Mixed Bonding",
+      "difficulty": "MEDIUM",
+      "sequenceIndex": 3,
+      "xpReward": 100,
+      "topicId": "chemical-bonding",
+      "subtopicId": "bond-type-identification",
+      "learningGoal": "Tell ionic and covalent bonds apart without a hint to lean on.",
+      "estimatedMinutes": 5,
+      "payload": {
+        "elementPool": [
+          "Na",
+          "Cl",
+          "O",
+          "Mg",
+          "H"
+        ],
+        "showBondTypeHint": false,
+        "missions": [
+          {
+            "key": "nacl-3",
+            "formula": "NaCl",
+            "name": "Sodium Chloride",
+            "bondType": "ionic",
+            "pair": [
+              "Na",
+              "Cl"
+            ],
+            "xpReward": 100
+          },
+          {
+            "key": "o2-3",
+            "formula": "O2",
+            "name": "Oxygen Gas",
+            "bondType": "covalent",
+            "pair": [
+              "O",
+              "O"
+            ],
+            "xpReward": 100
+          },
+          {
+            "key": "mgo-3",
+            "formula": "MgO",
+            "name": "Magnesium Oxide",
+            "bondType": "ionic",
+            "pair": [
+              "Mg",
+              "O"
+            ],
+            "xpReward": 100
+          },
+          {
+            "key": "h2-3",
+            "formula": "H2",
+            "name": "Hydrogen Gas",
+            "bondType": "covalent",
+            "pair": [
+              "H",
+              "H"
+            ],
+            "xpReward": 100
+          }
+        ]
+      }
+    },
+    {
+      "missionKey": "level-4-factory",
+      "title": "Level 4: Compound Factory",
+      "difficulty": "HARD",
+      "sequenceIndex": 4,
+      "xpReward": 60,
+      "topicId": "chemical-bonding",
+      "subtopicId": "applied-bonding",
+      "learningGoal": "Apply bonding rules quickly under a time limit, like a real exam question.",
+      "estimatedMinutes": 3,
+      "payload": {
+        "elementPool": [
+          "Mg",
+          "Cl",
+          "Na"
+        ],
+        "showBondTypeHint": false,
+        "factory": {
+          "sessionDurationSec": 60,
+          "orders": [
+            {
+              "key": "mgcl2-order",
+              "formula": "MgCl2",
+              "name": "Magnesium Chloride",
+              "bondType": "ionic",
+              "pair": [
+                "Mg",
+                "Cl"
+              ],
+              "quantity": 3,
+              "xpReward": 60
+            },
+            {
+              "key": "nacl-order",
+              "formula": "NaCl",
+              "name": "Sodium Chloride",
+              "bondType": "ionic",
+              "pair": [
+                "Na",
+                "Cl"
+              ],
+              "quantity": 4,
+              "xpReward": 50
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

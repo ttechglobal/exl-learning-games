@@ -1,0 +1,35 @@
+<svg width="100%" height="100%" viewBox="0 0 800 600" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+  <title>Build The Atom backdrop — friendly science corner</title>
+  <defs>
+    <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFF3DA"/>
+      <stop offset="100%" stop-color="#FFE3C2"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#skyGrad)"/>
+
+  <circle cx="120" cy="120" r="38" fill="#7B4FCB" opacity="0.07"/>
+  <circle cx="680" cy="90" r="54" fill="#FF6F91" opacity="0.07"/>
+  <circle cx="730" cy="260" r="26" fill="#2F9BD6" opacity="0.08"/>
+  <circle cx="60" cy="300" r="22" fill="#FFB23C" opacity="0.1"/>
+
+  <rect x="40" y="430" width="180" height="14" rx="4" fill="#D9B98C"/>
+  <g>
+    <rect x="55" y="380" width="34" height="50" rx="8" fill="#FFFFFF" stroke="#D9B98C" stroke-width="3" opacity="0.9"/>
+    <circle cx="72" cy="400" r="6" fill="#7B4FCB" opacity="0.5"/>
+    <circle cx="72" cy="412" r="4" fill="#FF6F91" opacity="0.5"/>
+  </g>
+  <g>
+    <rect x="100" y="370" width="34" height="60" rx="8" fill="#FFFFFF" stroke="#D9B98C" stroke-width="3" opacity="0.9"/>
+    <circle cx="117" cy="392" r="5" fill="#2F9BD6" opacity="0.5"/>
+    <circle cx="117" cy="404" r="5" fill="#FFB23C" opacity="0.5"/>
+    <circle cx="117" cy="416" r="4" fill="#4CAF6E" opacity="0.5"/>
+  </g>
+  <g>
+    <rect x="145" y="385" width="34" height="45" rx="8" fill="#FFFFFF" stroke="#D9B98C" stroke-width="3" opacity="0.9"/>
+    <circle cx="162" cy="404" r="6" fill="#7B4FCB" opacity="0.5"/>
+  </g>
+
+  <path d="M0 540 C 200 520, 600 560, 800 530 L800 600 L0 600 Z" fill="#FBD9A5"/>
+  <path d="M0 555 C 200 538, 600 572, 800 548 L800 600 L0 600 Z" fill="#F6C988" opacity="0.6"/>
+</svg>

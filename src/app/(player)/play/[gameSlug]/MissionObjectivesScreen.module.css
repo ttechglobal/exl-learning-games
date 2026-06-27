@@ -1,0 +1,108 @@
+.wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 24px;
+  padding-top: 48px;
+}
+
+.mascotRow {
+  position: relative;
+  z-index: 1;
+  margin-bottom: -18px;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: mascotRise 0.4s var(--eg-ease-pop) 0.05s forwards;
+}
+@keyframes mascotRise {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  width: min(420px, 92vw);
+  background: #ffffff;
+  border: 3px solid var(--accent-color, var(--eg-subject-chemistry));
+  border-radius: 22px;
+  padding: 26px;
+  box-shadow: 0 10px 0 rgba(0, 0, 0, 0.05), 0 14px 30px rgba(43, 28, 74, 0.12);
+  opacity: 0;
+  transform: scale(0.96) translateY(10px);
+  animation: cardMaterialize 0.4s var(--eg-ease-pop) 0.15s forwards;
+}
+@keyframes cardMaterialize {
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.cardLabel {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-color, var(--eg-subject-chemistry));
+  margin-bottom: 16px;
+}
+
+.list {
+  list-style: none;
+  margin: 0 0 22px;
+  padding: 0;
+}
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.95rem;
+  color: var(--eg-text-bright);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+.item:last-child {
+  margin-bottom: 0;
+}
+.check {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 16%, white);
+  color: var(--accent-color, var(--eg-subject-chemistry));
+  font-weight: 800;
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.startButton {
+  width: 100%;
+  min-height: 54px;
+  border-radius: 14px;
+  border: none;
+  background: var(--accent-color, var(--eg-subject-chemistry));
+  color: #ffffff;
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 70%, black);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.startButton:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 70%, black);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .mascotRow {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+}

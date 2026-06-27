@@ -1,0 +1,137 @@
+/**
+ * SiteHeader.module.css
+ *
+ * Extracted from HomePage.module.css. Consumes only --eg-* tokens, same as
+ * HomePage — see motion/tokens.css for the brand/surface token definitions
+ * this depends on. Assumes the parent page sets [data-theme] somewhere up
+ * the tree (on its own root wrapper); this component has no opinion about
+ * where that attribute lives, it just reads the resulting --eg-* values.
+ */
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.fd {
+  font-family: var(--eg-font-display);
+}
+
+.header {
+  position: relative;
+  z-index: 1;
+  padding: 18px 0;
+}
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.logoMark {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--eg-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  color: #fff;
+}
+.logoText {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--eg-surface-text);
+}
+
+.lobbyNav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--eg-surface-card);
+  border: 1px solid var(--eg-surface-border);
+  border-radius: 30px;
+  padding: 5px;
+}
+.lobbyNav a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--eg-surface-text-dim);
+  padding: 8px 14px;
+  border-radius: 24px;
+  transition: background 0.15s, color 0.15s;
+}
+.lobbyNav a:hover {
+  background: var(--eg-surface-card-2);
+  color: var(--eg-surface-text);
+}
+.navActive {
+  background: var(--eg-brand) !important;
+  color: #fff !important;
+}
+.navLabel {
+  white-space: nowrap;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.xpPill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--eg-brand-tint);
+  color: var(--eg-brand);
+  font-weight: 700;
+  font-size: 13.5px;
+  padding: 8px 14px;
+  border-radius: 30px;
+}
+.themeToggle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--eg-surface-border);
+  background: var(--eg-surface-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 15px;
+}
+.avatarBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--eg-brand-tint);
+  border: 1px solid var(--eg-surface-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+@media (max-width: 760px) {
+  .navLabel {
+    display: none;
+  }
+  .lobbyNav a {
+    padding: 9px 11px;
+  }
+}

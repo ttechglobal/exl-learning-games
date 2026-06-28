@@ -38,6 +38,10 @@ export interface GameRuntimeProps {
   hasNextMission: boolean;
   reviewSuccessLines: string[];
   onAdvanceToNextMission: () => void;
+  /** Navigates away from the play flow entirely (PlayClient owns the
+   *  actual router call, same as BackButton's onBack callbacks) — wired
+   *  to ReflectionScreen's new "Back to Home" button. */
+  onBackToHome: () => void;
   /**
    * Player-chosen difficulty (see DifficultySelectScreen / PlayClient) —
    * null when the engine has no real modifiers defined
@@ -128,6 +132,7 @@ export function GameRuntime({
   hasNextMission,
   reviewSuccessLines,
   onAdvanceToNextMission,
+  onBackToHome,
   playerDifficulty,
   isPaused,
   menu
@@ -259,7 +264,7 @@ export function GameRuntime({
   const extraContent = (
     <>
       {typeof protonCount === "number" && <PeriodicTableReveal highlightAtomicNumber={protonCount} />}
-      {typeof finalScore === "number" && <HighScoreEntry gameSlug={gameSlug} score={finalScore} />}
+      {typeof finalScore === "number" && <HighScoreEntry gameId={gameId} gameSlug={gameSlug} score={finalScore} />}
     </>
   );
 
@@ -270,6 +275,7 @@ export function GameRuntime({
       onPlayAgain={() => setPhase("playing")}
       onNextMission={onAdvanceToNextMission}
       onViewConceptSummary={() => setPhase("reviewingConcepts")}
+      onBackToHome={onBackToHome}
       gameSlug={gameSlug}
       extraContent={extraContent}
     />

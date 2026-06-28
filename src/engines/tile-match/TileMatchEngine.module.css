@@ -77,6 +77,7 @@
   max-width: 340px;
 }
 .elementTile {
+  position: relative;
   box-sizing: border-box;
   background: #fff;
   border: 2.5px solid var(--el-color);
@@ -121,22 +122,37 @@
   75% { transform: translateX(5px); }
 }
 
-/* Sized for a tile in the ~100-110px range now, up from the ~90px
- * "tiles too big" correction — that correction was about removing the
- * earlier ~200px/~115px oversizing, not landing on the smallest possible
- * tile. With the panel no longer artificially tall, a slightly bigger,
- * more confident tile reads better than a small one in generous padding. */
+/*
+ * PERIODIC-TABLE-STYLE LAYOUT per direct feedback ("make the atomic
+ * number bigger and positioned at the top right of the card like a real
+ * periodic table"). A real periodic table cell puts the atomic number
+ * as a small-but-legible number tucked in the corner, with the element
+ * symbol as the dominant, large central feature — this now matches that
+ * convention instead of the previous "#6" prefix sitting as a small
+ * caption-style line below the symbol.
+ *
+ * .tileNumber is absolutely positioned in the top-right corner of the
+ * tile (position: relative was added to .elementTile above specifically
+ * to anchor this), sized up from the old 0.56rem caption size to read
+ * clearly on its own rather than as a footnote. No "#" prefix anymore —
+ * real periodic tables show a plain number ("6"), not "#6".
+ */
 .tileSymbol {
   font-family: var(--eg-font-display);
   font-weight: 800;
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   line-height: 1;
   color: var(--el-color);
 }
 .tileNumber {
-  font-size: 0.56rem;
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-family: var(--eg-font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
   color: var(--eg-text-dim);
-  font-weight: 600;
+  line-height: 1;
 }
 .tileName {
   font-size: 0.5rem;
@@ -241,7 +257,12 @@
     max-width: 290px;
   }
   .tileSymbol {
-    font-size: 1.15rem;
+    font-size: 1.3rem;
+  }
+  .tileNumber {
+    font-size: 0.7rem;
+    top: 5px;
+    right: 7px;
   }
   .hintButton {
     padding: 8px 17px 8px 8px;
@@ -251,14 +272,20 @@
 
 /* Tablet and up: continued growth in both tile size and gap — matching
  * the "need space left, right, and in between the cards... on desktop
- * too" feedback. */
+ * too" feedback. Atomic number grows along with the tile/symbol so it
+ * stays proportionate rather than looking small on a bigger tile. */
 @media (min-width: 600px) {
   .tileGrid {
     max-width: 460px;
     gap: 20px;
   }
   .tileSymbol {
-    font-size: 1.55rem;
+    font-size: 1.75rem;
+  }
+  .tileNumber {
+    font-size: 0.92rem;
+    top: 8px;
+    right: 10px;
   }
 }
 

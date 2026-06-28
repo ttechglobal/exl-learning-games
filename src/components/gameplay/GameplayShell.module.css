@@ -116,13 +116,19 @@
 /* Desktop/tablet (>=600px, see the existing breakpoint below where
  * .statCard grows back to full size): menu and stats group together on
  * the left instead, where there's more horizontal room and no real need
- * to push stats all the way to the opposite edge. */
+ * to push stats all the way to the opposite edge. Time and Score sit
+ * immediately next to each other as a tight pair (gap only, no stray
+ * margin pushing them apart) — see .statsRow's gap below, unchanged
+ * from the shared base rule, which is what keeps them reading as one
+ * grouped HUD cluster rather than two separately-floating cards. */
 @media (min-width: 600px) {
   .menuSlot {
     justify-content: flex-start;
+    gap: 16px;
   }
   .statsRow {
     justify-content: flex-start;
+    gap: 12px;
   }
 }
 

@@ -124,14 +124,6 @@
   transform: translateY(3px);
   box-shadow: 0 2px 0 color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 70%, black);
 }
-.primaryButtonDisabled {
-  background: #d8d2e8;
-  box-shadow: none;
-  cursor: default;
-}
-.primaryButtonDisabled:active {
-  transform: none;
-}
 
 .secondaryButton {
   width: 100%;
@@ -143,6 +135,26 @@
   font-family: var(--eg-font-display);
   font-weight: 600;
   font-size: 0.92rem;
+  cursor: pointer;
+}
+
+/* Back to Home — per direct feedback, a real way off this screen
+ * besides replaying or advancing. Deliberately the quietest of the four
+ * actions (no fill, no border, just text) since it's the "leave this
+ * flow entirely" option, not a step forward in the mission loop the way
+ * the other three are — but still a real full-width tappable button,
+ * not a tiny link, since it needs to be easy to find and use, not just
+ * technically present. */
+.homeButton {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 14px;
+  border: none;
+  background: transparent;
+  color: var(--eg-text-dim);
+  font-family: var(--eg-font-display);
+  font-weight: 600;
+  font-size: 0.9rem;
   cursor: pointer;
 }
 

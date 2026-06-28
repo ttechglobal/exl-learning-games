@@ -88,3 +88,93 @@ function getStartOfWeekIso(): string {
   monday.setHours(0, 0, 0, 0);
   return monday.toISOString();
 }
+
+export interface GameLeaderboardEntry {
+  studentId: string;
+  displayName: string;
+  score: number;
+  date: string;
+  rank: number;
+}
+
+/**
+ * Real, per-GAME, all-time, server-backed leaderboard — distinct from
+ * getWeeklyLeaderboard above (that one is cross-game, weekly, for the
+ * homepage). This is what HighScoreEntry.tsx now shows instead of (or
+ * alongside) the old localStorage-only list: a top-N table of the best
+ * score anyone has ever recorded on THIS specific game, visible to
+ * everyone regardless of whose device set the record.
+ *
+ * SCORE SOURCE: attempt.score is a normalized 0-1 value (see
+ * TileMatchEngine's onComplete — score: Math.min(1, raw/ceiling)), not
+ * the actual in-game point total a player would recognize from their
+ * own session. The real number (e.g. "740") only exists inside
+ * attempt.raw_outcome's `finalScore` key, the same field
+ * GameRuntime.tsx already reads client-side
+ * (lastResult?.rawOutcome?.finalScore). This query reaches into that
+ * jsonb column rather than using the normalized score column, since
+ * ranking by the normalized value would show 0.92 instead of the
+ * 700-ish numbers players actually recognize from their own session.
+ *
+ * DELIBERATELY NOT SORTING BY THE JSONB PATH IN POSTGREST: PostgREST/
+ * postgrest-js's .order() on a jsonb key has had real, documented
+ * quoting/casting issues across versions, and without a live DB to test
+ * against in this session there's no way to confirm it behaves
+ * correctly here. Instead this pulls a bounded candidate set (most
+ * recent CANDIDATE_POOL_SIZE attempts with a numeric finalScore — recent
+ * rather than unbounded, so a long-running game's attempt table doesn't
+ * force pulling its entire history just to find the top 10) and sorts +
+ * ranks entirely in JS, where the behavior is fully predictable and
+ * doesn't depend on PostgREST version quirks. If this game accumulates
+ * enough volume that "most recent N" stops reliably containing the
+ * true all-time top 10, revisit with a proper indexed/generated column
+ * for finalScore instead of querying into raw jsonb at all.
+ *
+ * Only attempts where raw_outcome has a numeric finalScore are
+ * considered — engines with no comparable per-session score
+ * (particle-assembly's one-shot completion, bond-match's level mode)
+ * simply never produce rows with that key, so they're naturally
+ * excluded rather than needing a special case here.
+ */
+const CANDIDATE_POOL_SIZE = 500;
+
+export async function getGameLeaderboard(gameId: string, limit = 10): Promise<GameLeaderboardEntry[]> {
+  const { data, error } = await supabaseServer()
+    .from("attempt")
+    .select("student_id, raw_outcome, completed_at, student:student_id(display_name)")
+    .eq("game_id", gameId)
+    // ->> (text extraction), not -> (json extraction), on the FINAL key
+    // in the path — this is the documented working form for .not(...,
+    // "is", null) against a jsonb column. Treated as a soft optimization
+    // only, not the source of correctness: the .filter() call below
+    // (after the query returns) re-checks "does this row actually have
+    // a numeric finalScore" in JS regardless, so even if this DB-side
+    // filter behaves differently than expected on a given PostgREST
+    // version, rows without a real score still can't leak into the
+    // ranked result.
+    .not("raw_outcome->>finalScore", "is", null)
+    .order("completed_at", { ascending: false })
+    .limit(CANDIDATE_POOL_SIZE);
+
+  if (error) throw error;
+
+  return ((data ?? []) as Array<{
+    student_id: string;
+    raw_outcome: Record<string, unknown>;
+    completed_at: string;
+    student: { display_name: string } | { display_name: string }[] | null;
+  }>)
+    .filter((row) => typeof row.raw_outcome?.finalScore === "number")
+    .map((row) => {
+      const studentRecord = Array.isArray(row.student) ? row.student[0] : row.student;
+      return {
+        studentId: row.student_id,
+        displayName: studentRecord?.display_name ?? "Anonymous",
+        score: row.raw_outcome.finalScore as number,
+        date: row.completed_at.slice(0, 10)
+      };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((entry, i) => ({ ...entry, rank: i + 1 }));
+}

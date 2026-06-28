@@ -11,6 +11,12 @@ export interface ReflectionScreenProps {
   onPlayAgain: () => void;
   onNextMission: () => void;
   onViewConceptSummary: () => void;
+  /** Per direct feedback: a real way back to the homepage from Mission
+   *  Complete, not just Play Again / Next Mission / Review Concepts.
+   *  Always shown — unlike onNextMission, this isn't conditional on
+   *  hasNextMission, since "go home" is a sensible action regardless of
+   *  whether more missions exist. */
+  onBackToHome: () => void;
   accentColor?: string;
   /** Used to resolve this game's environment art (see
    *  lib/content/gameEnvironments.ts) so Mission Complete uses the same
@@ -46,6 +52,14 @@ export interface ReflectionScreenProps {
  * BACKDROP added per direct feedback: this screen previously had no
  * environment art at all. Uses the same EnvironmentBackdrop + scrim
  * treatment as the rest of the pre/post-play flow.
+ *
+ * "ALL MISSIONS COMPLETE" BUTTON REMOVED per direct feedback: previously
+ * when hasNextMission was false, Next Mission didn't disappear — it
+ * relabeled itself to a disabled "All Missions Complete" button, which
+ * still occupied space and looked like a dead control rather than just
+ * not being there. Now the Next Mission button only renders AT ALL when
+ * hasNextMission is true; nothing replaces it when there's no next
+ * mission, rather than a disabled stand-in.
  */
 export function ReflectionScreen({
   successLines,
@@ -53,6 +67,7 @@ export function ReflectionScreen({
   onPlayAgain,
   onNextMission,
   onViewConceptSummary,
+  onBackToHome,
   accentColor = "var(--eg-subject-chemistry)",
   gameSlug,
   extraContent
@@ -83,15 +98,16 @@ export function ReflectionScreen({
           <button onClick={onViewConceptSummary} className={styles.conceptButton}>
             📘 Review Concepts
           </button>
-          <button
-            disabled={!hasNextMission}
-            onClick={onNextMission}
-            className={`${styles.primaryButton} ${!hasNextMission ? styles.primaryButtonDisabled : ""}`}
-          >
-            {hasNextMission ? "Next Mission" : "All Missions Complete"}
-          </button>
+          {hasNextMission && (
+            <button onClick={onNextMission} className={styles.primaryButton}>
+              Next Mission
+            </button>
+          )}
           <button onClick={onPlayAgain} className={styles.secondaryButton}>
             Play Again
+          </button>
+          <button onClick={onBackToHome} className={styles.homeButton}>
+            🏠 Back to Home
           </button>
         </div>
       </div>

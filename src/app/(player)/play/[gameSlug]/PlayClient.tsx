@@ -302,6 +302,7 @@ export function PlayClient({ studentId, game, missions, initialMissionId }: Play
           setScreen(supportsDifficultyChoice ? "difficulty" : "entry");
         }
       }}
+      onBackToHome={() => router.push("/worlds")}
     />
   );
 }

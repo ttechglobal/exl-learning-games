@@ -106,3 +106,14 @@
   margin-top: 10px;
   font-style: italic;
 }
+
+/* Only applied when BOTH the DB leaderboard and a local personal-best
+ * section render in the same card — a divider so the two reads as
+ * distinct sections ("everyone's top scores" vs "your best on this
+ * device") rather than one continuous list mixing two different
+ * meanings of "score" together. */
+.localSection {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed color-mix(in srgb, var(--eg-gold) 40%, transparent);
+}

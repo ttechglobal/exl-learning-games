@@ -220,8 +220,8 @@ export function TileMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
                 style={{ "--el-color": el.hex, animationDelay: `${i * 0.03}s` } as React.CSSProperties}
                 onPointerDown={() => handleTileTap(el)}
               >
+                <div className={styles.tileNumber}>{el.number}</div>
                 <div className={styles.tileSymbol}>{el.symbol}</div>
-                <div className={styles.tileNumber}>#{el.number}</div>
                 <div className={styles.tileName}>{el.name}</div>
               </div>
             ))}

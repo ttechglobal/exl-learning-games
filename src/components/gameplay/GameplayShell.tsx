@@ -118,19 +118,23 @@ export function GameplayShell({
         </div>
       )}
 
-      {/* Menu + stats share ONE row at every breakpoint, side by side on
-          the LEFT, mobile and desktop alike — per the latest feedback
-          (desktop should match mobile's arrangement, not differ from
-          it). See GameMenu.module.css's comment for why GameMenu's own
-          button had to stop being position:fixed for this to work at
-          all (a fixed element ignores whatever flex layout wraps it,
-          which is exactly what caused the original "menu covers the
-          timer" bug). Stats are also no longer a second,
+      {/* Menu + stats share ONE row at every breakpoint — never two
+          independently-positioned elements that could land on top of
+          each other (the original bug; see GameMenu.module.css's comment
+          for why GameMenu's own button had to stop being position:fixed
+          for that fix to actually hold). Within that shared row: on
+          mobile (<600px, see CSS) menu stays top-left and stats sit at
+          the opposite end, top-right, per the latest feedback; at
+          >=600px they switch to grouped together on the left instead,
+          where there's more room. This exact split has been asked for,
+          undone, and asked for again across several rounds — see the
+          CSS file's header comment for the full history before changing
+          it once more. Stats are also no longer a second,
           separately-centered block beneath the menu, which is what made
           them feel as visually heavy as the actual game elements on a
           phone screen. At >=600px this same row's stats visually present
           as larger cards; the markup doesn't change between tiers, only
-          the sizing does. */}
+          the sizing/alignment does. */}
       <div className={styles.menuSlot}>
         {menu}
         <div className={styles.statsRow}>

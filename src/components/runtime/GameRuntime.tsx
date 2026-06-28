@@ -7,6 +7,7 @@ import { PeriodicTableReveal } from "@/motion/PeriodicTableReveal";
 import { HighScoreEntry } from "@/components/runtime/HighScoreEntry";
 import { getEngineDefinition } from "@/engines/registry";
 import { applyDifficultyModifiers, type PlayerDifficulty } from "@/lib/content/difficultyModifiers";
+import { resolveQuickConceptsForSlug } from "@/lib/content/quickConcepts";
 import type { AttemptResult } from "@/types/result";
 import { enqueueAttempt } from "@/lib/offline/attemptQueue";
 
@@ -71,12 +72,39 @@ export interface GameRuntimeProps {
 
 type Phase = "snapshot" | "playing" | "reflection" | "reviewingConcepts";
 
-/** Used only when a live row's `snapshot` doesn't actually have the new
- *  `{cards}` shape yet (see the guard in the snapshot/reviewingConcepts
- *  branch below) — generic enough to not be actively wrong for any
- *  subject, but every real game should have its own migrated content
- *  rather than relying on this long-term. */
-const FALLBACK_SNAPSHOT_CARDS = [{ title: "Quick Concept", body: "Get ready — your mission is about to begin." }];
+/** Last-resort fallback when a game has NEITHER a real snapshot.cards
+ *  row in the DB NOR an entry in lib/content/quickConcepts.ts — see the
+ *  resolveSnapshotCards() helper below for the actual 3-tier resolution
+ *  order. Generic enough to not be actively wrong for any subject, but
+ *  every real game should have one of the two better sources rather
+ *  than relying on this long-term. */
+const GENERIC_FALLBACK_SNAPSHOT_CARDS = [{ title: "Quick Concept", body: "Get ready — your mission is about to begin." }];
+
+/**
+ * Resolves which Quick Concept cards to show, in order of preference:
+ *   1. The real snapshot.cards column on this game's DB row, if it's
+ *      actually been migrated/populated (Postgres can still return the
+ *      OLD {lines, readTimeSec} shape for any row that hasn't been
+ *      migrated yet — see GameRow.snapshot's type comment — so this is
+ *      checked defensively, not just type-asserted).
+ *   2. lib/content/quickConcepts.ts's per-slug content, for any game
+ *      that has real authored content written in code even though its
+ *      DB row doesn't (this is how Element Hunter's actual 5-card
+ *      content reaches players right now — no DB migration needed for
+ *      this specific game).
+ *   3. The single generic one-liner above, as an absolute last resort
+ *      so this screen never renders with zero content for any game.
+ */
+function resolveSnapshotCards(gameSlug: string, snapshot: { cards: { title: string; body: string }[] } | undefined) {
+  if (Array.isArray(snapshot?.cards) && snapshot.cards.length > 0) {
+    return snapshot.cards;
+  }
+  const perSlugCards = resolveQuickConceptsForSlug(gameSlug);
+  if (perSlugCards && perSlugCards.length > 0) {
+    return perSlugCards;
+  }
+  return GENERIC_FALLBACK_SNAPSHOT_CARDS;
+}
 
 /**
  * Orchestrates the full per-mission loop (architecture doc Section 3.1):
@@ -170,16 +198,16 @@ export function GameRuntime({
   );
 
   if (phase === "snapshot" || phase === "reviewingConcepts") {
-    // Defensive guard against unmigrated rows: until the DB migration that
-    // rewrites every game's `snapshot` column from the old
-    // `{lines, readTimeSec}` shape to `{cards}` actually runs, a live
-    // Supabase row can still arrive here with the OLD shape — `snapshot`
+    // See resolveSnapshotCards() above for the 3-tier resolution order
+    // (real DB content -> per-slug code fallback -> generic last
+    // resort). The defensive Array.isArray check inside it still
+    // matters: until a DB migration rewrites every game's `snapshot`
+    // column from the old `{lines, readTimeSec}` shape to `{cards}`, a
+    // live Supabase row can arrive here with the OLD shape — `snapshot`
     // is typed as `{cards: [...]}` (see GameRow.snapshot's migration
     // caveat in types/db.ts) but TypeScript types don't change what
-    // Postgres actually returns. Without this guard, `cards` would be
-    // `undefined` and ConceptSnapshot would crash on `cards.length`
-    // immediately on every single play session against an unmigrated DB.
-    const cards = Array.isArray(snapshot?.cards) && snapshot.cards.length > 0 ? snapshot.cards : FALLBACK_SNAPSHOT_CARDS;
+    // Postgres actually returns.
+    const cards = resolveSnapshotCards(gameSlug, snapshot);
     return (
       <ConceptSnapshot
         cards={cards}

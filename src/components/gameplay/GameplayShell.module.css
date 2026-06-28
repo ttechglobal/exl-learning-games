@@ -2,13 +2,13 @@
  * GameplayShell.module.css
  *
  * Mobile-first. Three real breakpoints:
- *   - base (phones, ~360-599px): menu button stays top-left, stat pills
- *     move to the top-right of the same row (per direct feedback — not
- *     grouped beside the menu), mission banner full-width below,
- *     gameplay frame gets the rest
- *   - >=600px (tablets): menu and stats stay grouped together on the
- *     left of the same row — more horizontal room there, no real need to
- *     separate them — and stat cards grow back to full size
+ *   - base (phones, ~360-599px): menu button top-left, stat pills
+ *     (Time/Score) top-right of the same row, mission banner full-width
+ *     below, gameplay frame gets the rest
+ *   - >=600px (tablets): menu and stats switch to grouped together on
+ *     the left of the same row instead — more horizontal room there, no
+ *     real need to keep them split to opposite edges — and stat cards
+ *     grow back to full size
  *   - >=1024px (laptops/desktop): gameplay frame gets a max-width and more
  *     breathing room instead of stretching edge-to-edge, per the brief's
  *     "comfortable reading distance" requirement
@@ -22,9 +22,11 @@
  * would still have floated at its own fixed coordinate regardless of
  * what this file says. Both pieces were necessary; neither alone would
  * have fixed it. Once that was fixed, where exactly menu vs stats sit
- * within the row became a free layout choice (left-grouped, then
- * mobile-split-to-opposite-ends per the latest feedback) rather than
- * still being constrained by the original bug.
+ * within the row became a free layout choice — this has gone back and
+ * forth across several rounds of feedback (grouped-left, split-to-
+ * corners-on-mobile-only, grouped-left-everywhere, now split-to-corners-
+ * on-mobile-again) — see .menuSlot's own comment for the current,
+ * explicitly-scoped answer.
  *
  * MOBILE STAT COMPACTING: per direct feedback, Time/Score were too large
  * relative to the actual game elements on a phone screen — the HUD was
@@ -68,23 +70,28 @@
   border-radius: 20px;
 }
 
-/* Menu button + stats share this one row, grouped together on the LEFT,
- * at every breakpoint — mobile and desktop now match (an earlier
- * revision split them to opposite ends specifically on mobile per a
- * different round of feedback; that's been reverted per the latest
- * direction that desktop should match mobile's side-by-side grouping
- * rather than mobile having its own separate arrangement). See the file
- * header for why sharing one row at all (menu and stats never
- * absolutely-positioned independently) is the structural fix behind the
- * original menu/timer collision bug, and GameMenu.module.css's comment
- * for why the button itself also had to stop being position:fixed for
- * that fix to actually work. */
+/* Menu button + stats share this one row at every breakpoint — never two
+ * independently-positioned elements that could land on top of each
+ * other (the original bug; see GameMenu.module.css's comment for why
+ * GameMenu's own button had to stop being position:fixed for that fix
+ * to actually hold).
+ *
+ * ALIGNMENT: per the latest direct feedback, scoped explicitly to
+ * MOBILE — menu stays top-left, stats (Time/Score) move to the opposite
+ * end of the same row, top-right. Desktop keeps the grouped-left
+ * arrangement from the previous round (that request was about mobile
+ * specifically, not a reason to change desktop again). This is the
+ * THIRD time this exact alignment question has come up across
+ * different rounds of feedback; if it changes again, check this comment
+ * and the file history above for the full back-and-forth before
+ * picking a side once more.
+ */
 .menuSlot {
   position: relative;
   z-index: 50;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 10px;
   min-height: 42px;
   margin-bottom: 10px;
@@ -101,9 +108,22 @@
 .statsRow {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-start;
+  justify-content: flex-end;
   align-items: center;
   gap: 8px;
+}
+
+/* Desktop/tablet (>=600px, see the existing breakpoint below where
+ * .statCard grows back to full size): menu and stats group together on
+ * the left instead, where there's more horizontal room and no real need
+ * to push stats all the way to the opposite edge. */
+@media (min-width: 600px) {
+  .menuSlot {
+    justify-content: flex-start;
+  }
+  .statsRow {
+    justify-content: flex-start;
+  }
 }
 
 /* Mobile-first sizing: small pill by default. Grows back to a full-size
@@ -155,6 +175,7 @@
 }
 
 .missionBanner {
+  box-sizing: border-box;
   width: 100%;
   background: #fff;
   border: 3px solid var(--eg-gold);

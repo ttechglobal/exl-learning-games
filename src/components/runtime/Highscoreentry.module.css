@@ -1,4 +1,5 @@
 .wrap {
+  box-sizing: border-box;
   width: 100%;
   background: color-mix(in srgb, var(--eg-gold) 10%, white);
   border: 2px solid var(--eg-gold);

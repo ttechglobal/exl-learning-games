@@ -37,18 +37,28 @@ export interface GameEnvironmentImages {
 }
 
 /**
- * Both variants point at the same file for now — there is only one
- * Element Hunter environment asset in this codebase
- * (/mascot/scene-element-hunter.png). When a dedicated mobile crop/
- * composition is produced, change ONLY `mobile` here; EnvironmentBackdrop
- * already renders desktop/mobile through separate <source> tags driven
- * by a media query, so no component code needs to change when that
- * second asset arrives.
+ * Both variants point at the same file for Element Hunter and Atom Forge
+ * for now — there is only one source asset for each in this codebase
+ * (/mascot/scene-element-hunter.png, /mascot/forge-backdrop.svg). When a
+ * dedicated mobile crop/composition is produced for either, change ONLY
+ * `mobile` here; EnvironmentBackdrop already renders desktop/mobile
+ * through separate <source> tags driven by a media query, so no
+ * component code needs to change when a second asset arrives.
+ *
+ * Atom Forge's entry added when BondMatchEngine was migrated onto
+ * GameplayShell/EnvironmentBackdrop (previously rendered its own raw
+ * <img src="/mascot/forge-backdrop.svg"> directly, bypassing this
+ * registry and the shared desktop/mobile picture-swap mechanism
+ * entirely).
  */
 export const GAME_ENVIRONMENT_IMAGES: Record<string, GameEnvironmentImages> = {
   "element-hunter": {
     desktop: "/mascot/scene-element-hunter.png",
     mobile: "/mascot/scene-element-hunter.png"
+  },
+  "atom-forge": {
+    desktop: "/mascot/forge-backdrop.svg",
+    mobile: "/mascot/forge-backdrop.svg"
   }
 };
 

@@ -100,11 +100,53 @@ function addDistractorElements(config: Record<string, unknown>): Record<string, 
   return { elementPool: [...existingPool, ...distractors] };
 }
 
+/** Only returns a `factory` override key when the mission being modified
+ *  ALREADY has a factory config — see the long comment on
+ *  MODIFIERS_BY_ENGINE["bond-match"] above for the exact crash this
+ *  fixes. A mission with no `factory` at all (Atom Forge Levels 1-3)
+ *  gets `{}` here, so applyDifficultyModifiers's merge never touches
+ *  `factory` for it — it simply stays absent, exactly as authored. */
+function mergeFactoryOverrideIfPresent(config: Record<string, unknown>, sessionDurationSec: number): Record<string, unknown> {
+  if (typeof config.factory !== "object" || config.factory === null) return {};
+  return { factory: { sessionDurationSec } };
+}
+
 const MODIFIERS_BY_ENGINE: Record<string, ModifierSet> = {
+  /**
+   * BUG FIX: EASY and HARD used to unconditionally include a `factory`
+   * key in their override object — `factory: { sessionDurationSec: 90 }`
+   * etc — regardless of whether the mission being modified was a
+   * factory mission at all. applyDifficultyModifiers's merge only does
+   * a nested-object merge when the EXISTING value is also an object;
+   * for a non-factory mission (Atom Forge Levels 1-3, which use
+   * `missions`, not `factory`), config.factory doesn't exist yet, so
+   * the merge fell through to a plain overwrite — `merged.factory`
+   * became `{ sessionDurationSec: 90 }` with NO `orders` array, on a
+   * mission that was never a factory mission to begin with.
+   * BondMatchEngine.tsx's `isFactory = Boolean(shared.factory)` then
+   * misread that as "this is a factory mission," and
+   * `shared.factory!.orders[...]` crashed because `orders` was
+   * undefined. This is exactly the
+   * "Cannot read properties of undefined (reading 'length')" crash.
+   *
+   * Fixed by only emitting a `factory` override when the incoming
+   * config ALREADY has one (mergeFactoryOverrideIfPresent) — Levels 1-3
+   * now correctly get no `factory` key injected at any difficulty, and
+   * Level 4 (the actual factory mission) still gets its session-length
+   * tuned per tier exactly as before.
+   */
   "bond-match": {
-    EASY: (config) => ({ ...trimToRequiredElements(config), showBondTypeHint: true, factory: { sessionDurationSec: 90 } }),
-    MEDIUM: { showBondTypeHint: true, factory: { sessionDurationSec: 60 } },
-    HARD: (config) => ({ ...addDistractorElements(config), showBondTypeHint: false, factory: { sessionDurationSec: 40 } })
+    EASY: (config) => ({
+      ...trimToRequiredElements(config),
+      showBondTypeHint: true,
+      ...mergeFactoryOverrideIfPresent(config, 90)
+    }),
+    MEDIUM: (config) => ({ showBondTypeHint: true, ...mergeFactoryOverrideIfPresent(config, 60) }),
+    HARD: (config) => ({
+      ...addDistractorElements(config),
+      showBondTypeHint: false,
+      ...mergeFactoryOverrideIfPresent(config, 40)
+    })
   },
   "tile-match": {
     EASY: { sessionDurationSec: 90, tileCount: 4 },

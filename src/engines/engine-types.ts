@@ -38,19 +38,17 @@ export interface EngineRuntimeProps<TConfig = unknown, TOutcome = unknown> {
    * Engines never construct their own GameMenu; they only place this
    * ReactNode wherever the shell expects it.
    *
-   * MIGRATION STATUS: only tile-match (TileMatchEngine.tsx) actually
-   * renders this inside a GameplayShell as of this revision — bond-match
-   * and particle-assembly still render their own pre-shell chrome
-   * directly and never reference `menu` at all, which means there is
-   * currently NO visible in-game menu during their actual gameplay phase
-   * (Entry/Difficulty/Objectives/Reflection still show it correctly,
-   * via PlayClient's sibling-fragment rendering — only the "playing"
-   * phase for these two specific engines is affected). This was a
-   * deliberate, scoped decision (tile-match as the proven template
-   * first) — not an oversight to silently work around if you're reading
-   * this while building a new engine: migrate bond-match and
-   * particle-assembly onto GameplayShell before assuming every engine
-   * already has a working menu.
+   * MIGRATION STATUS: tile-match and bond-match both render this inside
+   * a real GameplayShell as of this revision. particle-assembly still
+   * renders its own pre-shell chrome directly and never references
+   * `menu` at all, which means there is currently NO visible in-game
+   * menu during ITS "playing" phase specifically (Entry/Difficulty/
+   * Objectives/Reflection still show it correctly via PlayClient's
+   * sibling-fragment rendering — only particle-assembly's actual
+   * gameplay screen is affected). Migrate particle-assembly onto
+   * GameplayShell next, following the same pattern bond-match's
+   * migration used, before assuming every engine already has a working
+   * menu.
    */
   menu?: React.ReactNode;
 }

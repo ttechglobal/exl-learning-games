@@ -1,106 +1,67 @@
-.screen {
+/**
+ * BondMatchEngine.module.css
+ *
+ * MIGRATED onto GameplayShell this round (see BondMatchEngine.tsx's file
+ * header comment for the full reasoning — this engine previously had no
+ * working in-game menu and never ran through the responsive/box-sizing
+ * fixes the rest of this session applied to TileMatchEngine).
+ *
+ * REMOVED entirely (now owned by GameplayShell): .screen, .backdrop,
+ * .hud, .hudCard, .missionLabel, .missionFormula, .missionName,
+ * .statRow, .statBlock, .statLabel, .statValue (+ .timer/.xp/.urgent
+ * variants) — all of that chrome is shared now, not duplicated here.
+ *
+ * .platformScene and .dockWrap were `position: absolute`/`fixed` against
+ * the WHOLE viewport before — now normal flow children inside
+ * .engineColumn (GameplayShell's `children` slot), stacked vertically
+ * the same way TileMatchEngine's tile grid + hint button are. This also
+ * fixes a latent box-sizing risk: every width:100%-with-padding rule in
+ * this file now explicitly sets box-sizing: border-box, matching the
+ * fix applied across the rest of the codebase this session (a missing
+ * box-sizing: border-box was the exact cause of a real "card bigger
+ * than its container" bug found and fixed in HighScoreEntry.tsx).
+ */
+
+.engineColumn {
   position: relative;
-  min-height: 70vh;
-  font-family: var(--eg-font-body);
-  color: var(--eg-text-bright);
-}
-
-.backdrop {
-  position: absolute;
-  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: 0;
 }
 
-.hud {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: space-between;
-  padding: 8px;
-  z-index: 6;
-}
-.hudCard {
-  background: rgba(255, 255, 255, 0.93);
-  border: 2.5px solid var(--accent-color, var(--eg-subject-chemistry));
-  border-radius: 16px;
-  padding: 10px 16px;
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.05), 0 8px 16px rgba(58, 42, 85, 0.12);
-}
-.missionLabel {
-  font-family: var(--eg-font-display);
-  font-size: 0.6rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--eg-text-dim);
-  margin-bottom: 3px;
-}
-.missionFormula {
-  font-family: var(--eg-font-display);
-  font-weight: 700;
-  font-size: 1.1rem;
-  color: var(--accent-color, var(--eg-subject-chemistry));
-}
-.missionName {
-  font-size: 0.74rem;
-  color: var(--eg-text-bright);
-}
 .bondHint {
-  font-size: 0.66rem;
+  box-sizing: border-box;
+  font-size: 0.74rem;
   color: var(--eg-text-dim);
-  margin-top: 2px;
-  max-width: 220px;
-}
-.statRow {
-  display: flex;
-  gap: 12px;
-}
-.statBlock {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 10px;
+  padding: 6px 14px;
+  margin-bottom: 10px;
+  max-width: min(320px, 92vw);
   text-align: center;
 }
-.statLabel {
-  font-family: var(--eg-font-display);
-  font-size: 0.56rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--eg-text-dim);
-}
-.statValue {
-  font-family: var(--eg-font-display);
-  font-weight: 700;
-  font-size: 1.05rem;
-}
-.statValue.timer {
-  color: var(--eg-danger);
-}
-.statValue.timer.urgent {
-  animation: timerPulse 0.5s ease-in-out infinite;
-}
-@keyframes timerPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-}
-.statValue.xp {
-  color: #4caf6e;
+[data-theme="dark"] .bondHint {
+  background: rgba(24, 28, 40, 0.85);
 }
 
 .platformScene {
   position: relative;
   z-index: 1;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 110px 16px 130px;
-  min-height: 70vh;
+  width: 100%;
+  padding: 16px 12px;
 }
 .platformSurface {
   position: relative;
-  width: min(680px, 92vw);
-  height: min(300px, 42vw);
+  box-sizing: border-box;
+  width: min(620px, 100%);
+  height: min(280px, 56vw);
+  max-height: 280px;
   background: radial-gradient(ellipse at 50% 30%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.15) 70%);
   border-radius: 50% / 30%;
   border: 4px dashed rgba(123, 79, 203, 0.25);
@@ -224,7 +185,9 @@
   left: 50%;
   transform: translate(-50%, -50%) scale(0.4);
   z-index: 40;
+  box-sizing: border-box;
   width: 230px;
+  max-width: 90vw;
   background: #fff;
   border: 3px solid var(--eg-gold);
   border-radius: 20px;
@@ -233,6 +196,9 @@
   opacity: 0;
   pointer-events: none;
   box-shadow: 0 10px 0 rgba(0, 0, 0, 0.06), 0 16px 32px rgba(58, 42, 85, 0.2);
+}
+[data-theme="dark"] .compoundCard {
+  background: #181c28;
 }
 .compoundCard.showing {
   animation: compoundPop 1.5s cubic-bezier(0.3, 1.6, 0.5, 1) forwards;
@@ -291,6 +257,7 @@
   gap: 10px;
   z-index: 35;
   opacity: 0;
+  box-sizing: border-box;
   max-width: min(440px, 90vw);
 }
 .hintRow.showing {
@@ -322,16 +289,16 @@
 }
 
 .dockWrap {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 8;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  box-sizing: border-box;
   display: flex;
   justify-content: center;
-  padding-bottom: 16px;
+  padding: 8px 12px 4px;
 }
 .dock {
+  box-sizing: border-box;
   display: flex;
   gap: 10px;
   padding: 10px 16px;
@@ -340,7 +307,10 @@
   border: 2.5px solid var(--accent-color, var(--eg-subject-chemistry));
   box-shadow: 0 8px 0 rgba(0, 0, 0, 0.05), 0 10px 20px rgba(58, 42, 85, 0.12);
   overflow-x: auto;
-  max-width: 95vw;
+  max-width: 100%;
+}
+[data-theme="dark"] .dock {
+  background: rgba(24, 28, 40, 0.93);
 }
 .dockCapsule {
   flex-shrink: 0;
@@ -384,9 +354,21 @@
   color: var(--eg-text-dim);
 }
 
-@media (max-width: 720px) {
+@media (min-width: 600px) {
   .platformSurface {
-    width: 94vw;
+    height: 280px;
+  }
+  .dockCapsule {
+    width: 64px;
+    height: 82px;
+  }
+  .miniNucleus {
+    width: 28px;
+    height: 28px;
+    font-size: 0.64rem;
+  }
+  .miniSymbol {
+    font-size: 0.6rem;
   }
 }
 

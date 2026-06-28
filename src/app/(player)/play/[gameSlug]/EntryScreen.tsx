@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { getElementByAtomicNumber } from "@/motion/periodicTableData";
 import { CATEGORY_COLORS } from "@/motion/periodicTableData";
 import { Mascot } from "@/motion/Mascot";
 import { resolveMissionBriefing } from "@/lib/content/missionBriefing";
+import { LeaderboardModal } from "@/components/runtime/LeaderboardModal";
 import type { MissionRow } from "@/types/db";
 import styles from "@/app/(player)/play/[gameSlug]/EntryScreen.module.css";
 
@@ -32,6 +34,11 @@ export interface EntryScreenProps {
    *  screen, by MissionTopBar (rendered by PrePlayShell, see
    *  PlayClient.tsx). */
   gameSlug: string;
+  /** Needed for the View High Scores button — LeaderboardModal fetches
+   *  /api/games/[id]/leaderboard, which needs the real DB id, not the
+   *  slug. */
+  gameId: string;
+  gameTitle: string;
   subject: string;
   mission: MissionRow;
   onStart: () => void;
@@ -43,7 +50,8 @@ export interface EntryScreenProps {
  * wrapper, backdrop, or min-height:100vh; PrePlayShell handles all of
  * that for the whole pre-play flow now, not just this one screen. This
  * component is just: mascot, narrative briefing, element glyph (when
- * relevant), Learning Goal, and the Start Mission button.
+ * relevant), Learning Goal, View High Scores, and the Start Mission
+ * button.
  *
  * Per direct instruction: Reward/Difficulty/Time are REMOVED from this
  * screen entirely (an earlier revision simplified them into one quiet
@@ -62,8 +70,15 @@ export interface EntryScreenProps {
  *
  * Still does the periodic-table-glyph preview for particle-assembly-style
  * missions (target.proton in payload) — unaffected by this revision.
+ *
+ * VIEW HIGH SCORES added per direct feedback: players shouldn't have to
+ * complete a mission to see where they (or anyone else) rank — this
+ * opens LeaderboardModal, the same real DB-backed leaderboard
+ * HighScoreEntry.tsx shows after a completed attempt, available right
+ * here on the very first screen of the play flow.
  */
-export function EntryScreen({ gameSlug, subject, mission, onStart }: EntryScreenProps) {
+export function EntryScreen({ gameSlug, gameId, gameTitle, subject, mission, onStart }: EntryScreenProps) {
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const target = (mission.payload as { target?: Record<string, number> }).target;
   const protonCount = target?.proton;
   const element = typeof protonCount === "number" ? getElementByAtomicNumber(protonCount) : undefined;
@@ -97,10 +112,23 @@ export function EntryScreen({ gameSlug, subject, mission, onStart }: EntryScreen
           <div className={styles.goalText}>{learningGoal}</div>
         </div>
 
+        <button className={styles.highScoresButton} onClick={() => setShowLeaderboard(true)}>
+          🏆 View High Scores
+        </button>
+
         <button className={styles.startButton} onClick={onStart}>
           Start Mission
         </button>
       </div>
+
+      {showLeaderboard && (
+        <LeaderboardModal
+          gameId={gameId}
+          gameTitle={gameTitle}
+          accentColor={accentColor}
+          onClose={() => setShowLeaderboard(false)}
+        />
+      )}
     </div>
   );
 }

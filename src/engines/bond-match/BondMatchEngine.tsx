@@ -15,6 +15,8 @@ import { fireIonicTransfer, fireCovalentSharing } from "@/motion/bondingMotion";
 import { playSound } from "@/motion/sound/playSound";
 import type { EngineRuntimeProps } from "@/engines/engine-types";
 import type { BondMatchSharedConfig } from "@/engines/bond-match/bondMatch.config";
+import { GameplayShell, type GameplayStat } from "@/components/gameplay/GameplayShell";
+import { GAME_ENVIRONMENT_IMAGES } from "@/lib/content/gameEnvironments";
 import styles from "@/engines/bond-match/BondMatchEngine.module.css";
 
 interface PlacedAtom {
@@ -50,7 +52,25 @@ function resolveSharedConfig(topLevelShared: BondMatchSharedConfig, missionPaylo
   return topLevelShared;
 }
 
-export function BondMatchEngine({ config, onComplete }: EngineRuntimeProps<BondMatchConfig, Outcome>) {
+/**
+ * MIGRATED onto GameplayShell this round (previously rendered its own
+ * raw <img> backdrop + absolute-positioned .hud directly — see
+ * engine-types.ts's long comment on EngineRuntimeProps.menu, which
+ * explicitly flagged that bond-match had NO working in-game menu during
+ * actual gameplay as a result: Restart Mission / Exit to Worlds simply
+ * didn't exist once a mission started, only before/after it). Now wired
+ * the same way TileMatchEngine is: `menu` renders inside GameplayShell's
+ * reserved row, `isPaused` actually halts the factory timer (see the
+ * countdown effect below, which now checks it the same way
+ * TileMatchEngine's does), and the environment backdrop goes through the
+ * shared EnvironmentBackdrop/gameEnvironments.ts registry instead of a
+ * hardcoded raw <img src="...">.
+ *
+ * Internal gameplay logic (drag physics, bond validation, factory
+ * order cycling, the compound-reveal card, the hint toast) is UNCHANGED
+ * by this migration — only the outer chrome moved.
+ */
+export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRuntimeProps<BondMatchConfig, Outcome>) {
   const shared = resolveSharedConfig(config.shared, config.mission.payload);
   const isFactory = Boolean(shared.factory);
 
@@ -86,6 +106,7 @@ export function BondMatchEngine({ config, onComplete }: EngineRuntimeProps<BondM
 
   useEffect(() => {
     if (!isFactory || factoryEndedRef.current) return;
+    if (isPaused) return;
     if (factoryTimeLeft <= 0) {
       factoryEndedRef.current = true;
       onComplete({
@@ -101,7 +122,7 @@ export function BondMatchEngine({ config, onComplete }: EngineRuntimeProps<BondM
     const t = setTimeout(() => setFactoryTimeLeft((s) => s - 1), 1000);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFactory, factoryTimeLeft]);
+  }, [isFactory, factoryTimeLeft, isPaused]);
 
   const clearAtoms = useCallback(() => setNodes({}), []);
 
@@ -123,17 +144,22 @@ export function BondMatchEngine({ config, onComplete }: EngineRuntimeProps<BondM
 
   const startDragFromDock = useCallback(
     (e: React.PointerEvent, symbol: string) => {
+      if (isPaused) return;
       e.preventDefault();
       const id = spawnAtom(symbol, e.clientX, e.clientY);
       setDragId(id);
     },
-    [spawnAtom]
+    [spawnAtom, isPaused]
   );
 
-  const startDragFromAtom = useCallback((e: React.PointerEvent, id: string) => {
-    e.preventDefault();
-    setDragId(id);
-  }, []);
+  const startDragFromAtom = useCallback(
+    (e: React.PointerEvent, id: string) => {
+      if (isPaused) return;
+      e.preventDefault();
+      setDragId(id);
+    },
+    [isPaused]
+  );
 
   const BOND_DISTANCE = 95;
 
@@ -339,111 +365,108 @@ export function BondMatchEngine({ config, onComplete }: EngineRuntimeProps<BondM
 
   const dockElements: BondElement[] = [...new Set(shared.elementPool)].map((s) => BOND_ELEMENTS[s]).filter(Boolean);
 
+  const stats: GameplayStat[] = isFactory
+    ? [
+        { label: "Time", value: factoryTimeLeft, tone: "danger", urgent: factoryTimeLeft <= 10 },
+        { label: "XP", value: factoryXp, tone: "success" }
+      ]
+    : [{ label: "XP", value: currentMission?.xpReward ?? 0, tone: "success" }];
+
+  const missionFormula = currentMission?.formula ?? currentOrder?.formula ?? "";
+  const missionName = currentMission?.name ?? currentOrder?.name ?? "";
+  const missionPromptText = isFactory && currentOrder
+    ? `${missionFormula} \u2014 ${missionName} (${factoryProduced}/${currentOrder.quantity} made)`
+    : `${missionFormula} \u2014 ${missionName}`;
+
   return (
-    <div className={`${styles.screen} ${shaking ? styles.appShakeWrap : ""} ${shaking ? "shaking" : ""}`}>
-      <img className={styles.backdrop} src="/mascot/forge-backdrop.svg" alt="" />
-
-      <div className={styles.hud}>
-        <div className={styles.hudCard}>
-          <div className={styles.missionLabel}>{isFactory ? "Factory Order" : "Forge This Compound"}</div>
-          <div className={styles.missionFormula}>{currentMission?.formula ?? currentOrder?.formula}</div>
-          <div className={styles.missionName}>
-            {currentMission?.name ?? currentOrder?.name}
-            {isFactory && currentOrder ? ` \u2014 ${factoryProduced}/${currentOrder.quantity} made` : ""}
+    <GameplayShell
+      environmentImages={GAME_ENVIRONMENT_IMAGES["atom-forge"]}
+      fallbackGradient="radial-gradient(ellipse 90% 70% at 50% 0%, #2A3A5C 0%, #1B2438 55%, #11162A 100%)"
+      accentColor="var(--eg-subject-chemistry)"
+      stats={stats}
+      missionPrompt={{ label: isFactory ? "Factory Order" : "Forge This Compound", text: missionPromptText }}
+      menu={menu}
+      isPaused={isPaused}
+    >
+      <div className={`${styles.engineColumn} ${shaking ? styles.appShakeWrap : ""} ${shaking ? "shaking" : ""}`}>
+        {!isFactory && shared.showBondTypeHint && activePair && (
+          <div className={styles.bondHint}>
+            {activeBondType === "ionic"
+              ? `${BOND_ELEMENTS[activePair[0]]?.name} gives an electron to ${BOND_ELEMENTS[activePair[1]]?.name}.`
+              : `Two ${BOND_ELEMENTS[activePair[0]]?.name} atoms SHARE electrons.`}
           </div>
-          {!isFactory && shared.showBondTypeHint && activePair && (
-            <div className={styles.bondHint}>
-              {activeBondType === "ionic"
-                ? `${BOND_ELEMENTS[activePair[0]]?.name} gives an electron to ${BOND_ELEMENTS[activePair[1]]?.name}.`
-                : `Two ${BOND_ELEMENTS[activePair[0]]?.name} atoms SHARE electrons.`}
-            </div>
-          )}
-        </div>
-        <div className={styles.hudCard}>
-          <div className={styles.statRow}>
-            {isFactory && (
-              <div className={styles.statBlock}>
-                <div className={styles.statLabel}>Time</div>
-                <div className={`${styles.statValue} ${styles.timer} ${factoryTimeLeft <= 10 ? styles.urgent : ""}`}>{factoryTimeLeft}</div>
-              </div>
-            )}
-            <div className={styles.statBlock}>
-              <div className={styles.statLabel}>XP</div>
-              <div className={`${styles.statValue} ${styles.xp}`}>{isFactory ? factoryXp : currentMission?.xpReward ?? 0}</div>
-            </div>
-          </div>
-        </div>
-      </div>
+        )}
 
-      <div className={styles.platformScene} ref={platformRef}>
-        <div className={styles.platformSurface}>
-          <svg className={styles.connectorSvg}>
-            {connector && (
-              <line
-                x1={connector.a.x}
-                y1={connector.a.y}
-                x2={connector.b.x}
-                y2={connector.b.y}
-                className={`${styles.connectorLine} ${connector.valid ? styles.valid : styles.invalid}`}
-              />
-            )}
-          </svg>
-          <div className={styles.atomLayer} ref={layerRef}>
-            {Object.values(nodes).map((atom) => {
-              const el = BOND_ELEMENTS[atom.symbol];
-              if (!el) return null;
-              return (
-                <div
-                  key={atom.id}
-                  className={`${styles.atomNode} ${dragId === atom.id ? styles.dragging : ""} ${atom.dropIn ? styles.dropping : ""}`}
-                  style={{ left: atom.x, top: atom.y, "--el-color": el.hex } as React.CSSProperties}
-                  onPointerDown={(e) => startDragFromAtom(e, atom.id)}
-                >
-                  {el.shells.map((count, shellIdx) => {
-                    const radius = 18 + shellIdx * 11;
-                    const dotCount = Math.min(count, 8);
-                    return (
-                      <div key={shellIdx}>
-                        <div
-                          className={styles.shellRing}
-                          style={{ width: radius * 2, height: radius * 2, marginLeft: -radius, marginTop: -radius } as React.CSSProperties}
-                        />
-                        {Array.from({ length: dotCount }, (_, e2) => (
+        <div className={styles.platformScene} ref={platformRef}>
+          <div className={styles.platformSurface}>
+            <svg className={styles.connectorSvg}>
+              {connector && (
+                <line
+                  x1={connector.a.x}
+                  y1={connector.a.y}
+                  x2={connector.b.x}
+                  y2={connector.b.y}
+                  className={`${styles.connectorLine} ${connector.valid ? styles.valid : styles.invalid}`}
+                />
+              )}
+            </svg>
+            <div className={styles.atomLayer} ref={layerRef}>
+              {Object.values(nodes).map((atom) => {
+                const el = BOND_ELEMENTS[atom.symbol];
+                if (!el) return null;
+                return (
+                  <div
+                    key={atom.id}
+                    className={`${styles.atomNode} ${dragId === atom.id ? styles.dragging : ""} ${atom.dropIn ? styles.dropping : ""}`}
+                    style={{ left: atom.x, top: atom.y, "--el-color": el.hex } as React.CSSProperties}
+                    onPointerDown={(e) => startDragFromAtom(e, atom.id)}
+                  >
+                    {el.shells.map((count, shellIdx) => {
+                      const radius = 18 + shellIdx * 11;
+                      const dotCount = Math.min(count, 8);
+                      return (
+                        <div key={shellIdx}>
                           <div
-                            key={e2}
-                            className={styles.electronOrbit}
-                            style={{ animationDuration: `${3.5 + shellIdx * 1.3}s`, transform: `rotate(${(360 / dotCount) * e2}deg)` }}
-                          >
-                            <div className={styles.electronDot} style={{ left: radius - 3.5, "--el-color": el.hex } as React.CSSProperties} />
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })}
-                  <div className={styles.atomNucleus} style={{ "--el-color": el.hex } as React.CSSProperties}>
-                    {el.symbol}
+                            className={styles.shellRing}
+                            style={{ width: radius * 2, height: radius * 2, marginLeft: -radius, marginTop: -radius } as React.CSSProperties}
+                          />
+                          {Array.from({ length: dotCount }, (_, e2) => (
+                            <div
+                              key={e2}
+                              className={styles.electronOrbit}
+                              style={{ animationDuration: `${3.5 + shellIdx * 1.3}s`, transform: `rotate(${(360 / dotCount) * e2}deg)` }}
+                            >
+                              <div className={styles.electronDot} style={{ left: radius - 3.5, "--el-color": el.hex } as React.CSSProperties} />
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                    <div className={styles.atomNucleus} style={{ "--el-color": el.hex } as React.CSSProperties}>
+                      {el.symbol}
+                    </div>
+                    <div className={styles.atomLabel}>{el.name}</div>
                   </div>
-                  <div className={styles.atomLabel}>{el.name}</div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className={styles.dockWrap}>
-        <div className={styles.dock}>
-          {dockElements.map((el) => (
-            <div
-              key={el.symbol}
-              className={styles.dockCapsule}
-              style={{ "--el-color": el.hex } as React.CSSProperties}
-              onPointerDown={(e) => startDragFromDock(e, el.symbol)}
-            >
-              <div className={styles.miniNucleus}>{el.symbol}</div>
-              <div className={styles.miniSymbol}>{el.name}</div>
-            </div>
-          ))}
+        <div className={styles.dockWrap}>
+          <div className={styles.dock}>
+            {dockElements.map((el) => (
+              <div
+                key={el.symbol}
+                className={styles.dockCapsule}
+                style={{ "--el-color": el.hex } as React.CSSProperties}
+                onPointerDown={(e) => startDragFromDock(e, el.symbol)}
+              >
+                <div className={styles.miniNucleus}>{el.symbol}</div>
+                <div className={styles.miniSymbol}>{el.name}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -470,6 +493,6 @@ export function BondMatchEngine({ config, onComplete }: EngineRuntimeProps<BondM
           <Mascot pose={mascotPose} widthPx={76} />
         </div>
       )}
-    </div>
+    </GameplayShell>
   );
 }

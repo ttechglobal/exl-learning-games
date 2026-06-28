@@ -1,0 +1,115 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(20, 16, 34, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.sheet {
+  box-sizing: border-box;
+  width: min(400px, 100%);
+  max-height: 80vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 22px;
+  box-shadow: 0 20px 50px -16px rgba(0, 0, 0, 0.4);
+}
+[data-theme="dark"] .sheet {
+  background: #181c28;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.eyebrow {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-color, var(--eg-subject-chemistry));
+}
+.title {
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--eg-text-bright);
+  margin-top: 2px;
+}
+
+.closeButton {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--eg-text-dim);
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+[data-theme="dark"] .closeButton {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.statusText {
+  font-size: 0.9rem;
+  color: var(--eg-text-dim);
+  text-align: center;
+  padding: 24px 8px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.row {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 24px 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 6%, white);
+  font-size: 0.86rem;
+}
+[data-theme="dark"] .row {
+  background: rgba(255, 255, 255, 0.06);
+}
+.rank {
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  color: var(--eg-text-dim);
+  text-align: center;
+}
+.name {
+  font-weight: 700;
+  color: var(--eg-text-bright);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.score {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  color: var(--accent-color, var(--eg-subject-chemistry));
+}
+.date {
+  font-size: 0.7rem;
+  color: var(--eg-text-faint);
+}

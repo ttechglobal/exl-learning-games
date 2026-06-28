@@ -216,6 +216,8 @@ export function PlayClient({ studentId, game, missions, initialMissionId }: Play
       >
         <EntryScreen
           gameSlug={game.slug}
+          gameId={game.id}
+          gameTitle={game.title}
           subject={game.subject}
           mission={activeMission}
           onStart={() => setScreen(supportsDifficultyChoice ? "difficulty" : "objectives")}

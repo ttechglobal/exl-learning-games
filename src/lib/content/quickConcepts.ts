@@ -16,32 +16,30 @@
  * Element Hunter's real content.
  *
  * This module is a second, PER-SLUG fallback that GameRuntime checks
- * before reaching for the single generic line — see GameRuntime.tsx's
- * resolveFallbackSnapshotCards(). Element Hunter gets its real 5-card
- * content this way, in code, without requiring any database step at
- * all. A future game can either get its own entry here (same pattern)
- * or, once someone has DB access, a real snapshot.cards row — either
- * path works since GameRuntime checks the real DB value FIRST and only
- * falls back to this module when that's missing.
+ * before reaching for the single generic line — see
+ * GameRuntime.tsx's resolveSnapshotCards(). A future game can either get
+ * its own entry here (same pattern) or, once someone has DB access, a
+ * real snapshot.cards row — either path works since GameRuntime checks
+ * the real DB value FIRST and only falls back to this module when
+ * that's missing.
  *
- * CONTENT GROUNDING for Element Hunter — written directly off what the
- * game actually teaches and how it phrases things in-game, not generic
- * chemistry filler:
- *   - engines/tile-match/elementData.ts: the dataset is atomic number,
- *     symbol, group/family, and valence electrons for the first 36
- *     elements (H through Kr).
- *   - engines/tile-match/tileMatch.logic.ts's generateClue(): the ONLY
- *     three clue types a round ever asks for are exactly those —
- *     "Atomic Number 6", a group name like "noble gas", or "4 valence
- *     electrons" — so the four content cards below are one per real
- *     clue type, not arbitrary chemistry facts. A player who reads all
- *     of them has seen a worked example of every clue type they're
- *     about to be asked to match.
- *   - The valence-electron card deliberately does NOT claim the simple
- *     "count the group number" shortcut applies to the transition
- *     metals (Sc through Zn) that are also in this game's dataset —
- *     that shortcut only holds for main-group elements, and overstating
- *     it would teach something that breaks on this game's own content.
+ * REWRITTEN per direct feedback: the original 5 cards were too wordy —
+ * multi-sentence bodies with parentheticals and caveats, more like a
+ * short essay than a "quick concept" meant to be read in a few seconds
+ * before gameplay starts. Every card here is now ONE short idea and ONE
+ * short example, nothing more. Nuance and exceptions (e.g. transition
+ * metals not following the simple valence-electron shortcut) are
+ * deliberately left OUT of these cards and handled instead by the
+ * in-game Hint button (see teachingHints.ts), which is the right place
+ * for that depth — a player who wants more than the quick version taps
+ * Hint during an actual round, rather than reading it all upfront.
+ *
+ * CONTENT GROUNDING — still tied to what the game actually teaches:
+ *   - engines/tile-match/elementData.ts: atomic number, symbol,
+ *     group/family, and valence electrons, for the first 36 elements.
+ *   - engines/tile-match/tileMatch.logic.ts's generateClue(): the only
+ *     three clue types are exactly those three ideas — one card per
+ *     real clue type, not arbitrary chemistry trivia.
  */
 
 export interface QuickConceptCard {
@@ -52,24 +50,24 @@ export interface QuickConceptCard {
 const QUICK_CONCEPTS_BY_SLUG: Record<string, QuickConceptCard[]> = {
   "element-hunter": [
     {
-      title: "Welcome, Element Hunter",
-      body: "Every round gives you one clue about an element — its atomic number, its family on the periodic table, or how many valence electrons it has. Find the tile that matches before time runs out."
+      title: "How to Play",
+      body: "Read the clue. Tap the element that matches. That's it!"
     },
     {
       title: "Atomic Number",
-      body: "The atomic number is just how many protons an element has — and protons never lie, so it's the most reliable clue you'll get. \"Atomic Number 6\" can only ever mean Carbon (C), no matter what else is on the grid."
+      body: "This is just the element's number on the periodic table. \"Atomic Number 6\" always means Carbon."
     },
     {
       title: "Element Families",
-      body: "Elements in the same family act alike. Noble gases (He, Ne, Ar...) barely react with anything. Alkali metals (Li, Na, K...) react fast and fiercely. Halogens (F, Cl, Br...) love to grab an extra electron. When a clue names a family, think \"what do these elements have in common?\" rather than chasing one exact element."
+      body: "Elements in the same family act alike. Noble gases barely react. Metals react fast."
     },
     {
       title: "Valence Electrons",
-      body: "Valence electrons are the outermost electrons — the ones involved in bonding. For most elements on the grid (the ones NOT in the middle block, like Na, Mg, Cl, Ar), just count their group straight across the periodic table: Sodium is in the 1st group, so it has 1. Chlorine is near the right edge, group 17, so it has 7. The transition metals in the middle (Fe, Cu, Zn, and friends) don't follow this neat pattern — those clues are rarer, so don't worry about memorizing them up front."
+      body: "These are an atom's outer electrons. Sodium has 1. Chlorine has 7."
     },
     {
-      title: "Helpful Tip",
-      body: "Stuck on a clue? Tap Hint any time — it explains the concept behind the clue without just handing you the answer. Use it to learn the pattern, then try to spot it yourself next round."
+      title: "Stuck? Use a Hint",
+      body: "Tap Hint to learn the pattern. It won't give away the answer."
     }
   ]
 };

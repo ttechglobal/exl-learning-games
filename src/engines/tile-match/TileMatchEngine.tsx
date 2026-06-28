@@ -8,6 +8,9 @@ import type { HunterElement } from "@/engines/tile-match/elementData";
 import { Mascot } from "@/motion/Mascot";
 import { playSound } from "@/motion/sound/playSound";
 import type { EngineRuntimeProps } from "@/engines/engine-types";
+import { GameplayShell, type GameplayStat } from "@/components/gameplay/GameplayShell";
+import { HintModal, type HintContent } from "@/components/gameplay/HintModal";
+import { GAME_ENVIRONMENT_IMAGES } from "@/lib/content/gameEnvironments";
 import styles from "@/engines/tile-match/TileMatchEngine.module.css";
 
 /**
@@ -22,8 +25,21 @@ import styles from "@/engines/tile-match/TileMatchEngine.module.css";
  * existing one-call-per-mission GameRuntime contract without requiring any
  * change to GameRuntime itself; GameRuntime has no idea Element Hunter's
  * "mission" took 60 seconds and contained 30 rounds internally.
+ *
+ * MIGRATED onto GameplayShell (gameplay-redesign brief, section 8: "Build
+ * One Universal Gameplay Template"). Everything that used to be rendered
+ * directly by this component — environment backdrop, HUD cards, the
+ * fixed-position menu button, the pause overlay, the mission banner —
+ * moved into GameplayShell, which now owns all of that as shared chrome.
+ * This component renders ONLY: its own `stats` array (declarative, not
+ * fixed markup), its `missionPrompt` (the clue), and `children` (the
+ * actual tile grid) — the part of the screen that's genuinely specific to
+ * this game. The hint, previously an inline dismissible card competing
+ * for screen space with the tile grid, is now a real HintModal overlay
+ * (section 7: "a well-designed modal... encourage students to actually
+ * read the hint").
  */
-export function TileMatchEngine({ config, onComplete }: EngineRuntimeProps<TileMatchConfig, TileMatchOutcome>) {
+export function TileMatchEngine({ config, onComplete, isPaused, menu }: EngineRuntimeProps<TileMatchConfig, TileMatchOutcome>) {
   const { shared } = config;
   const pool = useRef<HunterElement[]>(poolFromSymbols(shared.elementPool)).current;
 
@@ -35,17 +51,11 @@ export function TileMatchEngine({ config, onComplete }: EngineRuntimeProps<TileM
   const [roundsCorrect, setRoundsCorrect] = useState(0);
   const [tierIndex, setTierIndex] = useState(0);
   const [wrongAttemptsOnClue, setWrongAttemptsOnClue] = useState(0);
-  const [bannerShift, setBannerShift] = useState(false);
   const [mascotPose, setMascotPose] = useState<"idle" | "celebrate" | "encourage" | null>(null);
-  /**
-   * Replaces the old eliminatedSymbols mechanic (hint = remove one wrong
-   * tile from the board) — that was an answer-revealing hint, exactly
-   * the pattern flagged as wrong since the platform's original design
-   * philosophy doc. Now a hint shows TEACHING TEXT (see
-   * teachingHints.ts) explaining the rule behind the current clue, and
-   * never touches which tiles are visible or tappable.
-   */
-  const [activeHintText, setActiveHintText] = useState<string | null>(null);
+  /** Now holds structured HintContent for the modal, not a flat string —
+   *  see HintModal.tsx / teachingHints.ts for the shape and why it
+   *  changed. */
+  const [activeHint, setActiveHint] = useState<HintContent | null>(null);
 
   const [clue, setClue] = useState<Clue | null>(null);
   const [tiles, setTiles] = useState<HunterElement[]>([]);
@@ -64,9 +74,7 @@ export function TileMatchEngine({ config, onComplete }: EngineRuntimeProps<TileM
     setTiles(grid);
     setTileState({});
     setWrongAttemptsOnClue(0);
-    setActiveHintText(null);
-    setBannerShift(false);
-    requestAnimationFrame(() => setBannerShift(true));
+    setActiveHint(null);
   }, [currentTier, pool, shared.tileCount]);
 
   useEffect(() => {
@@ -76,6 +84,7 @@ export function TileMatchEngine({ config, onComplete }: EngineRuntimeProps<TileM
 
   useEffect(() => {
     if (endedRef.current) return;
+    if (isPaused) return;
     if (timeLeft <= 0) {
       endedRef.current = true;
       const timeSpentSec = shared.sessionDurationSec;
@@ -94,7 +103,7 @@ export function TileMatchEngine({ config, onComplete }: EngineRuntimeProps<TileM
     }
     const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearTimeout(timer);
-  }, [timeLeft, score, bestStreak, roundsAnswered, roundsCorrect, currentTier.tier, shared.sessionDurationSec, onComplete]);
+  }, [timeLeft, isPaused, score, bestStreak, roundsAnswered, roundsCorrect, currentTier.tier, shared.sessionDurationSec, onComplete]);
 
   useEffect(() => {
     const secondsAtTier = tierStartedAtRef.current - timeLeft;
@@ -113,7 +122,7 @@ export function TileMatchEngine({ config, onComplete }: EngineRuntimeProps<TileM
 
   const handleTileTap = useCallback(
     (el: HunterElement) => {
-      if (!clue || tileState[el.symbol]) return;
+      if (isPaused || !clue || tileState[el.symbol]) return;
 
       if (clue.isMatch(el)) {
         setTileState((s) => ({ ...s, [el.symbol]: "correct" }));
@@ -143,107 +152,111 @@ export function TileMatchEngine({ config, onComplete }: EngineRuntimeProps<TileM
         setTimeout(() => setMascotPose(null), 900);
       }
     },
-    [clue, tileState, streak, shared.scoring, startNewRound, applyTimePenalty]
+    [clue, tileState, streak, shared.scoring, startNewRound, applyTimePenalty, isPaused]
   );
 
   const handleHintTap = useCallback(() => {
     if (!clue) return;
-    setActiveHintText(resolveTeachingHint(clue));
+    setActiveHint(resolveTeachingHint(clue));
     applyTimePenalty(shared.scoring.hintTimePenaltySec);
     playSound("particleRemove");
   }, [clue, shared.scoring.hintTimePenaltySec, applyTimePenalty]);
 
-  const showHintButton = shared.hints.enabled && wrongAttemptsOnClue >= shared.hints.showAfterWrongAttempts;
+  /**
+   * Per the gameplay-redesign brief, section 6: "Instead of appearing only
+   * after an incorrect answer, provide a dedicated Hint button... Players
+   * may choose whether or not to use it." Previously gated behind
+   * wrongAttemptsOnClue >= shared.hints.showAfterWrongAttempts, which was
+   * exactly the old "appears after you get it wrong" pattern the brief
+   * asks to move away from. The button is now visible for the whole round
+   * whenever hints are enabled at all, full stop.
+   *
+   * wrongAttemptsOnClue itself is left in place (still incremented on a
+   * wrong tap, still reset on a new round) even though nothing reads it
+   * anymore — it's a one-line hook point for per-clue miss telemetry if
+   * that's wanted later, not dead code being smuggled in.
+   */
+  const showHintButton = shared.hints.enabled;
+
+  const stats: GameplayStat[] = [
+    { label: "Time", value: timeLeft, tone: "danger", urgent: timeLeft <= 10 },
+    { label: "Score", value: score, tone: "success", caption: streak > 1 ? `\u{1F525} x${streak} streak` : `Tier ${currentTier.tier}` }
+  ];
 
   return (
-    <div className={styles.screen}>
-      {/* Environment background layer — see docs/ELEMENT_HUNTER_ENVIRONMENT_BRIEF.md
-          for the full art spec. Falls back to a plain CSS gradient (no
-          real art file required) until /public/mascot/scene-element-hunter.png
-          exists — this <img> simply renders nothing visible if the file
-          is missing, so there's no broken-image icon while waiting on
-          the asset; the CSS gradient on .screen behind it covers that gap. */}
-      <img
-        src="/mascot/scene-element-hunter.png"
-        alt=""
-        role="presentation"
-        className={styles.environmentBackdrop}
-        onError={(e) => {
-          (e.currentTarget as HTMLImageElement).style.display = "none";
-        }}
-      />
-
-      <div className={styles.hud}>
-        <div className={styles.hudCard}>
-          <div className={styles.statLabel}>Time</div>
-          <div className={`${styles.statValue} ${styles.timer} ${timeLeft <= 10 ? styles.urgent : ""}`}>{timeLeft}</div>
+    <GameplayShell
+      environmentImages={GAME_ENVIRONMENT_IMAGES["element-hunter"]}
+      fallbackGradient="radial-gradient(ellipse 90% 70% at 50% 0%, #2A3A5C 0%, #1B2438 55%, #11162A 100%)"
+      accentColor="var(--eg-subject-chemistry)"
+      stats={stats}
+      missionPrompt={clue ? { label: clue.label, text: clue.text } : undefined}
+      menu={menu}
+      isPaused={isPaused}
+    >
+      {/* Wrapped in one column container — GameplayShell's .gameplayFrame
+          is a row flex container by default (it centers a SINGLE child;
+          most engines only ever render one). Now that the hint lives
+          outside .tileGridPanel as a sibling, both need to be grouped
+          together so they stack vertically instead of GameplayShell
+          placing them side by side as two separate flex items. */}
+      <div className={styles.engineColumn}>
+        {/* Backing panel enforces "stay quiet behind the tiles" in code,
+            not just by trusting the background image to leave this area
+            empty — a solid-ish panel always sits between the environment
+            art and the tile grid regardless of what the art actually
+            contains. */}
+        <div className={styles.tileGridPanel}>
+          <div className={styles.tileGrid}>
+            {tiles.map((el, i) => (
+              <div
+                key={el.symbol}
+                className={[
+                  styles.elementTile,
+                  tileState[el.symbol] === "correct" ? styles.correct : "",
+                  tileState[el.symbol] === "wrong" ? styles.wrong : ""
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                style={{ "--el-color": el.hex, animationDelay: `${i * 0.03}s` } as React.CSSProperties}
+                onPointerDown={() => handleTileTap(el)}
+              >
+                <div className={styles.tileSymbol}>{el.symbol}</div>
+                <div className={styles.tileNumber}>#{el.number}</div>
+                <div className={styles.tileName}>{el.name}</div>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className={styles.hudCard}>
-          <div className={styles.statLabel}>Score</div>
-          <div className={`${styles.statValue} ${styles.score}`}>{score}</div>
-          <div className={styles.streakRow}>{streak > 1 ? `\u{1F525} x${streak} streak` : ""}</div>
-          <div className={styles.tierBadge}>Tier {currentTier.tier}</div>
+
+        {/* Hint deliberately lives OUTSIDE .tileGridPanel now, in its own
+            zone below it — per direct feedback on both its styling and
+            its position. Previously it was squeezed inside the same
+            panel as the tile grid, directly beneath the tiles, sharing
+            that card's visual space; now it's a clearly separate element
+            so it never competes with the grid for room or attention,
+            with styling that reads as an inviting "get help" affordance
+            (warm, rounded, mascot-led) rather than the flatter, slightly
+            warning-toned treatment it had before. */}
+        <div className={styles.hintButtonWrap}>
+          {showHintButton && (
+            <button className={styles.hintButton} onClick={handleHintTap}>
+              <Mascot pose="encourage" widthPx={26} />
+              <span className={styles.hintButtonText}>
+                <span>Use a Hint</span>
+                <span className={styles.hintButtonCost}>Costs {shared.scoring.hintTimePenaltySec}s off the clock</span>
+              </span>
+            </button>
+          )}
         </div>
       </div>
 
-      <div className={`${styles.missionBanner} ${bannerShift ? styles.shifting : ""}`}>
-        <div className={styles.missionLabel}>{clue?.label}</div>
-        <div className={styles.missionText}>{clue?.text}</div>
-      </div>
-
-      {/* Backing panel enforces "stay quiet behind the tiles" in code,
-          not just by trusting the background image to leave this area
-          empty — a solid-ish panel always sits between the environment
-          art and the tile grid regardless of what the art actually
-          contains. */}
-      <div className={styles.tileGridPanel}>
-        <div className={styles.tileGrid}>
-          {tiles.map((el, i) => (
-            <div
-              key={el.symbol}
-              className={[
-                styles.elementTile,
-                tileState[el.symbol] === "correct" ? styles.correct : "",
-                tileState[el.symbol] === "wrong" ? styles.wrong : ""
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              style={{ "--el-color": el.hex, animationDelay: `${i * 0.03}s` } as React.CSSProperties}
-              onPointerDown={() => handleTileTap(el)}
-            >
-              <div className={styles.tileSymbol}>{el.symbol}</div>
-              <div className={styles.tileNumber}>#{el.number}</div>
-              <div className={styles.tileName}>{el.name}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Teaching hint card — replaces the old tile-elimination mechanic.
-          Shows the RULE behind the current clue, never which tile is
-          correct. Dismissible by tapping it again or starting the next
-          round (cleared automatically by startNewRound). */}
-      {activeHintText && (
-        <div className={styles.hintCard} onClick={() => setActiveHintText(null)}>
-          <span className={styles.hintCardIcon}>💡</span>
-          <span className={styles.hintCardText}>{activeHintText}</span>
-        </div>
-      )}
-
-      <div className={styles.hintButtonWrap}>
-        {showHintButton && (
-          <button className={styles.hintButton} onClick={handleHintTap}>
-            <Mascot pose="encourage" widthPx={22} />
-            Hint (-{shared.scoring.hintTimePenaltySec}s)
-          </button>
-        )}
-      </div>
+      {activeHint && <HintModal content={activeHint} accentColor="var(--eg-subject-chemistry)" onClose={() => setActiveHint(null)} />}
 
       {mascotPose && (
-        <div style={{ position: "fixed", bottom: 18, right: 14, zIndex: 7, width: 76 }}>
+        <div className={styles.mascotPopup}>
           <Mascot pose={mascotPose} widthPx={76} />
         </div>
       )}
-    </div>
+    </GameplayShell>
   );
 }

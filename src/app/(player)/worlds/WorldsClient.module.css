@@ -19,6 +19,16 @@
   transition: background 0.25s ease, color 0.25s ease;
 }
 
+/* Game cards are <Link>s wrapping title/description text — without this,
+ * the browser's default anchor underline shows on that text (the actual
+ * bug being fixed here: cards looked like ordinary underlined links
+ * instead of clickable cards). Same pattern HomePage.module.css already
+ * uses for its own card links. */
+.page :global(a) {
+  text-decoration: none;
+  color: inherit;
+}
+
 .container {
   max-width: 1100px;
   margin: 0 auto;
@@ -182,14 +192,41 @@
   margin-bottom: 10px;
 }
 
-@media (max-width: 560px) {
+@media (max-width: 680px) {
+  .container {
+    padding: 0 16px;
+  }
+  .titleRow {
+    padding: 24px 0 28px;
+  }
   .gameGrid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
   }
   .subjectCount {
     margin-left: 0;
   }
   .subjectHead {
     flex-wrap: wrap;
+  }
+  .gameCardArt {
+    height: 100px;
+  }
+  .gameCardBody {
+    padding: 12px 14px 14px;
+  }
+}
+
+/* Genuinely narrow phones (most budget Android devices in the
+ * ~360-400px range this platform targets) — two columns at that width
+ * squeezes each card too thin for the title/description to read
+ * comfortably, so this tier drops to one column instead of forcing the
+ * same 2-up grid down to an uncomfortable size. */
+@media (max-width: 420px) {
+  .gameGrid {
+    grid-template-columns: 1fr;
+  }
+  .gameCardArt {
+    height: 130px;
   }
 }

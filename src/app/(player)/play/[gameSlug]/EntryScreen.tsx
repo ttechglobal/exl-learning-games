@@ -26,7 +26,11 @@ function fallbackLearningGoal(topicId: string, subtopicId: string | null): strin
 }
 
 export interface EntryScreenProps {
-  gameTitle: string;
+  /** Still needed for resolveMissionBriefing(gameSlug) — this is a lookup
+   *  key, not something displayed here. Game title/subject are no longer
+   *  props of this component at all; they're shown once, above this
+   *  screen, by MissionTopBar (rendered by PrePlayShell, see
+   *  PlayClient.tsx). */
   gameSlug: string;
   subject: string;
   mission: MissionRow;
@@ -34,18 +38,32 @@ export interface EntryScreenProps {
 }
 
 /**
- * Mission Briefing screen. Per direct instruction: Reward/Difficulty/Time
- * are REMOVED from this screen entirely (an earlier revision simplified
- * them into one quiet line — that wasn't enough; they don't belong here
- * at all). The screen now shows only: game/subject kicker, mascot,
- * narrative briefing, mission title (+ element glyph when relevant),
- * Learning Goal, and the Start Mission button. Nothing else competes for
- * attention.
+ * Mission Briefing screen content — rendered INSIDE PrePlayShell's
+ * .content slot (see PlayClient.tsx). No longer owns its own page-level
+ * wrapper, backdrop, or min-height:100vh; PrePlayShell handles all of
+ * that for the whole pre-play flow now, not just this one screen. This
+ * component is just: mascot, narrative briefing, element glyph (when
+ * relevant), Learning Goal, and the Start Mission button.
+ *
+ * Per direct instruction: Reward/Difficulty/Time are REMOVED from this
+ * screen entirely (an earlier revision simplified them into one quiet
+ * line — that wasn't enough; they don't belong here at all).
+ *
+ * GAME TITLE / SUBJECT KICKER REMOVED per direct feedback: that
+ * information now lives ONCE, in MissionTopBar. MISSION TITLE ALSO
+ * REMOVED from the card per a second, more specific round of feedback:
+ * with the page title already visible at the top of the screen, showing
+ * it again in the card (even as `mission.title` rather than `gameTitle`)
+ * read as the same information twice for single-mission games like
+ * Element Hunter, where the mission title and the game's identity are
+ * effectively the same thing. The element glyph (atomic number + symbol)
+ * stays — it's a content preview, not a title, and earns its place on
+ * the briefing.
  *
  * Still does the periodic-table-glyph preview for particle-assembly-style
  * missions (target.proton in payload) — unaffected by this revision.
  */
-export function EntryScreen({ gameTitle, gameSlug, subject, mission, onStart }: EntryScreenProps) {
+export function EntryScreen({ gameSlug, subject, mission, onStart }: EntryScreenProps) {
   const target = (mission.payload as { target?: Record<string, number> }).target;
   const protonCount = target?.proton;
   const element = typeof protonCount === "number" ? getElementByAtomicNumber(protonCount) : undefined;
@@ -56,12 +74,6 @@ export function EntryScreen({ gameTitle, gameSlug, subject, mission, onStart }: 
 
   return (
     <div className={styles.wrap} style={{ "--accent-color": accentColor } as React.CSSProperties}>
-      <img src="/mascot/scene-backdrop.svg" alt="" role="presentation" className={styles.backdrop} />
-
-      <div className={styles.kicker}>
-        {gameTitle} · {subject}
-      </div>
-
       <div className={styles.mascotRow}>
         <Mascot pose="idle" widthPx={130} />
       </div>
@@ -71,15 +83,14 @@ export function EntryScreen({ gameTitle, gameSlug, subject, mission, onStart }: 
 
         <p className={styles.briefingText}>{briefing}</p>
 
-        <div className={styles.missionTitleRow}>
-          <div className={styles.missionTitle}>{mission.title}</div>
-          {element && (
+        {element && (
+          <div className={styles.elementGlyphRow}>
             <div className={styles.elementGlyph}>
               <span className={styles.elementGlyphNumber}>{element.atomicNumber}</span>
               <span className={styles.elementGlyphSymbol}>{element.symbol}</span>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className={styles.goalRow}>
           <div className={styles.goalLabel}>Learning Goal</div>

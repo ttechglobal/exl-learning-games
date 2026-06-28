@@ -118,6 +118,36 @@
   margin: 14px auto 0;
   max-width: 460px;
 }
+.heroCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 26px;
+  padding: 14px 30px;
+  border-radius: 16px;
+  background: var(--eg-brand);
+  /* !important is deliberate and necessary here: .page :global(a) above
+   * sets color: inherit on every anchor in this page, and as a
+   * descendant selector (.page + bare `a`) its specificity actually beats
+   * a single class like .heroCta. In light mode that meant this button's
+   * text inherited --eg-surface-text (near-black) instead of using this
+   * rule's white — on the dark brand-navy background that made the text
+   * read as invisible. Dark mode happened to still look fine because its
+   * inherited text color is pale, masking the bug — this is the actual
+   * fix, not a coincidence of theme. */
+  color: #fff !important;
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow: 0 8px 0 color-mix(in srgb, var(--eg-brand) 70%, black), 0 14px 28px -10px rgba(0, 0, 0, 0.3);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.heroCta:hover {
+  transform: translateY(-2px);
+}
+.heroCta:active {
+  transform: translateY(3px);
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--eg-brand) 70%, black);
+}
 .playHeroMotifs {
   position: relative;
   height: 0;
@@ -131,7 +161,7 @@
   50% { transform: translateY(-9px); }
 }
 
-/* ============ SUBJECT RAIL ============ */
+/* ============ SUBJECT CARDS ============ */
 .railHead {
   display: flex;
   align-items: center;
@@ -142,53 +172,76 @@
   font-size: 14px;
   color: var(--eg-surface-text);
 }
-.subjectRail {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  padding-bottom: 6px;
+
+/*
+ * Replaces the old horizontal-scroll .subjectRail/.chip pills — per
+ * direct instruction, subject cards needed to be genuinely bigger, not
+ * just restyled pills. Real grid (wraps naturally on mobile down to a
+ * single column), each card a proper tappable tile with its own icon
+ * badge, name, and count — not a small inline pill competing for
+ * horizontal scroll space.
+ */
+.subjectGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
 }
-.chip {
-  flex: 0 0 auto;
+.subjectCard {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 9px;
+  text-align: center;
+  gap: 10px;
   background: var(--eg-surface-card);
   border: 1px solid var(--eg-surface-border);
-  border-radius: 30px;
-  padding: 10px 16px 10px 10px;
+  border-radius: 22px;
+  padding: 28px 16px;
   transition: transform 0.15s, box-shadow 0.15s;
 }
-.chip:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--eg-surface-shadow-soft);
+.subjectCard:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--eg-surface-shadow-card);
   border-color: transparent;
 }
-.chipIco {
-  width: 30px;
-  height: 30px;
+.subjectCardIco {
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   background: var(--c-tint);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
+  font-size: 28px;
 }
-.chipName {
+.subjectCardName {
   font-weight: 700;
-  font-size: 13.5px;
+  font-size: 17px;
   color: var(--eg-surface-text);
 }
-.chipCount {
-  font-size: 11px;
+.subjectCardCount {
+  font-size: 12.5px;
   font-weight: 700;
   color: var(--c);
   background: var(--c-tint);
-  padding: 3px 8px;
-  border-radius: 7px;
+  padding: 4px 12px;
+  border-radius: 8px;
 }
-.chipLocked {
+.subjectCardLocked {
   opacity: 0.55;
+}
+
+@media (max-width: 480px) {
+  .subjectGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .subjectCard {
+    padding: 22px 12px;
+  }
+  .subjectCardIco {
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+  }
 }
 
 /* ============ GAME ZONE (section mood) ============ */
@@ -539,7 +592,13 @@
   position: relative;
   z-index: 1;
   background: #fff;
-  color: var(--eg-brand);
+  /* Same fix as .heroCta above, same root cause: .page :global(a)'s
+   * color: inherit otherwise beats this rule by specificity. Not yet
+   * reported as broken, but in dark mode --eg-surface-text (pale) would
+   * read near-invisible on this button's white background the same way
+   * --eg-surface-text (dark) did on .heroCta's dark background in light
+   * mode — fixing proactively rather than waiting for the report. */
+  color: var(--eg-brand) !important;
   border: none;
   cursor: pointer;
   font-family: var(--eg-font-display);

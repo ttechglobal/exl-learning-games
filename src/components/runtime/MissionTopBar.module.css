@@ -1,0 +1,68 @@
+/**
+ * MissionTopBar.module.css
+ *
+ * UPDATED: this now renders inside PrePlayShell's .headerRow as a flex
+ * sibling of BackButton, not as an independent element that had to
+ * reserve its own padding to avoid a separately fixed-position button
+ * sitting on top of it. flex:1 here lets it claim whatever width is left
+ * after BackButton's fixed-size circle, and centers its own text within
+ * that — PrePlayShell's .headerRow owns the actual spacing between the
+ * two via its gap, not this component guessing at a padding value.
+ *
+ * LEGIBILITY FIX per direct feedback: game title/subject weren't visible
+ * because of the background. Root cause — text color only, no backing
+ * of any kind, sitting directly on the environment photo (same root
+ * cause DifficultySelectScreen's heading had, fixed the same way: see
+ * that file's .heading). Now sits on a small solid-ish pill with a
+ * shadow, plus a text-shadow on the text itself as a second line of
+ * defense — legibility no longer depends on what's behind it.
+ */
+
+.bar {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 6px 16px;
+  margin: 0 auto;
+  /* Negative margin pulls the title back toward true center despite
+   * BackButton's circle occupying space on the left only — without
+   * this, flex:1 centers the title within ITS OWN box (which starts
+   * after the button), visually shifting it right of center. Roughly
+   * half the button's width + gap. */
+  margin-right: 42px;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 14px;
+  box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.3);
+  width: fit-content;
+  max-width: 100%;
+}
+[data-theme="dark"] .bar {
+  background: rgba(20, 22, 34, 0.82);
+}
+
+.title {
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--eg-text-bright);
+  line-height: 1.2;
+}
+
+.subject {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-color, var(--eg-subject-chemistry));
+  margin-top: 2px;
+}
+
+@media (min-width: 600px) {
+  .title {
+    font-size: 1.2rem;
+  }
+}

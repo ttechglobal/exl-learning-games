@@ -1,0 +1,77 @@
+/**
+ * PrePlayShell.module.css
+ *
+ * Owns the backdrop (via EnvironmentBackdrop, see PrePlayShell.tsx) for
+ * the WHOLE pre-gameplay flow now — one continuous background behind the
+ * header row AND whatever screen content renders below it, which is the
+ * actual fix for "the top bar is a different color": there's no longer
+ * a header rendered outside this container with its own separate
+ * background.
+ *
+ * MOBILE: min-height: 100vh and a column flex layout that lets .content
+ * grow to fill remaining height (flex: 1 on .content, justify-content:
+ * center inside it) — per direct feedback, the old per-screen layouts
+ * clustered content near the top with unused space below on a phone
+ * tall enough that the card/list didn't need the full height. This
+ * stretches to use that space vertically rather than leaving it empty,
+ * while staying single-column / width-constrained the way a phone layout
+ * should.
+ *
+ * DESKTOP (>=1024px): width is what's free to grow on a wide screen, not
+ * height — .inner gets a max-width matching GameplayShell's own
+ * gameplay-frame cap (920px) so the pre-play flow and live gameplay
+ * agree on one "how wide is too wide" answer instead of each screen
+ * picking its own number.
+ */
+
+.shell {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.inner {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.headerRow {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0 4px;
+}
+
+/* flex: 1 + center lets content use the full remaining vertical space on
+ * a tall phone screen instead of clustering near the top — the actual
+ * mechanism behind "stretch height on mobile, don't leave space below
+ * unused." Each individual screen (EntryScreen, DifficultySelectScreen,
+ * MissionObjectivesScreen) still controls its own internal layout; this
+ * just gives that content room to vertically center within rather than
+ * being pinned to the top of a tall, otherwise-empty column. */
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 8px 0 24px;
+}
+
+@media (min-width: 600px) {
+  .inner {
+    padding: 0 24px;
+  }
+}

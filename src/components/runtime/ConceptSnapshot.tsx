@@ -4,6 +4,8 @@ import { useState } from "react";
 import { primeAudioOnUserGesture } from "@/motion/sound/playSound";
 import { Mascot } from "@/motion/Mascot";
 import { hasSeenConcepts, markConceptsSeen } from "@/lib/content/contentPrefs";
+import { EnvironmentBackdrop } from "@/components/runtime/EnvironmentBackdrop";
+import { resolveGameEnvironmentImages } from "@/lib/content/gameEnvironments";
 import styles from "@/components/runtime/ConceptSnapshot.module.css";
 
 export interface ConceptCard {
@@ -15,6 +17,12 @@ export interface ConceptSnapshotProps {
   cards: ConceptCard[];
   onContinue: () => void;
   accentColor?: string;
+  /** Used to resolve this game's environment art (see
+   *  lib/content/gameEnvironments.ts) so Quick Concepts uses the same
+   *  full-bleed backdrop as the rest of the pre-play flow and live
+   *  gameplay, per direct feedback — previously this screen had no
+   *  backdrop of its own at all. */
+  gameSlug?: string;
   /**
    * Engine type, used only to remember "this player has seen these
    * concepts before" so a returning player can skip straight through
@@ -39,12 +47,24 @@ export interface ConceptSnapshotProps {
  * concepts before. No countdown timer anymore — see the GameRow.snapshot
  * type comment for why a single shared readTimeSec didn't fit a
  * card-by-card, skippable experience.
+ *
+ * BACKDROP added per direct feedback: this screen previously had no
+ * environment art at all, while every other pre-play screen did — a
+ * visible gap in an otherwise continuous "you're in the game's world"
+ * feel. Now uses the same EnvironmentBackdrop + scrim treatment
+ * PrePlayShell uses. gameSlug stays optional on this component's props
+ * (not every possible caller is guaranteed to have it), but GameRuntime's
+ * one shared call site — used for both the initial "snapshot" phase and
+ * the post-mission "reviewingConcepts" revisit triggered from
+ * ReflectionScreen's "View Concept Summary" — passes it either way, so
+ * the backdrop shows in both cases in practice.
  */
-export function ConceptSnapshot({ cards, onContinue, accentColor = "var(--eg-subject-chemistry)", engineType }: ConceptSnapshotProps) {
+export function ConceptSnapshot({ cards, onContinue, accentColor = "var(--eg-subject-chemistry)", gameSlug, engineType }: ConceptSnapshotProps) {
   const [index, setIndex] = useState(0);
   const card = cards[index];
   const isLast = index === cards.length - 1;
   const canSkip = Boolean(engineType) && hasSeenConcepts(engineType!);
+  const images = gameSlug ? resolveGameEnvironmentImages(gameSlug) : undefined;
 
   function handleContinue() {
     primeAudioOnUserGesture();
@@ -62,6 +82,8 @@ export function ConceptSnapshot({ cards, onContinue, accentColor = "var(--eg-sub
 
   return (
     <div className={styles.wrap} style={{ "--accent-color": accentColor } as React.CSSProperties}>
+      <EnvironmentBackdrop images={images} scrim />
+
       <div className={styles.mascotRow}>
         <Mascot pose="idle" widthPx={96} />
       </div>

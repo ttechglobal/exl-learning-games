@@ -7,6 +7,12 @@
  * platform. A hint should teach the underlying rule, not remove an
  * option for the player.
  *
+ * RESTRUCTURED from a single flat string to HintContent
+ * (concept/explanation/tip/illustration) to match the new HintModal's
+ * real visual hierarchy (per the gameplay-redesign brief, section 7:
+ * "Short explanation... Key concept... Practical tip" as distinct
+ * parts, not one undifferentiated sentence in an inline card).
+ *
  * Keyed by ClueType (atomic_number / group / valence) since that's what
  * actually varies what the player needs to understand — not by element,
  * since the RULE behind "find Atomic Number 11" is the same rule behind
@@ -18,19 +24,34 @@
 import type { ClueType } from "@/engines/tile-match/tileMatch.config";
 import type { ElementGroup } from "@/engines/tile-match/elementData";
 import type { Clue } from "@/engines/tile-match/tileMatch.logic";
+import type { HintContent } from "@/components/gameplay/HintModal";
 
-const HINT_BY_CLUE_TYPE: Record<ClueType, string> = {
-  atomic_number: "Atomic number = the number of protons. Count along the periodic table starting from Hydrogen (1) — don't count by tile position, count by the real element order.",
-  group: "Elements in the same group share a column on the periodic table and behave similarly — check each tile's real chemical family, not just how it looks.",
-  valence: "Valence electrons sit in the outermost shell. For main-group elements, the group number is a strong clue to how many there are."
+const HINT_BY_CLUE_TYPE: Record<ClueType, HintContent> = {
+  atomic_number: {
+    concept: "Atomic Number",
+    explanation: "The atomic number is the number of protons an element has — it's what actually defines which element it is.",
+    tip: "Count along the periodic table starting from Hydrogen (1). Count by real element order, not by where a tile happens to sit on screen.",
+    illustration: "⚛️"
+  },
+  group: {
+    concept: "Element Groups",
+    explanation: "Elements in the same group share a column on the periodic table and behave similarly because they have the same number of valence electrons.",
+    tip: "Check each tile's real chemical family, not just how it looks or what color it is.",
+    illustration: "🧪"
+  },
+  valence: {
+    concept: "Valence Electrons",
+    explanation: "Valence electrons sit in the outermost shell of an atom, and they're what decide how an element bonds with others.",
+    tip: "For main-group elements, the group number is a strong clue to how many valence electrons there are.",
+    illustration: "⚡"
+  }
 };
 
-/** Group-specific teaching detail, used as a SECOND line alongside the
- *  generic valence/group explanation above when the clue's actual group
- *  is known — gives one more concrete, real fact without naming which
- *  tile is correct. Only group-type clues have a real groupName to key
- *  off; atomic_number and valence clues don't carry one. */
-const GROUP_FACTS: Record<ElementGroup, string> = {
+/** Group-specific teaching detail — replaces the generic tip with a real,
+ *  concrete fact about the clue's actual group when one is known. Only
+ *  group-type clues have a real groupName to key off; atomic_number and
+ *  valence clues keep their generic tip from HINT_BY_CLUE_TYPE above. */
+const GROUP_TIPS: Record<ElementGroup, string> = {
   "alkali metal": "Alkali metals sit in Group 1 — exactly one valence electron, and very reactive.",
   "alkaline earth metal": "Alkaline earth metals sit in Group 2 — two valence electrons.",
   "transition metal": "Transition metals sit in the central block — their valence electron count varies more than main-group elements.",
@@ -42,19 +63,19 @@ const GROUP_FACTS: Record<ElementGroup, string> = {
 };
 
 /**
- * Resolves the teaching text for the CURRENT clue. For a group-type
- * clue, appends the real fact about that specific group (e.g. "Alkali
- * metals sit in Group 1...") on top of the generic group-clue
- * explanation — for atomic_number/valence clues, just the generic line,
- * since there's no group name to attach a second fact to.
+ * Resolves the full HintContent for the CURRENT clue. For a group-type
+ * clue, the tip becomes the real, specific fact about that group (e.g.
+ * "Alkali metals sit in Group 1...") instead of the generic
+ * "check each tile's real chemical family" line — for atomic_number and
+ * valence clues, the generic tip is already concrete enough on its own.
  */
-export function resolveTeachingHint(clue: Clue): string {
+export function resolveTeachingHint(clue: Clue): HintContent {
   const base = HINT_BY_CLUE_TYPE[clue.type];
   if (clue.type === "group") {
     // clue.text IS the group name for group-type clues (see generateClue
-    // in tileMatch.logic.ts) — safe to use directly as the GROUP_FACTS key.
-    const groupFact = GROUP_FACTS[clue.text as ElementGroup];
-    if (groupFact) return `${base} ${groupFact}`;
+    // in tileMatch.logic.ts) — safe to use directly as the GROUP_TIPS key.
+    const groupTip = GROUP_TIPS[clue.text as ElementGroup];
+    if (groupTip) return { ...base, tip: groupTip };
   }
   return base;
 }

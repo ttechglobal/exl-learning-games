@@ -1,22 +1,59 @@
+/**
+ * ConceptSnapshot.module.css
+ *
+ * MOBILE LAYOUT FIX per direct feedback:
+ *   - .wrap previously had no min-height and flat 24px padding on all
+ *     sides — on a tall phone screen this meant the card sat near the
+ *     top with unused space below it ("there's space up and down, we
+ *     can stretch this") rather than using the available height.
+ *   - .card had NO side margin at all on phones — it's width: min(440px,
+ *     90vw), but .wrap's flat 24px padding combined with that left it
+ *     reading as edge-to-edge on narrow viewports ("no padding by the
+ *     left and right"). Now .wrap centers vertically (justify-content:
+ *     center on a min-height: 100vh column) so the card uses the
+ *     available vertical space rather than clustering at the top, and
+ *     .card gets explicit side margin distinct from .wrap's own padding.
+ */
+
 .wrap {
+  position: relative;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 24px;
+  justify-content: center;
+  padding: 24px 20px;
+  overflow: hidden;
 }
 
 .mascotRow {
+  position: relative;
+  z-index: 1;
   margin-bottom: -14px;
 }
 
 .card {
-  width: min(440px, 90vw);
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  /* calc() instead of width:100% + margin — width:100% means 100% of the
+   * parent; adding margin on top of that overflows the parent by the
+   * margin amount. Same latent bug confirmed and fixed on the other
+   * pre-play screens' cards (EntryScreen, MissionObjectivesScreen,
+   * DifficultySelectScreen) — fixing here too even though this card
+   * wasn't the one reported as visibly clipped. */
+  width: calc(100% - 24px);
+  max-width: 440px;
+  margin: 0 12px;
   text-align: center;
   background: #ffffff;
   border: 3px solid var(--accent-color, var(--eg-subject-chemistry));
   border-radius: 22px;
   padding: 26px;
   box-shadow: 0 10px 0 rgba(0, 0, 0, 0.05), 0 14px 30px rgba(43, 28, 74, 0.1);
+}
+[data-theme="dark"] .card {
+  background: #181c28;
 }
 
 .cardTopRow {
@@ -114,4 +151,11 @@
 .continueButton:active {
   transform: translateY(3px);
   box-shadow: 0 2px 0 color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 70%, black);
+}
+
+@media (max-width: 420px) {
+  .card {
+    padding: 22px 18px;
+    margin: 0 8px;
+  }
 }

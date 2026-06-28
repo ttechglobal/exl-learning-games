@@ -1,0 +1,286 @@
+/**
+ * GameplayShell.module.css
+ *
+ * Mobile-first. Three real breakpoints:
+ *   - base (phones, ~360-599px): menu button stays top-left, stat pills
+ *     move to the top-right of the same row (per direct feedback — not
+ *     grouped beside the menu), mission banner full-width below,
+ *     gameplay frame gets the rest
+ *   - >=600px (tablets): menu and stats stay grouped together on the
+ *     left of the same row — more horizontal room there, no real need to
+ *     separate them — and stat cards grow back to full size
+ *   - >=1024px (laptops/desktop): gameplay frame gets a max-width and more
+ *     breathing room instead of stretching edge-to-edge, per the brief's
+ *     "comfortable reading distance" requirement
+ *
+ * STRUCTURE: menu button and stats share ONE row (.menuSlot) at every
+ * breakpoint — see GameplayShell.tsx. Fixing the actual "menu overlapping
+ * the timer" bug took two changes together: (1) putting both in the same
+ * flex row here, AND (2) GameMenu.module.css's .menuButton no longer
+ * being position:fixed — a fixed element doesn't participate in ANY flex
+ * layout, so wrapping it in a row alone wouldn't have done anything; it
+ * would still have floated at its own fixed coordinate regardless of
+ * what this file says. Both pieces were necessary; neither alone would
+ * have fixed it. Once that was fixed, where exactly menu vs stats sit
+ * within the row became a free layout choice (left-grouped, then
+ * mobile-split-to-opposite-ends per the latest feedback) rather than
+ * still being constrained by the original bug.
+ *
+ * MOBILE STAT COMPACTING: per direct feedback, Time/Score were too large
+ * relative to the actual game elements on a phone screen — the HUD was
+ * winning the fight for attention against the tile grid it's supposed to
+ * be supporting. Below 600px, .statCard shrinks to a small pill instead
+ * of a large centered card in its own block, and .gameplayFrame gets the
+ * vertical space that frees up. The mission banner (the actual
+ * instruction text — what the player needs to read to play the round)
+ * keeps a full size of its own; it's the HUD numbers that shrink, not
+ * the content that teaches.
+ */
+
+.shell {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--eg-font-body);
+  color: var(--eg-text-bright);
+  overflow: hidden;
+  background: var(--fallback-gradient);
+  padding: 14px 14px 28px;
+}
+
+.pausedOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: rgba(10, 12, 20, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pausedLabel {
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 14px 28px;
+  border-radius: 20px;
+}
+
+/* Menu button + stats share this one row, grouped together on the LEFT,
+ * at every breakpoint — mobile and desktop now match (an earlier
+ * revision split them to opposite ends specifically on mobile per a
+ * different round of feedback; that's been reverted per the latest
+ * direction that desktop should match mobile's side-by-side grouping
+ * rather than mobile having its own separate arrangement). See the file
+ * header for why sharing one row at all (menu and stats never
+ * absolutely-positioned independently) is the structural fix behind the
+ * original menu/timer collision bug, and GameMenu.module.css's comment
+ * for why the button itself also had to stop being position:fixed for
+ * that fix to actually work. */
+.menuSlot {
+  position: relative;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  min-height: 42px;
+  margin-bottom: 10px;
+}
+
+.topZone {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.statsRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Mobile-first sizing: small pill by default. Grows back to a full-size
+ * card at the >=600px breakpoint below. */
+.statCard {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.93);
+  border: 2px solid var(--accent-color, var(--eg-subject-chemistry));
+  border-radius: 12px;
+  padding: 5px 10px;
+  text-align: center;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.05), 0 6px 12px rgba(58, 42, 85, 0.1);
+}
+[data-theme="dark"] .statCard {
+  background: rgba(24, 28, 40, 0.93);
+}
+
+.statLabel {
+  font-family: var(--eg-font-display);
+  font-size: 0.56rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--eg-text-dim);
+}
+.statValue {
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--eg-text-bright);
+}
+.statDanger { color: var(--eg-danger); }
+.statSuccess { color: #4caf6e; }
+.statGold { color: var(--eg-gold); }
+.statValue.urgent {
+  animation: statPulse 0.5s ease-in-out infinite;
+}
+@keyframes statPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.18); }
+}
+/* Hidden at the compact mobile size — a streak/tier caption under an
+ * already-small pill has no room to read; it reappears once stat cards
+ * grow back to full size at >=600px. */
+.statCaption {
+  display: none;
+}
+
+.missionBanner {
+  width: 100%;
+  background: #fff;
+  border: 3px solid var(--eg-gold);
+  border-radius: 18px;
+  padding: 10px 18px;
+  text-align: center;
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.06), 0 10px 20px rgba(58, 42, 85, 0.15);
+  max-width: min(520px, 92vw);
+}
+[data-theme="dark"] .missionBanner {
+  background: #181c28;
+}
+.missionLabel {
+  font-family: var(--eg-font-display);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--eg-text-dim);
+  margin-bottom: 3px;
+}
+.missionText {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 1.02rem;
+}
+
+/*
+ * Gameplay frame — where each engine's `children` renders.
+ *
+ * REVISED per a real mobile screenshot: flex:1 + center was vertically
+ * centering a small content-sized panel inside a tall flex column,
+ * which on a phone with a short HUD/banner left a LOT of empty backdrop
+ * above and below the panel — visually reading as "a small card
+ * floating in empty space" rather than a designed screen. Centering
+ * math wasn't wrong, the result just didn't look intentional.
+ *
+ * Now anchors content near the top (flex-start) with a fixed gap below
+ * the mission banner, instead of mathematically centering in whatever
+ * vertical space happens to be free. The actual gameplay panel
+ * (TileMatchEngine's .tileGridPanel) also now has its own min-height
+ * and grows to use more of the available space itself — see that file —
+ * so there's less leftover backdrop for either approach to manage.
+ */
+.gameplayFrame {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  padding-top: 8px;
+}
+
+@media (min-width: 600px) {
+  .statCard {
+    flex: 0 1 140px;
+    flex-direction: column;
+    gap: 0;
+    border-width: 2.5px;
+    border-radius: 16px;
+    padding: 10px 16px;
+  }
+  .statLabel {
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+  }
+  .statValue {
+    font-size: 1.5rem;
+  }
+  .statCaption {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--eg-gold);
+    font-weight: 700;
+    margin-top: 2px;
+    min-height: 14px;
+  }
+  .missionBanner {
+    padding: 12px 24px;
+  }
+  .missionText {
+    font-size: 1.15rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .shell {
+    padding: 20px 32px 40px;
+  }
+  /*
+   * DESKTOP COHESION FIX: per direct feedback, the desktop layout felt
+   * "scattered" — the actual cause was that .gameplayFrame got a
+   * max-width + center treatment here, but .menuSlot and .topZone never
+   * did. The menu button sat flush against the far-left edge of the
+   * whole browser window, stats sat next to it (also far-left), and the
+   * mission banner centered on its own independent axis — three
+   * different alignment anchors with nothing tying them into one
+   * composition. Giving the HUD row and the mission banner row the SAME
+   * max-width and auto centering as the gameplay frame below makes all
+   * of it read as one consistent column instead of three independently
+   * anchored pieces.
+   */
+  .menuSlot,
+  .topZone {
+    width: 100%;
+    max-width: 920px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .gameplayFrame {
+    max-width: 920px;
+    margin: 0 auto;
+  }
+  .statCard {
+    padding: 12px 22px;
+  }
+  .statValue {
+    font-size: 1.7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .statValue.urgent {
+    animation: none !important;
+    transform: none !important;
+  }
+}

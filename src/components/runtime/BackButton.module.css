@@ -1,0 +1,39 @@
+/**
+ * BackButton.module.css
+ *
+ * UPDATED: this is no longer position:fixed. It used to be — back when
+ * each pre-play screen rendered BackButton as an independent sibling
+ * with nothing else competing for its corner. Now it renders INSIDE
+ * PrePlayShell's .headerRow, alongside MissionTopBar, as a normal flex
+ * item (see PrePlayShell.tsx) — the same restructure that fixed the
+ * "top bar is a different color" seam also moved this here. A
+ * position:fixed element ignores whatever flex layout wraps it (this is
+ * the exact bug GameMenu.module.css's button had — see that file's
+ * comment for the fuller explanation), so once this needed to sit
+ * predictably beside MissionTopBar in one row, it had to stop being
+ * fixed for the same reason GameMenu's button did.
+ */
+
+.backButton {
+  position: relative;
+  flex-shrink: 0;
+  z-index: 50;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.25);
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--eg-text-bright);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+[data-theme="dark"] .backButton {
+  background: rgba(24, 28, 40, 0.92);
+  color: var(--eg-text-bright, #eee);
+}
+

@@ -3,7 +3,7 @@ import { ThemeProvider } from "@/components/ui/ThemeProvider";
 import "@/motion/tokens.css";
 
 export const metadata: Metadata = {
-  title: "ExamPrep Games",
+  title: "EXL Learning Games",
   description: "Learning games for WAEC/JAMB exam preparation"
 };
 

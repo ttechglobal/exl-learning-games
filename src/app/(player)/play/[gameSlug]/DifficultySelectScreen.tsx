@@ -31,15 +31,28 @@ const TIER_CLASS: Record<PlayerDifficulty, string> = {
  * from Easy to Hard, and a row of small "intensity bars" per tier fills
  * up more as difficulty increases — the escalation should be visible at
  * a glance, not just read off three same-shaped labels.
+ *
+ * No longer owns its own page-level wrapper or backdrop — PrePlayShell
+ * (see PlayClient.tsx) provides the full-bleed environment art for the
+ * whole pre-play flow now, not just this one screen.
+ *
+ * HEADING LEGIBILITY: per direct feedback, "Before You Begin" / "Choose
+ * Your Difficulty" weren't easily readable. Root cause — these used
+ * dim/bright TEXT-only colors with no backing of any kind, sitting
+ * directly on the (often busy) environment photo behind everything once
+ * PrePlayShell's backdrop replaced what used to be a much plainer
+ * background. See .heading in the CSS: now sits on its own small pill
+ * with a solid-ish background and a text-shadow, instead of trusting
+ * text color alone to stay legible over arbitrary photo content.
  */
 export function DifficultySelectScreen({ accentColor, onSelect }: DifficultySelectScreenProps) {
   return (
-    <div className={styles.wrap} style={{ "--accent-color": accentColor } as React.CSSProperties}>
+    <>
       <div className={styles.mascotRow}>
         <Mascot pose="idle" widthPx={92} />
       </div>
 
-      <div className={styles.heading}>
+      <div className={styles.heading} style={{ "--accent-color": accentColor } as React.CSSProperties}>
         <div className={styles.headingLabel}>Before You Begin</div>
         <div className={styles.headingTitle}>Choose Your Difficulty</div>
       </div>
@@ -68,6 +81,6 @@ export function DifficultySelectScreen({ accentColor, onSelect }: DifficultySele
           );
         })}
       </div>
-    </div>
+    </>
   );
 }

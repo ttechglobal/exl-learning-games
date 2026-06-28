@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { GameRuntime } from "@/components/runtime/GameRuntime";
+import { GameMenu } from "@/components/runtime/GameMenu";
+import { PrePlayShell } from "@/components/runtime/PrePlayShell";
 import { EntryScreen } from "@/app/(player)/play/[gameSlug]/EntryScreen";
 import { LevelSelectScreen } from "@/app/(player)/play/[gameSlug]/LevelSelectScreen";
 import { DifficultySelectScreen } from "@/app/(player)/play/[gameSlug]/DifficultySelectScreen";
@@ -34,6 +37,40 @@ const SUBJECT_FALLBACK_ACCENT: Record<string, string> = {
  * Runtime (which itself owns Quick Concepts -> gameplay -> Mission
  * Complete/Rewards, see GameRuntime.tsx).
  *
+ * BACK BUTTON vs IN-GAME MENU: per direct feedback, these are not the same
+ * control and should not share a screen. The in-game menu (Restart
+ * Mission / Exit to Worlds — see GameMenu.tsx) now appears ONLY once
+ * actual gameplay is running, passed down into GameRuntime -> the mounted
+ * engine. Every screen BEFORE that (Level Select, Mission Briefing,
+ * Difficulty Select, Mission Objectives) is wrapped in PrePlayShell,
+ * which renders a plain Back action (not a menu sheet with restart/exit
+ * options that don't really apply before a mission has even started).
+ *
+ * PREPLAYSHELL: as of this revision, BackButton and MissionTopBar are no
+ * longer rendered here as independent siblings of each screen — they're
+ * rendered BY PrePlayShell, alongside the environment backdrop, as ONE
+ * wrapper around whichever screen is active (see PrePlayShell.tsx). This
+ * fixed a real, confirmed bug: rendering them as separate siblings meant
+ * the header sat on the page's plain base background while the screen
+ * content below had its own independently-applied backdrop image — a
+ * visible seam between "header area" and "the rest of the screen."
+ * PrePlayShell now owns the backdrop once, for the whole flow, with the
+ * header rendered inside that same backdrop-having container.
+ *
+ * Each screen's back destination is intentionally a literal step backward
+ * through THIS sequence, not browser history — see handleBack() below for
+ * the exact per-screen mapping.
+ *
+ * GameMenu is built once here and handed to GameRuntime as `menu`, which
+ * threads it down into whichever engine is mounted (see
+ * GameRuntime.tsx / EngineRuntimeProps.menu) so the engine can render it
+ * inside its own GameplayShell.
+ *
+ * "Restart Mission" resets back to Entry for the SAME mission, not just
+ * GameRuntime's internal phase — a player choosing Restart from deep in
+ * gameplay should land back at the Mission Briefing, not silently
+ * re-mount the engine mid-flow.
+ *
  * DIFFICULTY SELECT: per the brief's section 4 — "Difficulty should become
  * a player choice rather than a fixed label" — this is the SAME mission
  * played with different engine-level parameters (timer length, item
@@ -63,6 +100,7 @@ const SUBJECT_FALLBACK_ACCENT: Record<string, string> = {
  * varies across the list.
  */
 export function PlayClient({ studentId, game, missions, initialMissionId }: PlayClientProps) {
+  const router = useRouter();
   const sortedMissions = useMemo(() => [...missions].sort((a, b) => a.sequence_index - b.sequence_index), [missions]);
   const isLevelBased = useMemo(() => new Set(sortedMissions.map((m) => m.difficulty)).size > 1, [sortedMissions]);
   const supportsDifficultyChoice = engineSupportsDifficultyChoice(game.engine_type);
@@ -70,6 +108,24 @@ export function PlayClient({ studentId, game, missions, initialMissionId }: Play
   const [screen, setScreen] = useState<Screen>(isLevelBased ? "levelSelect" : "entry");
   const [activeMissionId, setActiveMissionId] = useState(initialMissionId);
   const [playerDifficulty, setPlayerDifficulty] = useState<PlayerDifficulty | null>(null);
+  /**
+   * No UI control sets this true anymore — GameMenu's Pause/Resume button
+   * was removed per the gameplay-redesign brief (section 6: "Restart
+   * Mission, Exit to Worlds... remove unnecessary actions"). Kept as a
+   * literal `false` constant rather than deleted entirely, since
+   * GameRuntime/EngineRuntimeProps/TileMatchEngine's isPaused plumbing is
+   * real, working infrastructure (genuinely halts the timer, blocks taps,
+   * doesn't leak the answer through feedback text either) that a future
+   * pause trigger (e.g. a dedicated icon, not inside the menu sheet)
+   * could reconnect to without redoing any of that engine-level work —
+   * see GameMenu.tsx's comment for the same reasoning.
+   */
+  const isPaused = false;
+  /** Bumped on every Restart so GameRuntime/the engine remounts fresh
+   *  (cleared internal state) rather than just receiving the same props
+   *  again, which React could otherwise bail out of re-running setup
+   *  effects for. */
+  const [runtimeResetKey, setRuntimeResetKey] = useState(0);
 
   const activeMissionIndex = sortedMissions.findIndex((m) => m.id === activeMissionId);
   const activeMission = sortedMissions[activeMissionIndex];
@@ -92,57 +148,128 @@ export function PlayClient({ studentId, game, missions, initialMissionId }: Play
     return element ? CATEGORY_COLORS[element.category] : SUBJECT_FALLBACK_ACCENT[game.subject] ?? "var(--eg-subject-chemistry)";
   }
 
+  function handleRestart() {
+    setPlayerDifficulty(null);
+    setRuntimeResetKey((k) => k + 1);
+    setScreen("entry");
+  }
+
+  /**
+   * Per-screen back destination. A literal step backward through THIS
+   * sequence (not browser history) — mirrors how GameMenu's Exit always
+   * goes to a fixed /worlds rather than trusting wherever history points.
+   *   - levelSelect (the first screen when shown) -> /worlds
+   *   - entry -> levelSelect if this game has one, else /worlds
+   *   - difficulty -> entry
+   *   - objectives -> difficulty if the engine showed one, else entry
+   */
+  function handleBack() {
+    if (screen === "entry") {
+      if (isLevelBased) setScreen("levelSelect");
+      else router.push("/worlds");
+      return;
+    }
+    if (screen === "difficulty") {
+      setScreen("entry");
+      return;
+    }
+    if (screen === "objectives") {
+      setScreen(supportsDifficultyChoice ? "difficulty" : "entry");
+      return;
+    }
+    // levelSelect, or any unexpected state
+    router.push("/worlds");
+  }
+
+  const menu = <GameMenu onRestart={handleRestart} />;
+
   if (screen === "levelSelect") {
     return (
-      <LevelSelectScreen
+      <PrePlayShell
+        gameSlug={game.slug}
         gameTitle={game.title}
-        missions={sortedMissions}
-        onSelect={(missionId: string) => {
-          setActiveMissionId(missionId);
-          setScreen("entry");
-        }}
-      />
+        subject={game.subject}
+        onBack={() => router.push("/worlds")}
+        backLabel="Back to Worlds"
+      >
+        <LevelSelectScreen
+          gameTitle={game.title}
+          missions={sortedMissions}
+          onSelect={(missionId: string) => {
+            setActiveMissionId(missionId);
+            setScreen("entry");
+          }}
+        />
+      </PrePlayShell>
     );
   }
 
   if (screen === "entry") {
     return (
-      <EntryScreen
-        gameTitle={game.title}
+      <PrePlayShell
         gameSlug={game.slug}
+        gameTitle={game.title}
         subject={game.subject}
-        mission={activeMission}
-        onStart={() => setScreen(supportsDifficultyChoice ? "difficulty" : "objectives")}
-      />
+        accentColor={resolveAccentColor()}
+        onBack={handleBack}
+        backLabel={isLevelBased ? "Back to Levels" : "Back to Worlds"}
+      >
+        <EntryScreen
+          gameSlug={game.slug}
+          subject={game.subject}
+          mission={activeMission}
+          onStart={() => setScreen(supportsDifficultyChoice ? "difficulty" : "objectives")}
+        />
+      </PrePlayShell>
     );
   }
 
   if (screen === "difficulty") {
     return (
-      <DifficultySelectScreen
+      <PrePlayShell
+        gameSlug={game.slug}
+        gameTitle={game.title}
+        subject={game.subject}
         accentColor={resolveAccentColor()}
-        onSelect={(difficulty) => {
-          setPlayerDifficulty(difficulty);
-          setScreen("objectives");
-        }}
-      />
+        onBack={handleBack}
+        backLabel="Back to Mission Briefing"
+      >
+        <DifficultySelectScreen
+          accentColor={resolveAccentColor()}
+          onSelect={(difficulty) => {
+            setPlayerDifficulty(difficulty);
+            setScreen("objectives");
+          }}
+        />
+      </PrePlayShell>
     );
   }
 
   if (screen === "objectives") {
     return (
-      <MissionObjectivesScreen
-        objectives={resolveMissionObjectives(game.engine_type, activeMission.payload)}
+      <PrePlayShell
+        gameSlug={game.slug}
+        gameTitle={game.title}
+        subject={game.subject}
         accentColor={resolveAccentColor()}
-        onStart={() => setScreen("runtime")}
-      />
+        onBack={handleBack}
+        backLabel={supportsDifficultyChoice ? "Back to Difficulty" : "Back to Mission Briefing"}
+      >
+        <MissionObjectivesScreen
+          objectives={resolveMissionObjectives(game.engine_type, activeMission.payload)}
+          accentColor={resolveAccentColor()}
+          onStart={() => setScreen("runtime")}
+        />
+      </PrePlayShell>
     );
   }
 
   // screen === 'runtime'
   return (
     <GameRuntime
+      key={runtimeResetKey}
       gameId={game.id}
+      gameSlug={game.slug}
       studentId={studentId}
       engineType={game.engine_type}
       sharedConfig={game.shared_config}
@@ -162,6 +289,8 @@ export function PlayClient({ studentId, game, missions, initialMissionId }: Play
         "Review the Concept Snapshot any time from this screen."
       ]}
       playerDifficulty={playerDifficulty}
+      isPaused={isPaused}
+      menu={menu}
       onAdvanceToNextMission={() => {
         if (isLevelBased) {
           // Level-based games return to the level picker rather than

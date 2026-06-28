@@ -17,20 +17,23 @@ import styles from "@/app/HomePage.module.css";
  * grid — games are the main event here, subjects are just a filter.
  *
  * DATA HONESTY NOTE: this component is wired to exactly what `page.tsx`
- * already fetches (`gamesBySubject`, `featuredGames`, both real Supabase
- * data via lib/db/queries/games). Two pieces of the original mockup did
- * NOT exist anywhere in the schema and are intentionally left as optional
- * props with a real empty state, rather than faked:
+ * already fetches (`gamesBySubject`, `featuredGames` via lib/db/queries/
+ * games, and now `leaderboard` via lib/db/queries/leaderboard's
+ * getWeeklyLeaderboard — see that file for why it's a genuinely weekly
+ * figure computed from the attempt table, not StudentRow.xp_total's
+ * lifetime total). One piece of the original mockup still doesn't exist
+ * anywhere in the schema and is intentionally left as an honest gap
+ * rather than faked:
  *
- *   - `leaderboard` — there is no query anywhere in src/lib/db for
- *     top-N students by XP. StudentRow has xp_total, so this is buildable,
- *     but it needs a real `getWeeklyLeaderboard()` query first. Until a
- *     caller passes `leaderboard`, this section renders an honest empty
- *     state instead of a hardcoded mock list.
  *   - "coins" — there is no coins column anywhere in the schema (only
  *     xp_total on student). The top-bar pill below shows XP, not coins,
  *     for that reason. Don't reintroduce a coins display without a real
  *     column + query backing it.
+ *
+ * `leaderboard` stays an optional prop (the query can fail or return
+ * empty for a brand-new install with no attempts yet this week) — this
+ * section renders an honest empty state in that case rather than a
+ * hardcoded mock list.
  *
  * Subject metadata and game card art/descriptions used to be local
  * constants here — promoted to lib/content/subjects.ts and
@@ -87,7 +90,9 @@ function badgeForIndex(i: number): Badge {
 export interface HomePageProps {
   gamesBySubject: Record<string, GameRow[]>;
   featuredGames: GameRow[];
-  /** Optional until a real getWeeklyLeaderboard() query exists — see note above. */
+  /** Optional since the query can return empty (no attempts yet this
+   *  week) or fail — see getWeeklyLeaderboard in
+   *  lib/db/queries/leaderboard.ts, wired up in page.tsx. */
   leaderboard?: LeaderboardEntry[];
   /** Current student's XP total for the header pill; omit while logged out. */
   currentStudentXp?: number;
@@ -148,32 +153,35 @@ export function HomePage({ gamesBySubject, featuredGames, leaderboard, currentSt
           <span className={styles.w1}>PLAY.</span> <span className={styles.w2}>LEARN.</span> <span className={styles.w3}>MASTER.</span>
         </h1>
         <p>Master the subjects you learn in school through interactive games.</p>
+        <Link href="/worlds" className={`${styles.heroCta} ${styles.fd}`}>
+          Start Learning
+        </Link>
       </div>
 
       <div className={styles.container} id="worlds">
         <div className={styles.railHead}>
           <span className={`${styles.railTag} ${styles.fd}`}>Learn by subject</span>
         </div>
-        <div className={styles.subjectRail}>
+        <div className={styles.subjectGrid}>
           {SUBJECTS.map((subject) => {
             const games = gamesBySubject[subject.key] ?? [];
             const isLive = games.length > 0;
-            const chip = (
+            const card = (
               <div
-                className={`${styles.chip} ${isLive ? "" : styles.chipLocked}`}
+                className={`${styles.subjectCard} ${isLive ? "" : styles.subjectCardLocked}`}
                 style={{ "--c": subject.color, "--c-tint": subject.tint } as React.CSSProperties}
               >
-                <span className={styles.chipIco}>{subject.emoji}</span>
-                <span className={`${styles.chipName} ${styles.fd}`}>{subject.name}</span>
-                <span className={styles.chipCount}>{isLive ? games.length : "soon"}</span>
+                <span className={styles.subjectCardIco}>{subject.emoji}</span>
+                <span className={`${styles.subjectCardName} ${styles.fd}`}>{subject.name}</span>
+                <span className={styles.subjectCardCount}>{isLive ? `${games.length} games` : "Coming soon"}</span>
               </div>
             );
             return isLive ? (
               <Link key={subject.key} href={`/worlds#${subject.key}`}>
-                {chip}
+                {card}
               </Link>
             ) : (
-              <div key={subject.key}>{chip}</div>
+              <div key={subject.key}>{card}</div>
             );
           })}
         </div>
@@ -315,7 +323,7 @@ export function HomePage({ gamesBySubject, featuredGames, leaderboard, currentSt
             </div>
 
             <Link href="/worlds" className={`${styles.btnFinale} ${styles.fd}`}>
-              🎮 Start Learning — It&apos;s Free
+              Start Learning
             </Link>
           </div>
         </div>

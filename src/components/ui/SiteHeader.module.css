@@ -128,10 +128,36 @@
 }
 
 @media (max-width: 760px) {
+  .container {
+    padding: 0 14px;
+  }
   .navLabel {
     display: none;
   }
   .lobbyNav a {
-    padding: 9px 11px;
+    padding: 10px 14px;
+    font-size: 15px;
+  }
+  .lobbyNav {
+    gap: 4px;
+  }
+  .headerRight {
+    gap: 8px;
+  }
+  .logoText {
+    display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  /* Smallest phones: the XP figure is still useful, but "XP" as a
+     literal trailing word is the first thing that can go without
+     losing meaning — the ✦ glyph already signals what the pill is. */
+  .xpPill {
+    padding: 7px 11px;
+    font-size: 12.5px;
+  }
+  .xpSuffix {
+    display: none;
   }
 }

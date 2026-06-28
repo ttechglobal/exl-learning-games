@@ -1,0 +1,107 @@
+/**
+ * Per direct feedback: the menu button was overlapping the timer. Root
+ * cause — this was `position: fixed`, meaning it floated at a fixed
+ * screen coordinate completely independent of whatever layout (flexbox,
+ * grid, whatever) it happened to be rendered inside. Wrapping it in a
+ * flex row (GameplayShell's .menuSlot) never actually controlled its
+ * position, because a fixed element doesn't participate in flex layout
+ * at all — it was always going to sit at top:16px/left:16px regardless
+ * of what else was in that row, and on phones that's exactly where the
+ * first stat pill (the timer) ends up too.
+ *
+ * Now a normal in-flow flex item — GameMenu is only ever rendered inside
+ * GameplayShell's .menuSlot (see PlayClient.tsx, the only call site), so
+ * there's no other context this needs to float independently in.
+ * .menuSlot's flex layout now actually places this and the stats side by
+ * side on the left, both aligned together per direct feedback (not
+ * split to opposite corners), instead of both independently claiming the
+ * same physical coordinate.
+ */
+.menuButton {
+  position: relative;
+  flex-shrink: 0;
+  z-index: 50;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.25);
+  font-size: 1.1rem;
+  color: var(--eg-text-bright);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+[data-theme="dark"] .menuButton {
+  background: rgba(24, 28, 40, 0.92);
+  color: var(--eg-text-bright, #eee);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(20, 16, 34, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.sheet {
+  width: min(340px, 92vw);
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 22px;
+  box-shadow: 0 20px 50px -16px rgba(0, 0, 0, 0.4);
+}
+[data-theme="dark"] .sheet {
+  background: #181c28;
+}
+
+.sheetLabel {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--eg-text-dim);
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.sheetButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 50px;
+  border-radius: 14px;
+  border: 2px solid var(--eg-text-dim);
+  background: transparent;
+  color: var(--eg-text-bright);
+  font-family: var(--eg-font-display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.exitButton {
+  border-color: var(--eg-danger);
+  color: var(--eg-danger);
+}
+
+.cancelButton {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background: none;
+  border: none;
+  color: var(--eg-text-dim);
+  font-size: 0.85rem;
+  padding: 6px 0 0;
+  cursor: pointer;
+}

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { DepthBackdrop } from "@/motion/DepthBackdrop";
+import { SiteHeader } from "@/components/ui/SiteHeader";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { subjectMeta } from "@/lib/content/subjects";
 import { GAME_CARD_ART, GAME_CARD_DESC } from "@/lib/content/gameCardMeta";
@@ -23,11 +24,14 @@ import styles from "@/app/(player)/worlds/WorldsClient.module.css";
  * lookups the homepage's Popular Games section uses, so a card looks like
  * the same kind of object everywhere it appears in the app.
  *
- * Theme comes from the shared ThemeProvider (app/layout.tsx via
- * components/ui/ThemeProvider.tsx) — no local useState here. SiteHeader
- * itself now lives once in app/(player)/layout.tsx, wrapping this page
- * automatically, so it's intentionally NOT rendered again inside this
- * component.
+ * SiteHeader rendered DIRECTLY here (not via the shared (player)/layout.tsx
+ * anymore) — that layout used to render it for every screen under
+ * (player)/, including the actual play flow, which is exactly what's
+ * being undone: nav should never appear inside gameplay, only on Worlds
+ * and Home. See app/(player)/layout.tsx's comment for the full story.
+ *
+ * Theme still comes from the shared ThemeProvider (app/layout.tsx) — no
+ * local useState here.
  */
 
 export interface GameSummary {
@@ -60,13 +64,15 @@ function xpLabel(min: number, max: number): string {
 }
 
 export function WorldsClient({ bySubject }: WorldsClientProps) {
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const subjects = Object.entries(bySubject);
   const primaryAccent = subjects.length > 0 ? subjectMeta(subjects[0][0]).color : "var(--eg-brand)";
   const totalGames = subjects.reduce((sum, [, games]) => sum + games.length, 0);
 
   return (
     <div className={styles.page} data-theme={theme}>
+      <SiteHeader theme={theme} onToggleTheme={toggleTheme} active="games" />
+
       <div className={styles.titleRow}>
         <DepthBackdrop accentColor={primaryAccent} />
         <div className={styles.container}>

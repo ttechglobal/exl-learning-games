@@ -1,0 +1,52 @@
+/**
+ * EnvironmentBackdrop.module.css
+ *
+ * Genuinely full-bleed — inset:0 on a `position: fixed` ancestor (see
+ * PrePlayShell.module.css / GameplayShell.module.css's own .shell, both
+ * position: relative containers this absolutely-positions against)
+ * means this always covers the full screen, edge to edge, including
+ * behind any top bar/header content rendered as a sibling — which is
+ * exactly the fix for "the top bar shouldn't be a different color from
+ * the rest of the background": there's no separate background on the
+ * bar itself anymore, because the bar was moved to render INSIDE the
+ * same backdrop-having container instead of beside it. See
+ * PrePlayShell.tsx.
+ */
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* In live gameplay specifically, a straight center crop of the Element
+ * Hunter scene put a mostly-empty ceiling/light-fixture area behind the
+ * tile panel instead of the lower lab-bench detail — confirmed from a
+ * real screenshot, not guessed. Favoring the lower 2/3 of the image
+ * keeps more of the actual scenery visible behind the panel and HUD
+ * instead of empty ceiling. Applied via an explicit modifier class
+ * (opt-in per consumer) rather than changing the shared default, since
+ * PrePlayShell's use of this same component hasn't shown the same
+ * problem and shouldn't change without a reason to. */
+.focusLower {
+  object-position: center 75%;
+}
+
+/* Darkens toward the bottom, where foreground content (cards, the
+ * difficulty tier list, etc.) sits — lighter near the top where there's
+ * usually nothing but the title bar to protect. */
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(10, 10, 20, 0.15) 0%,
+    rgba(10, 10, 20, 0.35) 55%,
+    rgba(10, 10, 20, 0.5) 100%
+  );
+}

@@ -1,12 +1,15 @@
-.wrap {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: 100vh;
-  padding: 24px;
-  padding-top: 48px;
-}
+/**
+ * MissionObjectivesScreen.module.css
+ *
+ * No longer owns a page-level wrapper or backdrop — PrePlayShell (see
+ * PlayClient.tsx) provides that for the whole pre-play flow now. This
+ * file is just the mascot + card content.
+ *
+ * Card width fixed the same way as EntryScreen.module.css's card: sized
+ * against the real parent (box-sizing: border-box, width: 100%, max-
+ * width cap) instead of raw vw units, which is what caused the
+ * confirmed "card is cut off on the side" bug.
+ */
 
 .mascotRow {
   position: relative;
@@ -23,7 +26,13 @@
 .card {
   position: relative;
   z-index: 1;
-  width: min(420px, 92vw);
+  box-sizing: border-box;
+  /* calc() instead of width:100% + margin — see DifficultySelectScreen
+   * .module.css's .tierList comment for the full explanation of why
+   * width:100% plus margin overflows the parent by the margin amount. */
+  width: calc(100% - 20px);
+  max-width: 420px;
+  margin: 8px 10px 0;
   background: #ffffff;
   border: 3px solid var(--accent-color, var(--eg-subject-chemistry));
   border-radius: 22px;
@@ -96,6 +105,17 @@
 .startButton:active {
   transform: translateY(3px);
   box-shadow: 0 2px 0 color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 70%, black);
+}
+
+/* Narrow phones: a little less card padding so more of the actual width
+ * goes to the objective text rather than the card's own margins. */
+@media (max-width: 420px) {
+  .card {
+    padding: 20px 18px;
+  }
+  .item {
+    font-size: 0.9rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

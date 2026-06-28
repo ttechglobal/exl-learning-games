@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { ConceptSnapshot } from "@/components/runtime/ConceptSnapshot";
 import { ReflectionScreen } from "@/components/runtime/ReflectionScreen";
 import { PeriodicTableReveal } from "@/motion/PeriodicTableReveal";
+import { HighScoreEntry } from "@/components/runtime/HighScoreEntry";
 import { getEngineDefinition } from "@/engines/registry";
 import { applyDifficultyModifiers, type PlayerDifficulty } from "@/lib/content/difficultyModifiers";
 import type { AttemptResult } from "@/types/result";
@@ -21,6 +22,13 @@ export interface GameRuntimeMission {
 
 export interface GameRuntimeProps {
   gameId: string;
+  /** Needed for lib/content/localHighScores.ts's per-game storage key —
+   *  gameId (a DB uuid) would work as a key too, but slug is what every
+   *  other localStorage-backed feature in this app already keys on
+   *  (conceptPrefs.ts uses engineType, not an id), and slugs are stable
+   *  across environments in a way a row's literal id isn't guaranteed
+   *  to be if the DB is ever reseeded. */
+  gameSlug: string;
   studentId: string;
   engineType: string;
   sharedConfig: Record<string, unknown>;
@@ -40,6 +48,25 @@ export interface GameRuntimeProps {
    * (timers, item counts, hint verbosity).
    */
   playerDifficulty: PlayerDifficulty | null;
+  /**
+   * True while the player has paused via GameMenu (see PlayClient.tsx,
+   * the actual owner of this state). Passed straight through to the
+   * mounted engine — GameRuntime itself has no clock of its own to
+   * pause, only whichever engine is currently mounted does (or doesn't;
+   * see EngineRuntimeProps.isPaused's comment for which engines this
+   * actually matters to).
+   */
+  isPaused?: boolean;
+  /**
+   * The in-game menu instance (Restart Mission / Exit to Worlds — see
+   * components/runtime/GameMenu.tsx), built once by PlayClient and handed
+   * down here. Threaded straight into whichever engine mounts below (see
+   * the `playing` phase branch) so the engine can render it inside its
+   * own GameplayShell — this is now the ONLY place the menu appears;
+   * every screen before actual gameplay shows a plain BackButton instead
+   * (see PlayClient.tsx).
+   */
+  menu?: React.ReactNode;
 }
 
 type Phase = "snapshot" | "playing" | "reflection" | "reviewingConcepts";
@@ -64,6 +91,7 @@ const FALLBACK_SNAPSHOT_CARDS = [{ title: "Quick Concept", body: "Get ready — 
  */
 export function GameRuntime({
   gameId,
+  gameSlug,
   studentId,
   engineType,
   sharedConfig,
@@ -72,7 +100,9 @@ export function GameRuntime({
   hasNextMission,
   reviewSuccessLines,
   onAdvanceToNextMission,
-  playerDifficulty
+  playerDifficulty,
+  isPaused,
+  menu
 }: GameRuntimeProps) {
   const [phase, setPhase] = useState<Phase>("snapshot");
   const [lastResult, setLastResult] = useState<AttemptResult | null>(null);
@@ -155,6 +185,7 @@ export function GameRuntime({
         cards={cards}
         onContinue={() => setPhase(phase === "reviewingConcepts" ? "reflection" : "playing")}
         engineType={phase === "snapshot" ? engineType : undefined}
+        gameSlug={gameSlug}
       />
     );
   }
@@ -172,6 +203,8 @@ export function GameRuntime({
       <EngineComponent
         config={{ shared: effectiveSharedConfig, mission: effectiveMission }}
         onComplete={(outcome: unknown) => handleEngineComplete(outcome as Record<string, unknown>)}
+        isPaused={isPaused}
+        menu={menu}
       />
     );
   }
@@ -184,6 +217,24 @@ export function GameRuntime({
   const finalComposition = lastResult?.rawOutcome?.finalComposition as Record<string, number> | undefined;
   const protonCount = finalComposition?.proton;
 
+  // Same soft-contract pattern for high scores: ANY engine reporting a
+  // numeric `finalScore` gets the local high-score prompt automatically —
+  // not hardcoded to tile-match by name. Currently true for tile-match
+  // (every session) AND bond-match's factory mode specifically (Atom
+  // Forge Level 4 — BondMatchFactoryOutcome also has finalScore), which
+  // is correct: factory mode genuinely is a scored, repeatable session
+  // just like tile-match. bond-match's LEVEL mode (most missions) and
+  // particle-assembly's one-shot completion have no comparable score and
+  // correctly never trigger this.
+  const finalScore = lastResult?.rawOutcome?.finalScore as number | undefined;
+
+  const extraContent = (
+    <>
+      {typeof protonCount === "number" && <PeriodicTableReveal highlightAtomicNumber={protonCount} />}
+      {typeof finalScore === "number" && <HighScoreEntry gameSlug={gameSlug} score={finalScore} />}
+    </>
+  );
+
   return (
     <ReflectionScreen
       successLines={reviewSuccessLines}
@@ -191,8 +242,8 @@ export function GameRuntime({
       onPlayAgain={() => setPhase("playing")}
       onNextMission={onAdvanceToNextMission}
       onViewConceptSummary={() => setPhase("reviewingConcepts")}
-      xpEarned={mission.xpReward}
-      extraContent={typeof protonCount === "number" ? <PeriodicTableReveal highlightAtomicNumber={protonCount} /> : undefined}
+      gameSlug={gameSlug}
+      extraContent={extraContent}
     />
   );
 }

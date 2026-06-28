@@ -1,40 +1,33 @@
+/**
+ * EntryScreen.module.css
+ *
+ * No longer owns a page-level wrapper, backdrop, or min-height:100vh —
+ * PrePlayShell (see PlayClient.tsx) provides all of that for the whole
+ * pre-play flow now. This file is just the mascot + card content that
+ * renders inside PrePlayShell's .content slot.
+ *
+ * CARD WIDTH FIX: previously `width: min(420px, 90vw)` — 90vw is sized
+ * against the VIEWPORT, not this component's actual parent. Combined
+ * with the old .wrap's own 24px padding (now removed) and overflow:
+ * hidden, the card could end up wider than the space actually available
+ * inside the padded parent, with the overflow getting silently clipped
+ * on the right rather than the card shrinking to fit — this was the
+ * confirmed "card is cut off on the right" bug. Now `width: 100%` with a
+ * max-width cap and box-sizing implied by normal block layout — the card
+ * sizes against its real container instead of the raw viewport, so it
+ * can never be wider than the space PrePlayShell actually gives it.
+ */
+
+/* Local layout scope only now — stacks mascot above card, hosts the
+ * --accent-color variable used by children. No page-level concerns
+ * (min-height, overflow, backdrop) since PrePlayShell owns those. */
 .wrap {
   position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 24px;
-  overflow: hidden;
-}
-
-.backdrop {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.kicker {
-  position: relative;
-  z-index: 1;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--eg-text-dim);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  text-align: center;
-  margin-bottom: 18px;
-  opacity: 0;
-  animation: titleRise 0.5s var(--eg-ease-settle) forwards;
-}
-
-@keyframes titleRise {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 .mascotRow {
@@ -52,7 +45,16 @@
 .card {
   position: relative;
   z-index: 1;
-  width: min(420px, 90vw);
+  box-sizing: border-box;
+  /* calc() instead of width:100% + margin — see DifficultySelectScreen
+   * .module.css's .tierList comment for why width:100% plus margin
+   * overflows the parent by exactly the margin amount. This is the
+   * actual mechanism behind the "card clipped on the right" report:
+   * adding side margin for breathing room without correspondingly
+   * reducing the width pushes the card's right edge past its container. */
+  width: calc(100% - 20px);
+  max-width: 420px;
+  margin: 8px 10px 0;
   background: #ffffff;
   border: 3px solid var(--accent-color, var(--eg-subject-chemistry));
   border-radius: 22px;
@@ -85,27 +87,28 @@
   line-height: 1.6;
   margin: 0 0 18px;
   text-align: left;
+  /* Reserve roughly the height of 3 lines at this font size so the
+   * typewriter reveal (see TypewriterText) doesn't shift the card's
+   * height — and everything below it (glyph, goal, button) — as the
+   * text grows character by character. */
+  min-height: 4.8em;
 }
 
-.missionTitleRow {
+/* Holds the element glyph on its own now that the mission title row
+ * (which used to share this space) was removed per direct feedback —
+ * centered rather than space-between, since it's no longer balancing
+ * against a title on the other side. */
+.elementGlyphRow {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-.missionTitle {
-  font-family: var(--eg-font-display);
-  font-weight: 700;
-  font-size: 1.35rem;
-  color: var(--eg-text-bright);
+  justify-content: center;
+  margin-bottom: 16px;
 }
 
 .elementGlyph {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   border: 2px solid var(--accent-color, var(--eg-subject-chemistry));
   background: color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 12%, white);
   display: flex;
@@ -116,11 +119,11 @@
   line-height: 1;
 }
 .elementGlyphNumber {
-  font-size: 0.48rem;
+  font-size: 0.52rem;
   color: var(--eg-text-dim);
 }
 .elementGlyphSymbol {
-  font-size: 1.05rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--eg-text-bright);
 }
@@ -165,8 +168,22 @@
   box-shadow: 0 2px 0 color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 70%, black);
 }
 
+/* Narrow phones: less card padding, slightly smaller supporting text —
+ * same treatment as DifficultySelectScreen / MissionObjectivesScreen for
+ * consistency across the whole pre-play flow. */
+@media (max-width: 420px) {
+  .card {
+    padding: 20px 18px;
+  }
+  .briefingText {
+    font-size: 0.88rem;
+  }
+  .goalText {
+    font-size: 0.8rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .kicker,
   .card,
   .mascotRow {
     animation: none !important;

@@ -1,0 +1,106 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(20, 16, 34, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal {
+  width: min(380px, 92vw);
+  background: #ffffff;
+  border: 3px solid var(--accent-color, var(--eg-subject-chemistry));
+  border-radius: 24px;
+  padding: 26px;
+  text-align: center;
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transform: scale(0.92) translateY(10px);
+  animation: modalIn 0.28s var(--eg-ease-pop) forwards;
+}
+[data-theme="dark"] .modal {
+  background: #181c28;
+}
+@keyframes modalIn {
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.illustration {
+  font-size: 2.6rem;
+  margin-bottom: 6px;
+}
+
+.conceptLabel {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-color, var(--eg-subject-chemistry));
+  margin-bottom: 6px;
+}
+
+.concept {
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: var(--eg-text-bright);
+  margin-bottom: 14px;
+}
+
+.explanation {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--eg-text-bright);
+  margin: 0 0 16px;
+}
+
+.tipRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  text-align: left;
+  background: color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 8%, white);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+}
+.tipIcon {
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+.tipText {
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--eg-text-bright);
+}
+
+.closeButton {
+  width: 100%;
+  min-height: 50px;
+  border-radius: 14px;
+  border: none;
+  background: var(--accent-color, var(--eg-subject-chemistry));
+  color: #ffffff;
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 70%, black);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.closeButton:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 70%, black);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+}

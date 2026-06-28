@@ -1,170 +1,101 @@
-.screen {
+/**
+ * TileMatchEngine.module.css
+ *
+ * Tile sizing/spacing history (four rounds of feedback so far):
+ *   1. Originally: fixed width:96px tiles in a 3-column grid, cramped on
+ *      phones below ~380px, text too small to read comfortably.
+ *   2. Overcorrected to: 2 fluid columns filling up to 420px wide —
+ *      ~200px tiles, too big, ate too much vertical space alongside the
+ *      HUD/mission banner/hint button all competing for the same screen.
+ *   3. Pulled back to 3 columns / max-width 360px (~110-115px tiles) —
+ *      STILL reported too big.
+ *   4. Pulled back further to max-width 300px (~90px tiles) — tile SIZE
+ *      finally landed, but a separate complaint surfaced: the tiles
+ *      themselves were too squeezed together, not enough room left,
+ *      right, and between them. Gaps below are now meaningfully larger
+ *      at every breakpoint (8px->14px base, 6px->10px smallest phones,
+ *      12px->20px tablet, same growth at desktop) — tile SIZE and tile
+ *      SPACING are independent levers; this round only touches spacing.
+ */
+
+/*
+ * PANEL SIZING — REVISED AGAIN. The min-height:50vh + justify-content:
+ * center approach from the previous round was meant to center the tile
+ * grid INSIDE a tall panel, but a real screenshot showed the grid still
+ * sitting low with a large dead gap at the TOP of the panel instead —
+ * the centering wasn't taking effect as intended in practice, regardless
+ * of why. Rather than keep debugging that specific mechanism blind,
+ * this drops it: the panel is content-sized again (no min-height at
+ * all), with generous, deliberate padding around the grid instead of an
+ * artificial minimum height trying to manufacture extra internal space.
+ * A panel that's exactly as tall as it needs to be, well-padded, reads
+ * as intentional; a tall panel with unexplained dead space inside it
+ * does not, no matter the cause.
+ */
+.tileGridPanel {
   position: relative;
-  min-height: 60vh;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 18px;
+  padding: 28px 18px;
+  box-shadow: 0 14px 30px -12px rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-family: var(--eg-font-body);
-  color: var(--eg-text-bright);
-  overflow: hidden;
-  /*
-   * Fallback gradient — cool lab-lighting blues, matching the brief's
-   * "night-shift lab, scientific lighting" direction — shows whenever
-   * the real environment image (scene-element-hunter.png, see
-   * docs/ELEMENT_HUNTER_ENVIRONMENT_BRIEF.md) hasn't been added yet,
-   * since the <img> element renders nothing when missing/erroring.
-   */
-  background: radial-gradient(ellipse 90% 70% at 50% 0%, #2A3A5C 0%, #1B2438 55%, #11162A 100%);
-}
-
-.environmentBackdrop {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-}
-
-/*
- * Backing panel — keeps the area directly behind the tile grid visually
- * quiet REGARDLESS of what the environment image contains (per the
- * brief's non-negotiable constraint: the center must stay low-contrast
- * so element symbols/numbers read instantly). A semi-opaque card, not a
- * fully solid one, so the environment is still visible through it at the
- * edges rather than looking like a separate floating box.
- */
-.tileGridPanel {
-  position: relative;
-  z-index: 1;
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 22px;
-  padding: 18px;
-  box-shadow: 0 16px 36px -14px rgba(0, 0, 0, 0.35);
 }
 [data-theme="dark"] .tileGridPanel {
   background: rgba(17, 20, 30, 0.88);
 }
 
-.hud {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+/* Groups .tileGridPanel and the hint zone into one vertical stack —
+ * GameplayShell's .gameplayFrame is a row flex container that centers a
+ * single child by default, so without this wrapper, having the hint
+ * button as a sibling of .tileGridPanel (rather than nested inside it,
+ * as it used to be) would put them side by side instead of stacked. See
+ * TileMatchEngine.tsx's comment at the call site. */
+.engineColumn {
   display: flex;
-  justify-content: space-between;
-  padding: 4px 4px 0;
-  z-index: 6;
-}
-.hudCard {
-  background: rgba(255, 255, 255, 0.93);
-  border: 2.5px solid var(--accent-color, var(--eg-subject-chemistry));
-  border-radius: 16px;
-  padding: 8px 14px;
-  text-align: center;
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.05), 0 8px 16px rgba(58, 42, 85, 0.12);
-}
-.statLabel {
-  font-family: var(--eg-font-display);
-  font-size: 0.58rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--eg-text-dim);
-}
-.statValue {
-  font-family: var(--eg-font-display);
-  font-weight: 800;
-  font-size: 1.3rem;
-}
-.statValue.timer {
-  color: var(--eg-danger);
-}
-.statValue.timer.urgent {
-  animation: timerPulse 0.5s ease-in-out infinite;
-}
-@keyframes timerPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-}
-.statValue.score {
-  color: #4caf6e;
-}
-.streakRow {
-  font-size: 0.66rem;
-  color: var(--eg-gold);
-  font-weight: 700;
-  margin-top: 2px;
-  min-height: 12px;
-}
-.tierBadge {
-  font-size: 0.6rem;
-  color: var(--eg-text-dim);
-  margin-top: 2px;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 
-.missionBanner {
-  position: relative;
-  z-index: 5;
-  background: #fff;
-  border: 3px solid var(--eg-gold);
-  border-radius: 18px;
-  padding: 10px 22px;
-  text-align: center;
-  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.06), 0 10px 20px rgba(58, 42, 85, 0.15);
-  max-width: min(480px, 86vw);
-  margin-bottom: 28px;
-}
-.missionBanner.shifting {
-  animation: missionShift 0.3s ease-out;
-}
-@keyframes missionShift {
-  0% { transform: scale(0.9); }
-  60% { transform: scale(1.04); }
-  100% { transform: scale(1); }
-}
-.missionLabel {
-  font-family: var(--eg-font-display);
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--eg-text-dim);
-  margin-bottom: 2px;
-}
-.missionText {
-  font-family: var(--eg-font-display);
-  font-weight: 700;
-  font-size: 1.1rem;
-}
-
+/* 3 fluid columns. max-width controls overall TILE SIZE; gap controls
+ * spacing BETWEEN tiles — these are independent and were being conflated
+ * in earlier passes. Grown again now that the panel itself is
+ * content-sized rather than artificially tall — with no min-height
+ * trying to fill itself with whitespace, there's real room for the
+ * tiles to be a comfortable, confident size without the panel
+ * ballooning past its content. */
 .tileGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  max-width: min(520px, 90vw);
+  gap: 14px;
+  width: 100%;
+  max-width: 340px;
 }
 .elementTile {
   background: #fff;
-  border: 3px solid var(--el-color);
+  border: 2.5px solid var(--el-color);
   border-radius: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2px;
-  padding: 10px;
+  padding: 10px 6px;
   cursor: pointer;
   touch-action: manipulation;
   aspect-ratio: 1;
-  width: 96px;
-  box-shadow: 0 6px 0 color-mix(in srgb, var(--el-color) 55%, black), 0 8px 16px rgba(58, 42, 85, 0.1);
+  width: 100%;
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--el-color) 55%, black), 0 6px 12px rgba(58, 42, 85, 0.1);
   transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.2s ease;
   animation: tileIn 0.3s cubic-bezier(0.3, 1.6, 0.5, 1) backwards;
 }
 .elementTile:active {
-  transform: translateY(4px);
-  box-shadow: 0 2px 0 color-mix(in srgb, var(--el-color) 55%, black);
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--el-color) 55%, black);
 }
 @keyframes tileIn {
   from { opacity: 0; transform: scale(0.7); }
@@ -187,93 +118,158 @@
   25% { transform: translateX(-5px); }
   75% { transform: translateX(5px); }
 }
+
+/* Sized for a tile in the ~100-110px range now, up from the ~90px
+ * "tiles too big" correction — that correction was about removing the
+ * earlier ~200px/~115px oversizing, not landing on the smallest possible
+ * tile. With the panel no longer artificially tall, a slightly bigger,
+ * more confident tile reads better than a small one in generous padding. */
 .tileSymbol {
   font-family: var(--eg-font-display);
   font-weight: 800;
-  font-size: 1.4rem;
+  font-size: 1.3rem;
+  line-height: 1;
   color: var(--el-color);
 }
 .tileNumber {
-  font-size: 0.6rem;
+  font-size: 0.56rem;
   color: var(--eg-text-dim);
   font-weight: 600;
 }
 .tileName {
-  font-size: 0.56rem;
+  font-size: 0.5rem;
   color: var(--eg-text-dim);
+  text-align: center;
 }
 
-.hintCard {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  max-width: min(440px, 90vw);
-  margin: 14px auto 0;
-  padding: 12px 16px;
-  background: color-mix(in srgb, var(--eg-gold) 14%, white);
-  border: 2px solid var(--eg-gold);
-  border-radius: 14px;
-  cursor: pointer;
-  opacity: 0;
-  transform: translateY(6px);
-  animation: hintCardIn 0.3s var(--eg-ease-pop) forwards;
-}
-@keyframes hintCardIn {
-  to { opacity: 1; transform: translateY(0); }
-}
-.hintCardIcon {
-  font-size: 1.1rem;
-  flex-shrink: 0;
-}
-.hintCardText {
-  font-size: 0.84rem;
-  line-height: 1.45;
-  color: var(--eg-text-bright);
-}
-
+/*
+ * HINT BUTTON — restyled and repositioned per direct feedback, more than
+ * once now. Still "doesn't look pressable" was the latest note, so this
+ * round goes further than a color change: a clearer pressed/3D affordance
+ * (existing box-shadow steps already do some of this, increased here),
+ * a hover lift, and the cost messaging spelled out as a real sentence
+ * fragment ("Use a hint — costs 5s") rather than a bare "-5s" badge that
+ * required already knowing what the number meant.
+ *
+ * POSITION: lives in its own zone below .tileGridPanel (see
+ * .engineColumn and TileMatchEngine.tsx), clearly separated from the
+ * grid so it reads as its own distinct control, not part of the grid.
+ *
+ * STYLING: warm gold/amber treatment consistent with this game's reward
+ * palette (--eg-gold), pill-shaped, with a visible press depth and hover
+ * lift so it reads as something to tap, not flat decorative text next
+ * to an icon.
+ */
 .hintButtonWrap {
   display: flex;
   justify-content: center;
-  margin-top: 16px;
-  min-height: 40px;
+  margin-top: 20px;
+  min-height: 48px;
 }
 .hintButton {
-  background: #fff4f0;
-  border: 2px solid color-mix(in srgb, var(--eg-danger) 45%, transparent);
-  border-radius: 14px;
-  padding: 8px 16px;
+  background: linear-gradient(180deg, #fffaf0 0%, #ffedc7 100%);
+  border: 2px solid var(--eg-gold);
+  border-radius: 999px;
+  padding: 10px 20px 10px 10px;
   font-family: var(--eg-font-display);
-  font-weight: 600;
-  font-size: 0.82rem;
+  font-weight: 700;
+  font-size: 0.88rem;
   color: var(--eg-text-bright);
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--eg-gold) 55%, black), 0 8px 16px rgba(58, 42, 85, 0.14);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
   animation: hintAppear 0.3s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.hintButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 0 color-mix(in srgb, var(--eg-gold) 55%, black), 0 10px 18px rgba(58, 42, 85, 0.16);
+}
+.hintButton:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--eg-gold) 55%, black);
+}
+[data-theme="dark"] .hintButton {
+  background: linear-gradient(180deg, #2c2410 0%, #241d0c 100%);
+  color: var(--eg-text-bright, #eee);
 }
 @keyframes hintAppear {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .hintButton img {
-  width: 22px;
+  width: 26px;
   display: block;
+  flex-shrink: 0;
+}
+.hintButtonText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.25;
+}
+.hintButtonCost {
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--eg-text-dim);
+  text-transform: none;
+  letter-spacing: normal;
 }
 
-@media (max-width: 480px) {
-  .tileGrid {
-    grid-template-columns: repeat(2, 1fr);
+.mascotPopup {
+  position: fixed;
+  bottom: 18px;
+  right: 14px;
+  z-index: 7;
+  width: 76px;
+}
+
+/* Very small phones: pull back slightly from the base size, but stay
+ * well above the earlier "too small" 90px tiles — same gap floor as
+ * before, since spacing between tiles was the confirmed problem, not
+ * size at this tier. */
+@media (max-width: 360px) {
+  .tileGridPanel {
+    padding: 22px 12px;
   }
-  .elementTile {
-    width: 100%;
+  .tileGrid {
+    gap: 10px;
+    max-width: 290px;
+  }
+  .tileSymbol {
+    font-size: 1.15rem;
+  }
+  .hintButton {
+    padding: 8px 17px 8px 8px;
+    font-size: 0.82rem;
+  }
+}
+
+/* Tablet and up: continued growth in both tile size and gap — matching
+ * the "need space left, right, and in between the cards... on desktop
+ * too" feedback. */
+@media (min-width: 600px) {
+  .tileGrid {
+    max-width: 460px;
+    gap: 20px;
+  }
+  .tileSymbol {
+    font-size: 1.55rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tileGrid {
+    grid-template-columns: repeat(4, 1fr);
+    max-width: 580px;
+    gap: 22px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .elementTile, .missionBanner.shifting, .statValue.timer.urgent, .hintButton {
+  .elementTile, .hintButton {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;

@@ -1,12 +1,16 @@
-.wrap {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: 100vh;
-  padding: 24px;
-  padding-top: 48px;
-}
+/**
+ * DifficultySelectScreen.module.css
+ *
+ * No longer owns a page-level wrapper or backdrop — PrePlayShell (see
+ * PlayClient.tsx) provides that for the whole pre-play flow now. This
+ * file is just the mascot + heading + tier list content.
+ *
+ * Card-width handling matches EntryScreen.module.css's fix: percentage-
+ * based against the real parent (box-sizing: border-box, width: 100%,
+ * max-width cap) instead of raw vw units that don't account for
+ * whatever padding the actual parent applies — same root cause as the
+ * "card cut off on the right" bug fixed there.
+ */
 
 .mascotRow {
   position: relative;
@@ -20,11 +24,26 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/*
+ * HEADING LEGIBILITY FIX: previously dim/bright TEXT COLOR ONLY, no
+ * backing — illegible once this screen started sitting directly on a
+ * busy environment photo (PrePlayShell's backdrop) instead of a plainer
+ * background. Now a small solid-ish pill with its own background and a
+ * text-shadow as a second line of defense, so legibility never depends
+ * on what happens to be behind it.
+ */
 .heading {
   position: relative;
   z-index: 1;
   text-align: center;
-  margin-bottom: 26px;
+  margin-bottom: 22px;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 16px;
+  padding: 10px 20px;
+  box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.25);
+}
+[data-theme="dark"] .heading {
+  background: rgba(20, 22, 34, 0.82);
 }
 .headingLabel {
   font-family: var(--eg-font-display);
@@ -32,7 +51,7 @@
   font-size: 0.78rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--eg-text-dim);
+  color: var(--accent-color, var(--eg-text-dim));
 }
 .headingTitle {
   font-family: var(--eg-font-display);
@@ -54,8 +73,17 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  width: min(440px, 92vw);
+  gap: 18px;
+  /* calc() instead of width:100% + margin — width:100% means 100% of the
+   * PARENT's width; adding margin on top of that overflows the parent by
+   * exactly the margin amount, the same trap fixed elsewhere in this
+   * pre-play flow (see EntryScreen.module.css's card width comment).
+   * Subtracting the margin from the width directly is what actually
+   * keeps this contained. */
+  width: calc(100% - 20px);
+  max-width: 440px;
+  margin: 0 10px;
+  box-sizing: border-box;
 }
 
 .tierButton {
@@ -63,6 +91,7 @@
   align-items: center;
   gap: 16px;
   width: 100%;
+  box-sizing: border-box;
   border: none;
   border-radius: 18px;
   cursor: pointer;
@@ -117,6 +146,10 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  /* Lets text truncate/wrap inside a flex row instead of forcing the
+   * row wider than its container — without this, long difficulty
+   * descriptions on a narrow phone could push .tierButton past 100%. */
+  min-width: 0;
 }
 .tierTopRow {
   display: flex;
@@ -159,6 +192,41 @@
 .tierEASY .intensityBar.filled { background: #3f9c5c; }
 .tierMEDIUM .intensityBar.filled { background: #e0980f; }
 .tierHARD .intensityBar.filled { background: #d8473a; }
+
+/* Narrow phones: scale the whole escalation down together so HARD's
+ * larger padding/icon/text still fits comfortably instead of forcing a
+ * cramped fit at full desktop scale. */
+@media (max-width: 420px) {
+  .tierList {
+    gap: 12px;
+  }
+  .tierButton {
+    gap: 12px;
+  }
+  .tierEASY { padding: 11px 14px; }
+  .tierMEDIUM { padding: 13px 15px; }
+  .tierHARD { padding: 15px 16px; }
+
+  .tierEASY .tierIconWrap { width: 36px; height: 36px; }
+  .tierMEDIUM .tierIconWrap { width: 40px; height: 40px; }
+  .tierHARD .tierIconWrap { width: 44px; height: 44px; }
+
+  .tierEASY .tierEmoji { font-size: 1.05rem; }
+  .tierMEDIUM .tierEmoji { font-size: 1.2rem; }
+  .tierHARD .tierEmoji { font-size: 1.3rem; }
+
+  .tierEASY .tierLabel { font-size: 0.88rem; }
+  .tierMEDIUM .tierLabel { font-size: 0.95rem; }
+  .tierHARD .tierLabel { font-size: 1.04rem; }
+
+  .tierEASY .tierDesc { font-size: 0.7rem; }
+  .tierMEDIUM .tierDesc { font-size: 0.73rem; }
+  .tierHARD .tierDesc { font-size: 0.76rem; }
+
+  .headingTitle {
+    font-size: 1.22rem;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .mascotRow {

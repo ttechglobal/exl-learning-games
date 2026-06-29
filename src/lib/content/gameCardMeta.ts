@@ -38,11 +38,21 @@ export const GAME_CARD_ART: Record<string, string> = {
    * broken, but this should get its own artwork before this game is
    * actually promoted/featured anywhere prominent.
    */
-  "build-the-atom": "/mascot/card-atom-forge.svg"
+  "build-the-atom": "/mascot/card-atom-forge.svg",
+  /**
+   * Hand-coded SVG, same construction as card-atom-forge.svg /
+   * card-element-hunter.svg — no image-generation pipeline involved,
+   * per direct instruction ("you can do the game image, the same the
+   * other ones were done, without necessarily generating the image
+   * specially"). Depicts methane (one carbon, four hydrogens) — Carbon
+   * Builder's actual first mission, not a generic chemistry icon.
+   */
+  "carbon-builder": "/mascot/card-carbon-builder.svg"
 };
 
 export const GAME_CARD_DESC: Record<string, string> = {
   "atom-forge": "Bond atoms together and repair the machine that builds the world's materials.",
   "element-hunter": "Race the clock to spot elements by atomic number, group, and valence electrons.",
-  "build-the-atom": "Add protons, neutrons, and electrons to build the exact atom or isotope you're given."
+  "build-the-atom": "Add protons, neutrons, and electrons to build the exact atom or isotope you're given.",
+  "carbon-builder": "Drag atoms together and build real molecules — one bond at a time, within carbon's strict 4-bond limit."
 };

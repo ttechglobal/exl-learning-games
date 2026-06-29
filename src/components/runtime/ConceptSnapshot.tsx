@@ -6,6 +6,8 @@ import { Mascot } from "@/motion/Mascot";
 import { hasSeenConcepts, markConceptsSeen } from "@/lib/content/contentPrefs";
 import { EnvironmentBackdrop } from "@/components/runtime/EnvironmentBackdrop";
 import { resolveGameEnvironmentImages } from "@/lib/content/gameEnvironments";
+import { BackButton } from "@/components/runtime/BackButton";
+import { MissionTopBar } from "@/components/runtime/MissionTopBar";
 import styles from "@/components/runtime/ConceptSnapshot.module.css";
 
 export interface ConceptCard {
@@ -33,6 +35,30 @@ export interface ConceptSnapshotProps {
    * omits engineType and the skip button doesn't render.
    */
   engineType?: string;
+  /**
+   * Game title + subject for the top header bar — same MissionTopBar
+   * every OTHER pre-play screen already shows (Mission Briefing,
+   * Difficulty Select, Mission Objectives, all via PrePlayShell). This
+   * screen previously had NONE of that, because it's mounted by
+   * GameRuntime directly, a different render path than PlayClient's
+   * PrePlayShell-wrapped screens — confirmed via a direct code trace,
+   * not assumed. Optional+undefined-checked rather than required, since
+   * onBack only makes sense when there's somewhere sensible to go back
+   * TO (see onBack's own comment).
+   */
+  gameTitle?: string;
+  subject?: string;
+  /**
+   * Back-button handler for the new header bar. Deliberately optional:
+   * the "reviewingConcepts" revisit flow (reopened from ReflectionScreen
+   * after a mission is already complete) has nowhere sensible to "go
+   * back" TO in the same sense the pre-mission flow does — GameRuntime
+   * only passes this for the initial pre-mission "snapshot" phase, not
+   * the post-mission revisit, so the header's back button simply doesn't
+   * render in that case rather than navigating somewhere confusing.
+   */
+  onBack?: () => void;
+  backLabel?: string;
 }
 
 /**
@@ -59,12 +85,23 @@ export interface ConceptSnapshotProps {
  * ReflectionScreen's "View Concept Summary" — passes it either way, so
  * the backdrop shows in both cases in practice.
  */
-export function ConceptSnapshot({ cards, onContinue, accentColor = "var(--eg-subject-chemistry)", gameSlug, engineType }: ConceptSnapshotProps) {
+export function ConceptSnapshot({
+  cards,
+  onContinue,
+  accentColor = "var(--eg-subject-chemistry)",
+  gameSlug,
+  engineType,
+  gameTitle,
+  subject,
+  onBack,
+  backLabel = "Back"
+}: ConceptSnapshotProps) {
   const [index, setIndex] = useState(0);
   const card = cards[index];
   const isLast = index === cards.length - 1;
   const canSkip = Boolean(engineType) && hasSeenConcepts(engineType!);
   const images = gameSlug ? resolveGameEnvironmentImages(gameSlug) : undefined;
+  const showHeader = Boolean(gameTitle && subject);
 
   function handleContinue() {
     primeAudioOnUserGesture();
@@ -83,6 +120,13 @@ export function ConceptSnapshot({ cards, onContinue, accentColor = "var(--eg-sub
   return (
     <div className={styles.wrap} style={{ "--accent-color": accentColor } as React.CSSProperties}>
       <EnvironmentBackdrop images={images} scrim />
+
+      {showHeader && (
+        <div className={styles.headerRow}>
+          {onBack && <BackButton onBack={onBack} label={backLabel} />}
+          <MissionTopBar gameTitle={gameTitle!} subject={subject!} accentColor={accentColor} />
+        </div>
+      )}
 
       <div className={styles.mascotRow}>
         <Mascot pose="idle" widthPx={96} />

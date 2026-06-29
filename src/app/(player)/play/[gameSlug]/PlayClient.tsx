@@ -7,6 +7,7 @@ import { GameMenu } from "@/components/runtime/GameMenu";
 import { PrePlayShell } from "@/components/runtime/PrePlayShell";
 import { EntryScreen } from "@/app/(player)/play/[gameSlug]/EntryScreen";
 import { LevelSelectScreen } from "@/app/(player)/play/[gameSlug]/LevelSelectScreen";
+import { TrackMapScreen } from "@/app/(player)/play/[gameSlug]/TrackMapScreen";
 import { DifficultySelectScreen } from "@/app/(player)/play/[gameSlug]/DifficultySelectScreen";
 import { MissionObjectivesScreen } from "@/app/(player)/play/[gameSlug]/MissionObjectivesScreen";
 import { resolveMissionObjectives } from "@/lib/content/missionObjectives";
@@ -19,9 +20,13 @@ export interface PlayClientProps {
   game: GameRow;
   missions: MissionRow[];
   initialMissionId: string;
+  /** mission_id -> has at least one successful attempt. Empty set is
+   *  fine/expected for any game not using "trackMap" progression — see
+   *  page.tsx, which only bothers fetching this for trackMap games. */
+  completedMissionIds: Set<string>;
 }
 
-type Screen = "levelSelect" | "entry" | "difficulty" | "objectives" | "runtime";
+type Screen = "levelSelect" | "trackMap" | "entry" | "difficulty" | "objectives" | "runtime";
 
 const SUBJECT_FALLBACK_ACCENT: Record<string, string> = {
   chemistry: "var(--eg-subject-chemistry)",
@@ -90,24 +95,67 @@ const SUBJECT_FALLBACK_ACCENT: Record<string, string> = {
  * it only asks for skip/revisit on Quick Concepts, which now lives inside
  * GameRuntime/ConceptSnapshot instead.
  *
+ * PROGRESSION MODE: previously, whether this game showed a flat level
+ * picker was INFERRED purely from whether mission difficulty values
+ * varied (`new Set(missions.map(m => m.difficulty)).size > 1`). That
+ * broke for Carbon Builder, whose 11 missions deliberately span
+ * EASY/MEDIUM/HARD as one staged sequence, not free-choice levels — the
+ * same "mixed difficulty" signal Atom Forge's real levels also produce,
+ * with a completely different intended experience. Replaced with an
+ * explicit `game.progression_mode` column (see types/db.ts's GameRow
+ * for the full reasoning) with three values:
+ *   - "linear": straight chain, auto-advance via Next Mission. No
+ *     picker screen at all. (Element Hunter, Build the Atom.)
+ *   - "levelSelect": flat, unordered, always-fully-unlocked grid —
+ *     unchanged behavior, still LevelSelectScreen. (Atom Forge.)
+ *   - "trackMap": ordered, LOCKED path — a NEW screen (TrackMapScreen),
+ *     where mission N+1 stays locked until N has a successful attempt.
+ *     (Carbon Builder.)
+ * `progression_mode` is nullable for already-seeded games; null falls
+ * back to the OLD inferred behavior so nothing existing breaks without
+ * a migration (see the `progressionMode` useMemo below).
+ *
  * Level select only shows for games whose missions represent genuinely
  * different LEVELS rather than a content sequence within one continuous
  * difficulty — Atom Forge's 4 missions are real levels (different
  * mechanics/difficulty: ionic, covalent, mixed, timed factory), so the
  * player picks one; Build The Atom's missions are all EASY/MEDIUM content
  * variety at the same difficulty tier, so it stays a straight linear
- * sequence with no picker. Detected by whether mission difficulty actually
- * varies across the list.
+ * sequence with no picker.
  */
-export function PlayClient({ studentId, game, missions, initialMissionId }: PlayClientProps) {
+export function PlayClient({ studentId, game, missions, initialMissionId, completedMissionIds }: PlayClientProps) {
   const router = useRouter();
   const sortedMissions = useMemo(() => [...missions].sort((a, b) => a.sequence_index - b.sequence_index), [missions]);
-  const isLevelBased = useMemo(() => new Set(sortedMissions.map((m) => m.difficulty)).size > 1, [sortedMissions]);
+
+  /**
+   * Falls back to the pre-progression_mode inferred heuristic ONLY when
+   * the column is null (an existing seeded game predating this field) —
+   * every newly-authored game should set this explicitly rather than
+   * relying on inference, per this file's header comment.
+   */
+  const progressionMode = useMemo<"linear" | "levelSelect" | "trackMap">(() => {
+    if (game.progression_mode) return game.progression_mode;
+    const hasMixedDifficulty = new Set(sortedMissions.map((m) => m.difficulty)).size > 1;
+    return hasMixedDifficulty ? "levelSelect" : "linear";
+  }, [game.progression_mode, sortedMissions]);
+
+  const isLevelBased = progressionMode === "levelSelect";
+  const isTrackMap = progressionMode === "trackMap";
   const supportsDifficultyChoice = engineSupportsDifficultyChoice(game.engine_type);
 
-  const [screen, setScreen] = useState<Screen>(isLevelBased ? "levelSelect" : "entry");
+  const [screen, setScreen] = useState<Screen>(isLevelBased ? "levelSelect" : isTrackMap ? "trackMap" : "entry");
   const [activeMissionId, setActiveMissionId] = useState(initialMissionId);
   const [playerDifficulty, setPlayerDifficulty] = useState<PlayerDifficulty | null>(null);
+  /**
+   * Mirrors the server-fetched completedMissionIds prop, but kept as
+   * local state so a freshly-completed mission can flip TrackMapScreen's
+   * lock state immediately (unlocking the next step) without a full page
+   * reload/re-fetch — onAdvanceToNextMission below adds the
+   * just-finished mission's id into this set client-side, which is safe
+   * here ONLY because reaching onAdvanceToNextMission at all already
+   * means GameRuntime reported a successful completion.
+   */
+  const [locallyCompletedIds, setLocallyCompletedIds] = useState(completedMissionIds);
   /**
    * No UI control sets this true anymore — GameMenu's Pause/Resume button
    * was removed per the gameplay-redesign brief (section 6: "Restart
@@ -158,14 +206,15 @@ export function PlayClient({ studentId, game, missions, initialMissionId }: Play
    * Per-screen back destination. A literal step backward through THIS
    * sequence (not browser history) — mirrors how GameMenu's Exit always
    * goes to a fixed /worlds rather than trusting wherever history points.
-   *   - levelSelect (the first screen when shown) -> /worlds
-   *   - entry -> levelSelect if this game has one, else /worlds
+   *   - levelSelect / trackMap (the first screen when shown) -> /worlds
+   *   - entry -> levelSelect/trackMap if this game has one, else /worlds
    *   - difficulty -> entry
    *   - objectives -> difficulty if the engine showed one, else entry
    */
   function handleBack() {
     if (screen === "entry") {
       if (isLevelBased) setScreen("levelSelect");
+      else if (isTrackMap) setScreen("trackMap");
       else router.push("/worlds");
       return;
     }
@@ -177,7 +226,7 @@ export function PlayClient({ studentId, game, missions, initialMissionId }: Play
       setScreen(supportsDifficultyChoice ? "difficulty" : "entry");
       return;
     }
-    // levelSelect, or any unexpected state
+    // levelSelect, trackMap, or any unexpected state
     router.push("/worlds");
   }
 
@@ -204,6 +253,28 @@ export function PlayClient({ studentId, game, missions, initialMissionId }: Play
     );
   }
 
+  if (screen === "trackMap") {
+    return (
+      <PrePlayShell
+        gameSlug={game.slug}
+        gameTitle={game.title}
+        subject={game.subject}
+        onBack={() => router.push("/worlds")}
+        backLabel="Back to Worlds"
+      >
+        <TrackMapScreen
+          gameTitle={game.title}
+          missions={sortedMissions}
+          completedMissionIds={locallyCompletedIds}
+          onSelect={(missionId: string) => {
+            setActiveMissionId(missionId);
+            setScreen("entry");
+          }}
+        />
+      </PrePlayShell>
+    );
+  }
+
   if (screen === "entry") {
     return (
       <PrePlayShell
@@ -212,7 +283,7 @@ export function PlayClient({ studentId, game, missions, initialMissionId }: Play
         subject={game.subject}
         accentColor={resolveAccentColor()}
         onBack={handleBack}
-        backLabel={isLevelBased ? "Back to Levels" : "Back to Worlds"}
+        backLabel={isLevelBased ? "Back to Levels" : isTrackMap ? "Back to Map" : "Back to Worlds"}
       >
         <EntryScreen
           gameSlug={game.slug}
@@ -269,9 +340,29 @@ export function PlayClient({ studentId, game, missions, initialMissionId }: Play
   // screen === 'runtime'
   return (
     <GameRuntime
-      key={runtimeResetKey}
+      // Keyed on BOTH runtimeResetKey (bumped on explicit Restart) AND
+      // activeMission.id — the mission-id part is the actual fix for a
+      // real bug this round's "skip pregame screens" change would
+      // otherwise introduce: GameRuntime's internal phase state
+      // (useState<Phase>("snapshot")) only initializes on a genuine
+      // mount, never resets on a prop change alone. The OLD flow (mission
+      // N+1 routed through "entry"/"objectives" before reaching
+      // "runtime" again) happened to get a correct reset for free,
+      // because switching screen away from "runtime" unmounted
+      // GameRuntime entirely, then mounting it again for screen ===
+      // "runtime" was a genuinely fresh instance. The NEW trackMap path
+      // (see onAdvanceToNextMission below) goes straight from one
+      // mission's "runtime" to the next mission's "runtime" with NO
+      // screen change in between — same component instance the whole
+      // time, so without this key change, GameRuntime would still be
+      // sitting in phase "reflection" (left over from the mission that
+      // just finished) when the new mission's props arrive, instead of
+      // starting the new mission at phase "snapshot" as it should.
+      key={`${runtimeResetKey}-${activeMission.id}`}
       gameId={game.id}
       gameSlug={game.slug}
+      gameTitle={game.title}
+      subject={game.subject}
       studentId={studentId}
       engineType={game.engine_type}
       sharedConfig={game.shared_config}
@@ -288,13 +379,49 @@ export function PlayClient({ studentId, game, missions, initialMissionId }: Play
       hasNextMission={Boolean(nextMission) && !isLevelBased}
       reviewSuccessLines={[
         `You successfully created ${(activeMission.payload as { resultLabel?: string }).resultLabel ?? activeMission.title}.`,
-        "Review the Concept Snapshot any time from this screen."
+        "Review the Concept Snapshot any time from this screen.",
+        // Explicit unlock confirmation per direct feedback ("when a
+        // user completes a level it should unlock the next one") — the
+        // unlock itself was already happening correctly
+        // (locallyCompletedIds gets the just-finished mission added in
+        // onAdvanceToNextMission below, the real mechanism
+        // TrackMapScreen's lock check reads from), but nothing told the
+        // PLAYER it happened. This line makes the unlock a visible,
+        // named confirmation rather than a silent state change the
+        // player would only discover by going back to the map.
+        ...(isTrackMap && nextMission ? [`🔓 "${nextMission.title}" is now unlocked!`] : [])
       ]}
       playerDifficulty={playerDifficulty}
       isPaused={isPaused}
       menu={menu}
       onAdvanceToNextMission={() => {
-        if (isLevelBased) {
+        if (isTrackMap) {
+          // Unlock the just-finished mission's successor immediately
+          // (client-side, ahead of the next full page load re-fetching
+          // from the DB — see locallyCompletedIds' doc comment above for
+          // why this is safe). Per direct feedback ("after completing a
+          // mission, the user should be able to start the next mission
+          // without necessarily going through all the pregame
+          // screens"): goes straight to "runtime" (gameplay), skipping
+          // Mission Briefing/Objectives entirely — NOT just skipping to
+          // "entry" as an earlier revision did. ReflectionScreen (Mission
+          // Complete, with its Next Mission button) is still the one
+          // screen shown between missions — that satisfies "one quick
+          // transition screen" without forcing a second click-through
+          // for content the player has already seen on every earlier
+          // mission of this same game. The map stays available via Back
+          // for a player who WANTS to stop and look at the whole path.
+          setLocallyCompletedIds((prev) => new Set(prev).add(activeMission.id));
+          if (nextMission) {
+            setActiveMissionId(nextMission.id);
+            setScreen("runtime");
+          } else {
+            // Finished the whole track — nothing left to unlock, so
+            // there's nowhere more useful to land than the map itself,
+            // now showing every step completed.
+            setScreen("trackMap");
+          }
+        } else if (isLevelBased) {
           // Level-based games return to the level picker rather than
           // auto-advancing to a "next" level — completing Level 1 doesn't
           // imply Level 2 is what the player wants next.
@@ -305,6 +432,7 @@ export function PlayClient({ studentId, game, missions, initialMissionId }: Play
         }
       }}
       onBackToHome={() => router.push("/worlds")}
+      onBackFromConcepts={() => setScreen("objectives")}
     />
   );
 }

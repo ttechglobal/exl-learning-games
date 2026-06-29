@@ -20,7 +20,9 @@ const BRIEFING_BY_SLUG: Record<string, string> = {
   "build-the-atom":
     "Welcome, Scientist. A specimen has arrived with no label. Reconstruct it atom by atom to identify exactly what it is.",
   "element-hunter":
-    "Welcome, Scientist. Elements have scattered across the lab shelves. Track down the right ones before the timer runs out."
+    "Welcome, Scientist. Elements have scattered across the lab shelves. Track down the right ones before the timer runs out.",
+  "carbon-builder":
+    "Welcome, Scientist. The lab needs working molecules, not loose atoms — bond them correctly, respecting every element's bonding limit, or the structure won't hold."
 };
 
 const FALLBACK_BRIEFING = "Welcome back. Your next challenge is ready — complete it to earn XP and keep climbing.";

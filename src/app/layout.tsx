@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
+import { PlayerNamePrompt } from "@/components/identity/PlayerNamePrompt";
 import "@/motion/tokens.css";
 
 export const metadata: Metadata = {
@@ -26,7 +27,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           fontFamily: "var(--eg-font-body)"
         }}
       >
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <PlayerNamePrompt />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

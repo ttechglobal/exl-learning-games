@@ -42,6 +42,40 @@ export interface GameRow {
    * needs to write that same shape into the DB.
    */
   snapshot: { cards: { title: string; body: string }[] };
+  /**
+   * How the player moves between this game's missions — see
+   * PlayClient.tsx's header comment for the full explanation of why
+   * this exists as an explicit column rather than staying inferred.
+   *
+   * Previously, PlayClient auto-detected "level-based" purely from
+   * whether mission difficulty values varied across the list (`new
+   * Set(missions.map(m => m.difficulty)).size > 1`). That heuristic
+   * broke for Carbon Builder: its 11 missions deliberately span
+   * EASY/MEDIUM/HARD as a single staged sequence (hydrogen gas all the
+   * way to isobutane), not free-choice levels — but mixed difficulty
+   * values triggered the same "show a flat unordered picker, never
+   * auto-advance" behavior built for Atom Forge's genuinely-separate
+   * levels. Same data shape, two different intended experiences; an
+   * inferred flag couldn't tell them apart.
+   *
+   * - "linear": straight chain by sequence_index, auto-advances via
+   *   the Reflection screen's Next Mission button. No picker shown.
+   *   (Element Hunter, Build the Atom.)
+   * - "levelSelect": flat, unordered grid; player can play any mission
+   *   anytime in any order; completing one never auto-advances, it
+   *   returns to the grid. (Atom Forge — levels are genuinely
+   *   different mechanics, not a sequence.)
+   * - "trackMap": ordered, LOCKED path — mission N+1 is locked until
+   *   N has at least one successful attempt; shown as a track/map, not
+   *   a flat grid. (Carbon Builder.)
+   *
+   * Nullable for backward compatibility with existing seeded rows
+   * (same additive-column pattern as MissionRow.learning_goal) — null
+   * falls back to the OLD inferred behavior (mixed difficulty ->
+   * levelSelect, else linear) so already-seeded games keep working
+   * unchanged without needing a migration before this ships.
+   */
+  progression_mode: "linear" | "levelSelect" | "trackMap" | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;

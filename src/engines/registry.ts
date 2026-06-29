@@ -6,6 +6,8 @@ import { TileMatchEngine } from "@/engines/tile-match/TileMatchEngine";
 import { TileMatchSharedConfigSchema } from "@/engines/tile-match/tileMatch.config";
 import { BondMatchEngine } from "@/engines/bond-match/BondMatchEngine";
 import { BondMatchSharedConfigSchema } from "@/engines/bond-match/bondMatch.config";
+import { MoleculeBuilderEngine } from "@/engines/molecule-builder/MoleculeBuilderEngine";
+import { MoleculeBuilderSharedConfigSchema } from "@/engines/molecule-builder/moleculeBuilder.config";
 
 /**
  * Single source of truth mapping a Game's `engine_type` string to the
@@ -30,10 +32,17 @@ const bondMatchDefinition: EngineDefinition = {
   Component: BondMatchEngine as unknown as EngineDefinition["Component"]
 };
 
+const moleculeBuilderDefinition: EngineDefinition = {
+  engineType: "molecule-builder",
+  configSchema: MoleculeBuilderSharedConfigSchema as unknown as z.ZodSchema<unknown>,
+  Component: MoleculeBuilderEngine as unknown as EngineDefinition["Component"]
+};
+
 const registry: Record<string, EngineDefinition> = {
   "particle-assembly": particleAssemblyDefinition,
   "tile-match": tileMatchDefinition,
-  "bond-match": bondMatchDefinition
+  "bond-match": bondMatchDefinition,
+  "molecule-builder": moleculeBuilderDefinition
   // "multi-stage": multiStageDefinition  — add once src/engines/multi-stage is built
 };
 

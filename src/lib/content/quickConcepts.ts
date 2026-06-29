@@ -69,6 +69,32 @@ const QUICK_CONCEPTS_BY_SLUG: Record<string, QuickConceptCard[]> = {
       title: "Stuck? Use a Hint",
       body: "Tap Hint to learn the pattern. It won't give away the answer."
     }
+  ],
+  /**
+   * Per docs/carbon-builder.md Section 3's draft set, refined into the
+   * platform's "one short idea, one short example" card format.
+   */
+  "carbon-builder": [
+    {
+      title: "How to Play",
+      body: "Drag atoms onto the build surface. Tap two placed atoms to bond them. Hit Submit when you're done."
+    },
+    {
+      title: "Carbon's Rule",
+      body: "Carbon always makes exactly 4 bonds — never more, never fewer. Watch the counter on each carbon."
+    },
+    {
+      title: "Filling the Rest",
+      body: "After carbon's other bonds are placed, hydrogen fills whatever's left. Methane's carbon takes 4 hydrogens."
+    },
+    {
+      title: "Double & Triple Bonds",
+      body: "Some bonds count for more than one slot. A double bond uses 2 of carbon's 4 slots by itself."
+    },
+    {
+      title: "Stuck? Use a Hint",
+      body: "Tap Hint to see what's still missing. It won't place the bond for you."
+    }
   ]
 };
 

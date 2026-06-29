@@ -30,6 +30,14 @@ export interface GameRuntimeProps {
    *  across environments in a way a row's literal id isn't guaranteed
    *  to be if the DB is ever reseeded. */
   gameSlug: string;
+  /** Added alongside Quick Concepts' new header bar (see ConceptSnapshot
+   *  usage below) — previously GameRuntime had no need for either of
+   *  these, since the gameplay/Reflection screens it owns don't show a
+   *  title bar at all. PlayClient.tsx already has both (it's how
+   *  PrePlayShell gets them for every OTHER pre-play screen), so this is
+   *  plain plumbing, not new data. */
+  gameTitle: string;
+  subject: string;
   studentId: string;
   engineType: string;
   sharedConfig: Record<string, unknown>;
@@ -42,6 +50,22 @@ export interface GameRuntimeProps {
    *  actual router call, same as BackButton's onBack callbacks) — wired
    *  to ReflectionScreen's new "Back to Home" button. */
   onBackToHome: () => void;
+  /**
+   * Returns to the Mission Objectives screen — the literal previous step
+   * before GameRuntime mounts (see PlayClient.tsx: `screen ===
+   * "objectives"` is what calls setScreen("runtime") to get here). Used
+   * by Quick Concepts' new header back button during the initial
+   * pre-mission "snapshot" phase ONLY — NOT the post-mission
+   * "reviewingConcepts" revisit, which has nowhere equivalent to go back
+   * to (see ConceptSnapshotProps.onBack's comment). Matches every OTHER
+   * pre-play screen's "back goes one step back in this exact flow"
+   * convention (PrePlayShell's handleBack in PlayClient.tsx) — this is
+   * NOT the same as onBackToHome, which exits the whole play flow to
+   * /worlds; conflating the two would mean Quick Concepts' back button
+   * skips past Objectives/Difficulty/Briefing entirely, unlike every
+   * other screen's back button.
+   */
+  onBackFromConcepts: () => void;
   /**
    * Player-chosen difficulty (see DifficultySelectScreen / PlayClient) —
    * null when the engine has no real modifiers defined
@@ -124,6 +148,8 @@ function resolveSnapshotCards(gameSlug: string, snapshot: { cards: { title: stri
 export function GameRuntime({
   gameId,
   gameSlug,
+  gameTitle,
+  subject,
   studentId,
   engineType,
   sharedConfig,
@@ -133,6 +159,7 @@ export function GameRuntime({
   reviewSuccessLines,
   onAdvanceToNextMission,
   onBackToHome,
+  onBackFromConcepts,
   playerDifficulty,
   isPaused,
   menu
@@ -219,6 +246,15 @@ export function GameRuntime({
         onContinue={() => setPhase(phase === "reviewingConcepts" ? "reflection" : "playing")}
         engineType={phase === "snapshot" ? engineType : undefined}
         gameSlug={gameSlug}
+        gameTitle={gameTitle}
+        subject={subject}
+        // Only the initial pre-mission "snapshot" phase gets a working
+        // Back — there's nowhere sensible to navigate "back" to from
+        // the post-mission "reviewingConcepts" revisit (the mission is
+        // already done; Reflection already has its own way back). See
+        // ConceptSnapshotProps.onBack's doc comment.
+        onBack={phase === "snapshot" ? onBackFromConcepts : undefined}
+        backLabel="Back to Objectives"
       />
     );
   }

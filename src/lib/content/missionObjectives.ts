@@ -46,6 +46,13 @@ const OBJECTIVES_BY_ENGINE: Record<string, MissionObjectives> = {
       "Clear the whole board.",
       "Earn bonus XP for fewer wrong attempts."
     ]
+  },
+  "molecule-builder": {
+    items: [
+      "Drag atoms onto the build surface and bond them together.",
+      "Respect every atom's maximum bond count — watch the counters.",
+      "Hit Submit when your structure matches the target."
+    ]
   }
 };
 

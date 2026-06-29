@@ -33,6 +33,18 @@ const HINT_BY_CLUE_TYPE: Record<ClueType, HintContent> = {
     tip: "Count along the periodic table starting from Hydrogen (1). Count by real element order, not by where a tile happens to sit on screen.",
     illustration: "⚛️"
   },
+  electron_number: {
+    concept: "Electron Number",
+    explanation: "A neutral atom has the same number of electrons as protons — so its electron count is the same as its atomic number.",
+    tip: "Look at the number on the tile, same as an Atomic Number clue — for a neutral atom, it's the exact same number either way.",
+    illustration: "💫"
+  },
+  period: {
+    concept: "Periods",
+    explanation: "A period is a row on the periodic table. Elements in the same period have the same number of electron shells.",
+    tip: "Period 1 is just H and He. Each new period starts a new row as atomic number increases.",
+    illustration: "📊"
+  },
   group: {
     concept: "Element Groups",
     explanation: "Elements in the same group share a column on the periodic table and behave similarly because they have the same number of valence electrons.",
@@ -44,6 +56,12 @@ const HINT_BY_CLUE_TYPE: Record<ClueType, HintContent> = {
     explanation: "Valence electrons sit in the outermost shell of an atom, and they're what decide how an element bonds with others.",
     tip: "For main-group elements, the group number is a strong clue to how many valence electrons there are.",
     illustration: "⚡"
+  },
+  mass_number: {
+    concept: "Mass Number",
+    explanation: "The mass number is the total count of protons and neutrons in an atom's nucleus — it's roughly the element's atomic weight, rounded to a whole number.",
+    tip: "Mass number is usually close to double the atomic number for lighter elements, but check the actual tile — don't just guess from atomic number alone.",
+    illustration: "⚖️"
   }
 };
 

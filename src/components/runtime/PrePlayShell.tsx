@@ -54,7 +54,7 @@ export function PrePlayShell({ gameSlug, gameTitle, subject, accentColor, onBack
 
   return (
     <div className={styles.shell} style={accentColor ? ({ "--accent-color": accentColor } as React.CSSProperties) : undefined}>
-      <EnvironmentBackdrop images={images} fallbackSrc="/mascot/scene-backdrop.svg" scrim />
+      <EnvironmentBackdrop images={images} fallbackSrc="/illustrations/generic-fallback.png" scrim />
 
       <div className={styles.inner}>
         <div className={styles.headerRow}>

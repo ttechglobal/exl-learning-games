@@ -26,6 +26,27 @@
   overflow: hidden;
 }
 
+/* Matches PrePlayShell.module.css's .headerRow exactly — same visual
+ * treatment every other pre-play screen already gets, since this screen
+ * is mounted by GameRuntime directly (not through PrePlayShell) and
+ * previously had no header bar at all. position: absolute (rather than
+ * a normal flex child of .wrap) because .wrap centers its children
+ * vertically — a real flex child here would push the centered
+ * mascot/card down to make room for it, when the actual intent is for
+ * this to sit pinned at the very top, same as every other screen. */
+.headerRow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px 4px;
+  box-sizing: border-box;
+}
+
 .mascotRow {
   position: relative;
   z-index: 1;

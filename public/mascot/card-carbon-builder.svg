@@ -1,0 +1,48 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!--
+    card-carbon-builder.svg
+
+    Hand-coded SVG card art, matching how card-atom-forge.svg and
+    card-element-hunter.svg are built (flat, iconographic, no photo
+    generation) per direct instruction — "you can do the game image,
+    the same the other ones were done, without necessarily generating
+    the image specially."
+
+    Depicts a small methane-like molecule (one central carbon, four
+    hydrogens) — Carbon Builder's actual first mission, not a generic
+    chemistry icon. Colors match the real atom palette from
+    atomRoster.ts exactly: carbon #2f9bd6, hydrogen #dcd6ff.
+  -->
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="42%" r="65%">
+      <stop offset="0%" stop-color="#2f9bd6" stop-opacity="0.16" />
+      <stop offset="100%" stop-color="#2f9bd6" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <rect width="200" height="200" rx="24" fill="#f4f0ff" />
+  <circle cx="100" cy="92" r="92" fill="url(#bgGlow)" />
+
+  <!-- Bonds (drawn first, so atom circles sit on top of the bond lines) -->
+  <line x1="100" y1="100" x2="100" y2="56" stroke="#9a8fc2" stroke-width="6" stroke-linecap="round" />
+  <line x1="100" y1="100" x2="100" y2="144" stroke="#9a8fc2" stroke-width="6" stroke-linecap="round" />
+  <line x1="100" y1="100" x2="60" y2="100" stroke="#9a8fc2" stroke-width="6" stroke-linecap="round" />
+  <line x1="100" y1="100" x2="140" y2="100" stroke="#9a8fc2" stroke-width="6" stroke-linecap="round" />
+
+  <!-- Central carbon -->
+  <circle cx="100" cy="100" r="26" fill="#2f9bd6" stroke="#1f6e9c" stroke-width="3" />
+  <text x="100" y="107" font-family="'Baloo 2', 'Space Grotesk', sans-serif" font-weight="700" font-size="20" fill="#ffffff" text-anchor="middle">C</text>
+
+  <!-- Four hydrogens -->
+  <circle cx="100" cy="44" r="16" fill="#dcd6ff" stroke="#9a8fc2" stroke-width="2.5" />
+  <text x="100" y="50" font-family="'Baloo 2', 'Space Grotesk', sans-serif" font-weight="700" font-size="14" fill="#5b4f9c" text-anchor="middle">H</text>
+
+  <circle cx="100" cy="156" r="16" fill="#dcd6ff" stroke="#9a8fc2" stroke-width="2.5" />
+  <text x="100" y="162" font-family="'Baloo 2', 'Space Grotesk', sans-serif" font-weight="700" font-size="14" fill="#5b4f9c" text-anchor="middle">H</text>
+
+  <circle cx="44" cy="100" r="16" fill="#dcd6ff" stroke="#9a8fc2" stroke-width="2.5" />
+  <text x="44" y="106" font-family="'Baloo 2', 'Space Grotesk', sans-serif" font-weight="700" font-size="14" fill="#5b4f9c" text-anchor="middle">H</text>
+
+  <circle cx="156" cy="100" r="16" fill="#dcd6ff" stroke="#9a8fc2" stroke-width="2.5" />
+  <text x="156" y="106" font-family="'Baloo 2', 'Space Grotesk', sans-serif" font-weight="700" font-size="14" fill="#5b4f9c" text-anchor="middle">H</text>
+</svg>

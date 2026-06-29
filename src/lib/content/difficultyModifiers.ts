@@ -27,8 +27,29 @@
  * each time:
  *   - bond-match: dock size/distractor count (see correction above) +
  *     sessionDurationSec + hint visibility, all three together
- *   - tile-match: tileCount (a real schema field controlling board size)
- *     + sessionDurationSec
+ *   - tile-match: REPLACES `tiers` outright, not just tileCount/timer.
+ *     CORRECTION FROM AN EARLIER REVISION: Easy/Medium/Hard used to only
+ *     touch sessionDurationSec + tileCount, leaving whatever clueTypes
+ *     mix the DB-authored tiers happened to contain untouched — so a
+ *     player picking Easy still got group/valence/mass_number clues
+ *     mixed in with atomic_number, identical in content to Hard, just
+ *     faster-paced. That's exactly the timer-only anti-pattern Part 6
+ *     warns against, just one level deeper (tileCount isn't a timer, but
+ *     it's the same shape of fix-nothing-about-the-actual-question
+ *     problem). Fixed by giving each difficulty its OWN single-tier
+ *     clueTypes set, locked to genuinely different question content:
+ *       EASY:   atomic_number, electron_number — both are "read the
+ *               number straight off the tile," just asked two ways.
+ *       MEDIUM: + period, valence — now requires knowing WHERE an
+ *               element sits and how it bonds, not just reading a label.
+ *       HARD:   + mass_number, group — mass number requires connecting
+ *               atomic weight to identity (not shown as plainly as
+ *               atomic number), and group requires real periodic-table
+ *               knowledge, not a single visible number at all.
+ *     advanceAfterCorrect/advanceAfterSec are kept generous and
+ *     identical across all three (see TILE_MATCH_TIER_PACING below) since
+ *     this is a single-tier-per-difficulty design now — there's no
+ *     in-session tier-up to pace, just one fixed bucket of questions.
  *   - particle-assembly: no honest timer (untimed, checked on submit) —
  *     its levers are feedbackRules verbosity AND hideTargetNumbers (added
  *     specifically for this, see particleAssembly.config.ts); Hard
@@ -111,6 +132,38 @@ function mergeFactoryOverrideIfPresent(config: Record<string, unknown>, sessionD
   return { factory: { sessionDurationSec } };
 }
 
+/** Locked clue-type sets per difficulty — see the long comment above on
+ *  tile-match's correction. These are the actual content-difficulty
+ *  segregation; everything else for tile-match (pacing fields below) is
+ *  just plumbing to keep the Tier shape valid. */
+const TILE_MATCH_CLUES: Record<PlayerDifficulty, import("@/engines/tile-match/tileMatch.config").ClueType[]> = {
+  EASY: ["atomic_number", "electron_number"],
+  MEDIUM: ["atomic_number", "electron_number", "period", "valence"],
+  HARD: ["atomic_number", "electron_number", "period", "valence", "mass_number", "group"]
+};
+
+/** Single-tier pacing for tile-match's difficulty-locked design: since
+ *  each difficulty is now ONE tier with a fixed clueTypes set (not a
+ *  multi-tier in-session progression), advanceAfterCorrect/
+ *  advanceAfterSec just need to be large enough that the tier never
+ *  actually advances mid-session — there's nowhere to advance TO, only
+ *  one tier exists per difficulty. Values are session-length-sized on
+ *  purpose, not tuned per difficulty, since pacing isn't what
+ *  distinguishes these tiers anymore; clueTypes is.
+ */
+function buildSingleTier(clueTypes: import("@/engines/tile-match/tileMatch.config").ClueType[]): Record<string, unknown> {
+  return {
+    tiers: [
+      {
+        tier: 1,
+        clueTypes,
+        advanceAfterCorrect: 9999,
+        advanceAfterSec: 9999
+      }
+    ]
+  };
+}
+
 const MODIFIERS_BY_ENGINE: Record<string, ModifierSet> = {
   /**
    * BUG FIX: EASY and HARD used to unconditionally include a `factory`
@@ -149,9 +202,18 @@ const MODIFIERS_BY_ENGINE: Record<string, ModifierSet> = {
     })
   },
   "tile-match": {
-    EASY: { sessionDurationSec: 90, tileCount: 4 },
-    MEDIUM: { sessionDurationSec: 60, tileCount: 6 },
-    HARD: { sessionDurationSec: 40, tileCount: 9 }
+    // EASY's sessionDurationSec was reduced from 90 -> 60 per direct
+    // product feedback. Worth noting for future difficulty-tuning passes:
+    // this means Easy and Medium are now the SAME duration (60s) — the
+    // gap between them is carried entirely by clueTypes (see
+    // TILE_MATCH_CLUES above: Easy is atomic_number/electron_number only,
+    // Medium adds period/valence), not by time pressure at all anymore.
+    // That's consistent with this file's core principle (difficulty
+    // should change content, not just the clock) but flagged here in case
+    // "Easy and Medium take the same time" wasn't the intended outcome.
+    EASY: () => ({ sessionDurationSec: 60, tileCount: 4, ...buildSingleTier(TILE_MATCH_CLUES.EASY) }),
+    MEDIUM: () => ({ sessionDurationSec: 60, tileCount: 6, ...buildSingleTier(TILE_MATCH_CLUES.MEDIUM) }),
+    HARD: () => ({ sessionDurationSec: 40, tileCount: 9, ...buildSingleTier(TILE_MATCH_CLUES.HARD) })
   },
   "particle-assembly": {
     // No timer to adjust honestly (see file header) — Easy/Medium keep the

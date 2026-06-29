@@ -1,0 +1,95 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 14, 34, 0.55);
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.card {
+  width: min(380px, 100%);
+  background: #fff;
+  border-radius: 20px;
+  padding: 26px 24px;
+  box-sizing: border-box;
+  box-shadow: 0 14px 0 rgba(0, 0, 0, 0.06), 0 18px 36px rgba(43, 28, 74, 0.18);
+  border: 3px solid #7b4fcb;
+}
+[data-theme="dark"] .card {
+  background: #1c2030;
+}
+
+.title {
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--eg-text-bright);
+  text-align: center;
+}
+
+.subtitle {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: var(--eg-text-dim);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.input {
+  margin-top: 18px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 2px solid rgba(123, 79, 203, 0.3);
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--eg-text-bright);
+  background: rgba(123, 79, 203, 0.05);
+}
+.input:focus {
+  outline: none;
+  border-color: #7b4fcb;
+}
+
+.actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+}
+
+.skipButton {
+  flex: 1;
+  padding: 11px 0;
+  border-radius: 12px;
+  border: 2px solid rgba(123, 79, 203, 0.25);
+  background: transparent;
+  color: var(--eg-text-dim);
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.saveButton {
+  flex: 2;
+  padding: 11px 0;
+  border-radius: 12px;
+  border: none;
+  background: #7b4fcb;
+  color: #fff;
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #5d3a9e;
+}
+.saveButton:disabled,
+.skipButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

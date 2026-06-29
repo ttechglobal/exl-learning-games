@@ -40,3 +40,32 @@ export async function listAttemptsForStudent(studentId: string, topicId?: string
   if (error) throw error;
   return (data ?? []) as AttemptRow[];
 }
+
+/**
+ * Returns the set of mission_ids this student has at least one
+ * SUCCESSFUL attempt against, scoped to one game — the actual data the
+ * "trackMap" progression mode (see GameRow.progression_mode) needs to
+ * decide which missions are unlocked. A mission with only failed
+ * attempts (success === false) does NOT count as completed and stays
+ * locked — finishing a mission means succeeding at it, not just
+ * attempting it.
+ *
+ * Returns a Set (not an array) since every call site only ever needs
+ * membership checks (`completedMissionIds.has(mission.id)`), and a Set
+ * makes that an O(1) lookup per mission when rendering a track of
+ * potentially many missions, rather than an O(n) `.includes()` per
+ * mission rendered.
+ */
+export async function listCompletedMissionIdsForStudent(studentId: string, gameId: string): Promise<Set<string>> {
+  const { data, error } = await supabaseServer()
+    .from("attempt")
+    .select("mission_id")
+    .eq("student_id", studentId)
+    .eq("game_id", gameId)
+    .eq("success", true);
+
+  if (error) throw error;
+  const rows = (data ?? []) as { mission_id: string | null }[];
+  const ids = rows.map((row) => row.mission_id).filter((id): id is string => Boolean(id));
+  return new Set(ids);
+}

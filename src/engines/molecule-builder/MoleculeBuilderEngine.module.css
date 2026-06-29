@@ -1,0 +1,536 @@
+/**
+ * MoleculeBuilderEngine.module.css
+ *
+ * Built on GameplayShell from the start (no chrome to migrate away from
+ * — see the bond-match/tile-match precedent this follows). Visual
+ * language deliberately echoes bond-match's atom-as-circle styling
+ * (.atomNucleus's color/shadow treatment, .dockCapsule's shape) so
+ * Carbon Builder reads as a sibling chemistry game, not a visually
+ * unrelated one, while the actual interaction (slots + tap-to-bond +
+ * bond-order selector) is new.
+ *
+ * REVISED per direct feedback: "some elements are not visible" and "the
+ * atom elements are scrollable when there's a lot of space down — make
+ * use of the space down." Two genuinely separate, both confirmed bugs:
+ *
+ * 1. TEXT CONTRAST FAILURE (the "not visible" report). Checked the real
+ *    atom colors from atomRoster.ts against the white text the atom
+ *    chip used to hardcode — computed actual WCAG contrast ratios, not
+ *    a guess: Hydrogen (#dcd6ff) scored 1.39:1, Chlorine (#7ee0c3)
+ *    1.57:1, Oxygen (#ff6f91) 2.65:1 — all fail even the lenient 3:1
+ *    large-text minimum; only Carbon barely passed at 3.10:1. Fixed by
+ *    switching atom-chip text to a dark ink color
+ *    (--molecule-text-ink below) instead of white — re-checked, this
+ *    wins for EVERY atom in the roster, all comfortably above the full
+ *    4.5:1 normal-text threshold, not just the lenient one.
+ *
+ * 2. LAYOUT NOT USING AVAILABLE SPACE (the "scrollable / use the space
+ *    down" report). Checked TileMatchEngine.module.css's own history
+ *    before fixing this — it already tried min-height:50vh on its
+ *    panel to force more vertical space, and REVERTED it after a real
+ *    screenshot showed an unintentional-looking dead gap at the TOP of
+ *    the panel instead of the grid actually growing — forcing a
+ *    container taller doesn't make small content look intentional, it
+ *    just adds visible empty space. So this fix does NOT add
+ *    min-height/flex-grow to .buildSurface. Instead, the slot cells and
+ *    atom chips themselves are simply bigger now (96px cells / 80px
+ *    chips on mobile, up from 72px/60px — closer to tile-match's own
+ *    ~90-115px tile scale, the established reference point in this
+ *    codebase for "how big should an interactive game piece be"), so
+ *    the grid's CONTENT naturally fills more of the available space
+ *    rather than a forced-tall empty container around small content.
+ *    .buildSurface's overflow:auto stays (a genuinely large molecule
+ *    like pentane's 17 slots can still legitimately need to scroll on
+ *    a small phone), but it's no longer doing double duty masking a
+ *    grid that's simply too small for the space it sits in.
+ */
+
+.engineColumn {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  gap: 10px;
+}
+
+/* .bondOrderSelector / .orderButton (a single global selector affecting
+ * "whatever bonds next") REMOVED as part of the bonding-mechanic
+ * redesign — see MoleculeBuilderEngine.tsx's file header. Bond-order
+ * choice is now localized to a per-line tap + the .orderPicker* overlay
+ * below, only for Hard-tier missions that actually need one. */
+
+/* flex: 1 so this genuinely grows to fill whatever vertical space
+ * GameplayShell's .gameplayFrame hands the engine — the actual
+ * "use the space down" fix, applied to the CONTAINER. Paired with the
+ * bigger slot/chip sizes below (the content-side half of the fix) so
+ * the result is a grid that's both genuinely larger AND centered
+ * within the real available area, not a small grid floating in an
+ * artificially-stretched empty box (the failure mode TileMatchEngine
+ * already hit and rejected — see file header). overflow-y: auto stays
+ * as a safety net for legitimately large molecules on small screens,
+ * not as the primary sizing mechanism. */
+.buildSurface {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  padding: 12px;
+  overflow: auto;
+}
+
+.slotGrid {
+  position: relative;
+  display: grid;
+  grid-auto-rows: 96px;
+  grid-auto-columns: 96px;
+  gap: 0;
+}
+
+.slotCell {
+  position: relative;
+  z-index: 2;
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bondSvg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: visible;
+}
+.bondLine {
+  stroke-linecap: round;
+}
+/* DASHED, dim — a bond the molecule needs but that isn't formed yet
+ * (one or both ends still empty, or for Hard-tier lines, both ends
+ * filled but no order chosen yet without also being in the
+ * attention-getting "awaiting choice" state below). This is the part
+ * of the redesign that shows the player the whole skeleton shape
+ * upfront — see MoleculeBuilderEngine.tsx's file header. */
+.bondLineOpen {
+  stroke: var(--eg-text-dim);
+  stroke-width: 3;
+  stroke-dasharray: 6 5;
+  opacity: 0.55;
+}
+/* SOLID — the bond is actually formed (present in `bonds`). The visual
+ * "this connection is done" signal the whole redesign hinges on. */
+.bondLineFormed {
+  stroke: var(--accent-color, var(--eg-subject-chemistry));
+  stroke-width: 4;
+  opacity: 1;
+}
+/* Hard-tier only: both ends are filled, but the player hasn't picked an
+ * order for this specific line yet — gold, thicker, animated, to read
+ * as "this one needs your attention" distinctly from the merely-dashed
+ * "still needs an atom" state. */
+.bondLineAwaitingChoice {
+  stroke: var(--eg-gold);
+  stroke-width: 4.5;
+  stroke-dasharray: 6 5;
+  opacity: 1;
+  animation: lineAwaitingPulse 1.2s ease-in-out infinite;
+}
+@keyframes lineAwaitingPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.bondLineTappable {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.emptySlot {
+  box-sizing: border-box;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2.5px dashed rgba(123, 79, 203, 0.35);
+  background: rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  transition: background 0.1s ease, border-color 0.1s ease, transform 0.1s ease;
+}
+[data-theme="dark"] .emptySlot {
+  background: rgba(24, 28, 40, 0.4);
+}
+/* Live highlight while a drag is hovering directly over this slot —
+ * see MoleculeBuilderEngine.tsx's isValidDropTarget. The clearest
+ * possible "drop here" signal during the gesture itself, not just
+ * after release. */
+.emptySlotHover {
+  border-color: var(--eg-gold);
+  border-style: solid;
+  background: color-mix(in srgb, var(--eg-gold) 18%, transparent);
+  transform: scale(1.08);
+}
+.emptySlotHint {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.72rem;
+  color: var(--eg-text-dim);
+  opacity: 0.7;
+}
+
+/* The dragged atom's visual "ghost," following the live pointer
+ * position — see MoleculeBuilderEngine.tsx's dragState render. Fixed
+ * positioning directly at clientX/clientY (NOT relative to any
+ * scrolling container), since dragState's x/y come straight from
+ * PointerEvent.clientX/clientY, which are already viewport-relative.
+ * pointer-events: none so the ghost itself is never a hit-test target
+ * — only the real slots (via findSlotAtPoint) ever are. */
+.dragGhost {
+  position: fixed;
+  z-index: 60;
+  transform: translate(-50%, -50%);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--el-color);
+  box-shadow: 0 6px 0 color-mix(in srgb, var(--el-color) 65%, black), 0 10px 18px rgba(58, 42, 85, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #1c2030;
+  pointer-events: none;
+  opacity: 0.95;
+}
+
+.atomChip {
+  box-sizing: border-box;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: none;
+  background: var(--el-color);
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--el-color) 65%, black), 0 6px 10px rgba(58, 42, 85, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  /* Dark ink, NOT white — see file header's contrast-ratio findings.
+   * Every atom in the roster (including Carbon, the darkest one) reads
+   * well with dark text; white failed badly on the three lighter atoms
+   * (Hydrogen, Chlorine, Oxygen). #1c2030 matches this app's existing
+   * dark-mode background tone, used here purely as a near-black "ink"
+   * color, not a theme reference. */
+  color: #1c2030;
+  font-family: var(--eg-font-display);
+  animation: chipBreathe 3s ease-in-out infinite;
+  transition: transform 0.12s ease;
+}
+@keyframes chipBreathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+/* .atomChip.armed / chipArmed REMOVED — tap-to-arm bonding no longer
+ * exists, see file header. Tapping a placed atom now just removes it
+ * (handleClearSlot), same gesture as the old double-click/right-click
+ * shortcuts, now the PRIMARY way to remove an atom since there's no
+ * "armed" state to conflict with anymore. */
+.atomChip.full {
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--el-color) 65%, black), 0 0 0 3px color-mix(in srgb, #4caf6e 60%, transparent);
+}
+.atomChip.rejecting {
+  animation: chipReject 0.42s ease-in-out;
+}
+@keyframes chipReject {
+  /* Text stays dark ink throughout the reject flash too — the previous
+   * version's keyframe only swapped `background`, which was fine, but
+   * worth being explicit here that the text-color fix above applies
+   * during this animation as well, not just the resting state. */
+  0%, 100% { background: var(--el-color); transform: scale(1); }
+  30% { background: var(--eg-danger); transform: scale(1.15); }
+  60% { background: var(--eg-danger); transform: scale(0.95); }
+}
+.atomSymbol {
+  font-weight: 800;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+.bondCounter {
+  font-weight: 700;
+  font-size: 0.62rem;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+/* Hard-tier only: opened by tapping a line that's awaiting a bond-type
+ * choice (see .bondLineAwaitingChoice above and handleLineTap in the
+ * component). A small centered overlay rather than inline UI on the
+ * line itself, since a tappable target ON a thin SVG line is already
+ * doing double duty as a hit-area; the actual choice happens in a
+ * properly-sized, unambiguous card instead. */
+.orderPickerOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 14, 34, 0.5);
+}
+.orderPickerCard {
+  background: #fff;
+  border-radius: 18px;
+  padding: 20px 22px;
+  box-shadow: 0 10px 0 rgba(0, 0, 0, 0.05), 0 14px 30px rgba(43, 28, 74, 0.18);
+  border: 3px solid var(--eg-gold);
+}
+[data-theme="dark"] .orderPickerCard {
+  background: #1c2030;
+}
+.orderPickerLabel {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--eg-text-bright);
+  text-align: center;
+  margin-bottom: 14px;
+}
+.orderPickerRow {
+  display: flex;
+  gap: 10px;
+}
+.orderPickerButton {
+  box-sizing: border-box;
+  padding: 10px 18px;
+  border-radius: 14px;
+  border: 2px solid rgba(123, 79, 203, 0.3);
+  background: rgba(123, 79, 203, 0.06);
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--eg-text-bright);
+  cursor: pointer;
+}
+.orderPickerButton:active {
+  background: var(--accent-color, var(--eg-subject-chemistry));
+  color: #fff;
+}
+
+.helpText {
+  font-size: 0.72rem;
+  color: var(--eg-text-dim);
+  text-align: center;
+  max-width: min(360px, 90vw);
+  box-sizing: border-box;
+}
+
+.dockWrap {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  padding: 6px 12px;
+}
+.dock {
+  box-sizing: border-box;
+  display: flex;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.93);
+  border: 2.5px solid var(--accent-color, var(--eg-subject-chemistry));
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.05), 0 10px 20px rgba(58, 42, 85, 0.12);
+  overflow-x: auto;
+  max-width: 100%;
+}
+[data-theme="dark"] .dock {
+  background: rgba(24, 28, 40, 0.93);
+}
+.dockCapsule {
+  flex-shrink: 0;
+  width: 56px;
+  height: 74px;
+  border-radius: 28px;
+  background: linear-gradient(180deg, #fff, #f7f3ff);
+  border: 2px solid var(--el-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: grab;
+  touch-action: none;
+  animation: capsuleFloat 3.2s ease-in-out infinite;
+}
+[data-theme="dark"] .dockCapsule {
+  background: linear-gradient(180deg, #1c2030, #181c28);
+}
+@keyframes capsuleFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.dockChipInner {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--el-color);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--el-color) 65%, black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.58rem;
+  color: #fff;
+}
+.dockLabel {
+  font-family: var(--eg-font-display);
+  font-weight: 600;
+  font-size: 0.56rem;
+  color: var(--eg-text-dim);
+}
+
+.submitButton {
+  box-sizing: border-box;
+  padding: 10px 28px;
+  border-radius: 16px;
+  border: none;
+  background: var(--accent-color, var(--eg-subject-chemistry));
+  color: #fff;
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 65%, black);
+}
+.submitButton:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+.engineColumn.shaking {
+  animation: appShake 0.3s ease-in-out;
+}
+@keyframes appShake {
+  0%, 100% { transform: translateX(0); }
+  30% { transform: translateX(-5px); }
+  60% { transform: translateX(5px); }
+}
+
+.feedbackRow {
+  position: fixed;
+  bottom: 156px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  z-index: 35;
+  opacity: 0;
+  box-sizing: border-box;
+  max-width: min(440px, 90vw);
+}
+.feedbackRow .feedbackCard.entering {
+  animation: feedbackShow 2.8s ease-out forwards;
+}
+.feedbackRow {
+  animation: feedbackShow 2.8s ease-out forwards;
+}
+@keyframes feedbackShow {
+  0% { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  85% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+}
+.feedbackCard {
+  background: #fff4f0;
+  border: 2px solid color-mix(in srgb, var(--eg-danger) 40%, transparent);
+  border-radius: 14px;
+  padding: 9px 13px;
+  max-width: 320px;
+}
+[data-theme="dark"] .feedbackCard {
+  background: #2a2030;
+}
+.feedbackEyebrow {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.62rem;
+  color: var(--eg-danger);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 2px;
+}
+.feedbackText {
+  font-size: 0.8rem;
+  color: var(--eg-text-bright);
+  text-align: left;
+}
+
+.xpPop {
+  position: fixed;
+  top: 38%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 40;
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: #4caf6e;
+  pointer-events: none;
+  animation: xpPopFloat 1.1s ease-out forwards;
+}
+@keyframes xpPopFloat {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  25% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+  100% { opacity: 0; transform: translate(-50%, -60%) scale(1); }
+}
+
+.mascotPopup {
+  position: fixed;
+  bottom: 90px;
+  right: 14px;
+  z-index: 7;
+  width: 76px;
+}
+
+@media (min-width: 600px) {
+  .slotGrid {
+    grid-auto-rows: 108px;
+    grid-auto-columns: 108px;
+  }
+  .slotCell {
+    width: 108px;
+    height: 108px;
+  }
+  .atomChip {
+    width: 88px;
+    height: 88px;
+  }
+  .dockCapsule {
+    width: 64px;
+    height: 82px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atomChip, .dockCapsule, .engineColumn.shaking, .feedbackRow, .xpPop {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

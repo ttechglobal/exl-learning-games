@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getHighScores, qualifiesAsHighScore, saveHighScore, type HighScoreEntry as LocalHighScoreEntry } from "@/lib/content/localHighScores";
+import { getLocalPlayerName, setLocalPlayerName } from "@/lib/content/localPlayerName";
 import styles from "@/components/runtime/HighScoreEntry.module.css";
 
 export interface HighScoreEntryProps {
@@ -46,13 +47,28 @@ interface DbLeaderboardRow {
  *      kept because "did I beat my own best on this device" is still a
  *      genuinely useful, different question from "where do I rank
  *      against everyone," not a feature being removed.
+ *
+ * NAME PRE-FILL (later addition): the name input now pre-fills from
+ * lib/content/localPlayerName.ts instead of always starting blank, so a
+ * returning player doesn't have to retype their name on every single
+ * high score across every game. Saving here also writes back to that
+ * same local-name store, so a player who skips the one-time onboarding
+ * prompt (see components/identity/PlayerNamePrompt.tsx) but types a
+ * real name the first time they hit a high score still gets it
+ * remembered from then on.
  */
 export function HighScoreEntry({ gameId, gameSlug, score, accentColor = "var(--eg-subject-chemistry)" }: HighScoreEntryProps) {
   const [dbLeaderboard, setDbLeaderboard] = useState<DbLeaderboardRow[] | null>(null);
   const [dbLoadFailed, setDbLoadFailed] = useState(false);
 
   const [submitted, setSubmitted] = useState(false);
-  const [name, setName] = useState("");
+  // Pre-filled from a previously saved local player name (see
+  // lib/content/localPlayerName.ts) so a returning player doesn't have
+  // to retype their name on every single high score, on every game —
+  // the actual gap this component existed to close. Falls back to ""
+  // (an honest empty input) if no name has ever been saved on this
+  // device, exactly as before.
+  const [name, setName] = useState(() => getLocalPlayerName() ?? "");
   const [localScores, setLocalScores] = useState<LocalHighScoreEntry[]>(() => getHighScores(gameSlug));
   const qualifiesLocally = qualifiesAsHighScore(gameSlug, score);
 
@@ -87,6 +103,11 @@ export function HighScoreEntry({ gameId, gameSlug, score, accentColor = "var(--e
     });
     setLocalScores(updated);
     setSubmitted(true);
+    // Remember this name for next time, on every game — covers BOTH a
+    // player who already had a saved name (no-op, same value) AND a
+    // player who skipped the one-time onboarding prompt but typed a
+    // real name here for the first time (now remembered going forward).
+    if (trimmed.length > 0) setLocalPlayerName(trimmed);
   }
 
   const showDbSection = !dbLoadFailed && dbLeaderboard !== null && dbLeaderboard.length > 0;

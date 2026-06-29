@@ -18,7 +18,17 @@
 
 import { z } from "zod";
 
-export const ClueTypeSchema = z.enum(["atomic_number", "group", "valence"]);
+/**
+ * Clue types, grouped by the difficulty tier they're meant for (see
+ * difficultyModifiers.ts's tile-match entry, which is the actual place
+ * that enforces this grouping — this schema just has to allow all six):
+ *   - EASY:   atomic_number, electron_number (same underlying value on a
+ *             neutral atom, asked two different ways — both are simple
+ *             "read the number off the tile" clues)
+ *   - MEDIUM: + period, valence
+ *   - HARD:   + mass_number, group
+ */
+export const ClueTypeSchema = z.enum(["atomic_number", "electron_number", "period", "valence", "mass_number", "group"]);
 
 export const TierSchema = z.object({
   tier: z.number().int().min(1),

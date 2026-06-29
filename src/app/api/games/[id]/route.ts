@@ -1,34 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getGameById, getMissionsForGame } from "@/lib/db/queries/games";
-import { supabaseServer } from "@/lib/db/supabase";
+import { getGameLeaderboard } from "@/lib/db/queries/leaderboard";
 
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+/**
+ * GET /api/games/[id]/leaderboard
+ *
+ * Exposes getGameLeaderboard (see lib/db/queries/leaderboard.ts) to
+ * client components — HighScoreEntry.tsx is "use client" and can't call
+ * supabaseServer() directly (that client is server-only by design; see
+ * lib/db/supabase.ts's comment), so this route is the bridge.
+ *
+ * Per direct feedback ("the leaderboard should come from the DB, not
+ * just local" / "shouldn't only be visible when you submit a score"):
+ * this is a plain GET with no auth/score-submission gate — anyone
+ * viewing a Mission Complete screen can see the real top scores for
+ * that game, not just players who happened to beat their own local
+ * top 10.
+ *
+ * ?limit=N optional query param, defaults to 10 in getGameLeaderboard
+ * itself if omitted.
+ */
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const limitParam = request.nextUrl.searchParams.get("limit");
+  const limit = limitParam ? Number(limitParam) : undefined;
+
   try {
-    const game = await getGameById(params.id);
-    if (!game) {
-      return NextResponse.json({ error: "Game not found" }, { status: 404 });
-    }
-    const missions = await getMissionsForGame(params.id);
-    return NextResponse.json({ game, missions });
+    const leaderboard = await getGameLeaderboard(params.id, limit && Number.isFinite(limit) ? limit : undefined);
+    return NextResponse.json({ leaderboard });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
-}
-
-/** Admin-only. Partial update of a Game's top-level fields (not its missions — that's separate). */
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-  const body = await request.json();
-
-  const updatable: Record<string, unknown> = {};
-  if (body.title) updatable.title = body.title;
-  if (body.sharedConfig) updatable.shared_config = body.sharedConfig;
-  if (body.snapshot) updatable.snapshot = body.snapshot;
-  if (typeof body.isActive === "boolean") updatable.is_active = body.isActive;
-
-  const { data, error } = await supabaseServer().from("game").update(updatable).eq("id", params.id).select("*").single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-  return NextResponse.json({ game: data });
 }

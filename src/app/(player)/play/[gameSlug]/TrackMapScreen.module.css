@@ -1,0 +1,233 @@
+/**
+ * TrackMapScreen.module.css
+ *
+ * REWRITTEN from a vertical list of inline-styled rows into a
+ * horizontal, swipeable card deck — per direct feedback ("instead of a
+ * long list, it should be like cards, like in a game... can even be
+ * swipable"). Uses native CSS scroll-snap rather than a JS swipe
+ * library: this app has no existing carousel/swipe dependency anywhere
+ * (checked), and scroll-snap gives real touch-swipe, momentum, and
+ * snapping for free, on every platform, with zero new dependencies —
+ * appropriate for what's fundamentally a horizontally-scrolling list of
+ * cards, not a true edge-swipeable single-card-at-a-time interaction.
+ *
+ * Per direct decision: locked cards STAY VISIBLE in the deck (dimmed,
+ * not removed) rather than only appearing once unlocked — the player
+ * can see the whole path/scope of the game by swiping through, even
+ * before earning access to later steps.
+ */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 0;
+  min-height: 60vh;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.mascotRow {
+  margin-bottom: -14px;
+  position: relative;
+  z-index: 1;
+}
+
+.heading {
+  text-align: center;
+  margin-bottom: 18px;
+  padding: 0 20px;
+}
+.gameTitle {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: var(--eg-text-bright);
+}
+.subheading {
+  font-size: 0.84rem;
+  color: var(--eg-text-dim);
+  margin-top: 4px;
+}
+
+/* The actual swipeable deck. overflow-x: auto + scroll-snap-type gives
+ * native momentum scrolling and snap-to-card behavior on touch devices
+ * with zero JS; scrollbar hidden since the dot indicator below already
+ * communicates position. padding-inline creates "peek" space so the
+ * very first/last card isn't flush against the viewport edge — a
+ * visual cue that there's more to swipe to, consistent with how a real
+ * card carousel reads as swipeable at a glance, not just a left-aligned
+ * list. */
+.deck {
+  display: flex;
+  gap: 14px;
+  width: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 28px 16px;
+  box-sizing: border-box;
+  scrollbar-width: none;
+}
+.deck::-webkit-scrollbar {
+  display: none;
+}
+
+.cardSlot {
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+  width: min(240px, 78vw);
+}
+
+.card {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px;
+  padding: 18px;
+  text-align: left;
+  cursor: pointer;
+  border: 2.5px solid var(--card-color, #7b4fcb);
+  background: var(--card-bg, #fff);
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.05), 0 10px 20px rgba(58, 42, 85, 0.1);
+  transition: transform 0.15s ease;
+}
+.card:active {
+  transform: scale(0.97);
+}
+
+.cardLocked {
+  cursor: default;
+  border: 2.5px dashed rgba(120, 120, 130, 0.3);
+  background: rgba(120, 120, 130, 0.06);
+  opacity: 0.65;
+  /* dimmed but never invisible — see file header: locked cards stay in
+   * the deck on purpose, this is the actual visual "dimming" that
+   * implements that decision. */
+}
+.cardLocked:active {
+  transform: none;
+}
+
+/* Replaces the old img-based .cardArt — NO file dependency, this is a
+ * generated SVG (see MoleculeIcon in TrackMapScreen.tsx). Atom colors
+ * match the real roster from atomRoster.ts so a card's icon looks
+ * consistent with what the player actually sees in-game. */
+.cardArtWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  background: rgba(123, 79, 203, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.moleculeIcon {
+  width: 70%;
+  height: 70%;
+}
+.moleculeIconBond {
+  stroke: var(--card-color, #7b4fcb);
+  stroke-width: 4;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+.moleculeIconAtom {
+  stroke: rgba(0, 0, 0, 0.15);
+  stroke-width: 0.02;
+}
+.moleculeIconAtom[data-symbol="C"] { fill: #2f9bd6; }
+.moleculeIconAtom[data-symbol="H"] { fill: #dcd6ff; }
+.moleculeIconAtom[data-symbol="O"] { fill: #ff6f91; }
+.moleculeIconAtom[data-symbol="Cl"] { fill: #7ee0c3; }
+.cardLocked .moleculeIcon {
+  filter: grayscale(0.6);
+  opacity: 0.7;
+}
+
+.cardLockIcon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 1.1rem;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardTitle {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: var(--eg-text-bright);
+  line-height: 1.25;
+}
+.cardLocked .cardTitle {
+  color: var(--eg-text-dim);
+}
+
+.cardMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+.cardDifficulty {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--card-color, #7b4fcb);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.cardXp {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  color: var(--eg-gold);
+  font-size: 0.8rem;
+}
+.cardLockedSubtext {
+  font-size: 0.72rem;
+  color: var(--eg-text-dim);
+  margin-top: 8px;
+}
+
+/* Dot progress indicator below the deck — purely visual feedback on
+ * "how far through the swipeable deck am I," matching the same dot
+ * pattern ConceptSnapshot.module.css already uses for its own
+ * card-by-card progress, so a player who's seen that pattern in Quick
+ * Concepts recognizes this one immediately. */
+.dots {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(123, 79, 203, 0.25);
+}
+.dotCompleted {
+  background: #4caf6e;
+}
+.dotActive {
+  background: #7b4fcb;
+  width: 9px;
+  height: 9px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}

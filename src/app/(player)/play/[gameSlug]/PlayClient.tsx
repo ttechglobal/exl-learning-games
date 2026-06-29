@@ -381,37 +381,49 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
         `You successfully created ${(activeMission.payload as { resultLabel?: string }).resultLabel ?? activeMission.title}.`,
         "Review the Concept Snapshot any time from this screen.",
         // Explicit unlock confirmation per direct feedback ("when a
-        // user completes a level it should unlock the next one") — the
-        // unlock itself was already happening correctly
-        // (locallyCompletedIds gets the just-finished mission added in
-        // onAdvanceToNextMission below, the real mechanism
-        // TrackMapScreen's lock check reads from), but nothing told the
-        // PLAYER it happened. This line makes the unlock a visible,
-        // named confirmation rather than a silent state change the
-        // player would only discover by going back to the map.
+        // user completes a level it should unlock the next one") — see
+        // onMissionSucceeded below for where the unlock is now actually
+        // recorded (fixed a real bug: it used to only happen inside
+        // onAdvanceToNextMission, so tapping Back instead of Next
+        // Mission meant the unlock never got recorded at all).
         ...(isTrackMap && nextMission ? [`🔓 "${nextMission.title}" is now unlocked!`] : [])
       ]}
       playerDifficulty={playerDifficulty}
       isPaused={isPaused}
       menu={menu}
+      onMissionSucceeded={() => {
+        // Fires the INSTANT a mission succeeds — independent of
+        // whatever the player does next (Next Mission, View Concept
+        // Summary, or Back to Home). This is the actual fix for a real
+        // bug: an earlier revision only recorded a mission's completion
+        // here inside onAdvanceToNextMission, which meant a player who
+        // finished a mission and then tapped BACK (to look at the map,
+        // say) instead of Next Mission never had that completion
+        // recorded — TrackMapScreen's lock check
+        // (completedMissionIds.has(...)) would still show the next
+        // mission as locked even though it had genuinely just been
+        // earned. Completion and "the player chose to advance" are two
+        // separate events; this callback exists specifically so the
+        // former is recorded without needing the latter.
+        if (isTrackMap) {
+          setLocallyCompletedIds((prev) => new Set(prev).add(activeMission.id));
+        }
+      }}
       onAdvanceToNextMission={() => {
         if (isTrackMap) {
-          // Unlock the just-finished mission's successor immediately
-          // (client-side, ahead of the next full page load re-fetching
-          // from the DB — see locallyCompletedIds' doc comment above for
-          // why this is safe). Per direct feedback ("after completing a
-          // mission, the user should be able to start the next mission
-          // without necessarily going through all the pregame
-          // screens"): goes straight to "runtime" (gameplay), skipping
-          // Mission Briefing/Objectives entirely — NOT just skipping to
-          // "entry" as an earlier revision did. ReflectionScreen (Mission
+          // The unlock itself is now recorded in onMissionSucceeded
+          // above, not here — this callback ONLY handles navigation.
+          // Per direct feedback ("after completing a mission, the user
+          // should be able to start the next mission without
+          // necessarily going through all the pregame screens"): goes
+          // straight to "runtime" (gameplay), skipping Mission
+          // Briefing/Objectives entirely. ReflectionScreen (Mission
           // Complete, with its Next Mission button) is still the one
           // screen shown between missions — that satisfies "one quick
           // transition screen" without forcing a second click-through
           // for content the player has already seen on every earlier
           // mission of this same game. The map stays available via Back
           // for a player who WANTS to stop and look at the whole path.
-          setLocallyCompletedIds((prev) => new Set(prev).add(activeMission.id));
           if (nextMission) {
             setActiveMissionId(nextMission.id);
             setScreen("runtime");

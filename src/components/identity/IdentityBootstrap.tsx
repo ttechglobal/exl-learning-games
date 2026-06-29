@@ -1,10 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getLocalPlayerName, setLocalPlayerName, hasSeenPlayerNamePrompt, markPlayerNamePromptSeen } from "@/lib/content/localPlayerName";
 import styles from "@/components/identity/IdentityBootstrap.module.css";
 
 /**
  * components/identity/IdentityBootstrap.tsx
+ *
+ * RECONNECTED per direct decision: the server-side device-identity
+ * system this component drives (eg_device_id cookie + a real per-device
+ * student row — see lib/identity/deviceId.ts, lib/db/queries/
+ * students.ts) was paused two rounds ago in favor of local-only high
+ * scores, then explicitly turned back on now specifically to power a
+ * per-device XP total / profile — `addXpToStudent` (lib/db/queries/
+ * progress.ts) already existed, already worked correctly, and only
+ * ever needed a real identity to attach to. See docs/BUILD_LOG.md for
+ * the full decision record.
+ *
+ * MERGED, not duplicated: an earlier revision ran TWO separate "what
+ * should we call you" prompts — this component (server identity) and a
+ * since-removed PlayerNamePrompt.tsx (purely local, for high-score
+ * display names). Per the obvious UX problem with that (two near-
+ * identical name dialogs popping up at different moments), this is now
+ * the ONE prompt, and it writes the name to BOTH places at once:
+ * lib/content/localPlayerName.ts (the same store HighScoreEntry.tsx
+ * already reads for instant local display) AND the server via
+ * POST /api/identity (for the profile/XP total and the cross-device
+ * leaderboard's display name). One name, one prompt, two consumers.
  *
  * Mounted once near the root (see app/layout.tsx, same lifecycle as
  * ThemeProvider) so identity resolves as early as possible on every
@@ -16,23 +38,17 @@ import styles from "@/components/identity/IdentityBootstrap.module.css";
  *      visitor's FIRST page load (a plain Server Component render can't
  *      set cookies itself; see lib/identity/deviceId.ts's header
  *      comment for why this round-trip exists at all). Happens silently,
- *      every visit, no UI.
- *   2. The ONE-TIME name prompt — per direct product decision, shown on
- *      first-ever app open, not deferred to first leaderboard
- *      qualification (HighScoreEntry.tsx's existing local-personal-best
- *      flow is untouched and still asks for a name there too, for the
- *      LOCAL list specifically — these are two different name prompts
- *      for two different purposes, not a duplicate).
- *
- * "First-ever app open" is tracked via a small localStorage flag
- * (`eg_identity_onboarded`) SEPARATE from the eg_device_id cookie itself
- * — the cookie identifies the device to the server; this flag is purely
- * "have we already shown this exact browser the prompt," so a returning
- * visitor on the same device within the same cookie lifetime never sees
- * it twice, even across a server-side student-row recreation edge case.
+ *      every visit, no UI. If this device already has a saved local
+ *      name (from before this reconnection, or from a high-score save),
+ *      that name is pushed to the server at this point too, so a
+ *      device with local history doesn't show up as "Anonymous"
+ *      server-side the first time identity reconnects.
+ *   2. The ONE-TIME name prompt — shown on first-ever app open (per
+ *      direct product decision), using lib/content/localPlayerName.ts's
+ *      OWN seen-flag (hasSeenPlayerNamePrompt/markPlayerNamePromptSeen)
+ *      rather than a separate flag, since this is now the only name
+ *      prompt that exists.
  */
-const ONBOARDED_FLAG_KEY = "eg:identity-onboarded";
-
 export function IdentityBootstrap() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [name, setName] = useState("");
@@ -41,33 +57,39 @@ export function IdentityBootstrap() {
   useEffect(() => {
     let cancelled = false;
 
-    fetch("/api/identity")
+    const existingLocalName = getLocalPlayerName();
+
+    const identityFetch = existingLocalName
+      ? // Already have a local name (saved before this reconnection, or
+        // via a high-score save) — push it to the server immediately so
+        // this device's profile doesn't start as "Anonymous" the first
+        // time identity reconnects, then continue the same as the GET
+        // path below.
+        fetch("/api/identity", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ displayName: existingLocalName })
+        })
+      : fetch("/api/identity");
+
+    identityFetch
       .then((res) => {
         if (!res.ok) throw new Error(`identity bootstrap failed: ${res.status}`);
         return res.json();
       })
       .then(() => {
         if (cancelled) return;
-        let alreadyOnboarded = false;
-        try {
-          alreadyOnboarded = window.localStorage.getItem(ONBOARDED_FLAG_KEY) === "1";
-        } catch {
-          // If localStorage is unavailable, fail toward NOT nagging a
-          // returning visitor every load — same reasoning as
-          // conceptPrefs.ts elsewhere in this app: losing the flag is a
-          // smaller problem than crashing or being annoying.
-          alreadyOnboarded = true;
-        }
-        if (!alreadyOnboarded) setShowPrompt(true);
+        if (!hasSeenPlayerNamePrompt()) setShowPrompt(true);
       })
       .catch(() => {
         // Identity bootstrap failing shouldn't block the rest of the app
         // from rendering — every downstream feature (leaderboards,
-        // attempts) already has its own honest empty/failure state if
-        // studentId never resolves; this just means this particular
-        // visit silently stays unidentified rather than surfacing an
-        // error banner over the whole app for what's a non-critical
-        // background call.
+        // attempts, profile) already has its own honest empty/failure
+        // state if studentId never resolves; this just means this
+        // particular visit silently stays unidentified server-side
+        // rather than surfacing an error banner over the whole app for
+        // what's a non-critical background call. The LOCAL name (high
+        // scores) is completely unaffected either way.
       });
 
     return () => {
@@ -77,12 +99,7 @@ export function IdentityBootstrap() {
 
   function dismiss() {
     setShowPrompt(false);
-    try {
-      window.localStorage.setItem(ONBOARDED_FLAG_KEY, "1");
-    } catch {
-      // Same reasoning as above — losing this flag just means the
-      // prompt might reappear once more later, not a crash.
-    }
+    markPlayerNamePromptSeen();
   }
 
   async function handleSubmit() {
@@ -91,6 +108,7 @@ export function IdentityBootstrap() {
       dismiss(); // Skipping the name is allowed — Anonymous is a fine default.
       return;
     }
+    setLocalPlayerName(trimmed); // instant local effect — HighScoreEntry.tsx picks this up immediately
     setSubmitting(true);
     try {
       await fetch("/api/identity", {
@@ -100,8 +118,10 @@ export function IdentityBootstrap() {
       });
     } catch {
       // Same non-blocking reasoning as the GET above — worst case this
-      // device just keeps its default "Anonymous" name server-side; not
-      // worth blocking the rest of the app over.
+      // device's server-side profile name lags behind the local one
+      // until the next successful sync opportunity; not worth blocking
+      // the rest of the app over. The local name (and therefore local
+      // high scores) already saved successfully regardless.
     } finally {
       setSubmitting(false);
       dismiss();
@@ -111,10 +131,10 @@ export function IdentityBootstrap() {
   if (!showPrompt) return null;
 
   return (
-    <div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Choose a leaderboard name">
+    <div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Choose your player name">
       <div className={styles.card}>
         <div className={styles.title}>What should we call you?</div>
-        <div className={styles.subtitle}>This name shows up on leaderboards. You can skip this — no account needed.</div>
+        <div className={styles.subtitle}>This name shows up on leaderboards and your profile. You can skip this — no account needed.</div>
         <input
           className={styles.input}
           type="text"

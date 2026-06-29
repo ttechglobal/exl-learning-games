@@ -112,10 +112,11 @@
   transform: none;
 }
 
-/* Replaces the old img-based .cardArt — NO file dependency, this is a
- * generated SVG (see MoleculeIcon in TrackMapScreen.tsx). Atom colors
- * match the real roster from atomRoster.ts so a card's icon looks
- * consistent with what the player actually sees in-game. */
+/* Holds the compound name badge — see CompoundNameBadge in
+ * TrackMapScreen.tsx, which replaced an earlier version that drew the
+ * actual target molecular structure here (a real, confirmed mistake:
+ * that revealed the answer to a build-the-molecule puzzle before the
+ * player had even attempted it). No file dependency either way. */
 .cardArtWrap {
   position: relative;
   width: 100%;
@@ -127,28 +128,20 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  padding: 8px;
+  box-sizing: border-box;
 }
-.moleculeIcon {
-  width: 70%;
-  height: 70%;
+.compoundNameBadge {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--card-color, #7b4fcb);
+  text-align: center;
+  line-height: 1.3;
 }
-.moleculeIconBond {
-  stroke: var(--card-color, #7b4fcb);
-  stroke-width: 4;
-  stroke-linecap: round;
+.cardLocked .compoundNameBadge {
   opacity: 0.55;
-}
-.moleculeIconAtom {
-  stroke: rgba(0, 0, 0, 0.15);
-  stroke-width: 0.02;
-}
-.moleculeIconAtom[data-symbol="C"] { fill: #2f9bd6; }
-.moleculeIconAtom[data-symbol="H"] { fill: #dcd6ff; }
-.moleculeIconAtom[data-symbol="O"] { fill: #ff6f91; }
-.moleculeIconAtom[data-symbol="Cl"] { fill: #7ee0c3; }
-.cardLocked .moleculeIcon {
-  filter: grayscale(0.6);
-  opacity: 0.7;
+  filter: grayscale(0.4);
 }
 
 .cardLockIcon {

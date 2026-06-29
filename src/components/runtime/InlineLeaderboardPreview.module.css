@@ -1,0 +1,68 @@
+/**
+ * InlineLeaderboardPreview.module.css
+ *
+ * Same row/rank/name/score visual language as LeaderboardModal.module.css
+ * (kept visually consistent — this is a preview of the same data, just
+ * a different presentation, not a different design language), but
+ * compact: no date column, no header bar with a close button, smaller
+ * padding throughout, since this sits as ONE element among several on
+ * EntryScreen's briefing card rather than owning a full modal sheet.
+ */
+
+.wrap {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 4px 0 14px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 6%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 18%, transparent);
+}
+
+.label {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.7rem;
+  color: var(--eg-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 6px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.row {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.rank {
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 0.78rem;
+  color: var(--eg-text-dim);
+  text-align: center;
+}
+
+.name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--eg-text-bright);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.score {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--accent-color, var(--eg-subject-chemistry));
+}

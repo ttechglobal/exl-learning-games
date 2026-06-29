@@ -8,6 +8,7 @@ import { HighScoreEntry } from "@/components/runtime/HighScoreEntry";
 import { getEngineDefinition } from "@/engines/registry";
 import { applyDifficultyModifiers, type PlayerDifficulty } from "@/lib/content/difficultyModifiers";
 import { resolveQuickConceptsForSlug } from "@/lib/content/quickConcepts";
+import { hasSeenConcepts } from "@/lib/content/contentPrefs";
 import type { AttemptResult } from "@/types/result";
 import { enqueueAttempt } from "@/lib/offline/attemptQueue";
 
@@ -26,7 +27,7 @@ export interface GameRuntimeProps {
   /** Needed for lib/content/localHighScores.ts's per-game storage key —
    *  gameId (a DB uuid) would work as a key too, but slug is what every
    *  other localStorage-backed feature in this app already keys on
-   *  (conceptPrefs.ts uses engineType, not an id), and slugs are stable
+   *  (contentPrefs.ts uses engineType, not an id), and slugs are stable
    *  across environments in a way a row's literal id isn't guaranteed
    *  to be if the DB is ever reseeded. */
   gameSlug: string;
@@ -46,6 +47,23 @@ export interface GameRuntimeProps {
   hasNextMission: boolean;
   reviewSuccessLines: string[];
   onAdvanceToNextMission: () => void;
+  /**
+   * Fires the INSTANT a mission is reported successful — independent of
+   * whatever the player does next on the Reflection screen (Next
+   * Mission, View Concept Summary, or Back to Home). Added to fix a
+   * real, confirmed bug: the previous code only recorded a mission's
+   * completion (the actual mechanism TrackMapScreen's lock check reads
+   * from) inside onAdvanceToNextMission — meaning a player who finished
+   * a mission and then tapped BACK instead of Next Mission never had
+   * that completion recorded at all, so the next mission stayed locked
+   * even though it should have unlocked. Completion and "the player
+   * chose to advance" are two separate events; this callback exists
+   * specifically so PlayClient can record the former without needing
+   * the latter to also happen. See handleEngineComplete below, which
+   * calls this immediately on a successful outcome, same moment phase
+   * flips to "reflection" — not gated behind any later button press.
+   */
+  onMissionSucceeded: () => void;
   /** Navigates away from the play flow entirely (PlayClient owns the
    *  actual router call, same as BackButton's onBack callbacks) — wired
    *  to ReflectionScreen's new "Back to Home" button. */
@@ -158,13 +176,35 @@ export function GameRuntime({
   hasNextMission,
   reviewSuccessLines,
   onAdvanceToNextMission,
+  onMissionSucceeded,
   onBackToHome,
   onBackFromConcepts,
   playerDifficulty,
   isPaused,
   menu
 }: GameRuntimeProps) {
-  const [phase, setPhase] = useState<Phase>("snapshot");
+  /**
+   * Per direct feedback ("when the user completes a mission and wants
+   * to move to the next mission, we should not need to show the quick
+   * concepts again"): previously this ALWAYS initialized to "snapshot"
+   * regardless of hasSeenConcepts — that check existed (in
+   * contentPrefs.ts) and was already being WRITTEN to correctly
+   * (ConceptSnapshot.tsx calls markConceptsSeen on continue), but
+   * nothing ever READ it to skip the screen; it only controlled
+   * whether the in-screen "Skip" button rendered, not whether the
+   * screen mounted at all. So a player who'd already seen Carbon
+   * Builder's Quick Concepts on mission 1 still saw the FULL screen
+   * again on mission 2, just with a Skip button now visible on it —
+   * confirmed by tracing the actual code, not assumed. Fixed by
+   * checking hasSeenConcepts(engineType) in the initializer itself: if
+   * already seen for this engine type, mission 2+ goes straight to
+   * "playing", same as if the player had tapped Skip — Quick Concepts
+   * for one engine only ever needs to teach its mechanic once, not once
+   * per mission. Lazy initializer (the `() => ...` form) so this
+   * localStorage read only happens once per mount, not on every
+   * re-render.
+   */
+  const [phase, setPhase] = useState<Phase>(() => (hasSeenConcepts(engineType) ? "playing" : "snapshot"));
   const [lastResult, setLastResult] = useState<AttemptResult | null>(null);
 
   const engineDef = getEngineDefinition(engineType);
@@ -211,6 +251,11 @@ export function GameRuntime({
 
       setLastResult(result);
       setPhase("reflection");
+      // Fires immediately on success — see onMissionSucceeded's doc
+      // comment on GameRuntimeProps for exactly why this can't wait for
+      // onAdvanceToNextMission (the player might tap Back instead, and
+      // the mission still completed).
+      if (result.success) onMissionSucceeded();
 
       try {
         const response = await fetch("/api/attempts", {
@@ -226,7 +271,7 @@ export function GameRuntime({
         await enqueueAttempt(result);
       }
     },
-    [studentId, gameId, mission]
+    [studentId, gameId, mission, onMissionSucceeded]
   );
 
   if (phase === "snapshot" || phase === "reviewingConcepts") {

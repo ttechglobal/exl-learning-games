@@ -126,7 +126,7 @@ export function TrackMapScreen({ gameTitle, missions, completedMissionIds, onSel
                   onClick={() => onSelect(mission.id)}
                 >
                   <div className={styles.cardArtWrap}>
-                    <MoleculeIcon payload={mission.payload} />
+                    <CompoundNameBadge payload={mission.payload} color={color} />
                   </div>
                   <div className={styles.cardTitle}>
                     {isCompleted ? "✓ " : ""}
@@ -140,7 +140,7 @@ export function TrackMapScreen({ gameTitle, missions, completedMissionIds, onSel
               ) : (
                 <div className={`${styles.card} ${styles.cardLocked}`} style={{ "--card-color": color } as React.CSSProperties}>
                   <div className={styles.cardArtWrap}>
-                    <MoleculeIcon payload={mission.payload} />
+                    <CompoundNameBadge payload={mission.payload} color={color} />
                     <span className={styles.cardLockIcon} aria-label="Locked">
                       🔒
                     </span>
@@ -169,59 +169,31 @@ export function TrackMapScreen({ gameTitle, missions, completedMissionIds, onSel
 }
 
 /**
- * Small inline SVG icon drawn directly from a mission's own payload —
- * NO image file dependency at all, per direct instruction ("the track
- * map needs an image, please make it not need an image"). Each card
- * shows the ACTUAL molecule that mission builds (ball-and-stick style,
- * matching this engine's real in-game visual language), generated from
- * real slot/bond data rather than a generic placeholder — arguably
- * better than a single static image would have been, since every card
- * in the deck looks genuinely different and accurate to its own
- * mission, not copies of one shared illustration.
+ * Shows the mission's compound NAME only (e.g. "Methane (CH₄)") — NOT
+ * the molecular structure. REPLACES an earlier version of this card
+ * (MoleculeIcon, removed) that drew the actual target structure as a
+ * ball-and-stick SVG, generated directly from the mission's own
+ * slots/targetAtoms/targetBonds. That was a real, confirmed mistake per
+ * direct feedback: showing the finished structure on the card a player
+ * sees BEFORE attempting the mission gives away the answer to a
+ * build-the-molecule puzzle — the exact thing this game is supposed to
+ * test. A name badge still gives the card real per-mission identity
+ * (not a generic placeholder) without revealing how the atoms actually
+ * connect.
  *
- * Engine-agnostic by design, matching TrackMapScreen's own scope (any
+ * Engine-agnostic by design, same as the component it replaces (any
  * "trackMap" progression-mode game can use this screen, not just
- * Carbon Builder): if a mission's payload doesn't have the
- * slots/targetAtoms/targetBonds shape this expects (some other future
- * engine's payload shape), this renders nothing rather than guessing
- * at an unfamiliar shape or throwing.
+ * Carbon Builder): if a mission's payload doesn't have a `resultLabel`
+ * field (some other future engine's payload shape), this renders
+ * nothing rather than guessing at an unfamiliar shape.
  */
-function MoleculeIcon({ payload }: { payload: Record<string, unknown> }) {
-  const slots = payload.slots as { id: string; row: number; col: number }[] | undefined;
-  const targetAtoms = payload.targetAtoms as Record<string, string> | undefined;
-  const targetBonds = payload.targetBonds as { slotA: string; slotB: string; order: string }[] | undefined;
-
-  if (!Array.isArray(slots) || !targetAtoms || !Array.isArray(targetBonds) || slots.length === 0) {
-    return null;
-  }
-
-  const rows = slots.map((s) => s.row);
-  const cols = slots.map((s) => s.col);
-  const minRow = Math.min(...rows);
-  const minCol = Math.min(...cols);
-  const rowSpan = Math.max(...rows) - minRow + 1;
-  const colSpan = Math.max(...cols) - minCol + 1;
-
-  const positionOf = (slotId: string) => {
-    const slot = slots.find((s) => s.id === slotId);
-    if (!slot) return { x: 0, y: 0 };
-    return { x: slot.col - minCol + 0.5, y: slot.row - minRow + 0.5 };
-  };
+function CompoundNameBadge({ payload, color }: { payload: Record<string, unknown>; color: string }) {
+  const resultLabel = typeof payload.resultLabel === "string" ? payload.resultLabel : undefined;
+  if (!resultLabel) return null;
 
   return (
-    <svg className={styles.moleculeIcon} viewBox={`0 0 ${colSpan} ${rowSpan}`} preserveAspectRatio="xMidYMid meet">
-      {targetBonds.map((bond, i) => {
-        const a = positionOf(bond.slotA);
-        const b = positionOf(bond.slotB);
-        return <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} className={styles.moleculeIconBond} vectorEffect="non-scaling-stroke" />;
-      })}
-      {slots.map((slot) => {
-        const symbol = targetAtoms[slot.id];
-        if (!symbol) return null;
-        const pos = positionOf(slot.id);
-        const radius = symbol === "C" ? 0.22 : 0.16;
-        return <circle key={slot.id} cx={pos.x} cy={pos.y} r={radius} className={styles.moleculeIconAtom} data-symbol={symbol} />;
-      })}
-    </svg>
+    <div className={styles.compoundNameBadge} style={{ "--card-color": color } as React.CSSProperties}>
+      {resultLabel}
+    </div>
   );
 }

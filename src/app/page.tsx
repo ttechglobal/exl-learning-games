@@ -1,5 +1,6 @@
 import { listGames } from "@/lib/db/queries/games";
 import { getWeeklyLeaderboard } from "@/lib/db/queries/leaderboard";
+import { resolveCurrentStudent } from "@/lib/identity/deviceId";
 import { HomePage } from "@/app/HomePage";
 import type { GameRow } from "@/types/db";
 
@@ -13,28 +14,25 @@ const FEATURED_SLUGS = ["atom-forge", "element-hunter"];
  * remains the practical, no-frills subject-browse grid this page links
  * into via "Start Playing" / "Browse Subjects" / the World cards.
  *
- * leaderboard wired up to the real getWeeklyLeaderboard query — this part
- * is untouched by the later scope correction below and still renders
- * normally (it doesn't depend on per-device identity at all; it's a
+ * leaderboard wired up to the real getWeeklyLeaderboard query — a
  * cross-game ranking by whatever student_id attempts were recorded
- * under).
+ * under, unaffected by the identity reconnection below either way.
  *
- * currentStudentXp is intentionally NOT wired here anymore. An earlier
- * round called resolveCurrentStudent() (lib/identity/deviceId.ts) to fill
- * it in, but that function only READS an eg_device_id cookie — nothing
- * currently MINTS that cookie (IdentityBootstrap, the component that
- * used to call /api/identity to create it, was unmounted from
- * app/layout.tsx per a later scope correction: focus on local per-game
- * high scores, not server-side cross-device identity, for now). Calling
- * resolveCurrentStudent() here today would always silently resolve to
- * null — dead code that LOOKS like it does something. Left out
- * entirely rather than kept as a call that can never succeed; reconnect
- * it (the function itself still works) once IdentityBootstrap or an
- * equivalent is remounted as part of a real account/cross-device push.
+ * currentStudentXp — RECONNECTED. Two rounds ago this was deliberately
+ * removed (IdentityBootstrap was unmounted, so resolveCurrentStudent()
+ * would always have resolved to null — dead code that looked like it
+ * did something). Per direct decision, IdentityBootstrap is remounted
+ * in app/layout.tsx again now, specifically so a real per-device XP
+ * total can show here — `addXpToStudent` (lib/db/queries/progress.ts)
+ * already existed and worked correctly; it only needed a real identity
+ * to attach to.
  */
 export default async function RootPage() {
   const games = await listGames();
-  const leaderboard = await getWeeklyLeaderboard(10).catch(() => undefined); // honest empty state on failure, not a crashed homepage
+  const [leaderboard, student] = await Promise.all([
+    getWeeklyLeaderboard(10).catch(() => undefined), // honest empty state on failure, not a crashed homepage
+    resolveCurrentStudent()
+  ]);
 
   const gamesBySubject = games.reduce<Record<string, GameRow[]>>((acc, game) => {
     (acc[game.subject] ??= []).push(game);
@@ -45,5 +43,12 @@ export default async function RootPage() {
     (g): g is GameRow => Boolean(g)
   );
 
-  return <HomePage gamesBySubject={gamesBySubject} featuredGames={featuredGames} leaderboard={leaderboard} />;
+  return (
+    <HomePage
+      gamesBySubject={gamesBySubject}
+      featuredGames={featuredGames}
+      leaderboard={leaderboard}
+      currentStudentXp={student?.xp_total}
+    />
+  );
 }

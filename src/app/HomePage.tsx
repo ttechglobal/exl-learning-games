@@ -91,7 +91,7 @@ export interface HomePageProps {
   gamesBySubject: Record<string, GameRow[]>;
   featuredGames: GameRow[];
   /** Optional since the query can return empty (no attempts yet this
-   *  week) or fail — see getWeeklyLeaderboard in
+   *  week) or fail — see getLeaderboard("weekly", ...) in
    *  lib/db/queries/leaderboard.ts, wired up in page.tsx. */
   leaderboard?: LeaderboardEntry[];
   /** Current student's XP total for the header pill; omit while logged out. */
@@ -102,7 +102,11 @@ export function HomePage({ gamesBySubject, featuredGames, leaderboard, currentSt
   const { theme, toggleTheme } = useTheme();
 
   const champion = leaderboard?.[0];
-  const rest = leaderboard?.slice(1, 4) ?? [];
+  // Top 5 total on the homepage (1 champion + 4 more) — see page.tsx's
+  // HOMEPAGE_LEADERBOARD_SIZE comment for why this shrank from the
+  // previous top 10 now that /leaderboard exists as the "see more"
+  // destination (top 20 + your rank, with weekly/monthly/all-time tabs).
+  const rest = leaderboard?.slice(1, 5) ?? [];
 
   return (
     <div className={styles.page} data-theme={theme}>
@@ -272,6 +276,10 @@ export function HomePage({ gamesBySubject, featuredGames, leaderboard, currentSt
                   </div>
                 ))}
               </div>
+
+              <Link href="/leaderboard" className={styles.lbSeeFullLink}>
+                See full leaderboard
+              </Link>
             </div>
           ) : (
             <div className={styles.lbList}>

@@ -1,0 +1,166 @@
+.page {
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+  box-sizing: border-box;
+}
+
+.headRow {
+  margin-bottom: 18px;
+}
+
+.title {
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: var(--eg-text-bright);
+  margin: 0 0 6px;
+}
+
+.subtitle {
+  font-size: 0.86rem;
+  color: var(--eg-text-dim);
+  margin: 0;
+}
+
+/* ============ TABS ============ */
+.tabs {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--eg-surface-card-2);
+  margin-bottom: 16px;
+}
+
+.tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  border-radius: 11px;
+  padding: 10px 0;
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.86rem;
+  color: var(--eg-text-dim);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.tabActive {
+  background: var(--eg-surface-card);
+  color: var(--eg-text-bright);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* ============ PANEL / LIST ============ */
+.panel {
+  background: var(--eg-surface-card);
+  border: 1px solid var(--eg-surface-border);
+  border-radius: 20px;
+  padding: 10px;
+}
+
+.statusText {
+  padding: 30px 16px;
+  text-align: center;
+  color: var(--eg-text-dim);
+  font-size: 0.88rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+}
+
+/* The "highlight the viewing student's own row" hook — same role
+ * HomePage.module.css's .lbRowYou already defines for the homepage
+ * preview, mirrored here for the full /leaderboard page so a player who
+ * IS visible in the top 20 still gets a visual "that's you" cue without
+ * needing the separate pinned row below (see .rowPinned). */
+.rowYou {
+  background: color-mix(in srgb, var(--eg-gold) 16%, transparent);
+}
+
+.rank {
+  width: 32px;
+  flex-shrink: 0;
+  text-align: center;
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--eg-text-dim);
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--eg-text-bright);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sub {
+  font-size: 0.74rem;
+  color: var(--eg-surface-text-faint);
+  margin-top: 1px;
+}
+
+.xp {
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--eg-text-bright);
+  white-space: nowrap;
+  text-align: right;
+}
+.xp span {
+  font-size: 0.68rem;
+  color: var(--eg-surface-text-faint);
+  font-weight: 600;
+}
+
+/* ============ PINNED "YOUR RANK" ROW ============ */
+.pinnedDivider {
+  margin: 10px 6px 4px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--eg-surface-border);
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--eg-text-dim);
+}
+
+.rowPinned {
+  border: 1.5px solid color-mix(in srgb, var(--eg-gold) 50%, transparent);
+}
+
+.notRankedNote {
+  margin-top: 10px;
+  padding: 14px;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--eg-text-dim);
+  border-top: 1px dashed var(--eg-surface-border);
+}

@@ -148,25 +148,6 @@
   line-height: 1.4;
 }
 
-/* Secondary, smaller than .startButton — "view high scores" is a real
- * useful action but shouldn't compete with "start mission" for primary
- * visual weight. Outlined rather than filled, matching the same
- * secondary-button treatment used elsewhere in this flow
- * (ReflectionScreen's .secondaryButton). */
-.highScoresButton {
-  width: 100%;
-  min-height: 46px;
-  border-radius: 14px;
-  border: 2px solid var(--accent-color, var(--eg-subject-chemistry));
-  background: transparent;
-  color: var(--accent-color, var(--eg-subject-chemistry));
-  font-family: var(--eg-font-display);
-  font-weight: 600;
-  font-size: 0.92rem;
-  cursor: pointer;
-  margin-bottom: 10px;
-}
-
 .startButton {
   width: 100%;
   min-height: 54px;

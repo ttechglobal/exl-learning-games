@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { GameRuntime } from "@/components/runtime/GameRuntime";
 import { GameMenu } from "@/components/runtime/GameMenu";
@@ -13,6 +13,7 @@ import { MissionObjectivesScreen } from "@/app/(player)/play/[gameSlug]/MissionO
 import { resolveMissionObjectives } from "@/lib/content/missionObjectives";
 import { engineSupportsDifficultyChoice, type PlayerDifficulty } from "@/lib/content/difficultyModifiers";
 import { getElementByAtomicNumber, CATEGORY_COLORS } from "@/motion/periodicTableData";
+import { track } from "@/lib/analytics/track";
 import type { GameRow, MissionRow } from "@/types/db";
 
 export interface PlayClientProps {
@@ -179,6 +180,31 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
   const activeMission = sortedMissions[activeMissionIndex];
   const nextMission = sortedMissions[activeMissionIndex + 1];
 
+  /**
+   * mission_viewed — the funnel's true top (see types/event.ts's header):
+   * fires whenever the Mission Briefing (EntryScreen) is actually shown
+   * for a given mission, distinct from mission_started (GameRuntime.tsx),
+   * which only fires once the player taps through to real gameplay.
+   * Comparing the two answers "of everyone who SAW a mission, how many
+   * actually started it." Placed BEFORE the `if (!activeMission) return`
+   * below, not after — React requires every hook to run on every render
+   * in the same order, so a hook can never sit after a conditional
+   * return; the `activeMission &&` guard inside the effect body handles
+   * the same "nothing to track yet" case safely instead.
+   */
+  useEffect(() => {
+    if (screen === "entry" && activeMission) {
+      track("mission_viewed", {
+        studentId,
+        gameId: game.id,
+        missionId: activeMission.id,
+        topicId: activeMission.topic_id,
+        subtopicId: activeMission.subtopic_id ?? undefined
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, activeMission?.id, studentId, game.id]);
+
   if (!activeMission) {
     return (
       <div style={{ textAlign: "center", padding: 60, color: "var(--eg-text-dim)" }}>Mission not found.</div>
@@ -287,8 +313,6 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
       >
         <EntryScreen
           gameSlug={game.slug}
-          gameId={game.id}
-          gameTitle={game.title}
           subject={game.subject}
           mission={activeMission}
           onStart={() => setScreen(supportsDifficultyChoice ? "difficulty" : "objectives")}

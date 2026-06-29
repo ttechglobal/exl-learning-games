@@ -1,12 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { getElementByAtomicNumber } from "@/motion/periodicTableData";
 import { CATEGORY_COLORS } from "@/motion/periodicTableData";
 import { Mascot } from "@/motion/Mascot";
 import { resolveMissionBriefing } from "@/lib/content/missionBriefing";
-import { LeaderboardModal } from "@/components/runtime/LeaderboardModal";
-import { InlineLeaderboardPreview } from "@/components/runtime/InlineLeaderboardPreview";
 import type { MissionRow } from "@/types/db";
 import styles from "@/app/(player)/play/[gameSlug]/EntryScreen.module.css";
 
@@ -35,11 +32,6 @@ export interface EntryScreenProps {
    *  screen, by MissionTopBar (rendered by PrePlayShell, see
    *  PlayClient.tsx). */
   gameSlug: string;
-  /** Needed for the View High Scores button — LeaderboardModal fetches
-   *  /api/games/[id]/leaderboard, which needs the real DB id, not the
-   *  slug. */
-  gameId: string;
-  gameTitle: string;
   subject: string;
   mission: MissionRow;
   onStart: () => void;
@@ -51,8 +43,7 @@ export interface EntryScreenProps {
  * wrapper, backdrop, or min-height:100vh; PrePlayShell handles all of
  * that for the whole pre-play flow now, not just this one screen. This
  * component is just: mascot, narrative briefing, element glyph (when
- * relevant), Learning Goal, View High Scores, and the Start Mission
- * button.
+ * relevant), Learning Goal, and the Start Mission button.
  *
  * Per direct instruction: Reward/Difficulty/Time are REMOVED from this
  * screen entirely (an earlier revision simplified them into one quiet
@@ -72,18 +63,17 @@ export interface EntryScreenProps {
  * Still does the periodic-table-glyph preview for particle-assembly-style
  * missions (target.proton in payload) — unaffected by this revision.
  *
- * VIEW HIGH SCORES + INLINE PREVIEW: per direct feedback, players
- * shouldn't have to complete a mission to see where they (or anyone
- * else) rank, AND the leaderboard should be easily visible "beside the
- * title card," not buried behind an extra tap. So there are now TWO
- * presentations of the SAME leaderboard data (one query, one source of
- * truth — see InlineLeaderboardPreview.tsx's header comment): a small
- * always-visible top-3 strip rendered directly on this card, and the
- * existing "View High Scores" button that still opens the full
- * LeaderboardModal for anyone who wants more than the top few.
+ * VIEW HIGH SCORES + INLINE PREVIEW REMOVED per direct decision: the
+ * per-game leaderboard surfaces (InlineLeaderboardPreview,
+ * LeaderboardModal, HighScoreEntry, getGameLeaderboard) are retired
+ * entirely — see lib/db/queries/leaderboard.ts's header. The
+ * weekly/monthly/all-time leaderboard (linked from the homepage and its
+ * own /leaderboard page) is now the only competitive ranking surface in
+ * the app, so this screen no longer needs a leaderboard entry point of
+ * its own — gameId/gameTitle were only ever needed for that and have
+ * been dropped from this component's props accordingly.
  */
-export function EntryScreen({ gameSlug, gameId, gameTitle, subject, mission, onStart }: EntryScreenProps) {
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
+export function EntryScreen({ gameSlug, subject, mission, onStart }: EntryScreenProps) {
   const target = (mission.payload as { target?: Record<string, number> }).target;
   const protonCount = target?.proton;
   const element = typeof protonCount === "number" ? getElementByAtomicNumber(protonCount) : undefined;
@@ -103,8 +93,6 @@ export function EntryScreen({ gameSlug, gameId, gameTitle, subject, mission, onS
 
         <p className={styles.briefingText}>{briefing}</p>
 
-        <InlineLeaderboardPreview gameId={gameId} accentColor={accentColor} />
-
         {element && (
           <div className={styles.elementGlyphRow}>
             <div className={styles.elementGlyph}>
@@ -119,23 +107,10 @@ export function EntryScreen({ gameSlug, gameId, gameTitle, subject, mission, onS
           <div className={styles.goalText}>{learningGoal}</div>
         </div>
 
-        <button className={styles.highScoresButton} onClick={() => setShowLeaderboard(true)}>
-          🏆 View High Scores
-        </button>
-
         <button className={styles.startButton} onClick={onStart}>
           Start Mission
         </button>
       </div>
-
-      {showLeaderboard && (
-        <LeaderboardModal
-          gameId={gameId}
-          gameTitle={gameTitle}
-          accentColor={accentColor}
-          onClose={() => setShowLeaderboard(false)}
-        />
-      )}
     </div>
   );
 }

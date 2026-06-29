@@ -506,6 +506,26 @@
   font-size: 13px;
 }
 
+/* Secondary, quiet link beneath the top-5 preview — points to the new
+ * /leaderboard page (top 20 + weekly/monthly/all-time tabs + your rank).
+ * Deliberately understated (no button chrome/box-shadow like .heroCta
+ * or .btnFinale) since this is a "see more" affordance on a homepage
+ * teaser, not a primary call to action competing with Start Learning. */
+.lbSeeFullLink {
+  display: block;
+  text-align: center;
+  margin-top: 14px;
+  padding: 10px;
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--eg-gold);
+  text-decoration: none;
+}
+.lbSeeFullLink:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 760px) {
   .lbPanel {
     grid-template-columns: 1fr;

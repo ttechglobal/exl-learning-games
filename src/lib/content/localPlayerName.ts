@@ -1,26 +1,29 @@
 /**
  * lib/content/localPlayerName.ts
  *
- * Pure client-side, no backend, no account, no device cookie — exactly
- * the scope corrected to per direct feedback: high scores are LOCAL
- * (per device, via localHighScores.ts), and the one missing piece was
- * "the player shouldn't have to retype their name every single time."
- * This is that piece, and nothing more.
+ * Pure client-side, no backend, no account, no device cookie. Originally
+ * built so a player wouldn't have to retype their name on every local
+ * high-score save (lib/content/localHighScores.ts, since replaced by
+ * lib/content/personalBest.ts — see that file's header for why the
+ * name-entry high-score flow was retired). What's left is the genuinely
+ * independent piece: the one-time onboarding name prompt
+ * (PlayerNamePrompt.tsx / IdentityBootstrap.tsx) still needs somewhere
+ * to read/write a locally-remembered display name, with no per-game
+ * high-score flow involved at all anymore.
  *
  * Deliberately NOT the same thing as the server-side anonymous-identity
  * system built in an earlier round (lib/identity/deviceId.ts,
  * lib/db/queries/students.ts, the eg_device_id cookie) — that system
  * still exists in the codebase (not deleted; it's real, tested,
- * functioning infrastructure for a global/DB-backed leaderboard) but is
- * NOT what currently drives the name prompt or the high-score flow. Per
- * direct decision: focus on local per-game high scores working
- * correctly first: revisit wiring the two together (so a chosen local
- * name could also become the DB display_name) only once a real
+ * functioning infrastructure for the global/DB-backed leaderboard) but
+ * is NOT what currently drives this local name prompt. Per direct
+ * decision: revisit wiring the two together (so a chosen local name
+ * could also become the DB display_name) only once a real
  * account/cross-device system is actually being built — not now.
  *
  * Same "exl:" localStorage key prefix and SSR-safety pattern as every
  * other local-preference module in this codebase (ThemeProvider.tsx,
- * conceptPrefs.ts, localHighScores.ts) — kept consistent rather than
+ * conceptPrefs.ts, personalBest.ts) — kept consistent rather than
  * introducing a third naming convention.
  */
 
@@ -33,8 +36,8 @@ function isBrowser(): boolean {
 /** Returns the saved local player name, or null if one was never set
  *  (including: storage unavailable, or the player explicitly skipped
  *  the prompt — skipping does NOT save an empty string, it saves
- *  nothing, so a later high-score save still offers a real empty input
- *  rather than a confusing pre-filled blank). */
+ *  nothing, leaving a real empty/unset state rather than a confusing
+ *  pre-filled blank). */
 export function getLocalPlayerName(): string | null {
   if (!isBrowser()) return null;
   try {
@@ -45,11 +48,9 @@ export function getLocalPlayerName(): string | null {
   }
 }
 
-/** Saves the local player name — called both from the one-time
- *  onboarding prompt AND from HighScoreEntry.tsx's save action (so a
- *  player who skips the prompt but later types a name into a
- *  high-score box still gets that name remembered for every game after
- *  that, not just the one they were playing when they first typed it). */
+/** Saves the local player name — called from the one-time onboarding
+ *  prompt (PlayerNamePrompt.tsx / IdentityBootstrap.tsx), the only
+ *  caller now that the per-game high-score name-entry flow is retired. */
 export function setLocalPlayerName(name: string): void {
   if (!isBrowser()) return;
   const trimmed = name.trim().slice(0, 20);

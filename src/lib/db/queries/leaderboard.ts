@@ -1,6 +1,8 @@
 import { supabaseServer } from "@/lib/db/supabase";
 
-export interface WeeklyLeaderboardEntry {
+export type LeaderboardPeriod = "weekly" | "monthly" | "allTime";
+
+export interface LeaderboardEntry {
   studentId: string;
   displayName: string;
   xpTotal: number;
@@ -9,39 +11,66 @@ export interface WeeklyLeaderboardEntry {
 }
 
 /**
- * Fills the gap HomePage.tsx's own doc comment calls out by name: "there
- * is no query anywhere in src/lib/db for top-N students by XP... it
- * needs a real getWeeklyLeaderboard() query first." This is that query —
- * HomePage's `leaderboard` prop has had nothing real behind it until now.
+ * lib/db/queries/leaderboard.ts
  *
- * GENUINELY WEEKLY, not all-time: StudentRow.xp_total is a lifetime
- * running total, not a weekly one — using it directly would make
- * "Weekly Champion" a lie for any student who'd simply played the most
- * over their account's whole lifetime, not this week. Instead this sums
- * attempt.xp_awarded for attempts completed since the start of the
- * current week (Monday 00:00, server-local) and joins back to student
- * for display_name — an actual weekly figure, computed fresh on every
- * call rather than cached or denormalized anywhere. That's the right
- * tradeoff for a homepage teaser at this scale; revisit with a
- * materialized view or scheduled aggregation only if this page's query
- * volume ever makes the live join too slow.
+ * THE ONE COMPETITIVE RANKING SURFACE IN THE APP. Per direct decision,
+ * the old per-game, score-based leaderboard (getGameLeaderboard, which
+ * used to live in this file) is RETIRED — it only ever worked for
+ * engines that emit a numeric `finalScore` (tile-match, bond-match's
+ * factory mode), so three of the four engines could never appear on it
+ * at all, and it competed for attention with this cross-game one. See
+ * lib/content/personalBest.ts for what replaced its "did I beat my own
+ * best on this game" half — a quiet personal stat, not a leaderboard.
  *
- * "gamesPlayed" here means attempts completed THIS WEEK, matching what a
- * player would read "Games" as on the weekly champion card — not a
- * lifetime count, for the same reason xp_total alone wasn't used above.
+ * Everything here is XP-based and cross-game: any mission in any engine
+ * contributes the same way, via attempt.xp_awarded. Three periods, one
+ * shared implementation (getLeaderboard) parameterized by a cutoff date:
+ *
+ *   - "weekly": sums xp_awarded for attempts since Monday 00:00
+ *     (server-local) — see getStartOfWeekIso. Resets every Monday,
+ *     which is what makes a "Weekly Champion" card keep feeling alive
+ *     rather than getting dominated permanently by whoever played most
+ *     in week one.
+ *   - "monthly": sums xp_awarded for attempts since the 1st of the
+ *     current month — see getStartOfMonthIso. Same shape, different
+ *     cutoff, longer-running competition than weekly.
+ *   - "allTime": reads student.xp_total directly rather than summing
+ *     attempt rows — that column already IS the lifetime running total
+ *     (see lib/db/queries/progress.ts's addXpToStudent, the only writer
+ *     of it), so re-deriving it from a full, unbounded scan of attempt
+ *     would be strictly more expensive for an identical number. This is
+ *     the "Total XP" view explicitly asked for alongside weekly/monthly,
+ *     not a third variant of the same summing query.
+ *
+ * GENUINELY PERIOD-SCOPED, not all-time pretending otherwise:
+ * student.xp_total is a lifetime total, so using it for weekly/monthly
+ * would make a "Weekly Champion" badge a lie for anyone who simply
+ * played the most over their account's whole lifetime, not this week —
+ * exactly the bug the original getWeeklyLeaderboard was written to
+ * avoid. weekly/monthly still compute fresh from attempt on every call
+ * rather than being cached or denormalized anywhere — the right
+ * tradeoff at this scale; revisit with a materialized view or scheduled
+ * aggregation only if query volume ever makes the live join too slow.
+ *
+ * "gamesPlayed" means attempts completed IN THAT PERIOD for
+ * weekly/monthly (matching what a player would read "Games" as on a
+ * weekly/monthly champion card), and lifetime attempt count for
+ * allTime.
  *
  * No avatarEmoji in the return type — there's no such column on
  * `student`. HomePage.tsx's LeaderboardEntry already treats avatarEmoji
  * as optional with a UI-level fallback emoji, so simply not supplying it
  * here is correct, not a gap to paper over with a fake value.
  */
-export async function getWeeklyLeaderboard(limit = 10): Promise<WeeklyLeaderboardEntry[]> {
-  const startOfWeek = getStartOfWeekIso();
+export async function getLeaderboard(period: LeaderboardPeriod, limit = 10): Promise<LeaderboardEntry[]> {
+  if (period === "allTime") return getAllTimeLeaderboard(limit);
+
+  const sinceIso = period === "weekly" ? getStartOfWeekIso() : getStartOfMonthIso();
 
   const { data, error } = await supabaseServer()
     .from("attempt")
     .select("student_id, xp_awarded, student:student_id(display_name)")
-    .gte("completed_at", startOfWeek);
+    .gte("completed_at", sinceIso);
 
   if (error) throw error;
 
@@ -68,11 +97,119 @@ export async function getWeeklyLeaderboard(limit = 10): Promise<WeeklyLeaderboar
     }
   }
 
+  return rankAndSlice(totals, limit);
+}
+
+/**
+ * allTime reads student.xp_total straight off the student table instead
+ * of summing attempt rows — see this file's header for why that's the
+ * correct (and cheaper) source for a lifetime figure. gamesPlayed here
+ * is a real lifetime attempt count (a second, lightweight query), kept
+ * separate from xp_total so a student with a long history but few
+ * recent plays still shows an honest "games played" number rather than
+ * something derived from xp_total/missionReward guesswork.
+ */
+async function getAllTimeLeaderboard(limit: number): Promise<LeaderboardEntry[]> {
+  const { data: students, error: studentsError } = await supabaseServer()
+    .from("student")
+    .select("id, display_name, xp_total")
+    .order("xp_total", { ascending: false })
+    .limit(limit);
+
+  if (studentsError) throw studentsError;
+
+  const rows = (students ?? []) as Array<{ id: string; display_name: string; xp_total: number }>;
+  if (rows.length === 0) return [];
+
+  const { data: attemptCounts, error: attemptsError } = await supabaseServer()
+    .from("attempt")
+    .select("student_id")
+    .in(
+      "student_id",
+      rows.map((r) => r.id)
+    );
+
+  if (attemptsError) throw attemptsError;
+
+  const countByStudent = new Map<string, number>();
+  for (const row of (attemptCounts ?? []) as Array<{ student_id: string }>) {
+    countByStudent.set(row.student_id, (countByStudent.get(row.student_id) ?? 0) + 1);
+  }
+
+  return rows.map((r, i) => ({
+    studentId: r.id,
+    displayName: r.display_name,
+    xpTotal: r.xp_total,
+    gamesPlayed: countByStudent.get(r.id) ?? 0,
+    rank: i + 1
+  }));
+}
+
+function rankAndSlice(
+  totals: Map<string, { displayName: string; xpTotal: number; gamesPlayed: number }>,
+  limit: number
+): LeaderboardEntry[] {
   return Array.from(totals.entries())
     .map(([studentId, t]) => ({ studentId, ...t }))
     .sort((a, b) => b.xpTotal - a.xpTotal)
     .slice(0, limit)
     .map((entry, i) => ({ ...entry, rank: i + 1 }));
+}
+
+/**
+ * Where ONE specific student sits in a period's ranking, even when
+ * they're outside the top N already fetched via getLeaderboard — the
+ * "Your rank: #N" line on /leaderboard for anyone not in the visible
+ * top 20. Computes the full ranked list for the period (same query
+ * shape as getLeaderboard, just unbounded) rather than trying to derive
+ * a rank from a count/comparison query, since ties need a single
+ * consistent ordering either way.
+ *
+ * Returns null if the student has no qualifying activity this period
+ * (weekly/monthly: zero attempts since the cutoff; allTime: student row
+ * not found) — "not ranked yet" is a real, distinct state from "ranked
+ * last," and the UI should be able to tell them apart.
+ */
+export async function getStudentRank(
+  studentId: string,
+  period: LeaderboardPeriod
+): Promise<{ rank: number; xpTotal: number; totalRanked: number } | null> {
+  if (period === "allTime") {
+    const { data: student, error } = await supabaseServer().from("student").select("xp_total").eq("id", studentId).maybeSingle();
+    if (error) throw error;
+    if (!student) return null;
+
+    const { count, error: countError } = await supabaseServer()
+      .from("student")
+      .select("id", { count: "exact", head: true })
+      .gt("xp_total", student.xp_total);
+    if (countError) throw countError;
+
+    const { count: totalRanked, error: totalError } = await supabaseServer()
+      .from("student")
+      .select("id", { count: "exact", head: true })
+      .gt("xp_total", 0);
+    if (totalError) throw totalError;
+
+    return { rank: (count ?? 0) + 1, xpTotal: student.xp_total, totalRanked: totalRanked ?? 0 };
+  }
+
+  const sinceIso = period === "weekly" ? getStartOfWeekIso() : getStartOfMonthIso();
+  const { data, error } = await supabaseServer().from("attempt").select("student_id, xp_awarded").gte("completed_at", sinceIso);
+  if (error) throw error;
+
+  const totals = new Map<string, number>();
+  for (const row of (data ?? []) as Array<{ student_id: string; xp_awarded: number | null }>) {
+    totals.set(row.student_id, (totals.get(row.student_id) ?? 0) + (row.xp_awarded ?? 0));
+  }
+
+  const myXp = totals.get(studentId);
+  if (myXp === undefined) return null;
+
+  const ranked = Array.from(totals.values()).sort((a, b) => b - a);
+  const rank = ranked.findIndex((xp) => xp === myXp) + 1;
+
+  return { rank, xpTotal: myXp, totalRanked: ranked.length };
 }
 
 /** Monday 00:00:00 in server-local time, as an ISO string suitable for a
@@ -89,92 +226,22 @@ function getStartOfWeekIso(): string {
   return monday.toISOString();
 }
 
-export interface GameLeaderboardEntry {
-  studentId: string;
-  displayName: string;
-  score: number;
-  date: string;
-  rank: number;
+/** The 1st of the current month, 00:00:00 server-local — the monthly
+ *  leaderboard's reset cutoff, same role as getStartOfWeekIso above but
+ *  for the longer period. */
+function getStartOfMonthIso(): string {
+  const now = new Date();
+  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+  return firstOfMonth.toISOString();
 }
 
 /**
- * Real, per-GAME, all-time, server-backed leaderboard — distinct from
- * getWeeklyLeaderboard above (that one is cross-game, weekly, for the
- * homepage). This is what HighScoreEntry.tsx now shows instead of (or
- * alongside) the old localStorage-only list: a top-N table of the best
- * score anyone has ever recorded on THIS specific game, visible to
- * everyone regardless of whose device set the record.
- *
- * SCORE SOURCE: attempt.score is a normalized 0-1 value (see
- * TileMatchEngine's onComplete — score: Math.min(1, raw/ceiling)), not
- * the actual in-game point total a player would recognize from their
- * own session. The real number (e.g. "740") only exists inside
- * attempt.raw_outcome's `finalScore` key, the same field
- * GameRuntime.tsx already reads client-side
- * (lastResult?.rawOutcome?.finalScore). This query reaches into that
- * jsonb column rather than using the normalized score column, since
- * ranking by the normalized value would show 0.92 instead of the
- * 700-ish numbers players actually recognize from their own session.
- *
- * DELIBERATELY NOT SORTING BY THE JSONB PATH IN POSTGREST: PostgREST/
- * postgrest-js's .order() on a jsonb key has had real, documented
- * quoting/casting issues across versions, and without a live DB to test
- * against in this session there's no way to confirm it behaves
- * correctly here. Instead this pulls a bounded candidate set (most
- * recent CANDIDATE_POOL_SIZE attempts with a numeric finalScore — recent
- * rather than unbounded, so a long-running game's attempt table doesn't
- * force pulling its entire history just to find the top 10) and sorts +
- * ranks entirely in JS, where the behavior is fully predictable and
- * doesn't depend on PostgREST version quirks. If this game accumulates
- * enough volume that "most recent N" stops reliably containing the
- * true all-time top 10, revisit with a proper indexed/generated column
- * for finalScore instead of querying into raw jsonb at all.
- *
- * Only attempts where raw_outcome has a numeric finalScore are
- * considered — engines with no comparable per-session score
- * (particle-assembly's one-shot completion, bond-match's level mode)
- * simply never produce rows with that key, so they're naturally
- * excluded rather than needing a special case here.
+ * Back-compat named export — getWeeklyLeaderboard(limit) is exactly
+ * getLeaderboard("weekly", limit). Kept as a thin wrapper since
+ * app/page.tsx (the homepage) already calls it by this name and there's
+ * no reason to force every call site to migrate just because the
+ * monthly/all-time variants were added alongside it.
  */
-const CANDIDATE_POOL_SIZE = 500;
-
-export async function getGameLeaderboard(gameId: string, limit = 10): Promise<GameLeaderboardEntry[]> {
-  const { data, error } = await supabaseServer()
-    .from("attempt")
-    .select("student_id, raw_outcome, completed_at, student:student_id(display_name)")
-    .eq("game_id", gameId)
-    // ->> (text extraction), not -> (json extraction), on the FINAL key
-    // in the path — this is the documented working form for .not(...,
-    // "is", null) against a jsonb column. Treated as a soft optimization
-    // only, not the source of correctness: the .filter() call below
-    // (after the query returns) re-checks "does this row actually have
-    // a numeric finalScore" in JS regardless, so even if this DB-side
-    // filter behaves differently than expected on a given PostgREST
-    // version, rows without a real score still can't leak into the
-    // ranked result.
-    .not("raw_outcome->>finalScore", "is", null)
-    .order("completed_at", { ascending: false })
-    .limit(CANDIDATE_POOL_SIZE);
-
-  if (error) throw error;
-
-  return ((data ?? []) as Array<{
-    student_id: string;
-    raw_outcome: Record<string, unknown>;
-    completed_at: string;
-    student: { display_name: string } | { display_name: string }[] | null;
-  }>)
-    .filter((row) => typeof row.raw_outcome?.finalScore === "number")
-    .map((row) => {
-      const studentRecord = Array.isArray(row.student) ? row.student[0] : row.student;
-      return {
-        studentId: row.student_id,
-        displayName: studentRecord?.display_name ?? "Anonymous",
-        score: row.raw_outcome.finalScore as number,
-        date: row.completed_at.slice(0, 10)
-      };
-    })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit)
-    .map((entry, i) => ({ ...entry, rank: i + 1 }));
+export async function getWeeklyLeaderboard(limit = 10): Promise<LeaderboardEntry[]> {
+  return getLeaderboard("weekly", limit);
 }

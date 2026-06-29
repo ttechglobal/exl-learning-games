@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { ConceptSnapshot } from "@/components/runtime/ConceptSnapshot";
 import { ReflectionScreen } from "@/components/runtime/ReflectionScreen";
 import { PeriodicTableReveal } from "@/motion/PeriodicTableReveal";
-import { HighScoreEntry } from "@/components/runtime/HighScoreEntry";
+import { PersonalBest } from "@/components/runtime/PersonalBest";
 import { getEngineDefinition } from "@/engines/registry";
 import { applyDifficultyModifiers, type PlayerDifficulty } from "@/lib/content/difficultyModifiers";
 import { resolveQuickConceptsForSlug } from "@/lib/content/quickConcepts";
 import { hasSeenConcepts } from "@/lib/content/contentPrefs";
 import type { AttemptResult } from "@/types/result";
 import { enqueueAttempt } from "@/lib/offline/attemptQueue";
+import { track } from "@/lib/analytics/track";
 
 export interface GameRuntimeMission {
   id: string;
@@ -24,7 +25,7 @@ export interface GameRuntimeMission {
 
 export interface GameRuntimeProps {
   gameId: string;
-  /** Needed for lib/content/localHighScores.ts's per-game storage key —
+  /** Needed for lib/content/personalBest.ts's per-game storage key —
    *  gameId (a DB uuid) would work as a key too, but slug is what every
    *  other localStorage-backed feature in this app already keys on
    *  (contentPrefs.ts uses engineType, not an id), and slugs are stable
@@ -207,6 +208,48 @@ export function GameRuntime({
   const [phase, setPhase] = useState<Phase>(() => (hasSeenConcepts(engineType) ? "playing" : "snapshot"));
   const [lastResult, setLastResult] = useState<AttemptResult | null>(null);
 
+  /**
+   * mission_started fires exactly once per real GameRuntime mount (this
+   * component remounts per mission/restart — see PlayClient.tsx's `key=
+   * {\`${runtimeResetKey}-${activeMission.id}\`}` comment for why that's
+   * guaranteed), the moment gameplay actually begins. Tracked here
+   * rather than inside each engine so every engine gets this signal for
+   * free, same "one place, not four engines" reasoning as
+   * handleEngineComplete below. hasStartedRef guards against firing a
+   * second time if phase cycles back through "playing" later in the
+   * SAME mount (e.g. Play Again on the Reflection screen sets phase back
+   * to "playing" — that's a genuinely new attempt at the same mission,
+   * but mission_started already covers "did the player ever start this
+   * mission instance," not "how many times did they retry," which
+   * attemptsBeforeSuccess on mission_completed already answers).
+   */
+  const hasTrackedStartRef = useRef(false);
+  useEffect(() => {
+    if (phase !== "playing" || hasTrackedStartRef.current) return;
+    hasTrackedStartRef.current = true;
+    track("mission_started", { studentId, gameId, missionId: mission.id, topicId: mission.topicId, subtopicId: mission.subtopicId });
+  }, [phase, studentId, gameId, mission.id, mission.topicId, mission.subtopicId]);
+
+  /**
+   * mission_abandoned fires on unmount if gameplay had started
+   * (mission_started already fired) but mission_completed never did —
+   * the player navigated away (Back to Home, browser back/close,
+   * switching games) mid-mission rather than finishing it. Read via a
+   * ref inside the cleanup, not component state, since an unmounting
+   * component's next render never happens — the cleanup closure must
+   * read whatever the LATEST committed value was, which refs guarantee
+   * and stale closures over plain variables don't.
+   */
+  const hasCompletedRef = useRef(false);
+  useEffect(() => {
+    return () => {
+      if (hasTrackedStartRef.current && !hasCompletedRef.current) {
+        track("mission_abandoned", { studentId, gameId, missionId: mission.id, topicId: mission.topicId, subtopicId: mission.subtopicId });
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const engineDef = getEngineDefinition(engineType);
 
   /**
@@ -256,6 +299,45 @@ export function GameRuntime({
       // onAdvanceToNextMission (the player might tap Back instead, and
       // the mission still completed).
       if (result.success) onMissionSucceeded();
+
+      // Flip BEFORE the mission_abandoned-on-unmount effect could ever
+      // run — a mission that just completed should never also report as
+      // abandoned, even if the player immediately navigates away from
+      // the Reflection screen a moment later.
+      hasCompletedRef.current = true;
+      track("mission_completed", {
+        studentId,
+        gameId,
+        missionId: mission.id,
+        topicId: mission.topicId,
+        subtopicId: mission.subtopicId,
+        detail: {
+          success: result.success ?? null,
+          attemptsBeforeSuccess: result.attemptsBeforeSuccess ?? null
+        }
+      });
+
+      // hintsUsed is a soft-contract field on rawOutcome (currently only
+      // TileMatchEngine's outcome carries it — see tileMatch.config.ts's
+      // comment on why this engine-internal counter is surfaced through
+      // rawOutcome rather than threading studentId/gameId into the
+      // engine itself). Tracked as its own event (not just folded into
+      // mission_completed's detail) since "did this mission need a
+      // hint" is a per-occurrence question worth counting on its own,
+      // the same way TileMatchEngine's Hint button already exists as a
+      // standalone, always-visible affordance rather than something
+      // bundled into the wrong-answer flow.
+      const hintsUsed = typeof rawOutcome.hintsUsed === "number" ? rawOutcome.hintsUsed : 0;
+      if (hintsUsed > 0) {
+        track("hint_used", {
+          studentId,
+          gameId,
+          missionId: mission.id,
+          topicId: mission.topicId,
+          subtopicId: mission.subtopicId,
+          detail: { count: hintsUsed }
+        });
+      }
 
       try {
         const response = await fetch("/api/attempts", {
@@ -331,21 +413,25 @@ export function GameRuntime({
   const finalComposition = lastResult?.rawOutcome?.finalComposition as Record<string, number> | undefined;
   const protonCount = finalComposition?.proton;
 
-  // Same soft-contract pattern for high scores: ANY engine reporting a
-  // numeric `finalScore` gets the local high-score prompt automatically —
-  // not hardcoded to tile-match by name. Currently true for tile-match
+  // Same soft-contract pattern for scores: ANY engine reporting a
+  // numeric `finalScore` gets the quiet personal-best stat automatically
+  // — not hardcoded to tile-match by name. Currently true for tile-match
   // (every session) AND bond-match's factory mode specifically (Atom
   // Forge Level 4 — BondMatchFactoryOutcome also has finalScore), which
   // is correct: factory mode genuinely is a scored, repeatable session
   // just like tile-match. bond-match's LEVEL mode (most missions) and
   // particle-assembly's one-shot completion have no comparable score and
-  // correctly never trigger this.
+  // correctly never trigger this. PersonalBest (not the old
+  // HighScoreEntry/per-game leaderboard — see lib/db/queries/
+  // leaderboard.ts's header) is intentionally a quiet, non-competitive
+  // stat now; the weekly/monthly/all-time leaderboard is the one
+  // competitive ranking surface in the app.
   const finalScore = lastResult?.rawOutcome?.finalScore as number | undefined;
 
   const extraContent = (
     <>
       {typeof protonCount === "number" && <PeriodicTableReveal highlightAtomicNumber={protonCount} />}
-      {typeof finalScore === "number" && <HighScoreEntry gameId={gameId} gameSlug={gameSlug} score={finalScore} />}
+      {typeof finalScore === "number" && <PersonalBest gameSlug={gameSlug} score={finalScore} />}
     </>
   );
 
@@ -353,7 +439,19 @@ export function GameRuntime({
     <ReflectionScreen
       successLines={reviewSuccessLines}
       hasNextMission={hasNextMission}
-      onPlayAgain={() => setPhase("playing")}
+      onPlayAgain={() => {
+        // Re-arm both tracking refs — Play Again is a genuinely NEW
+        // attempt at the same mission within the same GameRuntime
+        // mount, so it needs its own mission_started and needs to be
+        // eligible for mission_abandoned again if the player leaves
+        // without finishing THIS attempt. Without this reset,
+        // hasCompletedRef would stay permanently true from the first
+        // attempt and a second, abandoned attempt would never report as
+        // abandoned.
+        hasTrackedStartRef.current = false;
+        hasCompletedRef.current = false;
+        setPhase("playing");
+      }}
       onNextMission={onAdvanceToNextMission}
       onViewConceptSummary={() => setPhase("reviewingConcepts")}
       onBackToHome={onBackToHome}

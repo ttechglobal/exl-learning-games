@@ -179,6 +179,28 @@
   background: color-mix(in srgb, var(--eg-gold) 18%, transparent);
   transform: scale(1.08);
 }
+/* Wrong-atom-drop rejection on an EMPTY slot — same red-flash language
+ * as .atomChip.rejecting below (kept visually identical on purpose, so
+ * "that didn't work" reads the same whether the rejected attempt was a
+ * wrong-symbol drop here or an overfill on an already-placed atom).
+ * Border-only flash (no scale punch) since an empty slot has no filled
+ * circle to "shrink back" the way a placed atomChip does. */
+.emptySlotRejecting {
+  animation: emptySlotReject 0.42s ease-in-out;
+}
+@keyframes emptySlotReject {
+  0%, 100% { border-color: rgba(123, 79, 203, 0.35); background: rgba(255, 255, 255, 0.4); }
+  30% { border-color: var(--eg-danger); border-style: solid; background: color-mix(in srgb, var(--eg-danger) 16%, transparent); }
+  60% { border-color: var(--eg-danger); border-style: solid; background: color-mix(in srgb, var(--eg-danger) 16%, transparent); }
+}
+[data-theme="dark"] .emptySlotRejecting {
+  animation: emptySlotRejectDark 0.42s ease-in-out;
+}
+@keyframes emptySlotRejectDark {
+  0%, 100% { border-color: rgba(123, 79, 203, 0.35); background: rgba(24, 28, 40, 0.4); }
+  30% { border-color: var(--eg-danger); border-style: solid; background: color-mix(in srgb, var(--eg-danger) 22%, transparent); }
+  60% { border-color: var(--eg-danger); border-style: solid; background: color-mix(in srgb, var(--eg-danger) 22%, transparent); }
+}
 .emptySlotHint {
   font-family: var(--eg-font-display);
   font-weight: 700;
@@ -528,7 +550,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .atomChip, .dockCapsule, .engineColumn.shaking, .feedbackRow, .xpPop {
+  .atomChip, .dockCapsule, .engineColumn.shaking, .feedbackRow, .xpPop, .emptySlotRejecting {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;

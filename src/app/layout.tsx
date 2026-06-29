@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
 import { IdentityBootstrap } from "@/components/identity/IdentityBootstrap";
+import { OfflineQueueFlusher } from "@/components/identity/OfflineQueueFlusher";
 import "@/motion/tokens.css";
 
 export const metadata: Metadata = {
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       >
         <ThemeProvider>
           <IdentityBootstrap />
+          <OfflineQueueFlusher />
           {children}
         </ThemeProvider>
       </body>

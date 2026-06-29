@@ -1,0 +1,37 @@
+.wrap {
+  box-sizing: border-box;
+  width: 100%;
+  background: color-mix(in srgb, var(--accent-color) 8%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--accent-color) 30%, transparent);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin: 4px 0 18px;
+  text-align: center;
+}
+
+.label {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--eg-text-dim);
+  margin-bottom: 4px;
+}
+
+.value {
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: var(--eg-text-bright);
+}
+
+.newBest {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--accent-color) 70%, black);
+}
+[data-theme="dark"] .newBest {
+  color: color-mix(in srgb, var(--accent-color) 60%, white);
+}

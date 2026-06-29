@@ -20,13 +20,14 @@ import styles from "@/components/identity/IdentityBootstrap.module.css";
  * MERGED, not duplicated: an earlier revision ran TWO separate "what
  * should we call you" prompts — this component (server identity) and a
  * since-removed PlayerNamePrompt.tsx (purely local, for high-score
- * display names). Per the obvious UX problem with that (two near-
- * identical name dialogs popping up at different moments), this is now
- * the ONE prompt, and it writes the name to BOTH places at once:
- * lib/content/localPlayerName.ts (the same store HighScoreEntry.tsx
- * already reads for instant local display) AND the server via
- * POST /api/identity (for the profile/XP total and the cross-device
- * leaderboard's display name). One name, one prompt, two consumers.
+ * display names — that local-only flow itself is gone now too, see
+ * lib/content/personalBest.ts's header). Per the obvious UX problem with
+ * that (two near-identical name dialogs popping up at different
+ * moments), this is now the ONE prompt, and it writes the name to BOTH
+ * places at once: lib/content/localPlayerName.ts (for instant local
+ * display) AND the server via POST /api/identity (for the profile/XP
+ * total and the cross-device leaderboard's display name). One name, one
+ * prompt, two consumers.
  *
  * Mounted once near the root (see app/layout.tsx, same lifecycle as
  * ThemeProvider) so identity resolves as early as possible on every
@@ -108,7 +109,7 @@ export function IdentityBootstrap() {
       dismiss(); // Skipping the name is allowed — Anonymous is a fine default.
       return;
     }
-    setLocalPlayerName(trimmed); // instant local effect — HighScoreEntry.tsx picks this up immediately
+    setLocalPlayerName(trimmed); // instant local effect — any future reader of getLocalPlayerName() picks this up immediately
     setSubmitting(true);
     try {
       await fetch("/api/identity", {

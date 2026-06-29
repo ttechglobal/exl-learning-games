@@ -6,7 +6,8 @@ import type {
   MoleculeBuilderOutcome,
   BondOrder,
   AtomDef,
-  TargetBond
+  TargetBond,
+  Slot
 } from "@/engines/molecule-builder/moleculeBuilder.config";
 import {
   bondCountForSlot,
@@ -232,13 +233,58 @@ export function MoleculeBuilderEngine({
     [payload.targetBonds, roster]
   );
 
+  /**
+   * WRONG-ATOM DROP FEEDBACK — fixes a confirmed silent-failure bug:
+   * dropping an atom on a slot that doesn't accept it used to just
+   * `return` with no visible or audible response at all, leaving the
+   * player to guess why nothing happened. Every sibling engine already
+   * has an equivalent moment (BondMatchEngine's rejectBond — shake +
+   * fail sound + mascot "encourage" + a hint toast; TileMatchEngine's
+   * wrong-tap red flash) — this brings molecule-builder up to the same
+   * standard rather than inventing a new pattern. Reuses the EXACT
+   * mechanism already built for the overfill case just below
+   * (rejectingSlot + shaking + "fail" sound), since a wrong-symbol drop
+   * and an overfill rejection are the same player-facing moment: "that
+   * didn't work, here's why" — they shouldn't look or feel different
+   * from each other.
+   */
+  const handleWrongSymbolDrop = useCallback(
+    (symbol: string, slot: Slot) => {
+      setRejectingSlot(slot.id);
+      playSound("fail");
+      setShaking(true);
+      setTimeout(() => setShaking(false), 420);
+      setTimeout(() => setRejectingSlot(null), 420);
+
+      const wrongDef = atomDefBySymbol(roster, symbol);
+      const acceptedNames = slot.acceptsSymbols
+        .map((s) => atomDefBySymbol(roster, s)?.name ?? s)
+        .join(" or ");
+      // Reuses the SAME feedback card handleSubmit's failure path shows
+      // (see the feedback.visible render below) — that card already
+      // carries its own inline "encourage" mascot, so this deliberately
+      // does NOT also trigger the separate floating mascotPose popup;
+      // showing both at once would put two mascots on screen for one
+      // moment.
+      setFeedback({
+        visible: true,
+        text: `${wrongDef?.name ?? symbol} doesn't go there — that spot needs ${acceptedNames}.`,
+        entering: true
+      });
+    },
+    [roster]
+  );
+
   const handleDockDrop = useCallback(
     (symbol: string, slotId: string) => {
       if (isPaused) return;
       const slot = payload.slots.find((s) => s.id === slotId);
       if (!slot) return;
       if (placedAtoms[slotId]) return; // slot already occupied — clear it first
-      if (!slot.acceptsSymbols.includes(symbol)) return; // wrong atom type for this slot
+      if (!slot.acceptsSymbols.includes(symbol)) {
+        handleWrongSymbolDrop(symbol, slot);
+        return;
+      }
 
       const nextAtoms = { ...placedAtoms, [slotId]: symbol };
       setPlacedAtoms(nextAtoms);
@@ -247,7 +293,7 @@ export function MoleculeBuilderEngine({
       // complete one or more dashed lines immediately.
       tryAutoFormBonds(nextAtoms, bonds, chosenOrders);
     },
-    [isPaused, payload.slots, placedAtoms, bonds, chosenOrders, tryAutoFormBonds]
+    [isPaused, payload.slots, placedAtoms, bonds, chosenOrders, tryAutoFormBonds, handleWrongSymbolDrop]
   );
 
   /** Finds which (if any) empty slot the given client-coordinate point
@@ -462,7 +508,9 @@ export function MoleculeBuilderEngine({
                       ref={(el) => {
                         slotRefs.current[slot.id] = el;
                       }}
-                      className={`${styles.emptySlot} ${isValidDropTarget ? styles.emptySlotHover : ""}`}
+                      className={[styles.emptySlot, isValidDropTarget ? styles.emptySlotHover : "", isRejecting ? styles.emptySlotRejecting : ""]
+                        .filter(Boolean)
+                        .join(" ")}
                       data-slot-id={slot.id}
                     >
                       <span className={styles.emptySlotHint}>{slot.acceptsSymbols.join("/")}</span>

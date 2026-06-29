@@ -51,9 +51,9 @@ export function SiteHeader({ theme, onToggleTheme, active, currentStudentXp }: S
           <Link href="/worlds" className={active === "games" ? styles.navActive : undefined}>
             🎮 <span className={styles.navLabel}>Games</span>
           </Link>
-          <a href="/#leaderboard" className={active === "leaderboard" ? styles.navActive : undefined}>
+          <Link href="/leaderboard" className={active === "leaderboard" ? styles.navActive : undefined}>
             🏆 <span className={styles.navLabel}>Leaderboard</span>
-          </a>
+          </Link>
         </nav>
 
         <div className={styles.headerRight}>

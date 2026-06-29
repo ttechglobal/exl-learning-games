@@ -8,7 +8,7 @@ import type { StudentRow } from "@/types/db";
  * around a single hardcoded PLACEHOLDER_STUDENT_ID UUID, meaning every
  * visitor's attempts were written under the exact same fake student row.
  * The two real, server-backed leaderboard queries
- * (getWeeklyLeaderboard/getGameLeaderboard in lib/db/queries/
+ * (getLeaderboard in lib/db/queries/
  * leaderboard.ts) already work mechanically and are already globally
  * visible with no sign-in required — that part was never broken. What
  * was missing was distinct PLAYER IDENTITY: with everyone sharing one

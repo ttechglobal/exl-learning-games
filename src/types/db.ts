@@ -154,6 +154,31 @@ export interface TopicProgressRow {
   updated_at: string;
 }
 
+/**
+ * Lightweight analytics signal — see types/event.ts's AnalyticsEvent for
+ * the full design rationale (why this is a separate stream from
+ * `attempt`, not more columns added to it). `name` is intentionally
+ * `string` here rather than the narrower AnalyticsEventName union —
+ * this file mirrors the DB schema as Postgres actually stores it (a
+ * plain text column, no enum constraint in this checkout's migration),
+ * while the union lives at the application layer in types/event.ts. Kept
+ * separate from AttemptRow above on purpose: an event row never updates
+ * mastery_score or xp_total, and may exist with no corresponding
+ * attempt at all (e.g. mission_abandoned, or mission_viewed before a
+ * mission is even chosen).
+ */
+export interface EventRow {
+  id: string;
+  name: string;
+  student_id: string;
+  game_id: string;
+  mission_id: string | null;
+  topic_id: string | null;
+  subtopic_id: string | null;
+  detail: Record<string, unknown>;
+  occurred_at: string;
+}
+
 /** Shape passed to supabase-js's generic typing, e.g. supabase.from<GameRow>('game') */
 export interface Database {
   game: GameRow;
@@ -161,4 +186,5 @@ export interface Database {
   student: StudentRow;
   attempt: AttemptRow;
   topic_progress: TopicProgressRow;
+  event: EventRow;
 }

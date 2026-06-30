@@ -54,6 +54,11 @@
   width: 100%;
   height: 100%;
   gap: 10px;
+  /* Define --cell-size here (not on .slotGrid) so the dock capsules
+   * below also inherit it for proportional sizing — see .dockCapsule.
+   * Falls back to 4 columns when --cols isn't set yet (first render
+   * before JS sets it), which is the smallest real mission's width. */
+  --cell-size: clamp(52px, calc((100vw - 48px) / var(--cols, 4)), 108px);
 }
 
 /* .bondOrderSelector / .orderButton (a single global selector affecting
@@ -86,19 +91,51 @@
   overflow: auto;
 }
 
+/**
+ * RESPONSIVE SIZING — per direct request ("make Carbon Builder
+ * mobile-responsive; the shapes and lines should be very responsive
+ * for mobile"). FIXES A CONFIRMED ROOT CAUSE: cells were a flat 96px
+ * on every screen below 600px regardless of how many columns a given
+ * molecule's layout actually needs. Pentane (carbonBuilderMissions.ts's
+ * widest layout) spans 7 columns — at a fixed 96px that's 672px wide,
+ * wider than almost every phone viewport (typical 360-414px), forcing
+ * permanent horizontal scroll/overflow on exactly the molecules that
+ * most need to fit on screen. Isobutane's branching 4-column-wide shape
+ * had the same problem to a lesser degree.
+ *
+ * THE FIX: --cols/--rows (set inline by MoleculeBuilderEngine.tsx from
+ * this mission's real colSpan/rowSpan) drive a clamp() that sizes each
+ * cell as a share of the actual viewport width divided by however many
+ * columns THIS molecule needs — not a fixed breakpoint number that's
+ * the same whether the molecule has 2 slots or 17. A 2-column molecule
+ * (ethane) still gets nice big cells; a 7-column one (pentane) shrinks
+ * cells just enough to fit without scrolling. The min bound (52px) is
+ * the smallest size that's still comfortably tappable on a touchscreen
+ * per standard accessibility guidance (~44px minimum tap target plus a
+ * little breathing room); the max bound (108px) matches what desktop
+ * already showed before this change, so desktop/tablet is unaffected
+ * — see the >=600px block further down for the previous fixed
+ * tiers it grew from, now folded into this single formula instead of a
+ * fixed step between two hardcoded sizes.
+ *
+ * 100vw accounts for the FULL viewport since .buildSurface's own
+ * padding/centering already constrains how much of that width any one
+ * cell can actually claim; --cols stays the divisor either way since
+ * it's the real driver of "does this molecule's shape fit."
+ */
 .slotGrid {
   position: relative;
   display: grid;
-  grid-auto-rows: 96px;
-  grid-auto-columns: 96px;
+  grid-auto-rows: var(--cell-size);
+  grid-auto-columns: var(--cell-size);
   gap: 0;
 }
 
 .slotCell {
   position: relative;
   z-index: 2;
-  width: 96px;
-  height: 96px;
+  width: var(--cell-size);
+  height: var(--cell-size);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -155,8 +192,10 @@
 
 .emptySlot {
   box-sizing: border-box;
-  width: 72px;
-  height: 72px;
+  /* Scales with --cell-size — preserves the original 72/96 = 0.75
+   * empty-slot-to-cell ratio at every responsive size. */
+  width: calc(var(--cell-size) * 0.75);
+  height: calc(var(--cell-size) * 0.75);
   border-radius: 50%;
   border: 2.5px dashed rgba(123, 79, 203, 0.35);
   background: rgba(255, 255, 255, 0.4);
@@ -204,7 +243,7 @@
 .emptySlotHint {
   font-family: var(--eg-font-display);
   font-weight: 700;
-  font-size: 0.72rem;
+  font-size: calc(var(--cell-size) * 0.13);
   color: var(--eg-text-dim);
   opacity: 0.7;
 }
@@ -220,8 +259,10 @@
   position: fixed;
   z-index: 60;
   transform: translate(-50%, -50%);
-  width: 64px;
-  height: 64px;
+  /* Matches the responsive atomChip diameter (83% of cell) so the ghost
+   * looks like the thing you're dragging at every screen size. */
+  width: calc(var(--cell-size, 96px) * 0.833);
+  height: calc(var(--cell-size, 96px) * 0.833);
   border-radius: 50%;
   background: var(--el-color);
   box-shadow: 0 6px 0 color-mix(in srgb, var(--el-color) 65%, black), 0 10px 18px rgba(58, 42, 85, 0.3);
@@ -230,7 +271,7 @@
   justify-content: center;
   font-family: var(--eg-font-display);
   font-weight: 800;
-  font-size: 0.95rem;
+  font-size: calc(var(--cell-size, 96px) * 0.18);
   color: #1c2030;
   pointer-events: none;
   opacity: 0.95;
@@ -238,8 +279,12 @@
 
 .atomChip {
   box-sizing: border-box;
-  width: 80px;
-  height: 80px;
+  /* Scales with --cell-size (set on .engineColumn, see that rule's comment)
+   * instead of a fixed 80px — keeps the same ~83% chip-to-cell ratio
+   * the original fixed values had (80/96 = 0.833) at every size the
+   * responsive grid now produces, mobile through desktop. */
+  width: calc(var(--cell-size) * 0.833);
+  height: calc(var(--cell-size) * 0.833);
   border-radius: 50%;
   border: none;
   background: var(--el-color);
@@ -286,12 +331,17 @@
 }
 .atomSymbol {
   font-weight: 800;
-  font-size: 1.05rem;
+  /* Scales with the chip — ~12.6% of cell size as font-size (1.05rem at
+   * default 16px base ≈ 16.8px / 96px cell ≈ 0.175, but expressed as a
+   * proportion of chip diameter rather than cell for legibility). Using
+   * calc() relative to --cell-size keeps symbol/counter in proportion as
+   * cells shrink on narrow phones with many columns. */
+  font-size: calc(var(--cell-size) * 0.18);
   line-height: 1;
 }
 .bondCounter {
   font-weight: 700;
-  font-size: 0.62rem;
+  font-size: calc(var(--cell-size) * 0.105);
   opacity: 0.85;
   margin-top: 2px;
 }
@@ -384,8 +434,12 @@
 }
 .dockCapsule {
   flex-shrink: 0;
-  width: 56px;
-  height: 74px;
+  /* Scales with --cell-size — original 56×74px at 96px cell ≈ 0.583/0.77.
+   * Capsules feel right when they're visually "same family" as the placed
+   * atom chips on the grid; proportional sizing keeps that relationship
+   * intact as cells shrink for wide molecules on narrow phones. */
+  width: calc(var(--cell-size) * 0.583);
+  height: calc(var(--cell-size) * 0.77);
   border-radius: 28px;
   background: linear-gradient(180deg, #fff, #f7f3ff);
   border: 2px solid var(--el-color);
@@ -406,8 +460,8 @@
   50% { transform: translateY(-3px); }
 }
 .dockChipInner {
-  width: 24px;
-  height: 24px;
+  width: calc(var(--cell-size) * 0.25);
+  height: calc(var(--cell-size) * 0.25);
   border-radius: 50%;
   background: var(--el-color);
   box-shadow: 0 2px 0 color-mix(in srgb, var(--el-color) 65%, black);
@@ -416,7 +470,7 @@
   justify-content: center;
   font-family: var(--eg-font-display);
   font-weight: 700;
-  font-size: 0.58rem;
+  font-size: calc(var(--cell-size) * 0.094);
   color: #fff;
 }
 .dockLabel {
@@ -465,6 +519,12 @@
   opacity: 0;
   box-sizing: border-box;
   max-width: min(440px, 90vw);
+  /* CRITICAL: never intercept pointer events — this is a fixed overlay
+   * and without this, it blocks drag gestures on the build surface
+   * underneath it, freezing the game after any wrong-drop feedback
+   * appears. Children that genuinely need to be tappable override this
+   * individually (none currently do — this is pure read-only feedback). */
+  pointer-events: none;
 }
 .feedbackRow .feedbackCard.entering {
   animation: feedbackShow 2.8s ease-out forwards;
@@ -528,25 +588,6 @@
   right: 14px;
   z-index: 7;
   width: 76px;
-}
-
-@media (min-width: 600px) {
-  .slotGrid {
-    grid-auto-rows: 108px;
-    grid-auto-columns: 108px;
-  }
-  .slotCell {
-    width: 108px;
-    height: 108px;
-  }
-  .atomChip {
-    width: 88px;
-    height: 88px;
-  }
-  .dockCapsule {
-    width: 64px;
-    height: 82px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

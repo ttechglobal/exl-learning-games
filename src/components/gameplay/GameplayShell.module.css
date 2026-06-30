@@ -97,6 +97,40 @@
   margin-bottom: 10px;
 }
 
+/* Wraps menu + the optional gameTitle label as one group on the left of
+ * .menuSlot — see GameplayShell.tsx's gameTitle comment. When gameTitle
+ * is omitted (every engine except Carbon Builder today) this wraps just
+ * the menu button alone with no visual side effects: display:flex +
+ * align-items:center on a single child behaves identically to that
+ * child being a direct flex item of .menuSlot, so tile-match/bond-match/
+ * particle-assembly's existing layout is pixel-identical to before this
+ * wrapper was introduced. */
+.menuTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* Per direct request ("make the menu and the topbar/title of the game
+ * stay side by side, it looks neater") — same MissionTopBar title
+ * styling language (font-display, bold) but compact enough to share a
+ * 42px-min-height row with the menu button, unlike MissionTopBar
+ * itself which is a full standalone header bar for the pre-play screens.
+ * Truncates with an ellipsis rather than wrapping — this row has a
+ * fixed height and a long game title wrapping to a second line would
+ * push the stats/whatever's on the right of the row down with it. */
+.gameTitleLabel {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--eg-text-bright);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
 .topZone {
   position: relative;
   z-index: 5;

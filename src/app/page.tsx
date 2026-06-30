@@ -4,7 +4,11 @@ import { resolveCurrentStudent } from "@/lib/identity/deviceId";
 import { HomePage } from "@/app/HomePage";
 import type { GameRow } from "@/types/db";
 
-// Needs a live DB connection per-request; not meaningful to prerender at build time.
+// force-dynamic: this page reads the eg_device_id cookie to show the
+// viewer's XP total in the header. ISR can't serve per-user data from
+// a cached render, so we keep this dynamic. The leaderboard API route
+// (/api/leaderboard) uses Cache-Control headers instead so the actual
+// leaderboard fetch is served from CDN cache on the client side.
 export const dynamic = "force-dynamic";
 
 const FEATURED_SLUGS = ["atom-forge", "element-hunter"];

@@ -11,6 +11,7 @@ import { TrackMapScreen } from "@/app/(player)/play/[gameSlug]/TrackMapScreen";
 import { DifficultySelectScreen } from "@/app/(player)/play/[gameSlug]/DifficultySelectScreen";
 import { MissionObjectivesScreen } from "@/app/(player)/play/[gameSlug]/MissionObjectivesScreen";
 import { resolveMissionObjectives } from "@/lib/content/missionObjectives";
+import { resetConceptsSeen } from "@/lib/content/contentPrefs";
 import { engineSupportsDifficultyChoice, type PlayerDifficulty } from "@/lib/content/difficultyModifiers";
 import { getElementByAtomicNumber, CATEGORY_COLORS } from "@/motion/periodicTableData";
 import { track } from "@/lib/analytics/track";
@@ -271,6 +272,14 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
           gameTitle={game.title}
           missions={sortedMissions}
           onSelect={(missionId: string) => {
+            // Deliberate fresh mission pick — reset the per-engine
+            // "seen Quick Concepts" flag so it shows again here, even
+            // if a different mission of this same engine type already
+            // marked it seen earlier this session. See
+            // contentPrefs.ts's header for the full distinction between
+            // this and the Next Mission auto-advance path (which
+            // intentionally does NOT reset this).
+            resetConceptsSeen(game.engine_type);
             setActiveMissionId(missionId);
             setScreen("entry");
           }}
@@ -293,6 +302,15 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
           missions={sortedMissions}
           completedMissionIds={locallyCompletedIds}
           onSelect={(missionId: string) => {
+            // THE FIX for the reported bug: Quick Concepts wasn't
+            // showing again from the Track Map once it had been seen
+            // once for this engine type. A Track Map selection is a
+            // deliberate, fresh "I'm starting this specific mission"
+            // action — distinct from the Next Mission auto-advance
+            // chain (onAdvanceToNextMission below), which intentionally
+            // keeps Quick Concepts skipped. See contentPrefs.ts's
+            // header for the full reasoning.
+            resetConceptsSeen(game.engine_type);
             setActiveMissionId(missionId);
             setScreen("entry");
           }}

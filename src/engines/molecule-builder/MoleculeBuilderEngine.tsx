@@ -83,7 +83,8 @@ export function MoleculeBuilderEngine({
   config,
   onComplete,
   isPaused,
-  menu
+  menu,
+  gameTitle
 }: EngineRuntimeProps<MoleculeBuilderConfig, MoleculeBuilderOutcome>) {
   const { shared, mission } = config;
   const payload = mission.payload;
@@ -438,7 +439,15 @@ export function MoleculeBuilderEngine({
     }
   }, [isPaused, mission, payload, placedAtoms, bonds, roster, onComplete]);
 
-  const stats: GameplayStat[] = [{ label: "XP", value: mission.xpReward, tone: "success" }];
+  // XP stat REMOVED from the gameplay HUD per direct request ("you can
+  // remove the XP at the top of the carbon builder game"). XP is still
+  // fully awarded on mission completion — see handleSubmit's
+  // runSuccessSequence / onComplete below and GameRuntime.tsx's
+  // handleEngineComplete, which is what actually writes xp_awarded and
+  // calls addXpToStudent — this ONLY removes the during-gameplay display.
+  // The gameTitle prop passed to GameplayShell below now anchors that
+  // row instead of a stat card.
+  const stats: GameplayStat[] = [];
 
   // Layout: convert each slot's {row, col} into a CSS grid position. Row 0
   // is the carbon backbone; negative rows sit above it, positive rows
@@ -463,9 +472,13 @@ export function MoleculeBuilderEngine({
       stats={stats}
       missionPrompt={{ label: "Build This Molecule", text: payload.resultLabel }}
       menu={menu}
+      gameTitle={gameTitle}
       isPaused={isPaused}
     >
-      <div className={`${styles.engineColumn} ${shaking ? "shaking" : ""}`}>
+      <div
+        className={`${styles.engineColumn} ${shaking ? "shaking" : ""}`}
+        style={{ "--cols": colSpan, "--rows": rowSpan } as React.CSSProperties}
+      >
         <div className={styles.buildSurface} ref={buildSurfaceRef}>
           <div className={styles.slotGrid}>
             {payload.slots.map((slot) => {
@@ -591,7 +604,11 @@ export function MoleculeBuilderEngine({
         })()}
 
       {feedback.visible && (
-        <div className={styles.feedbackRow}>
+        <div
+          className={styles.feedbackRow}
+          onAnimationEnd={() => setFeedback((f) => ({ ...f, visible: false, entering: false }))}
+          onAnimationStart={() => setFeedback((f) => f.entering ? { ...f, entering: false } : f)}
+        >
           <Mascot pose="encourage" widthPx={56} />
           <div className={`${styles.feedbackCard} ${feedback.entering ? styles.entering : ""}`}>
             <div className={styles.feedbackEyebrow}>Almost there</div>

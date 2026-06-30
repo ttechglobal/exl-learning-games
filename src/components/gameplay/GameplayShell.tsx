@@ -47,6 +47,22 @@ export interface GameplayShellProps {
    *  corner). The shell owns menu + stats placement together; engines
    *  never position their own menu button or HUD again. */
   menu: React.ReactNode;
+  /**
+   * Optional game title shown directly next to the menu button during
+   * gameplay — per direct request for Carbon Builder specifically
+   * ("make the menu and the topbar/title of the game stay side by
+   * side, it looks neater"). Deliberately OPTIONAL and additive: every
+   * other engine (tile-match, bond-match, particle-assembly) omits this
+   * and keeps its exact current layout — only an engine that explicitly
+   * passes gameTitle gets the title rendered in the menu row. When
+   * provided, this also visually replaces the need for a separate XP
+   * stat card to anchor that row (Carbon Builder removes its XP stat
+   * entirely — see MoleculeBuilderEngine.tsx — relying on the title
+   * here instead; XP is still awarded on mission completion exactly as
+   * before, this only changes what's shown DURING gameplay, not whether
+   * XP is earned).
+   */
+  gameTitle?: string;
   /** True while paused — shell renders the dimmed "Paused" overlay
    *  centrally now, rather than each engine re-implementing the same
    *  overlay (tile-match previously did; bond-match/particle-assembly
@@ -105,6 +121,7 @@ export function GameplayShell({
   stats,
   missionPrompt,
   menu,
+  gameTitle,
   isPaused,
   children
 }: GameplayShellProps) {
@@ -134,20 +151,30 @@ export function GameplayShell({
           them feel as visually heavy as the actual game elements on a
           phone screen. At >=600px this same row's stats visually present
           as larger cards; the markup doesn't change between tiers, only
-          the sizing/alignment does. */}
+          the sizing/alignment does.
+
+          gameTitle (optional, additive — see GameplayShellProps' comment)
+          renders directly next to the menu when an engine passes it,
+          currently only Carbon Builder. Every other engine still omits
+          this prop and sees no layout change at all. */}
       <div className={styles.menuSlot}>
-        {menu}
-        <div className={styles.statsRow}>
-          {stats.map((stat, i) => (
-            <div key={i} className={styles.statCard}>
-              <div className={styles.statLabel}>{stat.label}</div>
-              <div className={[styles.statValue, TONE_CLASS[stat.tone ?? "default"], stat.urgent ? styles.urgent : ""].filter(Boolean).join(" ")}>
-                {stat.value}
-              </div>
-              {stat.caption && <div className={styles.statCaption}>{stat.caption}</div>}
-            </div>
-          ))}
+        <div className={styles.menuTitleGroup}>
+          {menu}
+          {gameTitle && <div className={styles.gameTitleLabel}>{gameTitle}</div>}
         </div>
+        {stats.length > 0 && (
+          <div className={styles.statsRow}>
+            {stats.map((stat, i) => (
+              <div key={i} className={styles.statCard}>
+                <div className={styles.statLabel}>{stat.label}</div>
+                <div className={[styles.statValue, TONE_CLASS[stat.tone ?? "default"], stat.urgent ? styles.urgent : ""].filter(Boolean).join(" ")}>
+                  {stat.value}
+                </div>
+                {stat.caption && <div className={styles.statCaption}>{stat.caption}</div>}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className={styles.topZone}>

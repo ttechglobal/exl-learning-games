@@ -1,0 +1,53 @@
+.shareBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.shareBtn:active {
+  transform: translateY(2px);
+}
+
+/* Pill — small, inline, used inside the homepage leaderboard panel */
+.shareBtnPill {
+  background: transparent;
+  border: 2px solid var(--eg-gold);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 0.82rem;
+  color: var(--eg-gold);
+}
+
+[data-theme="dark"] .shareBtnPill {
+  color: var(--eg-gold);
+}
+
+.shareBtnPill:hover {
+  background: color-mix(in srgb, var(--eg-gold) 10%, transparent);
+}
+
+/* Banner — more prominent, full-width-ish, used on the /leaderboard page */
+.shareBtnBanner {
+  background: linear-gradient(135deg, var(--eg-gold) 0%, color-mix(in srgb, var(--eg-gold) 75%, #ff8c00) 100%);
+  border-radius: 14px;
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  color: #4a2e00;
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--eg-gold) 55%, black), 0 6px 16px rgba(255, 178, 60, 0.25);
+  width: 100%;
+  justify-content: center;
+}
+
+.shareBtnBanner:active {
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--eg-gold) 55%, black);
+}
+
+.shareIcon {
+  font-size: 1em;
+  flex-shrink: 0;
+}

@@ -51,6 +51,7 @@ export function TileMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
   const [roundsCorrect, setRoundsCorrect] = useState(0);
   const [tierIndex, setTierIndex] = useState(0);
   const [wrongAttemptsOnClue, setWrongAttemptsOnClue] = useState(0);
+  const [hintsUsed, setHintsUsed] = useState(0);
   const [mascotPose, setMascotPose] = useState<"idle" | "celebrate" | "encourage" | null>(null);
   /** Now holds structured HintContent for the modal, not a flat string —
    *  see HintModal.tsx / teachingHints.ts for the shape and why it
@@ -97,13 +98,14 @@ export function TileMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
         roundsAnswered,
         roundsCorrect,
         highestTierReached: currentTier.tier,
-        timeSpentSec
+        timeSpentSec,
+        hintsUsed
       });
       return;
     }
     const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearTimeout(timer);
-  }, [timeLeft, isPaused, score, bestStreak, roundsAnswered, roundsCorrect, currentTier.tier, shared.sessionDurationSec, onComplete]);
+  }, [timeLeft, isPaused, score, bestStreak, roundsAnswered, roundsCorrect, currentTier.tier, shared.sessionDurationSec, onComplete, hintsUsed]);
 
   useEffect(() => {
     const secondsAtTier = tierStartedAtRef.current - timeLeft;
@@ -158,6 +160,7 @@ export function TileMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
   const handleHintTap = useCallback(() => {
     if (!clue) return;
     setActiveHint(resolveTeachingHint(clue));
+    setHintsUsed((n) => n + 1);
     applyTimePenalty(shared.scoring.hintTimePenaltySec);
     playSound("particleRemove");
   }, [clue, shared.scoring.hintTimePenaltySec, applyTimePenalty]);

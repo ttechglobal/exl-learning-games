@@ -401,6 +401,7 @@ export function GameRuntime({
         onComplete={(outcome: unknown) => handleEngineComplete(outcome as Record<string, unknown>)}
         isPaused={isPaused}
         menu={menu}
+        gameTitle={gameTitle}
       />
     );
   }

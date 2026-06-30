@@ -51,4 +51,14 @@ export interface EngineRuntimeProps<TConfig = unknown, TOutcome = unknown> {
    * menu.
    */
   menu?: React.ReactNode;
+  /**
+   * The game's display title (e.g. "Carbon Builder"), supplied by
+   * GameRuntime.tsx (which already receives it from PlayClient.tsx) —
+   * optional and currently consumed only by MoleculeBuilderEngine,
+   * which passes it through to GameplayShell's gameTitle prop (see that
+   * file's comment) to show the title next to the in-game menu button.
+   * Every other engine can ignore this prop entirely with no effect on
+   * its own rendering.
+   */
+  gameTitle?: string;
 }

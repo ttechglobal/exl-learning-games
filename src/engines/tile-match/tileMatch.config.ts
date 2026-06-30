@@ -76,4 +76,11 @@ export interface TileMatchOutcome {
   roundsCorrect: number;
   highestTierReached: number;
   timeSpentSec: number;
+  /** Count of Hint button taps across the whole session — surfaced
+   *  through rawOutcome the same way attemptsBeforeSuccess already is
+   *  on other engines' outcomes, so GameRuntime.tsx can fold it into
+   *  mission_completed's analytics detail without TileMatchEngine
+   *  needing any identity props of its own (studentId/gameId aren't
+   *  threaded into any engine today — see engine-types.ts). */
+  hintsUsed: number;
 }

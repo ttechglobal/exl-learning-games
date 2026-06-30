@@ -512,10 +512,6 @@
  * or .btnFinale) since this is a "see more" affordance on a homepage
  * teaser, not a primary call to action competing with Start Learning. */
 .lbSeeFullLink {
-  display: block;
-  text-align: center;
-  margin-top: 14px;
-  padding: 10px;
   font-family: var(--eg-font-display);
   font-weight: 700;
   font-size: 13px;
@@ -524,6 +520,17 @@
 }
 .lbSeeFullLink:hover {
   text-decoration: underline;
+}
+
+/* Wraps the "See full leaderboard" link + share button in a centered row */
+.lbFooterRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+  padding: 4px 0;
 }
 
 @media (max-width: 760px) {

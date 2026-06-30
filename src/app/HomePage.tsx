@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { GameRow } from "@/types/db";
 import { SiteHeader } from "@/components/ui/SiteHeader";
+import { ShareInvite } from "@/components/ui/ShareInvite";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { SUBJECT_META } from "@/lib/content/subjects";
 import { GAME_CARD_ART, GAME_CARD_DESC } from "@/lib/content/gameCardMeta";
@@ -277,9 +278,17 @@ export function HomePage({ gamesBySubject, featuredGames, leaderboard, currentSt
                 ))}
               </div>
 
-              <Link href="/leaderboard" className={styles.lbSeeFullLink}>
-                See full leaderboard
-              </Link>
+              <div className={styles.lbFooterRow}>
+                <Link href="/leaderboard" className={styles.lbSeeFullLink}>
+                  See full leaderboard
+                </Link>
+                <ShareInvite
+                  title="EXL Learning Games"
+                  text="I've been studying for WAEC/JAMB with learning games — come see the leaderboard and challenge me!"
+                  label="Invite Friends"
+                  variant="pill"
+                />
+              </div>
             </div>
           ) : (
             <div className={styles.lbList}>

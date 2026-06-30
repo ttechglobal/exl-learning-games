@@ -362,6 +362,20 @@
   position: relative;
   z-index: 1;
   padding: 40px 0 70px;
+  /* Fallback for browsers without color-mix() support (confirmed cause
+   * of a real bug report: the section rendered fully transparent on
+   * some devices because the ONLY background declaration used
+   * color-mix(), and an unsupported function makes the whole
+   * declaration invalid — not "ignored gracefully," the property falls
+   * back to whatever's already set, which here was nothing at all).
+   * This plain rgba line is a hand-mixed approximation of
+   * --eg-gold (#ffb23c light / #ffc36b dark) at ~14% over white, so a
+   * non-supporting browser still gets a visible warm tint instead of
+   * see-through nothing. The color-mix() line below it OVERRIDES this
+   * on any browser that does support it — same "two background
+   * declarations, second one wins if valid" cascade trick used for the
+   * other color-mix() backgrounds in this file. */
+  background: rgba(255, 178, 60, 0.12);
   background: linear-gradient(180deg, color-mix(in srgb, var(--eg-gold) 14%, transparent) 0%, transparent 100%);
 }
 .lbPanel {
@@ -371,6 +385,9 @@
 }
 .championCard {
   position: relative;
+  /* Fallback for browsers without color-mix() support — see .lbZone's
+   * comment above for why this matters; same risk, same fix. */
+  background: #d98a1f;
   background: linear-gradient(160deg, var(--eg-gold) 0%, color-mix(in srgb, var(--eg-gold) 60%, black) 100%);
   border-radius: 22px;
   padding: 28px 22px;
@@ -456,6 +473,7 @@
   border-radius: 14px;
 }
 .lbRowYou {
+  background: rgba(255, 178, 60, 0.14);
   background: color-mix(in srgb, var(--eg-gold) 16%, transparent);
 }
 .lbRank {

@@ -11,6 +11,7 @@ import type {
 import { isValidBondPair } from "@/engines/bond-match/bondMatch.logic";
 import { BOND_ELEMENTS, type BondElement } from "@/engines/bond-match/bondData";
 import { Mascot } from "@/motion/Mascot";
+import { pickMascotLine } from "@/motion/mascotLines";
 import { fireIonicTransfer, fireCovalentSharing } from "@/motion/bondingMotion";
 import { playSound } from "@/motion/sound/playSound";
 import type { EngineRuntimeProps } from "@/engines/engine-types";
@@ -53,6 +54,25 @@ function resolveSharedConfig(topLevelShared: BondMatchSharedConfig, missionPaylo
 }
 
 /**
+ * Picks the next compound to forge at random, rerolling once if it would
+ * repeat the just-completed compound (when there's more than one option) —
+ * per direct feedback ("the compounds should not be the same so the user
+ * does not see the same thing every time and get bored"). A flat
+ * round-robin (0,1,2,0,1,2,...) is deterministic and would still feel
+ * repetitive session to session; true random with a no-immediate-repeat
+ * guard reads as varied without ever showing the same compound twice in a
+ * row.
+ */
+function pickRandomMission(missions: BondMission[], excludeKey: string | null): BondMission {
+  if (missions.length <= 1) return missions[0];
+  let candidate = missions[Math.floor(Math.random() * missions.length)];
+  if (candidate.key === excludeKey) {
+    candidate = missions[(missions.indexOf(candidate) + 1) % missions.length];
+  }
+  return candidate;
+}
+
+/**
  * MIGRATED onto GameplayShell this round (previously rendered its own
  * raw <img> backdrop + absolute-positioned .hud directly — see
  * engine-types.ts's long comment on EngineRuntimeProps.menu, which
@@ -81,9 +101,49 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
   const [compoundCard, setCompoundCard] = useState<{ formula: string; name: string; bondType: string; xp: number } | null>(null);
   const [hint, setHint] = useState<string | null>(null);
   const [mascotPose, setMascotPose] = useState<"idle" | "celebrate" | "encourage" | null>(null);
+  const [mascotLine, setMascotLine] = useState<string | null>(null);
 
 
-  const [missionIndex, setMissionIndex] = useState(0);
+  /**
+   * Per direct feedback ("right now you do only one atom/compound, and
+   * then it ends — the user should be able to create different and more
+   * compounds in each level, not just one"): a single Atom Forge mission
+   * is now a real multi-compound SESSION, the same architectural shape
+   * tile-match already uses (loop internally, call onComplete exactly
+   * once at the end) rather than ending the moment the FIRST compound is
+   * forged. `activeMission` is the one compound on the platform right
+   * now; it's replaced with a random, no-immediate-repeat pick (see
+   * pickRandomMission above) each time one is completed, instead of a
+   * fixed round-robin through `shared.missions`.
+   *
+   * Two ways a session ends, matching bondMatch.config.ts's
+   * sessionLength/sessionDurationSec fields:
+   *   - untimed (Easy, no sessionDurationSec authored): ends after
+   *     `sessionLength` compounds (falls back to one full pass through
+   *     `shared.missions` if sessionLength isn't set, for any
+   *     mission authored before this field existed).
+   *   - timed (Medium/Hard, sessionDurationSec authored): ends when the
+   *     clock runs out, same shape as factory mode's countdown below —
+   *     the player forges as many compounds as they can in the time
+   *     given.
+   * Refs (sessionXpRef/sessionCompoundsRef/sessionWrongRef) are the
+   * source of truth read inside callbacks/timeouts to avoid stale
+   * closures; the paired state values exist only to drive the stats row.
+   */
+  const [activeMission, setActiveMission] = useState<BondMission | null>(() =>
+    !isFactory && shared.missions ? pickRandomMission(shared.missions, null) : null
+  );
+  const sessionXpRef = useRef(0);
+  const sessionCompoundsRef = useRef(0);
+  const sessionWrongRef = useRef(0);
+  const sessionOverRef = useRef(false);
+  const sessionEndedRef = useRef(false);
+  const [sessionXp, setSessionXp] = useState(0);
+  const [sessionCompoundsCompleted, setSessionCompoundsCompleted] = useState(0);
+  const [sessionTimeLeft, setSessionTimeLeft] = useState(shared.sessionDurationSec ?? 0);
+  const isTimedSession = !isFactory && typeof shared.sessionDurationSec === "number";
+  const compoundsTarget = shared.sessionLength ?? shared.missions?.length ?? 1;
+
   const attemptsRef = useRef(0);
   const missionStartRef = useRef(Date.now());
 
@@ -99,10 +159,34 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
   const layerRef = useRef<HTMLDivElement>(null);
   const nodeIdRef = useRef(0);
 
-  const currentMission: BondMission | null = !isFactory ? shared.missions![missionIndex % shared.missions!.length] : null;
+  const currentMission: BondMission | null = !isFactory ? activeMission : null;
   const currentOrder: FactoryOrder | null = isFactory ? shared.factory!.orders[factoryOrderIndex % shared.factory!.orders.length] : null;
   const activePair = currentMission?.pair ?? currentOrder?.pair ?? null;
   const activeBondType = currentMission?.bondType ?? currentOrder?.bondType ?? "ionic";
+
+  // Timed-session countdown (Medium/Hard, missions mode) — mirrors the
+  // factory countdown below exactly, just keyed off sessionDurationSec
+  // instead of factory.sessionDurationSec, and reading the session refs
+  // (not factory's own counters) for the final outcome.
+  useEffect(() => {
+    if (isFactory || typeof shared.sessionDurationSec !== "number" || sessionEndedRef.current) return;
+    if (isPaused) return;
+    if (sessionTimeLeft <= 0) {
+      sessionEndedRef.current = true;
+      onComplete({
+        success: true,
+        score: Math.min(1, sessionXpRef.current / (shared.sessionDurationSec * 4)),
+        finalScore: sessionXpRef.current,
+        compoundsProduced: sessionCompoundsRef.current,
+        wrongAttempts: sessionWrongRef.current,
+        timeSpentSec: shared.sessionDurationSec
+      } as BondMatchMissionOutcome);
+      return;
+    }
+    const t = setTimeout(() => setSessionTimeLeft((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFactory, shared.sessionDurationSec, sessionTimeLeft, isPaused]);
 
   useEffect(() => {
     if (!isFactory || factoryEndedRef.current) return;
@@ -234,7 +318,11 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
 
       if (mascotPose !== "celebrate") {
         setMascotPose("celebrate");
-        setTimeout(() => setMascotPose(null), 900);
+        setMascotLine((prev) => pickMascotLine("correct", prev));
+        setTimeout(() => {
+          setMascotPose(null);
+          setMascotLine(null);
+        }, 900);
       }
 
       if (isFactory) {
@@ -249,20 +337,20 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
           return next;
         });
       } else {
-        const timeSpentSec = Math.max(1, Math.round((Date.now() - missionStartRef.current) / 1000));
-        const outcome: BondMatchMissionOutcome = {
-          success: true,
-          attemptsBeforeSuccess: attemptsRef.current,
-          timeSpentSec,
-          bondType: activeBondType,
-          pair: activePair as [string, string]
-        };
-        setTimeout(() => {
-          onComplete(outcome);
-        }, 1700);
+        const xpEarned = currentMission?.xpReward ?? 0;
+        sessionXpRef.current += xpEarned;
+        sessionCompoundsRef.current += 1;
+        setSessionXp(sessionXpRef.current);
+        setSessionCompoundsCompleted(sessionCompoundsRef.current);
+        // Untimed sessions (Easy) end once compoundsTarget is reached;
+        // timed sessions (Medium/Hard) never end here — only the
+        // countdown effect above ends those, so this stays false for
+        // them and the advance-effect below just keeps picking new
+        // compounds until time runs out.
+        sessionOverRef.current = !isTimedSession && sessionCompoundsRef.current >= compoundsTarget;
       }
     },
-    [activeBondType, activePair, currentMission, currentOrder, isFactory, mascotPose, onComplete]
+    [activeBondType, activePair, currentMission, currentOrder, isFactory, isTimedSession, compoundsTarget, mascotPose, onComplete]
   );
 
   const rejectBond = useCallback(
@@ -271,7 +359,11 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
       setTimeout(() => setShaking(false), 320);
       playSound("fail");
       setMascotPose("encourage");
-      setTimeout(() => setMascotPose(null), 900);
+      setMascotLine((prev) => pickMascotLine("incorrect", prev));
+      setTimeout(() => {
+        setMascotPose(null);
+        setMascotLine(null);
+      }, 900);
 
       const [needA, needB] = (activePair ?? ["", ""]).map((s) => BOND_ELEMENTS[s]?.name ?? s);
       const aName = BOND_ELEMENTS[a.symbol]?.name ?? a.symbol;
@@ -293,6 +385,8 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
         emoji.style.top = `${(rect?.top ?? 0) + a.y}px`;
         document.body.appendChild(emoji);
         setTimeout(() => emoji.remove(), 750);
+      } else {
+        sessionWrongRef.current += 1;
       }
     },
     [activePair, isFactory]
@@ -349,13 +443,25 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
     if (isFactory || !compoundCard) return;
     const t = setTimeout(() => {
       setCompoundCard(null);
-      setMissionIndex((i) => i + 1);
+      if (sessionOverRef.current) {
+        sessionEndedRef.current = true;
+        const timeSpentSec = Math.max(1, Math.round((Date.now() - missionStartRef.current) / 1000));
+        onComplete({
+          success: true,
+          score: 1,
+          finalScore: sessionXpRef.current,
+          compoundsProduced: sessionCompoundsRef.current,
+          wrongAttempts: sessionWrongRef.current,
+          timeSpentSec
+        } as BondMatchMissionOutcome);
+        return;
+      }
       attemptsRef.current = 0;
-      missionStartRef.current = Date.now();
       clearAtoms();
+      setActiveMission((prev) => pickRandomMission(shared.missions!, prev?.key ?? null));
     }, 1700);
     return () => clearTimeout(t);
-  }, [compoundCard, isFactory, clearAtoms]);
+  }, [compoundCard, isFactory, clearAtoms, onComplete, shared.missions]);
 
   useEffect(() => {
     if (!isFactory || !compoundCard) return;
@@ -370,7 +476,12 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
         { label: "Time", value: factoryTimeLeft, tone: "danger", urgent: factoryTimeLeft <= 10 },
         { label: "XP", value: factoryXp, tone: "success" }
       ]
-    : [{ label: "XP", value: currentMission?.xpReward ?? 0, tone: "success" }];
+    : isTimedSession
+      ? [
+          { label: "Time", value: sessionTimeLeft, tone: "danger", urgent: sessionTimeLeft <= 10 },
+          { label: "XP", value: sessionXp, tone: "success", caption: `${sessionCompoundsCompleted} forged` }
+        ]
+      : [{ label: "XP", value: sessionXp, tone: "success", caption: `${sessionCompoundsCompleted}/${compoundsTarget} forged` }];
 
   const missionFormula = currentMission?.formula ?? currentOrder?.formula ?? "";
   const missionName = currentMission?.name ?? currentOrder?.name ?? "";
@@ -489,7 +600,8 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
       )}
 
       {mascotPose && (
-        <div style={{ position: "fixed", bottom: 90, right: 14, zIndex: 7, width: 76 }}>
+        <div className={styles.mascotPopup}>
+          {mascotLine && <div className={styles.mascotBubble}>{mascotLine}</div>}
           <Mascot pose={mascotPose} widthPx={76} />
         </div>
       )}

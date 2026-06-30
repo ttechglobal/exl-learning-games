@@ -138,7 +138,12 @@ function mergeFactoryOverrideIfPresent(config: Record<string, unknown>, sessionD
  *  just plumbing to keep the Tier shape valid. */
 const TILE_MATCH_CLUES: Record<PlayerDifficulty, import("@/engines/tile-match/tileMatch.config").ClueType[]> = {
   EASY: ["atomic_number", "electron_number"],
-  MEDIUM: ["atomic_number", "electron_number", "period", "valence"],
+  // Per direct feedback: Medium should NOT include "period" (location on
+  // the table is a Hard-tier, real periodic-table-knowledge clue, not a
+  // Medium one) — Medium instead layers valence electrons on top of the
+  // two Easy clue framings: atomic number, then electrons, then valence
+  // electrons.
+  MEDIUM: ["atomic_number", "electron_number", "valence"],
   HARD: ["atomic_number", "electron_number", "period", "valence", "mass_number", "group"]
 };
 
@@ -189,15 +194,31 @@ const MODIFIERS_BY_ENGINE: Record<string, ModifierSet> = {
    * tuned per tier exactly as before.
    */
   "bond-match": {
+    // Per direct feedback: Atom Forge's three difficulties now run the
+    // SAME single mission's `missions` pool through the multi-compound
+    // session described in BondMatchEngine.tsx (see its long comment on
+    // `activeMission`/sessionLength/sessionDurationSec), rather than
+    // three separate hand-authored Levels. Easy stays untimed (a short,
+    // fixed-length session — sessionLength) so a first-time player isn't
+    // racing a clock; Medium and Hard both add a genuine 60s session
+    // timer, which is the actual "timer in medium and hard" lever this
+    // engine never had before for anything other than the old, separate
+    // factory-only Level 4. mergeFactoryOverrideIfPresent is kept (not
+    // removed) purely for backward compatibility with any
+    // factory-shaped mission authored in the future — see its own
+    // comment for the crash it prevents; it's a no-op `{}` for Atom
+    // Forge's new content, which has no `factory` key at all anymore.
     EASY: (config) => ({
       ...trimToRequiredElements(config),
       showBondTypeHint: true,
+      sessionLength: 5,
       ...mergeFactoryOverrideIfPresent(config, 90)
     }),
-    MEDIUM: (config) => ({ showBondTypeHint: true, ...mergeFactoryOverrideIfPresent(config, 60) }),
+    MEDIUM: (config) => ({ showBondTypeHint: true, sessionDurationSec: 60, ...mergeFactoryOverrideIfPresent(config, 60) }),
     HARD: (config) => ({
       ...addDistractorElements(config),
       showBondTypeHint: false,
+      sessionDurationSec: 60,
       ...mergeFactoryOverrideIfPresent(config, 40)
     })
   },
@@ -212,8 +233,13 @@ const MODIFIERS_BY_ENGINE: Record<string, ModifierSet> = {
     // should change content, not just the clock) but flagged here in case
     // "Easy and Medium take the same time" wasn't the intended outcome.
     EASY: () => ({ sessionDurationSec: 60, tileCount: 4, ...buildSingleTier(TILE_MATCH_CLUES.EASY) }),
-    MEDIUM: () => ({ sessionDurationSec: 60, tileCount: 6, ...buildSingleTier(TILE_MATCH_CLUES.MEDIUM) }),
-    HARD: () => ({ sessionDurationSec: 40, tileCount: 9, ...buildSingleTier(TILE_MATCH_CLUES.HARD) })
+    // Medium and Hard both use 8 tiles now (previously 6 and 9) — per
+    // direct feedback that the grid should be uniform across the two
+    // higher difficulties rather than changing shape every tier; the
+    // difficulty gap between them is still carried by clueTypes/timer,
+    // not grid size.
+    MEDIUM: () => ({ sessionDurationSec: 60, tileCount: 8, ...buildSingleTier(TILE_MATCH_CLUES.MEDIUM) }),
+    HARD: () => ({ sessionDurationSec: 40, tileCount: 8, ...buildSingleTier(TILE_MATCH_CLUES.HARD) })
   },
   "particle-assembly": {
     // No timer to adjust honestly (see file header) — Easy/Medium keep the

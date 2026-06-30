@@ -38,6 +38,129 @@
   line-height: 1.4;
 }
 
+/* School/class chips — only render when at least one is set (see
+ * ProfileClient.tsx), sitting between the name and the device note. */
+.schoolClassRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.schoolClassChip {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--eg-text-bright);
+  background: var(--eg-brand-tint);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+/* Small, unobtrusive trigger sitting at the end of the identity card —
+ * deliberately not a big primary button, since editing your profile is
+ * an occasional action, not the main thing this card is for. */
+.editTrigger {
+  align-self: flex-start;
+  background: none;
+  border: 1px solid var(--eg-surface-border);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--eg-text-dim);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.editTrigger:hover {
+  color: var(--eg-text-bright);
+  border-color: var(--eg-text-dim);
+}
+
+/* Inline edit form — replaces .identityCard in place while editing,
+ * same card treatment so the swap doesn't jolt the layout. */
+.editCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px;
+  border-radius: 20px;
+  background: var(--eg-surface-card, #fff);
+  border: 1px solid var(--eg-surface-border);
+  margin-bottom: 18px;
+}
+
+.editTitle {
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--eg-text-bright);
+  margin-bottom: 10px;
+}
+
+.fieldLabel {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--eg-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-top: 10px;
+}
+
+.fieldInput {
+  margin-top: 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid var(--eg-surface-border);
+  background: var(--eg-surface, transparent);
+  color: var(--eg-text-bright);
+  font-size: 0.92rem;
+  font-family: inherit;
+}
+.fieldInput:focus {
+  outline: none;
+  border-color: var(--eg-brand);
+}
+
+.fieldError {
+  color: var(--eg-danger);
+  font-size: 0.8rem;
+  margin-top: 8px;
+}
+
+.editActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.cancelButton {
+  padding: 9px 16px;
+  border-radius: 10px;
+  border: 1.5px solid var(--eg-surface-border);
+  background: none;
+  color: var(--eg-text-dim);
+  font-weight: 700;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+
+.saveButton {
+  padding: 9px 18px;
+  border-radius: 10px;
+  border: none;
+  background: var(--eg-brand);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+.saveButton:disabled,
+.cancelButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .statsRow {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -6,7 +6,8 @@ import { SiteHeader } from "@/components/ui/SiteHeader";
 import { ShareInvite } from "@/components/ui/ShareInvite";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { SUBJECT_META } from "@/lib/content/subjects";
-import { GAME_CARD_ART, GAME_CARD_DESC } from "@/lib/content/gameCardMeta";
+import { GAME_CARD_DESC } from "@/lib/content/gameCardMeta";
+import { GameCardArt } from "@/components/ui/GameCardArt";
 import styles from "@/app/HomePage.module.css";
 
 /**
@@ -211,7 +212,12 @@ export function HomePage({ gamesBySubject, featuredGames, leaderboard, currentSt
                     style={{ "--c": subject?.color ?? "var(--eg-subject-chemistry)", "--c-tint": subject?.tint ?? "var(--eg-brand-tint)" } as React.CSSProperties}
                   >
                     <div className={styles.pgArt}>
-                      <img className={styles.pgArtImg} src={GAME_CARD_ART[game.slug] ?? ""} alt="" />
+                      <GameCardArt
+                        gameSlug={game.slug}
+                        emoji={subject?.emoji ?? "📖"}
+                        color={subject?.color ?? "var(--eg-subject-chemistry)"}
+                        tint={subject?.tint ?? "var(--eg-brand-tint)"}
+                      />
                       <div className={`${styles.pgBadge} ${BADGE_CLASS[badge]}`}>{BADGE_LABEL[badge]}</div>
                     </div>
                     <div className={styles.pgBody}>
@@ -283,9 +289,9 @@ export function HomePage({ gamesBySubject, featuredGames, leaderboard, currentSt
                   See full leaderboard
                 </Link>
                 <ShareInvite
-                  title="EXL Learning Games"
-                  text="I've been studying for WAEC/JAMB with learning games — come see the leaderboard and challenge me!"
-                  label="Invite Friends"
+                  title="EXL Learning Games — Beat my score!"
+                  text="I've been studying Chemistry, Physics and more with these games — come challenge me on the leaderboard!"
+                  label="Invite Friends to Play"
                   variant="pill"
                 />
               </div>

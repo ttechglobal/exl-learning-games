@@ -125,6 +125,12 @@ export interface StudentRow {
   display_name: string;
   xp_total: number;
   created_at: string;
+  /** Optional, player-entered — added per direct feedback ("students
+   *  should be able to add school, class"). Both null until a student
+   *  fills them in via the profile edit form; neither is required to
+   *  play, earn XP, or appear on the leaderboard. */
+  school: string | null;
+  class_name: string | null;
 }
 
 export interface AttemptRow {

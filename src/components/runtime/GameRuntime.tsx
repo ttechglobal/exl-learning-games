@@ -8,7 +8,6 @@ import { PersonalBest } from "@/components/runtime/PersonalBest";
 import { getEngineDefinition } from "@/engines/registry";
 import { applyDifficultyModifiers, type PlayerDifficulty } from "@/lib/content/difficultyModifiers";
 import { resolveQuickConceptsForSlug } from "@/lib/content/quickConcepts";
-import { hasSeenConcepts } from "@/lib/content/contentPrefs";
 import type { AttemptResult } from "@/types/result";
 import { enqueueAttempt } from "@/lib/offline/attemptQueue";
 import { track } from "@/lib/analytics/track";
@@ -185,27 +184,22 @@ export function GameRuntime({
   menu
 }: GameRuntimeProps) {
   /**
-   * Per direct feedback ("when the user completes a mission and wants
-   * to move to the next mission, we should not need to show the quick
-   * concepts again"): previously this ALWAYS initialized to "snapshot"
-   * regardless of hasSeenConcepts — that check existed (in
-   * contentPrefs.ts) and was already being WRITTEN to correctly
-   * (ConceptSnapshot.tsx calls markConceptsSeen on continue), but
-   * nothing ever READ it to skip the screen; it only controlled
-   * whether the in-screen "Skip" button rendered, not whether the
-   * screen mounted at all. So a player who'd already seen Carbon
-   * Builder's Quick Concepts on mission 1 still saw the FULL screen
-   * again on mission 2, just with a Skip button now visible on it —
-   * confirmed by tracing the actual code, not assumed. Fixed by
-   * checking hasSeenConcepts(engineType) in the initializer itself: if
-   * already seen for this engine type, mission 2+ goes straight to
-   * "playing", same as if the player had tapped Skip — Quick Concepts
-   * for one engine only ever needs to teach its mechanic once, not once
-   * per mission. Lazy initializer (the `() => ...` form) so this
-   * localStorage read only happens once per mount, not on every
-   * re-render.
+   * Always starts at "snapshot" now. An EARLIER revision initialized
+   * this via `hasSeenConcepts(engineType) ? "playing" : "snapshot"` —
+   * per feedback at the time ("we should not need to show the quick
+   * concepts again"). In practice that permanently hid Quick Concepts
+   * for an entire engine type (not just one game) the moment a player
+   * had seen it ONCE, ever, on ANY game sharing that engine — including
+   * across browser sessions, since hasSeenConcepts reads localStorage.
+   * Reported back as "Atom Forge has no Quick Concepts at all," which
+   * is exactly what that looks like from the player's side once it's
+   * been marked seen. Reverted: the screen always mounts again now, and
+   * the "don't make a returning player sit through it" need is instead
+   * served by ConceptSnapshot's Skip button being unconditionally
+   * visible (see its own canSkip change) — one tap, not a silent,
+   * permanent, cross-game disappearance.
    */
-  const [phase, setPhase] = useState<Phase>(() => (hasSeenConcepts(engineType) ? "playing" : "snapshot"));
+  const [phase, setPhase] = useState<Phase>("snapshot");
   const [lastResult, setLastResult] = useState<AttemptResult | null>(null);
 
   /**

@@ -5,7 +5,8 @@ import { DepthBackdrop } from "@/motion/DepthBackdrop";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { subjectMeta } from "@/lib/content/subjects";
-import { GAME_CARD_ART, GAME_CARD_DESC } from "@/lib/content/gameCardMeta";
+import { GAME_CARD_DESC } from "@/lib/content/gameCardMeta";
+import { GameCardArt } from "@/components/ui/GameCardArt";
 import type { GameRow, Difficulty } from "@/types/db";
 import styles from "@/app/(player)/worlds/WorldsClient.module.css";
 
@@ -105,7 +106,6 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
                   const { game } = summary;
                   const diffLabel = difficultyLabel(summary.difficultyMin, summary.difficultyMax);
                   const dotCount = summary.difficultyMax ? DIFFICULTY_DOTS[summary.difficultyMax] : 0;
-                  const art = GAME_CARD_ART[game.slug];
                   const desc = GAME_CARD_DESC[game.slug];
 
                   return (
@@ -116,11 +116,7 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
                       style={{ "--c": meta.color, "--c-tint": meta.tint } as React.CSSProperties}
                     >
                       <div className={styles.gameCardArt}>
-                        {art ? (
-                          <img className={styles.gameCardArtImg} src={art} alt="" />
-                        ) : (
-                          <span className={styles.gameCardEmoji}>{meta.emoji}</span>
-                        )}
+                        <GameCardArt gameSlug={game.slug} emoji={meta.emoji} color={meta.color} tint={meta.tint} />
                         {dotCount > 0 && (
                           <span className={styles.difficultyBadge} aria-label={diffLabel ?? undefined}>
                             {Array.from({ length: dotCount }).map((_, i) => (

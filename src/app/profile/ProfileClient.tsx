@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { Mascot } from "@/motion/Mascot";
@@ -17,6 +18,20 @@ export interface ProfileClientProps {
   games: GameRow[];
 }
 
+interface EditFormState {
+  displayName: string;
+  school: string;
+  className: string;
+}
+
+function studentToFormState(student: StudentRow): EditFormState {
+  return {
+    displayName: student.display_name,
+    school: student.school ?? "",
+    className: student.class_name ?? ""
+  };
+}
+
 /**
  * app/profile/ProfileClient.tsx
  *
@@ -25,17 +40,71 @@ export interface ProfileClientProps {
  * SiteHeader, same split every other top-level page in this app
  * already uses (HomePage.tsx, WorldsClient.tsx).
  *
- * Deliberately simple for a first version: identity (name + device-only
- * framing), total XP, missions completed, and a per-subject breakdown.
- * No editing UI here yet (changing your name still happens via
- * IdentityBootstrap's one-time prompt or a future settings surface) —
- * this is a profile to LOOK AT, not yet to edit from.
+ * EDITING ADDED per direct feedback ("students should be able to add
+ * school, class... user should be able to edit their profile"). Name,
+ * school, and class are all editable now via one inline form (Edit
+ * Profile button -> form -> Save/Cancel), POSTing to the same
+ * /api/identity endpoint the one-time onboarding name prompt already
+ * used (see that route's updated schema) — this is the one server-side
+ * write path for a student's editable profile fields, not a second one
+ * bolted on beside it. `student` state is updated optimistically from
+ * the response on a successful save, so the page reflects the change
+ * immediately without a full reload.
  */
-export function ProfileClient({ student, attemptsBySubject, totalMissionsCompleted, games }: ProfileClientProps) {
+export function ProfileClient({ student: initialStudent, attemptsBySubject, totalMissionsCompleted, games }: ProfileClientProps) {
   const { theme, toggleTheme } = useTheme();
+  const [student, setStudent] = useState(initialStudent);
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState<EditFormState>(() => (student ? studentToFormState(student) : { displayName: "", school: "", className: "" }));
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const subjectsAvailable = new Set(games.map((g) => g.subject)).size;
   const subjectsExplored = Object.keys(attemptsBySubject).length;
+
+  function startEditing() {
+    if (!student) return;
+    setForm(studentToFormState(student));
+    setSaveError(null);
+    setEditing(true);
+  }
+
+  function cancelEditing() {
+    setEditing(false);
+    setSaveError(null);
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (!student) return;
+    const trimmedName = form.displayName.trim();
+    if (trimmedName.length === 0) {
+      setSaveError("Name can't be empty.");
+      return;
+    }
+
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const response = await fetch("/api/identity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: trimmedName,
+          school: form.school,
+          className: form.className
+        })
+      });
+      if (!response.ok) throw new Error("Couldn't save your profile. Please try again.");
+      const data = await response.json();
+      setStudent(data.student as StudentRow);
+      setEditing(false);
+    } catch (err) {
+      setSaveError((err as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className={styles.page} data-theme={theme}>
@@ -52,13 +121,75 @@ export function ProfileClient({ student, attemptsBySubject, totalMissionsComplet
           </div>
         ) : (
           <>
-            <div className={styles.identityCard}>
-              <Mascot pose="celebrate" widthPx={84} />
-              <div className={styles.identityInfo}>
-                <div className={styles.displayName}>{student.display_name}</div>
-                <div className={styles.deviceNote}>This profile lives on this device — no account or password needed.</div>
+            {editing ? (
+              <form className={styles.editCard} onSubmit={handleSave}>
+                <div className={styles.editTitle}>Edit Profile</div>
+
+                <label className={styles.fieldLabel} htmlFor="profile-name">
+                  Name
+                </label>
+                <input
+                  id="profile-name"
+                  className={styles.fieldInput}
+                  value={form.displayName}
+                  maxLength={20}
+                  onChange={(e) => setForm((f) => ({ ...f, displayName: e.target.value }))}
+                  placeholder="Your name"
+                />
+
+                <label className={styles.fieldLabel} htmlFor="profile-school">
+                  School
+                </label>
+                <input
+                  id="profile-school"
+                  className={styles.fieldInput}
+                  value={form.school}
+                  maxLength={80}
+                  onChange={(e) => setForm((f) => ({ ...f, school: e.target.value }))}
+                  placeholder="e.g. Bright Future Secondary School"
+                />
+
+                <label className={styles.fieldLabel} htmlFor="profile-class">
+                  Class
+                </label>
+                <input
+                  id="profile-class"
+                  className={styles.fieldInput}
+                  value={form.className}
+                  maxLength={40}
+                  onChange={(e) => setForm((f) => ({ ...f, className: e.target.value }))}
+                  placeholder="e.g. SS2"
+                />
+
+                {saveError && <div className={styles.fieldError}>{saveError}</div>}
+
+                <div className={styles.editActions}>
+                  <button type="button" className={styles.cancelButton} onClick={cancelEditing} disabled={saving}>
+                    Cancel
+                  </button>
+                  <button type="submit" className={styles.saveButton} disabled={saving}>
+                    {saving ? "Saving…" : "Save"}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className={styles.identityCard}>
+                <Mascot pose="celebrate" widthPx={84} />
+                <div className={styles.identityInfo}>
+                  <div className={styles.displayName}>{student.display_name}</div>
+                  {(student.school || student.class_name) && (
+                    <div className={styles.schoolClassRow}>
+                      {student.school && <span className={styles.schoolClassChip}>🏫 {student.school}</span>}
+                      {student.class_name && <span className={styles.schoolClassChip}>🎓 {student.class_name}</span>}
+                    </div>
+                  )}
+                  <div className={styles.deviceNote}>This profile lives on this device — no account or password needed.</div>
+                </div>
+                <button className={styles.editTrigger} onClick={startEditing} aria-label="Edit profile">
+                  ✏️ Edit
+                </button>
               </div>
-            </div>
+            )}
 
             <div className={styles.statsRow}>
               <div className={styles.statCard}>

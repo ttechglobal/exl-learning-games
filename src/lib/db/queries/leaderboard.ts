@@ -1,4 +1,5 @@
 import { supabaseServer } from "@/lib/db/supabase";
+import { DEFAULT_DISPLAY_NAME } from "@/lib/db/queries/students";
 
 export type LeaderboardPeriod = "weekly" | "monthly" | "allTime";
 
@@ -136,13 +137,32 @@ async function getAllTimeLeaderboard(limit: number): Promise<LeaderboardEntry[]>
     countByStudent.set(row.student_id, (countByStudent.get(row.student_id) ?? 0) + 1);
   }
 
-  return rows.map((r, i) => ({
-    studentId: r.id,
-    displayName: r.display_name,
-    xpTotal: r.xp_total,
-    gamesPlayed: countByStudent.get(r.id) ?? 0,
-    rank: i + 1
-  }));
+  return rows
+    .map((r) => ({
+      studentId: r.id,
+      displayName: r.display_name,
+      xpTotal: r.xp_total,
+      gamesPlayed: countByStudent.get(r.id) ?? 0
+    }))
+    .filter(isRealLeaderboardEntry)
+    .map((entry, i) => ({ ...entry, rank: i + 1 }));
+}
+
+/**
+ * Per direct feedback ("remove anonymous users without points"):
+ * filters out students who both (a) never set a real display name —
+ * still sitting on the DEFAULT_DISPLAY_NAME every new student row gets
+ * at creation (see students.ts) — AND (b) have zero XP for the period
+ * being shown. Deliberately requires BOTH conditions: a real named
+ * player with genuinely 0 XP this week still belongs on the list (they
+ * exist, they're just not scoring yet), and an "Anonymous" row that
+ * HAS earned points is a real competitor regardless of whether they
+ * bothered to set a name. It's specifically the combination — no name
+ * AND no points — that means "a student row got created (e.g. just by
+ * loading the app) and nothing else ever happened" and is just noise.
+ */
+function isRealLeaderboardEntry(entry: { displayName: string; xpTotal: number }): boolean {
+  return entry.displayName !== DEFAULT_DISPLAY_NAME || entry.xpTotal > 0;
 }
 
 function rankAndSlice(
@@ -151,6 +171,7 @@ function rankAndSlice(
 ): LeaderboardEntry[] {
   return Array.from(totals.entries())
     .map(([studentId, t]) => ({ studentId, ...t }))
+    .filter(isRealLeaderboardEntry)
     .sort((a, b) => b.xpTotal - a.xpTotal)
     .slice(0, limit)
     .map((entry, i) => ({ ...entry, rank: i + 1 }));

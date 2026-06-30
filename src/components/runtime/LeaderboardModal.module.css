@@ -85,6 +85,7 @@
   align-items: center;
   padding: 9px 12px;
   border-radius: 12px;
+  background: #f7f6fa;
   background: color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 6%, white);
   font-size: 0.86rem;
 }

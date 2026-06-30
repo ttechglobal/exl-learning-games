@@ -36,7 +36,7 @@ import type { StudentRow } from "@/types/db";
  * code system is being built for this round.
  */
 
-const DEFAULT_DISPLAY_NAME = "Anonymous";
+export const DEFAULT_DISPLAY_NAME = "Anonymous";
 
 /**
  * Resolves a device id (from the eg_device_id cookie) to a real,
@@ -49,7 +49,7 @@ const DEFAULT_DISPLAY_NAME = "Anonymous";
  * displayName is optional and only used at CREATE time — if the student
  * already exists, whatever display_name they already have is returned
  * untouched, even if a different name is passed in on this call. Use
- * `updateStudentDisplayName` (below) to actually change an existing
+ * `updateStudentProfile` (below) to actually change an existing
  * student's name later (e.g. via the one-time onboarding prompt).
  *
  * NOT ENFORCED AT THE DB LEVEL IN THIS CHECKOUT: ideally
@@ -98,23 +98,38 @@ async function findStudentByDeviceId(deviceId: string): Promise<StudentRow | nul
 }
 
 /**
- * Updates an existing student's display name — the write side of the
- * one-time onboarding name prompt (see components/identity/
- * NamePrompt.tsx). Deliberately separate from
- * getOrCreateStudentByDeviceId's create-time displayName param: that one
- * only applies ONCE, at creation; this is how a name set later (or
- * changed) actually persists for an existing student.
+ * Updates an existing student's editable profile fields — display name,
+ * school, and class — the write side of the profile edit form (see
+ * app/profile/ProfileClient.tsx). All three are optional/independent:
+ * passing only `school` leaves displayName and className untouched,
+ * etc. (`undefined` means "don't touch this field," distinct from an
+ * empty string or null, which both mean "clear it").
+ *
+ * Kept as the one place that writes to `student` outside of creation,
+ * superseding the old single-purpose updateStudentDisplayName (which
+ * this replaces) now that there's more than one editable field — see
+ * api/identity/route.ts for the request shape that calls this.
  */
-export async function updateStudentDisplayName(studentId: string, displayName: string): Promise<StudentRow> {
-  const trimmed = displayName.trim().slice(0, 20);
-  const finalName = trimmed.length > 0 ? trimmed : DEFAULT_DISPLAY_NAME;
+export async function updateStudentProfile(
+  studentId: string,
+  fields: { displayName?: string; school?: string | null; className?: string | null }
+): Promise<StudentRow> {
+  const update: Record<string, unknown> = {};
 
-  const { data, error } = await supabaseServer()
-    .from("student")
-    .update({ display_name: finalName })
-    .eq("id", studentId)
-    .select("*")
-    .single();
+  if (fields.displayName !== undefined) {
+    const trimmed = fields.displayName.trim().slice(0, 20);
+    update.display_name = trimmed.length > 0 ? trimmed : DEFAULT_DISPLAY_NAME;
+  }
+  if (fields.school !== undefined) {
+    const trimmed = fields.school?.trim().slice(0, 80) ?? null;
+    update.school = trimmed && trimmed.length > 0 ? trimmed : null;
+  }
+  if (fields.className !== undefined) {
+    const trimmed = fields.className?.trim().slice(0, 40) ?? null;
+    update.class_name = trimmed && trimmed.length > 0 ? trimmed : null;
+  }
+
+  const { data, error } = await supabaseServer().from("student").update(update).eq("id", studentId).select("*").single();
 
   if (error) throw error;
   return data as StudentRow;

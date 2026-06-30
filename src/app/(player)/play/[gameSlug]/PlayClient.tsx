@@ -230,6 +230,21 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
   }
 
   /**
+   * Per direct feedback: players should be able to change difficulty
+   * mid-game from the in-game menu, not just before starting. Jumps
+   * straight to the DifficultySelectScreen (skipping back through
+   * Mission Briefing, which they've already seen) and bumps
+   * runtimeResetKey for the same reason handleRestart does — the next
+   * "runtime" mount needs to be a genuinely fresh engine instance,
+   * not the same one resuming mid-session with a config it already
+   * rendered against.
+   */
+  function handleChangeDifficulty() {
+    setRuntimeResetKey((k) => k + 1);
+    setScreen("difficulty");
+  }
+
+  /**
    * Per-screen back destination. A literal step backward through THIS
    * sequence (not browser history) — mirrors how GameMenu's Exit always
    * goes to a fixed /worlds rather than trusting wherever history points.
@@ -257,7 +272,7 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
     router.push("/worlds");
   }
 
-  const menu = <GameMenu onRestart={handleRestart} />;
+const menu = <GameMenu onRestart={handleRestart} onChangeDifficulty={supportsDifficultyChoice ? handleChangeDifficulty : undefined} />;
 
   if (screen === "levelSelect") {
     return (

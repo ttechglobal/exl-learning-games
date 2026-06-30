@@ -27,6 +27,26 @@ export const BondMatchSharedConfigSchema = z
     elementPool: z.array(z.string()).min(2),
     showBondTypeHint: z.boolean().default(true),
     missions: z.array(BondMissionSchema).optional(),
+    /**
+     * Both optional, both only meaningful in "missions" mode (ignored
+     * entirely when `factory` is set, which already has its own timed
+     * session loop). Per direct feedback ("the user should be able to
+     * create different and more compounds in each level, not just
+     * one... introduce timer in medium and hard"):
+     *   - sessionLength: how many successful compounds end an UNTIMED
+     *     session (Easy) — the player forges this many, in random
+     *     order with no immediate repeat, then the mission completes.
+     *   - sessionDurationSec: when set, the session is timed instead
+     *     (Medium/Hard) — the player forges as many compounds as they
+     *     can, drawn the same randomized no-repeat way, until the
+     *     clock runs out; sessionLength is ignored if this is set.
+     * Neither set at all -> falls back to forging through `missions`
+     * once each, in shuffled order (still no immediate repeat), the
+     * pre-existing untimed behavior for any mission authored before
+     * this field existed.
+     */
+    sessionLength: z.number().int().positive().optional(),
+    sessionDurationSec: z.number().int().positive().optional(),
     factory: z
       .object({
         sessionDurationSec: z.number().int().positive().default(60),
@@ -65,10 +85,11 @@ export interface BondMatchConfig {
 
 export interface BondMatchMissionOutcome {
   success: true;
-  attemptsBeforeSuccess: number;
+  score: number;
+  finalScore: number;
+  compoundsProduced: number;
+  wrongAttempts: number;
   timeSpentSec: number;
-  bondType: "ionic" | "covalent";
-  pair: [string, string];
 }
 
 export interface BondMatchFactoryOutcome {

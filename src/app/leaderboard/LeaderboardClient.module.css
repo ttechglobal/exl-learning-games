@@ -92,6 +92,7 @@
  * IS visible in the top 20 still gets a visual "that's you" cue without
  * needing the separate pinned row below (see .rowPinned). */
 .rowYou {
+  background: rgba(255, 178, 60, 0.14);
   background: color-mix(in srgb, var(--eg-gold) 16%, transparent);
 }
 

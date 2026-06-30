@@ -15,6 +15,7 @@
   margin: 4px 0 14px;
   padding: 10px 12px;
   border-radius: 14px;
+  background: rgba(120, 120, 130, 0.06);
   background: color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 6%, transparent);
   border: 1.5px solid color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 18%, transparent);
 }

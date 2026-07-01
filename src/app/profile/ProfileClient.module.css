@@ -38,6 +38,7 @@
   background: var(--eg-surface-card);
   border: 1px solid var(--eg-surface-border);
   box-shadow: 0 10px 26px -14px rgba(0, 0, 0, 0.3);
+  flex-wrap: wrap; /* let Edit button wrap on narrow screens */
 }
 
 .identityMascot {
@@ -46,7 +47,7 @@
 
 .identityInfo {
   flex: 1;
-  min-width: 0;
+  min-width: 160px; /* won't collapse below this before wrapping */
 }
 
 .identityTopRow {
@@ -158,6 +159,18 @@
 }
 .editTrigger:hover {
   filter: brightness(1.08);
+}
+
+/* On narrow phones the three-item row (mascot + info + edit button)
+ * gets too cramped. flex-wrap on .identityCard already lets the edit
+ * button drop to the next line — this rule makes it full-width and
+ * visually clearly a separate action row when it does. */
+@media (max-width: 420px) {
+  .editTrigger {
+    width: 100%;
+    text-align: center;
+    margin-top: 4px;
+  }
 }
 
 /* ============ EDIT FORM ============ */

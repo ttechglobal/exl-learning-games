@@ -41,7 +41,7 @@ export interface GameRow {
    * for the new shape each game's seed data now uses; the seed script
    * needs to write that same shape into the DB.
    */
-  snapshot: { cards: { title: string; body: string }[] };
+  snapshot: { cards: { title: string; body: string; visual?: string }[] };
   /**
    * How the player moves between this game's missions — see
    * PlayClient.tsx's header comment for the full explanation of why

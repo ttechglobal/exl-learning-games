@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { Mascot } from "@/motion/Mascot";
-import { GameplayShell, type GameplayStat } from "@/components/gameplay/GameplayShell";
+import { GameplayShell } from "@/components/gameplay/GameplayShell";
 import type { EngineRuntimeProps } from "@/engines/engine-types";
 import type {
   OpticsExperimentConfig,
@@ -67,7 +67,8 @@ export function OpticsExperimentEngine({
   config,
   onComplete,
   isPaused,
-  menu
+  menu,
+  gameTitle
 }: EngineRuntimeProps<OpticsExperimentConfig, OpticsExperimentOutcome>) {
   const { shared: rawShared, mission } = config;
   const payload = (mission.payload ?? {}) as Partial<MirrorLabPayload>;
@@ -100,6 +101,10 @@ export function OpticsExperimentEngine({
     kind: "hint" | "success" | "noimage";
   } | null>(null);
   const [succeeded, setSucceeded] = useState(false);
+  // Stores the completed outcome until the student clicks "Done ✓" —
+  // keeps the educational success explanation on screen as long as they
+  // want to read it, instead of auto-advancing after a fixed delay.
+  const [pendingOutcome, setPendingOutcome] = useState<OpticsExperimentOutcome | null>(null);
   // Show lab onboarding guide on the very first play — explains F, C,
   // the object arrow, and the image before the student touches anything.
   const [showOnboarding, setShowOnboarding] = useState(() => {
@@ -193,22 +198,21 @@ export function OpticsExperimentEngine({
 
     if (checkWinConditions(imgResult, winConditions, mirrorType)) {
       setSucceeded(true);
-      // Educational success message — tell the student WHAT they did and WHY it worked
       const successText = buildSuccessMessage(imgResult, winConditions, mirrorType);
       setFeedback({ text: successText, kind: "success" });
       const xpEarned = Math.max(
         Math.round(mission.xpReward * 0.35),
         Math.round(mission.xpReward * (1 - (nextAttempts - 1) * 0.12 - hintsUsed * 0.08))
       );
-      setTimeout(() => {
-        onComplete({
-          success: true,
-          attempts: nextAttempts,
-          hintsUsed,
-          timeSpentSec: Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000)),
-          xpEarned
-        });
-      }, 3200); // longer pause so student can read the explanation
+      // Store the outcome — onComplete fires when the student presses
+      // "Done ✓", not on a timer, so they can read the explanation.
+      setPendingOutcome({
+        success: true,
+        attempts: nextAttempts,
+        hintsUsed,
+        timeSpentSec: Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000)),
+        xpEarned
+      });
     } else {
       // Educational failure message — explain what is actually happening physically
       const failText = buildFailureMessage(imgResult, winConditions, mirrorType, payload.hint, nextAttempts);
@@ -277,17 +281,13 @@ export function OpticsExperimentEngine({
     ? getContextualGuide(imgResult, winConditions, mirrorType)
     : null;
 
-  // ─── Stat row ───────────────────────────────────────────────────────────────
-  const stats: GameplayStat[] = [
-    { label: "Attempts", value: attempts, tone: "neutral" }
-  ];
-
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
     <GameplayShell
       fallbackGradient="radial-gradient(ellipse 100% 80% at 60% 30%, #0c1c3a 0%, #060e1f 100%)"
       accentColor="var(--eg-subject-physics)"
-      stats={stats}
+      gameTitle={gameTitle ?? "Mirror Lab"}
+      stats={[{ label: "Attempts", value: attempts, tone: "neutral" }]}
       missionPrompt={{ label: "Mission", text: describeWinConditions(winConditions) }}
       menu={menu}
       isPaused={isPaused}
@@ -489,11 +489,17 @@ export function OpticsExperimentEngine({
             </button>
           )}
 
-          {/* Run experiment (primary CTA) */}
+          {/* Run experiment / Done */}
           <button
             className={`${styles.runBtn} ${succeeded ? styles.runBtnDone : ""}`}
-            onClick={handleRun}
-            disabled={isPaused || succeeded}
+            onClick={() => {
+              if (succeeded && pendingOutcome) {
+                onComplete(pendingOutcome);
+              } else {
+                handleRun();
+              }
+            }}
+            disabled={isPaused}
           >
             {succeeded ? "✓ Done!" : "▶  Run Experiment"}
           </button>

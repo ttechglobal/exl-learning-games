@@ -8,34 +8,29 @@ import { useTheme } from "@/components/ui/ThemeProvider";
 import { subjectMeta } from "@/lib/content/subjects";
 import { GAME_CARD_DESC } from "@/lib/content/gameCardMeta";
 import { GameCardArt } from "@/components/ui/GameCardArt";
-import { topicsForSubject, topicLabel } from "@/lib/content/gameTopics";
 import type { GameRow, Difficulty } from "@/types/db";
 import styles from "@/app/(player)/worlds/WorldsClient.module.css";
 
-/**
- * WorldsClient.tsx
- *
- * REVERTED a "Choose Subject" / "Choose Game" two-page split that
- * previously lived here (a /worlds/[subject] route, now deleted) — by
- * direct instruction, back to ONE /worlds page: every subject as its own
- * section, each with its games shown as rich cards directly underneath,
- * no intermediate subject-tile screen.
- *
- * TOPIC TAGS + FILTERS added per direct feedback: each game card now
- * shows a topic chip ("Periodic Table", "Chemical Bonding", etc) and
- * each subject section gets a row of filter tabs so players can drill
- * down within Chemistry to just "Hydrocarbons" games etc. The taxonomy
- * lives in lib/content/gameTopics.ts — add new topics there and the
- * filter tabs appear automatically. Per direct feedback: as the game
- * library grows, players need to be able to navigate to a specific
- * topic rather than scrolling through everything.
- *
- * CARD SIMPLIFICATION per direct feedback: removed missions count, XP
- * range, difficulty dots — too much info that doesn't help a player
- * decide whether to tap. Kept: art, game title, topic tag. Clean, like
- * the homepage's Popular Games cards.
- */
+// ─── Inline topic labels — no external file dependency ───────────────────────
+const TOPIC_LABELS: Record<string, string> = {
+  "periodic-table": "Periodic Table",
+  "atomic-structure": "Atomic Structure",
+  "chemical-bonding": "Chemical Bonding",
+  "molecular-bonding": "Molecular Bonding",
+  "hydrocarbons": "Hydrocarbons",
+  "reflection-of-light": "Reflection of Light",
+  "forces": "Forces",
+  "waves": "Waves",
+  "electricity": "Electricity",
+  "algebra": "Algebra",
+  "geometry": "Geometry",
+};
 
+function topicLabel(id: string): string {
+  return TOPIC_LABELS[id] ?? id.replace(/-/g, " ");
+}
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 export interface GameSummary {
   game: GameRow;
   missionCount: number;
@@ -50,137 +45,126 @@ export interface WorldsClientProps {
   bySubject: Record<string, GameSummary[]>;
 }
 
+// ─── Component ───────────────────────────────────────────────────────────────
 export function WorldsClient({ bySubject }: WorldsClientProps) {
   const { theme, toggleTheme } = useTheme();
-  // One active topic filter per subject — null means "All"
-  const [activeTopics, setActiveTopics] = useState<Record<string, string | null>>({});
+  const [expandedSubject, setExpandedSubject] = useState<string | null>(null);
 
-  const subjects = Object.entries(bySubject).filter(([, games]) => games.length > 0);
-  const primaryAccent = subjects.length > 0 ? subjectMeta(subjects[0][0]).color : "var(--eg-brand)";
-  const totalGames = subjects.reduce((sum, [, games]) => sum + games.length, 0);
+  const subjects = Object.entries(bySubject).filter(([, g]) => g.length > 0);
+  const totalGames = subjects.reduce((s, [, g]) => s + g.length, 0);
+  const primaryAccent = subjects.length > 0
+    ? subjectMeta(subjects[0][0]).color
+    : "var(--eg-brand)";
 
+  // ── Expanded view ────────────────────────────────────────────────────────
+  if (expandedSubject) {
+    const meta = subjectMeta(expandedSubject);
+    const games = bySubject[expandedSubject] ?? [];
+    return (
+      <div className={styles.page} data-theme={theme}>
+        <SiteHeader theme={theme} onToggleTheme={toggleTheme} active="games" />
+        <div className={styles.titleRow}>
+          <DepthBackdrop accentColor={meta.color} />
+          <div className={styles.container}>
+            <button className={styles.backBtn} onClick={() => setExpandedSubject(null)}>
+              ← All Worlds
+            </button>
+            <h1 className={styles.pageTitle}>{meta.emoji} {meta.name}</h1>
+          </div>
+        </div>
+        <div className={styles.container}>
+          <div className={styles.gameGrid}>
+            {games.map(({ game }) => (
+              <Link key={game.id} href={`/play/${game.slug}`}
+                className={styles.gameCard}>
+                <div className={styles.gameCardArt}>
+                  <GameCardArt gameSlug={game.slug} emoji={meta.emoji}
+                    color={meta.color} tint={meta.tint} />
+                </div>
+                <div className={styles.gameCardBody}>
+                  <div className={styles.gameCardTag}
+                    style={{ color: meta.color, background: meta.tint }}>
+                    {topicLabel(game.topic_id)}
+                  </div>
+                  <div className={styles.gameCardTitle}>{game.title}</div>
+                  {GAME_CARD_DESC[game.slug] && (
+                    <p className={styles.gameCardDesc}>{GAME_CARD_DESC[game.slug]}</p>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Overview: horizontal scroll rows ─────────────────────────────────────
   return (
     <div className={styles.page} data-theme={theme}>
       <SiteHeader theme={theme} onToggleTheme={toggleTheme} active="games" />
-
       <div className={styles.titleRow}>
         <DepthBackdrop accentColor={primaryAccent} />
         <div className={styles.container}>
           <h1 className={styles.pageTitle}>All Worlds</h1>
           <p className={styles.pageSubtitle}>
-            {totalGames} game{totalGames === 1 ? "" : "s"} across {subjects.length} subject{subjects.length === 1 ? "" : "s"}.
+            {totalGames} game{totalGames === 1 ? "" : "s"} across {subjects.length} subject{subjects.length === 1 ? "" : "s"}
           </p>
         </div>
       </div>
 
-      {/* Sticky subject jump bar — lets students navigate directly to a
-          subject without scrolling through everything above it */}
-      {subjects.length > 1 && (
-        <div className={styles.subjectJumpBar}>
-          <div className={styles.subjectJumpScroll}>
-            {subjects.map(([subject]) => {
-              const meta = subjectMeta(subject);
-              return (
-                <a
-                  key={subject}
-                  href={`#subject-${subject}`}
-                  className={styles.subjectJumpChip}
-                  style={{ "--c": meta.color, "--c-tint": meta.tint } as React.CSSProperties}
-                >
-                  <span>{meta.emoji}</span>
-                  <span>{meta.name}</span>
-                </a>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      <div className={styles.overviewWrap}>
+        {subjects.length === 0 && (
+          <p className={styles.emptyText}>No games yet — check back soon.</p>
+        )}
 
-      <div className={styles.container}>
-        {subjects.map(([subject, subjectGames]) => {
+        {subjects.map(([subject, games]) => {
           const meta = subjectMeta(subject);
-
-          // Build the topic filter list: only topics that have at least
-          // one game in this subject's current game set, in topic order.
-          const topicsInSubject = topicsForSubject(subject).filter((t) =>
-            subjectGames.some((s) => s.game.topic_id === t.id)
-          );
-          const activeTopic = activeTopics[subject] ?? null;
-          const visibleGames = activeTopic
-            ? subjectGames.filter((s) => s.game.topic_id === activeTopic)
-            : subjectGames;
-
           return (
-            <section key={subject} className={styles.subjectSection} id={`subject-${subject}`}>
-              <div className={styles.subjectHead}>
-                <span className={styles.subjectIcon} style={{ background: meta.tint }}>
-                  {meta.emoji}
-                </span>
-                <h2 className={styles.subjectName} style={{ color: meta.color }}>
-                  {meta.name}
-                </h2>
-                <span className={styles.subjectCount}>
-                  {subjectGames.length} game{subjectGames.length === 1 ? "" : "s"}
-                </span>
+            <section key={subject} className={styles.subjectSection}>
+
+              {/* Section header — plain text, no CSS variable colors */}
+              <div className={styles.sectionHead}>
+                <span className={styles.sectionEmoji}>{meta.emoji}</span>
+                <h2 className={styles.sectionName}>{meta.name}</h2>
+                <span className={styles.sectionCount}>{games.length}</span>
+                <button className={styles.viewAllBtn}
+                  onClick={() => setExpandedSubject(subject)}>
+                  View All →
+                </button>
               </div>
 
-              {/* Topic filter tabs — only render when there are 2+ distinct
-                  topics in this subject, since a single-topic subject has
-                  nothing to filter on. */}
-              {topicsInSubject.length >= 2 && (
-                <div className={styles.topicTabs} style={{ "--c": meta.color, "--c-tint": meta.tint } as React.CSSProperties}>
-                  <button
-                    className={`${styles.topicTab} ${activeTopic === null ? styles.topicTabActive : ""}`}
-                    onClick={() => setActiveTopics((s) => ({ ...s, [subject]: null }))}
-                  >
-                    All
-                  </button>
-                  {topicsInSubject.map((t) => (
-                    <button
-                      key={t.id}
-                      className={`${styles.topicTab} ${activeTopic === t.id ? styles.topicTabActive : ""}`}
-                      onClick={() => setActiveTopics((s) => ({ ...s, [subject]: t.id }))}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <div className={styles.gameGrid}>
-                {visibleGames.map(({ game }) => {
-                  const tag = topicLabel(game.topic_id);
-                  const desc = GAME_CARD_DESC[game.slug];
-
-                  return (
-                    <Link
-                      key={game.id}
-                      href={`/play/${game.slug}`}
-                      className={styles.gameCard}
-                      style={{ "--c": meta.color, "--c-tint": meta.tint } as React.CSSProperties}
-                    >
-                      <div className={styles.gameCardArt}>
-                        <GameCardArt gameSlug={game.slug} emoji={meta.emoji} color={meta.color} tint={meta.tint} />
+              {/* Horizontal scroll row */}
+              <div className={styles.scrollRow}>
+                {games.map(({ game }) => (
+                  <Link key={game.id} href={`/play/${game.slug}`}
+                    className={styles.miniCard}>
+                    <div className={styles.miniCardArt}
+                      style={{ background: meta.tint }}>
+                      <GameCardArt gameSlug={game.slug} emoji={meta.emoji}
+                        color={meta.color} tint={meta.tint} />
+                    </div>
+                    <div className={styles.miniCardBody}>
+                      <div className={styles.miniCardTag}
+                        style={{ color: meta.color, background: meta.tint }}>
+                        {topicLabel(game.topic_id)}
                       </div>
-                      <div className={styles.gameCardBody}>
-                        <div className={styles.gameCardTag}>{tag}</div>
-                        <div className={styles.gameCardTitle}>{game.title}</div>
-                        {desc && <p className={styles.gameCardDesc}>{desc}</p>}
-                      </div>
-                    </Link>
-                  );
-                })}
+                      <div className={styles.miniCardTitle}>{game.title}</div>
+                    </div>
+                  </Link>
+                ))}
+
+                <button className={styles.seeAllTile}
+                  onClick={() => setExpandedSubject(subject)}>
+                  <span>{meta.emoji}</span>
+                  <span className={styles.seeAllText}>See all</span>
+                  <span>→</span>
+                </button>
               </div>
+
             </section>
           );
         })}
-
-        {subjects.length === 0 && (
-          <div className={styles.emptyState}>
-            <div className={styles.emptyIcon}>{"\u{1F5FA}\uFE0F"}</div>
-            <p>No games yet — seed the database to see them here.</p>
-          </div>
-        )}
       </div>
     </div>
   );

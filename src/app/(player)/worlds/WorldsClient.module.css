@@ -1,231 +1,236 @@
+/* WorldsClient.module.css — minimal, no nested color-mix, no CSS vars for colors */
+
 .page {
   position: relative;
   min-height: 100vh;
   background: var(--eg-surface-bg);
   color: var(--eg-surface-text);
-  transition: background 0.25s ease, color 0.25s ease;
-}
-
-/* Sticky subject jump bar — appears after the title section and sticks
- * to the top as the student scrolls. Each chip jumps to that subject's
- * section via anchor link. Horizontally scrollable so it works when
- * there are 6+ subjects on a phone screen. */
-.subjectJumpBar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: var(--eg-surface-bg);
-  border-bottom: 1px solid var(--eg-surface-border);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.subjectJumpScroll {
-  display: flex;
-  gap: 8px;
-  padding: 10px 20px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  max-width: 900px;
-  margin: 0 auto;
-}
-.subjectJumpScroll::-webkit-scrollbar { display: none; }
-
-.subjectJumpChip {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border-radius: 999px;
-  background: var(--c-tint);
-  color: var(--c);
-  font-family: var(--eg-font-display);
-  font-weight: 700;
-  font-size: 0.82rem;
-  text-decoration: none;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: filter 0.12s ease;
-}
-.subjectJumpChip:hover {
-  filter: brightness(0.92);
 }
 
 .container {
   max-width: 900px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 20px;
   box-sizing: border-box;
 }
 
-/* Header zone — same DepthBackdrop treatment as Leaderboard/Profile */
 .titleRow {
   position: relative;
   overflow: hidden;
-  padding: 32px 0 28px;
+  padding: 28px 0 22px;
 }
 
 .pageTitle {
   font-family: var(--eg-font-display);
   font-weight: 800;
-  font-size: clamp(28px, 4.6vw, 40px);
+  font-size: clamp(24px, 4vw, 36px);
   color: var(--eg-surface-text);
   margin: 0;
   position: relative;
   z-index: 1;
 }
+
 .pageSubtitle {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   color: var(--eg-surface-text-dim);
-  margin: 6px 0 0;
+  margin: 5px 0 0;
   position: relative;
   z-index: 1;
 }
 
-/* ============ SUBJECT SECTIONS ============ */
+.backBtn {
+  background: none;
+  border: none;
+  color: var(--eg-surface-text-dim);
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 10px;
+  position: relative;
+  z-index: 1;
+  display: block;
+}
+.backBtn:hover { color: var(--eg-surface-text); }
+
+/* ── Overview ────────────────────────────────────────────────────────────── */
+.overviewWrap {
+  padding: 8px 0 60px;
+}
+
+.emptyText {
+  text-align: center;
+  padding: 60px 24px;
+  color: var(--eg-surface-text-dim);
+}
+
 .subjectSection {
-  padding: 28px 0 36px;
+  padding: 20px 0 4px;
   border-bottom: 1px solid var(--eg-surface-border);
 }
-.subjectSection:last-of-type {
-  border-bottom: none;
+.subjectSection:last-child { border-bottom: none; }
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 20px 10px;
 }
 
-.subjectHead {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-.subjectIcon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
+.sectionEmoji {
+  font-size: 22px;
   flex-shrink: 0;
 }
-.subjectName {
+
+.sectionName {
   font-family: var(--eg-font-display);
   font-weight: 800;
-  font-size: 1.15rem;
+  font-size: 1.1rem;
+  color: var(--eg-surface-text);
   margin: 0;
 }
-.subjectCount {
-  margin-left: auto;
-  font-size: 12.5px;
-  font-weight: 600;
+
+.sectionCount {
+  font-size: 11px;
+  font-weight: 700;
   color: var(--eg-surface-text-faint);
+  background: var(--eg-surface-card-2);
+  border-radius: 999px;
+  padding: 2px 8px;
 }
 
-/* ============ TOPIC FILTER TABS ============
- * Horizontal scrollable row of pill tabs — "All" always first, then
- * one tab per topic that actually has games in this subject. Per direct
- * feedback: "if you're looking for games under a particular topic you
- * can just click on a filter/tab." Active tab uses the subject's own
- * accent color so the filter feels like it belongs to that subject, not
- * a generic blue pill. Scrollable on mobile so long topic lists don't
- * wrap and steal vertical space from the grid. */
-.topicTabs {
+.viewAllBtn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--eg-brand);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+.viewAllBtn:hover { opacity: 0.8; }
+
+/* Horizontal scroll */
+.scrollRow {
   display: flex;
-  gap: 6px;
-  margin-bottom: 16px;
+  gap: 12px;
+  padding: 0 20px 20px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding-bottom: 2px; /* prevent clipping of focus ring */
 }
-.topicTabs::-webkit-scrollbar {
-  display: none;
+.scrollRow::-webkit-scrollbar { display: none; }
+
+.miniCard {
+  flex-shrink: 0;
+  width: 150px;
+  background: var(--eg-surface-card);
+  border-radius: 14px;
+  overflow: hidden;
+  text-decoration: none;
+  border: 1px solid var(--eg-surface-border);
+}
+.miniCard:hover { opacity: 0.9; }
+
+.miniCardArt {
+  height: 90px;
+  overflow: hidden;
+  position: relative;
 }
 
-.topicTab {
-  flex-shrink: 0;
-  padding: 7px 14px;
+.miniCardBody {
+  padding: 8px 10px 12px;
+}
+
+.miniCardTag {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   border-radius: 999px;
-  border: 1.5px solid var(--eg-surface-border);
-  background: none;
+  padding: 2px 7px;
+  margin-bottom: 4px;
+}
+
+.miniCardTitle {
   font-family: var(--eg-font-display);
   font-weight: 700;
-  font-size: 0.78rem;
-  color: var(--eg-surface-text-dim);
-  cursor: pointer;
-  transition: all 0.12s ease;
-  white-space: nowrap;
-}
-.topicTab:hover {
-  border-color: var(--c);
-  color: var(--c);
-}
-.topicTabActive {
-  background: var(--c);
-  border-color: var(--c);
-  color: #fff;
+  font-size: 0.82rem;
+  color: var(--eg-surface-text);
+  line-height: 1.3;
 }
 
-/* ============ GAME CARDS ============
- * Simplified per direct feedback: remove missions count, XP, difficulty
- * dots. Keep: art image, topic tag chip, game title, one-sentence desc.
- * Same visual DNA as the homepage Popular Games cards — clean, not
- * cluttered. The topic tag replaces the subject eyebrow (the subject is
- * already communicated by the section heading above the grid) and gives
- * each card a specific, useful hook: "Periodic Table", "Chemical Bonding". */
+.seeAllTile {
+  flex-shrink: 0;
+  width: 110px;
+  background: var(--eg-surface-card-2);
+  border: 1.5px dashed var(--eg-surface-border);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 8px;
+  cursor: pointer;
+  color: var(--eg-surface-text-dim);
+  font-size: 0.75rem;
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+}
+.seeAllTile:hover { background: var(--eg-surface-card); }
+.seeAllText { font-size: 0.75rem; }
+
+/* ── Expanded grid ───────────────────────────────────────────────────────── */
 .gameGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 16px;
+  padding: 16px 0 60px;
 }
 
 .gameCard {
   display: block;
   background: var(--eg-surface-card);
-  border-radius: 18px;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: var(--eg-surface-shadow-soft);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
   text-decoration: none;
+  border: 1px solid var(--eg-surface-border);
 }
-.gameCard:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--eg-surface-shadow-card);
-}
+.gameCard:hover { opacity: 0.9; }
 
 .gameCardArt {
-  position: relative;
-  height: 130px;
-  background: var(--c-tint);
+  height: 120px;
   overflow: hidden;
+  position: relative;
 }
 
 .gameCardBody {
-  padding: 12px 14px 16px;
+  padding: 10px 12px 14px;
 }
 
-/* Topic tag chip — replaces the old subject eyebrow (which was redundant
- * with the section heading) with something specific and useful. Styled as
- * a small pill using the subject's tint color so it's clearly a
- * categorization label rather than a status badge. */
 .gameCardTag {
   display: inline-block;
-  font-family: var(--eg-font-display);
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 9px;
   font-weight: 800;
-  color: var(--c);
-  background: var(--c-tint);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   border-radius: 999px;
-  padding: 3px 8px;
-  margin-bottom: 6px;
+  padding: 2px 8px;
+  margin-bottom: 5px;
 }
 
 .gameCardTitle {
   font-family: var(--eg-font-display);
   font-weight: 700;
-  font-size: 0.98rem;
+  font-size: 0.94rem;
   color: var(--eg-surface-text);
-  margin-bottom: 5px;
+  margin-bottom: 4px;
   line-height: 1.3;
 }
 
@@ -240,58 +245,10 @@
   overflow: hidden;
 }
 
-.emptyState {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  padding: 60px 24px;
-  color: var(--eg-surface-text-dim);
-}
-.emptyIcon {
-  font-size: 34px;
-  margin-bottom: 10px;
-}
-
-/* ============ RESPONSIVE ============ */
-@media (max-width: 680px) {
-  .container {
-    padding: 0 16px;
-  }
-  .titleRow {
-    padding: 24px 0 22px;
-  }
+@media (max-width: 600px) {
   .gameGrid {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
-  .subjectCount {
-    margin-left: 0;
-  }
-  .subjectHead {
-    flex-wrap: wrap;
-  }
-  .gameCardArt {
-    height: 110px;
-  }
-  .gameCardBody {
-    padding: 10px 12px 14px;
-  }
-  .gameCardTitle {
-    font-size: 0.9rem;
-  }
-  .gameCardDesc {
-    display: none; /* too cramped at 2-col — title + tag is enough */
-  }
-}
-
-@media (max-width: 420px) {
-  .gameGrid {
-    grid-template-columns: 1fr;
-  }
-  .gameCardArt {
-    height: 130px;
-  }
-  .gameCardDesc {
-    display: block; /* restore at 1-col: there's room again */
-  }
+  .gameCardArt { height: 100px; }
 }

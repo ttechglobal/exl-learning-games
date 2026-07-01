@@ -48,7 +48,7 @@ export const GAME_CARD_ART: Record<string, string> = {
    * Builder's actual first mission, not a generic chemistry icon.
    */
   "carbon-builder": "/mascot/card-carbon-builder.svg",
-  "mirror-lab": "/mascot/card-mirror-lab.svg"
+  // "mirror-lab" has no custom art yet — GameCardArt shows subject emoji fallback
 };
 
 export const GAME_CARD_DESC: Record<string, string> = {

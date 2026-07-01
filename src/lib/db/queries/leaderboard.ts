@@ -8,6 +8,13 @@ export interface LeaderboardEntry {
   displayName: string;
   xpTotal: number;
   gamesPlayed: number;
+  /** Optional — only set if the student filled it in via their profile
+   *  (see app/profile/ProfileClient.tsx). Surfaced on the leaderboard
+   *  row per direct discussion: school adds a lightweight community/
+   *  "see yourself and people you know" signal without requiring
+   *  accounts or grouping — see this file's other comments for the
+   *  full reasoning. */
+  school: string | null;
   rank: number;
 }
 
@@ -70,16 +77,16 @@ export async function getLeaderboard(period: LeaderboardPeriod, limit = 10): Pro
 
   const { data, error } = await supabaseServer()
     .from("attempt")
-    .select("student_id, xp_awarded, student:student_id(display_name)")
+    .select("student_id, xp_awarded, student:student_id(display_name, school)")
     .gte("completed_at", sinceIso);
 
   if (error) throw error;
 
-  const totals = new Map<string, { displayName: string; xpTotal: number; gamesPlayed: number }>();
+  const totals = new Map<string, { displayName: string; xpTotal: number; gamesPlayed: number; school: string | null }>();
   for (const row of (data ?? []) as Array<{
     student_id: string;
     xp_awarded: number | null;
-    student: { display_name: string } | { display_name: string }[] | null;
+    student: { display_name: string; school: string | null } | { display_name: string; school: string | null }[] | null;
   }>) {
     // Supabase's PostgREST returns a related row as an object for a
     // to-one foreign key, but typings (and some PostgREST versions) can
@@ -87,6 +94,7 @@ export async function getLeaderboard(period: LeaderboardPeriod, limit = 10): Pro
     // inference — handling both rather than assuming one shape.
     const studentRecord = Array.isArray(row.student) ? row.student[0] : row.student;
     const displayName = studentRecord?.display_name ?? "Anonymous";
+    const school = studentRecord?.school ?? null;
     const xp = row.xp_awarded ?? 0;
 
     const existing = totals.get(row.student_id);
@@ -94,7 +102,7 @@ export async function getLeaderboard(period: LeaderboardPeriod, limit = 10): Pro
       existing.xpTotal += xp;
       existing.gamesPlayed += 1;
     } else {
-      totals.set(row.student_id, { displayName, xpTotal: xp, gamesPlayed: 1 });
+      totals.set(row.student_id, { displayName, xpTotal: xp, gamesPlayed: 1, school });
     }
   }
 
@@ -108,18 +116,22 @@ export async function getLeaderboard(period: LeaderboardPeriod, limit = 10): Pro
  * is a real lifetime attempt count (a second, lightweight query), kept
  * separate from xp_total so a student with a long history but few
  * recent plays still shows an honest "games played" number rather than
- * something derived from xp_total/missionReward guesswork.
+ * something derived from xp_total/missionReward guesswork — no longer
+ * RENDERED anywhere per direct feedback ("remove number of games
+ * played"), but left on the data model since it's a real, cheap-to-keep
+ * stat that could resurface later (e.g. a future profile insight),
+ * rather than ripping out a working query for a UI-only ask.
  */
 async function getAllTimeLeaderboard(limit: number): Promise<LeaderboardEntry[]> {
   const { data: students, error: studentsError } = await supabaseServer()
     .from("student")
-    .select("id, display_name, xp_total")
+    .select("id, display_name, xp_total, school")
     .order("xp_total", { ascending: false })
     .limit(limit);
 
   if (studentsError) throw studentsError;
 
-  const rows = (students ?? []) as Array<{ id: string; display_name: string; xp_total: number }>;
+  const rows = (students ?? []) as Array<{ id: string; display_name: string; xp_total: number; school: string | null }>;
   if (rows.length === 0) return [];
 
   const { data: attemptCounts, error: attemptsError } = await supabaseServer()
@@ -142,7 +154,8 @@ async function getAllTimeLeaderboard(limit: number): Promise<LeaderboardEntry[]>
       studentId: r.id,
       displayName: r.display_name,
       xpTotal: r.xp_total,
-      gamesPlayed: countByStudent.get(r.id) ?? 0
+      gamesPlayed: countByStudent.get(r.id) ?? 0,
+      school: r.school
     }))
     .filter(isRealLeaderboardEntry)
     .map((entry, i) => ({ ...entry, rank: i + 1 }));
@@ -166,7 +179,7 @@ function isRealLeaderboardEntry(entry: { displayName: string; xpTotal: number })
 }
 
 function rankAndSlice(
-  totals: Map<string, { displayName: string; xpTotal: number; gamesPlayed: number }>,
+  totals: Map<string, { displayName: string; xpTotal: number; gamesPlayed: number; school: string | null }>,
   limit: number
 ): LeaderboardEntry[] {
   return Array.from(totals.entries())
@@ -251,9 +264,18 @@ function getStartOfWeekIso(): string {
  *  leaderboard's reset cutoff, same role as getStartOfWeekIso above but
  *  for the longer period. */
 function getStartOfMonthIso(): string {
+  // Rolling 30-day window rather than "since the 1st of this month" —
+  // a calendar-month reset means the leaderboard goes blank every 1st
+  // (all plays from last month vanish instantly) and the first ~3 days
+  // of a new month show almost nobody. A rolling window is always a
+  // full 30 days of real activity regardless of where you are in the
+  // calendar, which makes the monthly tab feel consistently populated
+  // rather than alternating between "full" and "empty" once a month.
   const now = new Date();
-  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-  return firstOfMonth.toISOString();
+  const thirtyDaysAgo = new Date(now);
+  thirtyDaysAgo.setDate(now.getDate() - 30);
+  thirtyDaysAgo.setHours(0, 0, 0, 0);
+  return thirtyDaysAgo.toISOString();
 }
 
 /**

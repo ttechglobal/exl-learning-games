@@ -40,8 +40,33 @@ export class LocalDbAdapter implements ExportAdapter {
   }
 }
 
-/** XP comes from the Mission's xp_reward when available; falls back to a small flat amount otherwise. */
+/**
+ * XP comes from the engine's own reported `xpEarned` (on rawOutcome)
+ * when present — a real, performance-based amount (e.g. Element
+ * Hunter's 5 XP per correct round, Atom Forge's 5 XP per compound
+ * forged; see TileMatchEngine.tsx / BondMatchEngine.tsx for where
+ * that's computed). Falls back to the Mission's flat xp_reward only
+ * when the engine doesn't report one at all — true for the
+ * single-attempt engines (particle-assembly, molecule-builder), where
+ * "one flat reward for the one thing you built" is the correct model
+ * to begin with, not a gap to fix.
+ *
+ * BUG THIS REPLACES: every engine, including session-based ones that
+ * already tracked their own internal score (tile-match's streak-bonus
+ * score, bond-match's per-compound score), was previously awarded the
+ * exact same flat mission.xp_reward regardless of how the session
+ * actually went — finishing Element Hunter having gotten one tile right
+ * paid the identical XP as finishing it with a 20-round streak. xpEarned
+ * closes that gap by being the one place a session's real performance
+ * becomes the real XP number, instead of two disconnected scoring
+ * systems (an in-game "Score" stat nobody's profile ever saw, and a
+ * flat reward that ignored it).
+ */
 async function resolveXpReward(result: AttemptResult): Promise<number> {
+  const reported = result.rawOutcome?.xpEarned;
+  if (typeof reported === "number" && Number.isFinite(reported)) {
+    return Math.max(0, Math.round(reported));
+  }
   if (result.missionId) {
     const mission = await getMissionById(result.missionId);
     if (mission) return mission.xp_reward;

@@ -85,6 +85,7 @@ function badgeForIndex(i: number): Badge {
   displayName: string;
   xpTotal: number;
   gamesPlayed: number;
+  school?: string | null;
   rank: number;
   avatarEmoji?: string;
 }
@@ -260,10 +261,12 @@ export function HomePage({ gamesBySubject, featuredGames, leaderboard, currentSt
                       <b className={styles.fd}>{champion.xpTotal.toLocaleString()}</b>
                       <span>XP</span>
                     </div>
-                    <div>
-                      <b className={styles.fd}>{champion.gamesPlayed}</b>
-                      <span>Games</span>
-                    </div>
+                    {champion.school && (
+                      <div>
+                        <b className={`${styles.fd} ${styles.championSchool}`}>{champion.school}</b>
+                        <span>School</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -274,8 +277,10 @@ export function HomePage({ gamesBySubject, featuredGames, leaderboard, currentSt
                     <div className={styles.lbRank}>{entry.rank}</div>
                     <div className={styles.lbAvatar}>{entry.avatarEmoji ?? "⭐"}</div>
                     <div className={styles.lbInfo}>
-                      <div className={styles.lbName}>{entry.displayName}</div>
-                      <div className={styles.lbSub}>{entry.gamesPlayed} games played</div>
+                      <div className={styles.lbNameRow}>
+                        <div className={styles.lbName}>{entry.displayName}</div>
+                        {entry.school && <div className={styles.lbSchoolTag}>{entry.school}</div>}
+                      </div>
                     </div>
                     <div className={styles.lbXp}>
                       {entry.xpTotal.toLocaleString()} <span>XP</span>

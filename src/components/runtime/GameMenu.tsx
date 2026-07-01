@@ -84,7 +84,7 @@ export function GameMenu({ onRestart, onChangeDifficulty }: GameMenuProps) {
             )}
 
             <Link href="/worlds" className={`${styles.sheetButton} ${styles.exitButton}`}>
-              ✕ Exit to Worlds
+              ✕ Exit
             </Link>
 
             <button className={styles.cancelButton} onClick={() => setOpen(false)}>

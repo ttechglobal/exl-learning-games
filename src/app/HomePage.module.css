@@ -453,6 +453,13 @@
   font-size: 19px;
   display: block;
 }
+.championSchool {
+  font-size: 13px !important;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .championStats span {
   font-size: 10.5px;
   font-weight: 700;
@@ -495,16 +502,36 @@
 }
 .lbInfo {
   flex: 1;
+  min-width: 0;
+}
+.lbNameRow {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  overflow: hidden;
 }
 .lbName {
   font-weight: 700;
   font-size: 13.5px;
   color: var(--eg-surface-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
-.lbSub {
+.lbSchoolTag {
   font-size: 11px;
   color: var(--eg-surface-text-faint);
-  margin-top: 1px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
+}
+.lbSchoolTag::before {
+  content: "·";
+  margin-right: 4px;
+  opacity: 0.6;
 }
 .lbXp {
   font-weight: 700;

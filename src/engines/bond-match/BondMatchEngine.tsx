@@ -179,7 +179,8 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
         finalScore: sessionXpRef.current,
         compoundsProduced: sessionCompoundsRef.current,
         wrongAttempts: sessionWrongRef.current,
-        timeSpentSec: shared.sessionDurationSec
+        timeSpentSec: shared.sessionDurationSec,
+        xpEarned: sessionXpRef.current
       } as BondMatchMissionOutcome);
       return;
     }
@@ -199,7 +200,8 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
         finalScore: factoryXp,
         compoundsProduced: factoryCompoundsProduced,
         wrongAttempts: factoryWrongAttempts,
-        timeSpentSec: shared.factory!.sessionDurationSec
+        timeSpentSec: shared.factory!.sessionDurationSec,
+        xpEarned: factoryXp
       } as BondMatchFactoryOutcome);
       return;
     }
@@ -452,7 +454,8 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
           finalScore: sessionXpRef.current,
           compoundsProduced: sessionCompoundsRef.current,
           wrongAttempts: sessionWrongRef.current,
-          timeSpentSec
+          timeSpentSec,
+          xpEarned: sessionXpRef.current
         } as BondMatchMissionOutcome);
         return;
       }

@@ -90,6 +90,17 @@ export interface BondMatchMissionOutcome {
   compoundsProduced: number;
   wrongAttempts: number;
   timeSpentSec: number;
+  /** Real XP for this session, read by LocalDbAdapter.resolveXpReward()
+   *  in preference to the Mission's flat xp_reward — see
+   *  tileMatch.config.ts's TileMatchOutcome.xpEarned for the full
+   *  rationale (same fix, same reason, applied here too). Atom Forge
+   *  sets this to 5 per compound forged (sessionXpRef in
+   *  BondMatchEngine.tsx), matching finalScore exactly in the current
+   *  content but kept as its own field rather than reusing finalScore
+   *  directly — a future mission could tune finalScore (the in-game
+   *  number shown on the HUD) and xpEarned (the real reward)
+   *  differently without this field meaning two things at once. */
+  xpEarned: number;
 }
 
 export interface BondMatchFactoryOutcome {
@@ -99,4 +110,5 @@ export interface BondMatchFactoryOutcome {
   compoundsProduced: number;
   wrongAttempts: number;
   timeSpentSec: number;
+  xpEarned: number;
 }

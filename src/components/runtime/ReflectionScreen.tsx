@@ -1,6 +1,8 @@
 "use client";
 
+import { useMemo } from "react";
 import { Mascot } from "@/motion/Mascot";
+import { pickMascotLine } from "@/motion/mascotLines";
 import { EnvironmentBackdrop } from "@/components/runtime/EnvironmentBackdrop";
 import { resolveGameEnvironmentImages } from "@/lib/content/gameEnvironments";
 import styles from "@/components/runtime/ReflectionScreen.module.css";
@@ -17,6 +19,20 @@ export interface ReflectionScreenProps {
    *  hasNextMission, since "go home" is a sensible action regardless of
    *  whether more missions exist. */
   onBackToHome: () => void;
+  /**
+   * Per direct feedback specifically about Atom Forge ("after completing
+   * a level, [players should be able to] either change difficulty or go
+   * to another level to pick"): once Atom Forge collapsed from four
+   * separate Levels into one difficulty-driven session (see
+   * BondMatchEngine.tsx's session model), "another level" effectively
+   * means "a different difficulty" — there's no separate level list
+   * anymore. Optional and additive: only engines with a real difficulty
+   * choice (engineSupportsDifficultyChoice) get this button at all; see
+   * PlayClient.tsx for where it's wired to the same handleChangeDifficulty
+   * the in-game menu's "Change Difficulty" action already uses, so both
+   * entry points land in the exact same place.
+   */
+  onChangeDifficulty?: () => void;
   accentColor?: string;
   /** Used to resolve this game's environment art (see
    *  lib/content/gameEnvironments.ts) so Mission Complete uses the same
@@ -68,11 +84,17 @@ export function ReflectionScreen({
   onNextMission,
   onViewConceptSummary,
   onBackToHome,
+  onChangeDifficulty,
   accentColor = "var(--eg-subject-chemistry)",
   gameSlug,
   extraContent
 }: ReflectionScreenProps) {
   const images = gameSlug ? resolveGameEnvironmentImages(gameSlug) : undefined;
+  // Picked once per mount (not on every render) — a fresh line each time
+  // a player lands on Mission Complete, per direct feedback that the
+  // mascot should react in different encouraging ways rather than the
+  // same static caption every time.
+  const mascotLine = useMemo(() => pickMascotLine("celebrate"), []);
 
   return (
     <div className={styles.wrap} style={{ "--accent-color": accentColor } as React.CSSProperties}>
@@ -83,6 +105,7 @@ export function ReflectionScreen({
       </div>
       <div className={styles.card}>
         <div className={styles.title}>Mission Complete!</div>
+        <div className={styles.mascotLine}>{mascotLine}</div>
 
         <div className={styles.lines}>
           {successLines.map((line, i) => (
@@ -106,6 +129,11 @@ export function ReflectionScreen({
           <button onClick={onPlayAgain} className={styles.secondaryButton}>
             Play Again
           </button>
+          {onChangeDifficulty && (
+            <button onClick={onChangeDifficulty} className={styles.secondaryButton}>
+              🎯 Change Difficulty
+            </button>
+          )}
           <button onClick={onBackToHome} className={styles.homeButton}>
             🏠 Back to Home
           </button>

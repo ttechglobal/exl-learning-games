@@ -68,6 +68,11 @@ export interface GameRuntimeProps {
    *  actual router call, same as BackButton's onBack callbacks) — wired
    *  to ReflectionScreen's new "Back to Home" button. */
   onBackToHome: () => void;
+  /** Optional — see ReflectionScreen.tsx's onChangeDifficulty comment.
+   *  Only passed by PlayClient when engineSupportsDifficultyChoice is
+   *  true for this game; GameRuntime itself has no opinion on which
+   *  engines support this, it just forwards whatever it's given. */
+  onChangeDifficulty?: () => void;
   /**
    * Returns to the Mission Objectives screen — the literal previous step
    * before GameRuntime mounts (see PlayClient.tsx: `screen ===
@@ -178,6 +183,7 @@ export function GameRuntime({
   onAdvanceToNextMission,
   onMissionSucceeded,
   onBackToHome,
+  onChangeDifficulty,
   onBackFromConcepts,
   playerDifficulty,
   isPaused,
@@ -450,6 +456,7 @@ export function GameRuntime({
       onNextMission={onAdvanceToNextMission}
       onViewConceptSummary={() => setPhase("reviewingConcepts")}
       onBackToHome={onBackToHome}
+      onChangeDifficulty={onChangeDifficulty}
       gameSlug={gameSlug}
       extraContent={extraContent}
     />

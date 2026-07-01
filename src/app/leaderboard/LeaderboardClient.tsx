@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { ShareInvite } from "@/components/ui/ShareInvite";
+import { DepthBackdrop } from "@/motion/DepthBackdrop";
 import type { LeaderboardEntry, LeaderboardPeriod } from "@/lib/db/queries/leaderboard";
 import styles from "@/app/leaderboard/LeaderboardClient.module.css";
 
@@ -22,9 +23,9 @@ export interface LeaderboardClientProps {
 }
 
 const TABS: { key: LeaderboardPeriod; label: string }[] = [
-  { key: "weekly", label: "Weekly" },
-  { key: "monthly", label: "Monthly" },
-  { key: "allTime", label: "All-Time" }
+  { key: "weekly", label: "This Week" },
+  { key: "monthly", label: "30 Days" },
+  { key: "allTime", label: "All Time" }
 ];
 
 const RANK_MEDALS: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
@@ -112,12 +113,17 @@ export function LeaderboardClient({ initialPeriod, initialEntries, initialMyRank
     <div className={styles.page} data-theme={theme}>
       <SiteHeader theme={theme} onToggleTheme={toggleTheme} active="leaderboard" currentStudentXp={currentStudentXp} />
 
-      <div className={styles.container}>
-        <div className={styles.headRow}>
-          <h1 className={styles.title}>🏆 Leaderboard</h1>
-          <p className={styles.subtitle}>Earn XP by completing missions across every game to climb the board.</p>
+      <div className={styles.titleRow}>
+        <DepthBackdrop accentColor="var(--eg-gold)" />
+        <div className={styles.container}>
+          <div className={styles.headRow}>
+            <h1 className={styles.title}>🏆 Leaderboard</h1>
+            <p className={styles.subtitle}>Earn XP by completing missions across every game to climb the board.</p>
+          </div>
         </div>
+      </div>
 
+      <div className={styles.container}>
         <div className={styles.tabs} role="tablist">
           {TABS.map((tab) => (
             <button
@@ -148,8 +154,10 @@ export function LeaderboardClient({ initialPeriod, initialEntries, initialMyRank
                 >
                   <div className={styles.rank}>{RANK_MEDALS[entry.rank] ?? entry.rank}</div>
                   <div className={styles.info}>
-                    <div className={styles.name}>{entry.displayName}</div>
-                    <div className={styles.sub}>{entry.gamesPlayed} games played</div>
+                    <div className={styles.nameRow}>
+                      <div className={styles.name}>{entry.displayName}</div>
+                      {entry.school && <div className={styles.schoolTag}>{entry.school}</div>}
+                    </div>
                   </div>
                   <div className={styles.xp}>
                     {entry.xpTotal.toLocaleString()} <span>XP</span>
@@ -165,8 +173,10 @@ export function LeaderboardClient({ initialPeriod, initialEntries, initialMyRank
               <div className={`${styles.row} ${styles.rowYou} ${styles.rowPinned}`}>
                 <div className={styles.rank}>{myRank.rank}</div>
                 <div className={styles.info}>
-                  <div className={styles.name}>You</div>
-                  <div className={styles.sub}>out of {myRank.totalRanked.toLocaleString()} ranked players</div>
+                  <div className={styles.nameRow}>
+                    <div className={styles.name}>You</div>
+                    <div className={styles.schoolTag}>out of {myRank.totalRanked.toLocaleString()} ranked</div>
+                  </div>
                 </div>
                 <div className={styles.xp}>
                   {myRank.xpTotal.toLocaleString()} <span>XP</span>

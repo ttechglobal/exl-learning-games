@@ -46,7 +46,7 @@ export const TileMatchSharedConfigSchema = z.object({
     streakBonusPerLevel: z.number().int().nonnegative().default(2),
     streakBonusCap: z.number().int().positive().default(5),
     wrongAnswerTimePenaltySec: z.number().int().nonnegative().default(2),
-    hintTimePenaltySec: z.number().int().nonnegative().default(3)
+    hintTimePenaltySec: z.number().int().nonnegative().default(0)
   }),
   hints: z.object({
     enabled: z.boolean().default(true),
@@ -83,4 +83,12 @@ export interface TileMatchOutcome {
    *  needing any identity props of its own (studentId/gameId aren't
    *  threaded into any engine today — see engine-types.ts). */
   hintsUsed: number;
+  /** Real XP for this session — 5 per correct round, read by
+   *  LocalDbAdapter.resolveXpReward() in preference to the Mission's
+   *  flat xp_reward (see that function's comment for why a flat reward
+   *  was the actual bug: it paid the same regardless of how the session
+   *  went). Distinct from `score`/`finalScore` above, which stay the
+   *  in-game points system (streak bonuses etc.) — xpEarned is the
+   *  number that actually lands in the player's lifetime total. */
+  xpEarned: number;
 }

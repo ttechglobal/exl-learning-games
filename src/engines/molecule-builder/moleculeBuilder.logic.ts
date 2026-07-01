@@ -158,10 +158,20 @@ export function buildFeedback(
   slots: Slot[],
   placedAtoms: Record<string, string>,
   placedBonds: PlacedBond[],
-  roster: AtomDef[]
+  roster: AtomDef[],
+  verbose = true
 ): string {
   if (result.correct || !result.mismatch) {
     return "Not quite — check your structure against the mission card. Try again.";
+  }
+
+  // Hard difficulty: skip the specific lookup below entirely and return
+  // one short, still-encouraging generic nudge — the player has to
+  // reason about which bond/atom is wrong themselves, same "Hard hides
+  // the specific detail" lever particle-assembly's feedbackRules
+  // already uses for the exact same reason.
+  if (!verbose) {
+    return "Not quite there yet — check your bonds and try again.";
   }
 
   const { kind, slotId } = result.mismatch;
@@ -182,10 +192,14 @@ export function buildFeedback(
       const def = symbol ? atomDefBySymbol(roster, symbol) : undefined;
       if (def) {
         const used = bondCountForSlot(slotId, placedBonds);
-        return `${def.name} only has ${used} of ${def.maxBonds} bonds filled — check what's still missing or wrong there.`;
+        const missing = def.maxBonds - used;
+        if (missing > 0) {
+          return `${def.name} still needs ${missing} more bond${missing > 1 ? "s" : ""} (it has ${used}/${def.maxBonds}). Check for a double or triple bond that hasn't been set yet — tap the glowing line between atoms to choose the bond type.`;
+        }
+        return `A bond connected to ${def.name} is the wrong type — check whether it should be single, double, or triple, and tap the line between those atoms to change it.`;
       }
     }
-    return "A bond is missing or the wrong type — double-check each connection against the mission card.";
+    return "A bond is missing or the wrong type — tap the glowing line between any two atoms to set its bond type, then try again.";
   }
 
   return "Not quite — check your structure against the mission card. Try again.";

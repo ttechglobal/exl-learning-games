@@ -50,64 +50,88 @@
             "formula": "NaCl",
             "name": "Sodium Chloride",
             "bondType": "ionic",
-            "pair": ["Na", "Cl"],
-            "xpReward": 80
+            "pair": [
+              "Na",
+              "Cl"
+            ],
+            "xpReward": 5
           },
           {
             "key": "mgo",
             "formula": "MgO",
             "name": "Magnesium Oxide",
             "bondType": "ionic",
-            "pair": ["Mg", "O"],
-            "xpReward": 85
+            "pair": [
+              "Mg",
+              "O"
+            ],
+            "xpReward": 5
           },
           {
             "key": "kf",
             "formula": "KF",
             "name": "Potassium Fluoride",
             "bondType": "ionic",
-            "pair": ["K", "F"],
-            "xpReward": 80
+            "pair": [
+              "K",
+              "F"
+            ],
+            "xpReward": 5
           },
           {
             "key": "mgcl2",
             "formula": "MgCl2",
             "name": "Magnesium Chloride",
             "bondType": "ionic",
-            "pair": ["Mg", "Cl"],
-            "xpReward": 85
+            "pair": [
+              "Mg",
+              "Cl"
+            ],
+            "xpReward": 5
           },
           {
             "key": "h2",
             "formula": "H2",
             "name": "Hydrogen Gas",
             "bondType": "covalent",
-            "pair": ["H", "H"],
-            "xpReward": 70
+            "pair": [
+              "H",
+              "H"
+            ],
+            "xpReward": 5
           },
           {
             "key": "o2",
             "formula": "O2",
             "name": "Oxygen Gas",
             "bondType": "covalent",
-            "pair": ["O", "O"],
-            "xpReward": 75
+            "pair": [
+              "O",
+              "O"
+            ],
+            "xpReward": 5
           },
           {
             "key": "n2",
             "formula": "N2",
             "name": "Nitrogen Gas",
             "bondType": "covalent",
-            "pair": ["N", "N"],
-            "xpReward": 80
+            "pair": [
+              "N",
+              "N"
+            ],
+            "xpReward": 5
           },
           {
             "key": "f2",
             "formula": "F2",
             "name": "Fluorine Gas",
             "bondType": "covalent",
-            "pair": ["F", "F"],
-            "xpReward": 75
+            "pair": [
+              "F",
+              "F"
+            ],
+            "xpReward": 5
           }
         ]
       }

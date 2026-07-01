@@ -272,7 +272,7 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
     router.push("/worlds");
   }
 
-const menu = <GameMenu onRestart={handleRestart} onChangeDifficulty={supportsDifficultyChoice ? handleChangeDifficulty : undefined} />;
+  const menu = <GameMenu onRestart={handleRestart} onChangeDifficulty={supportsDifficultyChoice ? handleChangeDifficulty : undefined} />;
 
   if (screen === "levelSelect") {
     return (
@@ -436,7 +436,6 @@ const menu = <GameMenu onRestart={handleRestart} onChangeDifficulty={supportsDif
       hasNextMission={Boolean(nextMission) && !isLevelBased}
       reviewSuccessLines={[
         `You successfully created ${(activeMission.payload as { resultLabel?: string }).resultLabel ?? activeMission.title}.`,
-        "Review the Concept Snapshot any time from this screen.",
         // Explicit unlock confirmation per direct feedback ("when a
         // user completes a level it should unlock the next one") — see
         // onMissionSucceeded below for where the unlock is now actually
@@ -501,6 +500,7 @@ const menu = <GameMenu onRestart={handleRestart} onChangeDifficulty={supportsDif
         }
       }}
       onBackToHome={() => router.push("/worlds")}
+      onChangeDifficulty={supportsDifficultyChoice ? handleChangeDifficulty : undefined}
       onBackFromConcepts={() => setScreen("objectives")}
     />
   );

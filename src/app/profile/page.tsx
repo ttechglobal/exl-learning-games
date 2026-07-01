@@ -1,6 +1,7 @@
 import { resolveCurrentStudent } from "@/lib/identity/deviceId";
 import { listAttemptsForStudent } from "@/lib/db/queries/attempts";
 import { listGames } from "@/lib/db/queries/games";
+import { getStudentRank } from "@/lib/db/queries/leaderboard";
 import { ProfileClient } from "@/app/profile/ProfileClient";
 import type { GameRow } from "@/types/db";
 
@@ -49,11 +50,18 @@ export default async function ProfilePage() {
         attemptsBySubject={{}}
         totalMissionsCompleted={0}
         games={[]}
+        xpThisWeek={0}
+        xpThisMonth={0}
       />
     );
   }
 
-  const [attempts, games] = await Promise.all([listAttemptsForStudent(student.id), listGames()]);
+  const [attempts, games, weeklyRank, monthlyRank] = await Promise.all([
+    listAttemptsForStudent(student.id),
+    listGames(),
+    getStudentRank(student.id, "weekly"),
+    getStudentRank(student.id, "monthly")
+  ]);
 
   const successfulAttempts = attempts.filter((a) => a.success === true);
   const totalMissionsCompleted = successfulAttempts.length;
@@ -72,6 +80,12 @@ export default async function ProfilePage() {
       attemptsBySubject={attemptsBySubject}
       totalMissionsCompleted={totalMissionsCompleted}
       games={games as GameRow[]}
+      // getStudentRank returns null when the student has no qualifying
+      // activity in that period (zero attempts since the cutoff) — a
+      // real, distinct "0 XP this period" rather than an error, so this
+      // defaults to 0 rather than omitting the stat entirely.
+      xpThisWeek={weeklyRank?.xpTotal ?? 0}
+      xpThisMonth={monthlyRank?.xpTotal ?? 0}
     />
   );
 }

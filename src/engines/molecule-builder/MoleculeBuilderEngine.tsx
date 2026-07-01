@@ -229,6 +229,31 @@ export function MoleculeBuilderEngine({
         setTimeout(() => setShaking(false), 420);
         setTimeout(() => setRejectingSlot(null), 420);
       }
+
+      // Auto-open the order picker for the first non-single bond that
+      // both ends are now filled for but no order has been chosen yet.
+      // Previously this required the player to find and tap the glowing
+      // dashed line between the atoms — an invisible interaction that
+      // meant ethene's C=C bond silently never formed, and Submit always
+      // failed with a "Carbon only has 2/4 bonds" message even when all
+      // 6 atom slots were filled. Opening the picker automatically (same
+      // moment single bonds auto-form) removes that hidden step.
+      for (const target of payload.targetBonds) {
+        if (target.order === "single") continue;
+        const key = lineKey(target.slotA, target.slotB);
+        const alreadyFormed = working.some(
+          (b) => (b.slotA === target.slotA && b.slotB === target.slotB) || (b.slotA === target.slotB && b.slotB === target.slotA)
+        );
+        if (alreadyFormed) continue;
+        if (currentChosenOrders[key]) continue;
+        const hasA = Boolean(currentAtoms[target.slotA]);
+        const hasB = Boolean(currentAtoms[target.slotB]);
+        if (!hasA || !hasB) continue;
+        // Both ends just became filled for this non-single bond and no
+        // order has been chosen yet — open the picker for it now.
+        setOpenOrderPickerFor(key);
+        break; // only open one picker at a time
+      }
       return working;
     },
     [payload.targetBonds, roster]
@@ -428,7 +453,7 @@ export function MoleculeBuilderEngine({
         }
       });
     } else {
-      const feedbackText = buildFeedback(result, payload.slots, placedAtoms, bonds, roster);
+      const feedbackText = buildFeedback(result, payload.slots, placedAtoms, bonds, roster, shared.feedbackVerbose);
       runFailureSequence({
         onShowFeedback: () => setFeedback({ visible: true, text: feedbackText, entering: true }),
         onShake: () => setShaking(true),

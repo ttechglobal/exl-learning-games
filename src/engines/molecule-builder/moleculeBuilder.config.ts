@@ -76,7 +76,16 @@ export const MoleculeBuilderSharedConfigSchema = z.object({
      *  never penalize XP. Matches the platform's existing "no
      *  punishment, only guidance" mascot philosophy. */
     trackAttempts: z.boolean().default(true)
-  })
+  }),
+  /** Per direct feedback ("the Game Menu... Change Difficulty" should
+   *  be available for all the games, not just one): this is Carbon
+   *  Builder's actual difficulty lever, same family as
+   *  particle-assembly's feedbackRules verbosity toggle — Hard turns
+   *  off the specific "Carbon #2 only has 3/4 bonds" mismatch detail in
+   *  favor of a generic "check your structure" nudge, so the player has
+   *  to reason about the bond count themselves instead of being told
+   *  exactly what's wrong. See moleculeBuilder.logic.ts's buildFeedback. */
+  feedbackVerbose: z.boolean().default(true)
 });
 
 /**

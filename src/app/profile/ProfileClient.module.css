@@ -1,106 +1,190 @@
 .page {
+  position: relative;
   min-height: 100vh;
+  background: var(--eg-surface-bg);
+  color: var(--eg-surface-text);
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
 .container {
   max-width: 640px;
   margin: 0 auto;
-  padding: 24px 20px 60px;
+  padding: 0 20px;
   box-sizing: border-box;
 }
 
+.mainSection {
+  padding-bottom: 60px;
+}
+
+/* Header zone — same depth-layer treatment WorldsClient/LeaderboardClient
+ * use, per direct feedback that this page should match the rest of the
+ * app's style rather than looking like a separate, plainer surface. */
+.titleRow {
+  position: relative;
+  overflow: hidden;
+  padding: 28px 0 22px;
+}
+
+/* ============ IDENTITY CARD ============ */
 .identityCard {
+  position: relative;
+  z-index: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 16px;
   padding: 20px;
-  border-radius: 20px;
-  background: var(--eg-surface-card, #fff);
+  border-radius: 22px;
+  background: var(--eg-surface-card);
   border: 1px solid var(--eg-surface-border);
-  margin-bottom: 18px;
+  box-shadow: 0 10px 26px -14px rgba(0, 0, 0, 0.3);
+}
+
+.identityMascot {
+  flex-shrink: 0;
 }
 
 .identityInfo {
   flex: 1;
+  min-width: 0;
+}
+
+.identityTopRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .displayName {
   font-family: var(--eg-font-display);
   font-weight: 800;
   font-size: 1.3rem;
-  color: var(--eg-text-bright);
+  color: var(--eg-surface-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.deviceNote {
-  font-size: 0.78rem;
-  color: var(--eg-text-dim);
-  margin-top: 4px;
-  line-height: 1.4;
+/* Game-app level badge — the single biggest "make this feel like a game
+ * app" signal per direct feedback. Cosmetic/derived only, see
+ * levelFromXp() in ProfileClient.tsx. */
+.levelBadge {
+  flex-shrink: 0;
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 0.74rem;
+  color: #fff;
+  background: #d98a1f;
+  background: linear-gradient(160deg, var(--eg-gold) 0%, color-mix(in srgb, var(--eg-gold) 65%, black) 100%);
+  border-radius: 999px;
+  padding: 4px 10px;
+  white-space: nowrap;
 }
 
-/* School/class chips — only render when at least one is set (see
- * ProfileClient.tsx), sitting between the name and the device note. */
+.levelTrack {
+  margin-top: 10px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--eg-surface-card-2);
+  overflow: hidden;
+}
+
+.levelFill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--eg-gold);
+  transition: width 0.4s ease;
+}
+
+.levelCaption {
+  margin-top: 5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--eg-surface-text-dim);
+}
+
+/* School/class chips — ALWAYS rendered (filled or empty), per direct
+ * feedback that a hidden/missing field doesn't prompt anyone to fill it
+ * in. An empty one is a dashed, muted, directly-clickable "+ Add..."
+ * affordance rather than a static label. */
 .schoolClassRow {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 6px;
+  margin-top: 10px;
 }
 
-.schoolClassChip {
+.filledChip,
+.emptyChip {
+  font-family: inherit;
   font-size: 0.76rem;
   font-weight: 600;
-  color: var(--eg-text-bright);
-  background: var(--eg-brand-tint);
   border-radius: 999px;
-  padding: 4px 10px;
+  padding: 5px 11px;
+  cursor: pointer;
 }
 
-/* Small, unobtrusive trigger sitting at the end of the identity card —
- * deliberately not a big primary button, since editing your profile is
- * an occasional action, not the main thing this card is for. */
-.editTrigger {
-  align-self: flex-start;
+.filledChip {
+  border: none;
+  color: var(--eg-surface-text);
+  background: var(--eg-brand-tint);
+}
+.filledChip:hover {
+  filter: brightness(0.97);
+}
+
+.emptyChip {
+  border: 1.5px dashed var(--eg-surface-border);
   background: none;
-  border: 1px solid var(--eg-surface-border);
+  color: var(--eg-surface-text-dim);
+}
+.emptyChip:hover {
+  border-color: var(--eg-brand);
+  color: var(--eg-brand);
+}
+
+.editTrigger {
+  flex-shrink: 0;
+  align-self: flex-start;
+  background: var(--eg-brand);
+  border: none;
   border-radius: 999px;
-  padding: 6px 12px;
+  padding: 8px 14px;
   font-size: 0.78rem;
   font-weight: 700;
-  color: var(--eg-text-dim);
+  color: #fff;
   cursor: pointer;
   white-space: nowrap;
 }
 .editTrigger:hover {
-  color: var(--eg-text-bright);
-  border-color: var(--eg-text-dim);
+  filter: brightness(1.08);
 }
 
-/* Inline edit form — replaces .identityCard in place while editing,
- * same card treatment so the swap doesn't jolt the layout. */
+/* ============ EDIT FORM ============ */
 .editCard {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 4px;
   padding: 20px;
-  border-radius: 20px;
-  background: var(--eg-surface-card, #fff);
+  border-radius: 22px;
+  background: var(--eg-surface-card);
   border: 1px solid var(--eg-surface-border);
-  margin-bottom: 18px;
 }
 
 .editTitle {
   font-family: var(--eg-font-display);
   font-weight: 800;
   font-size: 1.05rem;
-  color: var(--eg-text-bright);
+  color: var(--eg-surface-text);
   margin-bottom: 10px;
 }
 
 .fieldLabel {
   font-size: 0.74rem;
   font-weight: 700;
-  color: var(--eg-text-dim);
+  color: var(--eg-surface-text-dim);
   text-transform: uppercase;
   letter-spacing: 0.02em;
   margin-top: 10px;
@@ -111,8 +195,8 @@
   padding: 10px 12px;
   border-radius: 10px;
   border: 1.5px solid var(--eg-surface-border);
-  background: var(--eg-surface, transparent);
-  color: var(--eg-text-bright);
+  background: var(--eg-surface-bg);
+  color: var(--eg-surface-text);
   font-size: 0.92rem;
   font-family: inherit;
 }
@@ -139,7 +223,7 @@
   border-radius: 10px;
   border: 1.5px solid var(--eg-surface-border);
   background: none;
-  color: var(--eg-text-dim);
+  color: var(--eg-surface-text-dim);
   font-weight: 700;
   font-size: 0.86rem;
   cursor: pointer;
@@ -161,17 +245,71 @@
   cursor: default;
 }
 
+.sectionLabel {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: var(--eg-surface-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 10px;
+}
+
+/* ============ XP SNAPSHOT ============ */
+.xpRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.xpCard {
+  padding: 16px 10px;
+  border-radius: 18px;
+  background: var(--eg-brand-tint);
+  text-align: center;
+}
+
+.xpCardAllTime {
+  background: #d98a1f;
+  background: linear-gradient(160deg, var(--eg-gold) 0%, color-mix(in srgb, var(--eg-gold) 65%, black) 100%);
+  color: #fff;
+}
+
+.xpValue {
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: var(--eg-brand);
+}
+.xpCardAllTime .xpValue {
+  color: #fff;
+}
+
+.xpLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--eg-surface-text-dim);
+  margin-top: 4px;
+}
+.xpCardAllTime .xpLabel {
+  color: rgba(255, 255, 255, 0.85);
+}
+
 .statsRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 22px;
 }
 
 .statCard {
   padding: 18px 14px;
   border-radius: 16px;
-  background: var(--eg-brand-tint);
+  background: var(--eg-surface-card);
+  border: 1px solid var(--eg-surface-border);
   text-align: center;
 }
 
@@ -179,28 +317,18 @@
   font-family: var(--eg-font-display);
   font-weight: 800;
   font-size: 1.5rem;
-  color: var(--eg-brand);
+  color: var(--eg-surface-text);
 }
 
 .statLabel {
   font-size: 0.74rem;
-  color: var(--eg-text-dim);
+  color: var(--eg-surface-text-dim);
   margin-top: 2px;
   font-weight: 600;
 }
 
 .subjectSection {
-  margin-bottom: 18px;
-}
-
-.sectionLabel {
-  font-family: var(--eg-font-display);
-  font-weight: 700;
-  font-size: 0.78rem;
-  color: var(--eg-text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  margin-bottom: 10px;
+  margin-bottom: 28px;
 }
 
 .subjectList {
@@ -209,31 +337,47 @@
   gap: 8px;
 }
 
+/* No left accent border, per direct feedback — the subject's color
+ * lives on the rounded icon chip instead of a bar down the card edge. */
 .subjectRow {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: var(--eg-surface-card, #fff);
+  background: var(--eg-surface-card);
   border: 1px solid var(--eg-surface-border);
-  border-left: 4px solid var(--subject-color, var(--eg-brand));
+}
+
+.subjectIconWrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: #eef0f5;
+  background: color-mix(in srgb, var(--subject-color, var(--eg-brand)) 16%, white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+[data-theme="dark"] .subjectIconWrap {
+  background: color-mix(in srgb, var(--subject-color, var(--eg-brand)) 28%, black);
 }
 
 .subjectEmoji {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
 }
 
 .subjectName {
   flex: 1;
   font-weight: 700;
-  color: var(--eg-text-bright);
+  color: var(--eg-surface-text);
   font-size: 0.9rem;
 }
 
 .subjectCount {
   font-size: 0.8rem;
-  color: var(--eg-text-dim);
+  color: var(--eg-surface-text-dim);
   font-weight: 600;
 }
 
@@ -250,12 +394,12 @@
   font-family: var(--eg-font-display);
   font-weight: 700;
   font-size: 1rem;
-  color: var(--eg-text-bright);
+  color: var(--eg-surface-text);
 }
 
 .emptyText {
   font-size: 0.85rem;
-  color: var(--eg-text-dim);
+  color: var(--eg-surface-text-dim);
   line-height: 1.5;
   max-width: 360px;
 }
@@ -264,4 +408,22 @@
   color: var(--eg-brand);
   font-weight: 700;
   text-decoration: none;
+}
+
+@media (max-width: 420px) {
+  .identityCard {
+    flex-wrap: wrap;
+  }
+  .editTrigger {
+    margin-left: auto;
+  }
+  .xpRow {
+    gap: 6px;
+  }
+  .xpValue {
+    font-size: 1.1rem;
+  }
+  .xpCard {
+    padding: 12px 6px;
+  }
 }

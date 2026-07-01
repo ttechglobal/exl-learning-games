@@ -6,6 +6,7 @@ import { generateClueForTier, buildTileGrid, poolFromSymbols, type Clue } from "
 import { resolveTeachingHint } from "@/engines/tile-match/teachingHints";
 import type { HunterElement } from "@/engines/tile-match/elementData";
 import { Mascot } from "@/motion/Mascot";
+import { pickMascotLine } from "@/motion/mascotLines";
 import { playSound } from "@/motion/sound/playSound";
 import type { EngineRuntimeProps } from "@/engines/engine-types";
 import { GameplayShell, type GameplayStat } from "@/components/gameplay/GameplayShell";
@@ -53,6 +54,7 @@ export function TileMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
   const [wrongAttemptsOnClue, setWrongAttemptsOnClue] = useState(0);
   const [hintsUsed, setHintsUsed] = useState(0);
   const [mascotPose, setMascotPose] = useState<"idle" | "celebrate" | "encourage" | null>(null);
+  const [mascotLine, setMascotLine] = useState<string | null>(null);
   /** Now holds structured HintContent for the modal, not a flat string —
    *  see HintModal.tsx / teachingHints.ts for the shape and why it
    *  changed. */
@@ -99,7 +101,8 @@ export function TileMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
         roundsCorrect,
         highestTierReached: currentTier.tier,
         timeSpentSec,
-        hintsUsed
+        hintsUsed,
+        xpEarned: roundsCorrect * 5
       });
       return;
     }
@@ -138,10 +141,12 @@ export function TileMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
         setRoundsCorrect((r) => r + 1);
         tierCorrectCountRef.current += 1;
         playSound("success");
-        if (newStreak > 0 && newStreak % 5 === 0) {
-          setMascotPose("celebrate");
-          setTimeout(() => setMascotPose(null), 900);
-        }
+        setMascotPose("celebrate");
+        setMascotLine((prev) => pickMascotLine("correct", prev));
+        setTimeout(() => {
+          setMascotPose(null);
+          setMascotLine(null);
+        }, 900);
         setTimeout(startNewRound, 280);
       } else {
         setTileState((s) => ({ ...s, [el.symbol]: "wrong" }));
@@ -151,7 +156,11 @@ export function TileMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
         applyTimePenalty(shared.scoring.wrongAnswerTimePenaltySec);
         playSound("fail");
         setMascotPose("encourage");
-        setTimeout(() => setMascotPose(null), 900);
+        setMascotLine((prev) => pickMascotLine("incorrect", prev));
+        setTimeout(() => {
+          setMascotPose(null);
+          setMascotLine(null);
+        }, 900);
       }
     },
     [clue, tileState, streak, shared.scoring, startNewRound, applyTimePenalty, isPaused]
@@ -161,9 +170,8 @@ export function TileMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
     if (!clue) return;
     setActiveHint(resolveTeachingHint(clue));
     setHintsUsed((n) => n + 1);
-    applyTimePenalty(shared.scoring.hintTimePenaltySec);
     playSound("particleRemove");
-  }, [clue, shared.scoring.hintTimePenaltySec, applyTimePenalty]);
+  }, [clue]);
 
   /**
    * Per the gameplay-redesign brief, section 6: "Instead of appearing only
@@ -246,7 +254,7 @@ export function TileMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
               <Mascot pose="encourage" widthPx={26} />
               <span className={styles.hintButtonText}>
                 <span>Use a Hint</span>
-                <span className={styles.hintButtonCost}>Costs {shared.scoring.hintTimePenaltySec}s off the clock</span>
+                <span className={styles.hintButtonCost}>Free — no time penalty</span>
               </span>
             </button>
           )}
@@ -257,6 +265,7 @@ export function TileMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
 
       {mascotPose && (
         <div className={styles.mascotPopup}>
+          {mascotLine && <div className={styles.mascotBubble}>{mascotLine}</div>}
           <Mascot pose={mascotPose} widthPx={76} />
         </div>
       )}

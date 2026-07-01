@@ -128,6 +128,18 @@
   color: var(--eg-text-bright);
   margin-bottom: 10px;
 }
+.visual {
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  /* Thin border so the visual panel sits cleanly inside the card
+   * without looking like it floats on the white background. */
+  border: 1px solid rgba(0, 0, 0, 0.07);
+}
+[data-theme="dark"] .visual {
+  border-color: rgba(255, 255, 255, 0.08);
+}
 .body {
   font-size: 1rem;
   line-height: 1.65;

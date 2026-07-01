@@ -3,16 +3,21 @@
 import { useState } from "react";
 import { primeAudioOnUserGesture } from "@/motion/sound/playSound";
 import { Mascot } from "@/motion/Mascot";
-import { hasSeenConcepts, markConceptsSeen } from "@/lib/content/contentPrefs";
+import { markConceptsSeen } from "@/lib/content/contentPrefs";
 import { EnvironmentBackdrop } from "@/components/runtime/EnvironmentBackdrop";
 import { resolveGameEnvironmentImages } from "@/lib/content/gameEnvironments";
 import { BackButton } from "@/components/runtime/BackButton";
 import { MissionTopBar } from "@/components/runtime/MissionTopBar";
+import { ConceptVisual } from "@/components/runtime/ConceptVisual";
 import styles from "@/components/runtime/ConceptSnapshot.module.css";
 
 export interface ConceptCard {
   title: string;
   body: string;
+  /** Optional key into the ConceptVisual registry — renders an SVG
+   *  illustration above the body text when present. See
+   *  ConceptVisual.tsx for the registry and available keys. */
+  visual?: string;
 }
 
 export interface ConceptSnapshotProps {
@@ -26,13 +31,16 @@ export interface ConceptSnapshotProps {
    *  backdrop of its own at all. */
   gameSlug?: string;
   /**
-   * Engine type, used only to remember "this player has seen these
-   * concepts before" so a returning player can skip straight through
-   * (see lib/content/conceptPrefs.ts). Optional because ReflectionScreen's
-   * "View Concept Summary" reopens this same component to revisit cards
-   * after a mission — in that context there's no "skip" to offer (the
-   * player explicitly asked to see them again), so the caller simply
-   * omits engineType and the skip button doesn't render.
+   * Engine type, used to record "this player has seen these concepts"
+   * (see lib/content/contentPrefs.ts) and to decide whether the Skip
+   * button renders at all. Per direct feedback, Skip is now always
+   * available on first viewing too — not just for returning players —
+   * since teachers running a class through a mission need a fast way
+   * past the briefing. Optional because ReflectionScreen's "View Concept
+   * Summary" reopens this same component to revisit cards after a
+   * mission — in that context there's no "skip" to offer (the player
+   * explicitly asked to see them again), so the caller simply omits
+   * engineType and the skip button doesn't render.
    */
   engineType?: string;
   /**
@@ -69,10 +77,9 @@ export interface ConceptSnapshotProps {
  * worked example (Atomic Number -> Periodic Table -> Helpful Tip).
  *
  * Players can step forward/back between cards, or skip the whole thing
- * straight to gameplay if engineType is provided and they've seen these
- * concepts before. No countdown timer anymore — see the GameRow.snapshot
- * type comment for why a single shared readTimeSec didn't fit a
- * card-by-card, skippable experience.
+ * straight to gameplay any time engineType is provided. No countdown
+ * timer anymore — see the GameRow.snapshot type comment for why a single
+ * shared readTimeSec didn't fit a card-by-card, skippable experience.
  *
  * BACKDROP added per direct feedback: this screen previously had no
  * environment art at all, while every other pre-play screen did — a
@@ -99,7 +106,7 @@ export function ConceptSnapshot({
   const [index, setIndex] = useState(0);
   const card = cards[index];
   const isLast = index === cards.length - 1;
-  const canSkip = Boolean(engineType) && hasSeenConcepts(engineType!);
+  const canSkip = Boolean(engineType);
   const images = gameSlug ? resolveGameEnvironmentImages(gameSlug) : undefined;
   const showHeader = Boolean(gameTitle && subject);
 
@@ -148,6 +155,11 @@ export function ConceptSnapshot({
         </div>
 
         <div className={styles.title}>{card.title}</div>
+        {card.visual && (
+          <div className={styles.visual}>
+            <ConceptVisual visualKey={card.visual} />
+          </div>
+        )}
         <div className={styles.body}>{card.body}</div>
 
         <div className={styles.actions}>

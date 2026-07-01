@@ -1,0 +1,314 @@
+/**
+ * OpticsExperimentEngine.module.css
+ *
+ * The lab is intentionally dark — a dark background makes ray traces
+ * dramatically more readable and matches the "futuristic optics
+ * laboratory" setting from the spec. The dark background is supplied by
+ * GameplayShell's fallbackGradient; this file styles everything inside
+ * the shell's content area.
+ */
+
+/* ── First-time lab onboarding overlay ────────────────────────────────────── */
+.onboarding {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: rgba(6, 14, 31, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  backdrop-filter: blur(3px);
+}
+
+.onboardingCard {
+  background: #0f1e3a;
+  border: 1.5px solid rgba(96, 165, 250, 0.3);
+  border-radius: 18px;
+  padding: 20px 18px 18px;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.onboardingTitle {
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: #e2e8f0;
+  margin-bottom: 8px;
+}
+
+.onboardingBody {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin: 0 0 12px;
+}
+
+.onboardingDiagram {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+
+.onboardingBtn {
+  width: 100%;
+  padding: 11px;
+  border-radius: 10px;
+  border: none;
+  background: #1d4ed8;
+  color: #fff;
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.onboardingBtn:hover {
+  background: #1e40af;
+}
+
+.wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 8px 0 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* SVG fills the available vertical space between the stats row and
+ * controls. max-height caps it so the controls row stays visible on
+ * short screens (phones in landscape, compact tablets). */
+.labSvg {
+  width: 100%;
+  height: auto;
+  flex: 1 1 0;
+  min-height: 0;
+  display: block;
+  max-height: 58vh;
+  user-select: none;
+}
+
+/* ── Status panel (image readout + contextual guide) ─────────────────────── */
+.statusPanel {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.imageReadout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.readoutLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.45);
+  font-family: var(--eg-font-display);
+}
+
+.readoutValue {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  font-family: var(--eg-font-display);
+}
+
+/* Contextual guide — tells student what to DO, not just what IS */
+.guide {
+  padding: 8px 16px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.guide_guide {
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.guide_success {
+  color: #6ee7b7;
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.guide_warning {
+  color: #fcd34d;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+/* ── Feedback panel ───────────────────────────────────────────────────── */
+.feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  margin: 0 8px;
+  border-radius: 14px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  position: relative;
+}
+
+.feedback_hint {
+  background: rgba(30, 64, 120, 0.85);
+  border: 1px solid rgba(96, 165, 250, 0.3);
+}
+
+.feedback_success {
+  background: rgba(6, 78, 59, 0.85);
+  border: 1px solid rgba(52, 211, 153, 0.4);
+}
+
+.feedback_noimage {
+  background: rgba(78, 52, 6, 0.85);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+}
+
+.feedbackText {
+  flex: 1;
+  margin: 0;
+  color: #e2e8f0;
+}
+
+.feedbackClose {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  align-self: flex-start;
+}
+.feedbackClose:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ── Controls row ─────────────────────────────────────────────────────── */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 14px;
+  flex-wrap: wrap;
+}
+
+/* Mirror type toggle pill */
+.mirrorPicker {
+  display: flex;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
+}
+
+.mirrorBtn {
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: var(--eg-font-display);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+.mirrorBtn + .mirrorBtn {
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+.mirrorBtnActive {
+  background: rgba(96, 165, 250, 0.25);
+  color: #93c5fd;
+}
+.mirrorBtn:hover:not(.mirrorBtnActive) {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Show/hide rays */
+.raysBtn {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: var(--eg-font-display);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s ease;
+}
+.raysBtnOn {
+  background: rgba(34, 211, 238, 0.15);
+  border-color: rgba(34, 211, 238, 0.4);
+  color: #67e8f9;
+}
+
+/* Run Experiment — primary CTA, always grows to fill remaining space */
+.runBtn {
+  flex: 1;
+  min-width: 140px;
+  min-height: 46px;
+  border-radius: 12px;
+  border: none;
+  background: #1d4ed8;
+  color: #fff;
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  box-shadow: 0 4px 0 #1e3a8a, 0 6px 16px rgba(29, 78, 216, 0.35);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.runBtn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #1e3a8a;
+}
+.runBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.runBtnDone {
+  background: #065f46;
+  box-shadow: 0 4px 0 #064e3b;
+}
+
+/* Smooth image arrow transition as object moves */
+.imageArrow {
+  transition: transform 0.05s linear;
+}
+
+@media (max-width: 480px) {
+  .controls {
+    gap: 6px;
+    padding: 8px 10px 12px;
+  }
+  .mirrorBtn {
+    padding: 7px 10px;
+    font-size: 0.76rem;
+  }
+  .runBtn {
+    min-height: 42px;
+    font-size: 0.88rem;
+  }
+  .readoutValue {
+    font-size: 0.82rem;
+  }
+}

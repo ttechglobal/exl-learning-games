@@ -25,6 +25,10 @@ export const GameInputSchema = z.object({
   subject: z.string(),
   topicId: z.string(),
   subtopicId: z.string().optional(),
+  /** Optional — when omitted the runtime infers from mission difficulty mix.
+   *  Set explicitly to "trackMap" for sequential-unlock games like Mirror Lab
+   *  and Carbon Builder, so the inference logic is never load-bearing. */
+  progressionMode: z.enum(["linear", "levelSelect", "trackMap"]).optional(),
   sharedConfig: z.record(z.string(), z.unknown()),
   snapshot: z.object({
     cards: z

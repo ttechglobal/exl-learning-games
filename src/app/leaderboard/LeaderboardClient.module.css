@@ -135,10 +135,11 @@
   white-space: nowrap;
 }
 
-/* School name sits below the player name as a quiet, honest secondary
- * detail — not hidden, but deliberately lighter so the name stays the
- * headline. The dot separator reads as one continuous piece of
- * information rather than two separate rows competing for attention. */
+/* School stacks below the name on mobile — the inline ·dot treatment
+ * squeezes the player name to nothing at < 360px. flex-direction: column
+ * on narrow viewports keeps both readable without needing to truncate
+ * either. The ::before dot separator is hidden in column mode since it
+ * only makes visual sense on a single line. */
 .nameRow {
   display: flex;
   align-items: baseline;
@@ -159,6 +160,20 @@
   content: "·";
   margin-right: 5px;
   opacity: 0.6;
+}
+
+@media (max-width: 480px) {
+  .nameRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+  }
+  .schoolTag::before {
+    display: none;
+  }
+  .schoolTag {
+    font-size: 0.68rem;
+  }
 }
 
 .xp {

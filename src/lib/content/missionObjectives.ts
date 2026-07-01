@@ -1,68 +1,134 @@
 /**
  * lib/content/missionObjectives.ts
  *
- * Per-engine Mission Objectives — a short ✓ checklist shown for ~5 seconds
- * between the Mission Briefing and Quick Concepts. Replaces the old
- * lib/content/howToPlay.ts entirely (deleted, not kept alongside this) —
- * that file's dense objective/controls/scoring/hints/mistakes paragraphs
- * were a full "How to Play" page, which the product brief explicitly asks
- * to remove: "players should spend more time playing than reading."
+ * Mission briefings — shown before gameplay begins.
  *
- * Still keyed by ENGINE TYPE, not per mission or per game, for the same
- * reason as before — Atom Forge's four levels all use the same bond-match
- * mechanic, so the objectives shouldn't be rewritten four times. The
- * engine-keyed lookup pattern is the one thing carried over from the old
- * file; the CONTENT is new and much shorter (a handful of short objective
- * lines, not six paragraph-shaped fields).
+ * TONE: Game-mission style, but written for secondary school students
+ * (ages 13–18). Short sentences, simple words. It should feel exciting,
+ * not like a textbook. The chemistry/science learning goal is in there
+ * but stated naturally, not as a lesson header.
  *
- * A mission can still override/extend via payload.objectivesOverride for
- * the rare mission whose objectives genuinely differ from its engine's
- * default (e.g. a timed level adding "Finish before the timer expires").
+ * A 15-year-old should be able to read the brief in 5 seconds and
+ * immediately know: "okay, I get what this game is and what I need to do."
  */
 
 export interface MissionObjectives {
-  /** Each string is one ✓ line — kept short on purpose, not a sentence with sub-clauses. */
+  /** 2–3 short sentences. Game-world framing, simple language.
+   *  Learning goal is woven in, not announced. */
+  brief: string;
+  /** Short ✓ lines — what the player will DO. Max ~8 words each. */
   items: string[];
 }
 
+const OBJECTIVES_BY_SLUG: Record<string, MissionObjectives> = {
+  "atom-forge": {
+    brief:
+      "Atoms join together to form compounds — like salt, water, and the materials all around you.\n\nYour job: bond the right atoms together to build each compound before time runs out.",
+    items: [
+      "Drag two atoms together to bond them.",
+      "Build the compound shown in the mission.",
+      "Ionic bonds give electrons. Covalent bonds share them.",
+      "Beat the clock — forge as many as you can."
+    ]
+  },
+  "carbon-builder": {
+    brief:
+      "Carbon is the building block of all living things. Every carbon atom bonds exactly 4 times — no more, no less.\n\nBuild the molecule shown. Place the atoms. Connect the bonds. Simple.",
+    items: [
+      "Place each atom into its slot.",
+      "Carbon bonds exactly 4 times — don't go over.",
+      "Tap a bond line to set it as single, double, or triple.",
+      "Hit Submit when your molecule matches the target."
+    ]
+  },
+  "element-hunter": {
+    brief:
+      "Every element on the Periodic Table has its own atomic number, electrons, and position. You need to know them fast.\n\nFind the right element from the clue before the timer runs out.",
+    items: [
+      "Read the clue and tap the correct element.",
+      "Clear the board before time runs out.",
+      "Clues get harder — atomic number, valence, group, and more.",
+      "Use a hint if you're stuck — it's free."
+    ]
+  },
+  "build-the-atom": {
+    brief:
+      "Every atom is made of protons, neutrons, and electrons. The number of each one tells you exactly what element it is.\n\nBuild the exact atom shown. Get all three numbers right.",
+    items: [
+      "Add the right number of protons.",
+      "Match the neutron count for the correct isotope.",
+      "Balance the electrons to make it neutral.",
+      "Submit only when all three counts match."
+    ]
+  },
+  "mirror-lab": {
+    brief:
+      "A new experiment has arrived at the lab. The research team is waiting.\n\nConfigure the optical system — choose your mirror, position the object — and produce the required image before the deadline.",
+    items: [
+      "Drag the object arrow left or right to move it.",
+      "Switch between concave and convex mirrors as needed.",
+      "Watch the image update live as you experiment.",
+      "Press Run Experiment when you think you have it."
+    ]
+  }
+};
+
 const OBJECTIVES_BY_ENGINE: Record<string, MissionObjectives> = {
   "bond-match": {
+    brief:
+      "Atoms join together to form the compounds that make up everything around us.\n\nBond the right pairs of atoms together to build each compound before time runs out.",
     items: [
-      "Bond the correct pair of atoms together.",
-      "Match each compound the mission asks for.",
-      "Finish before time runs out."
+      "Drag two atoms together to bond them.",
+      "Build the compound the mission shows.",
+      "Race the clock — forge as many as you can."
     ]
   },
   "particle-assembly": {
+    brief:
+      "Every element is defined by the particles inside its atom. Protons, neutrons, electrons — get the numbers right.\n\nBuild the exact atom shown.",
     items: [
-      "Add the correct number of protons, neutrons, and electrons.",
-      "Match the exact target composition — partial builds don't score.",
-      "Double-check before you lock in your answer."
+      "Add the right protons, neutrons, and electrons.",
+      "The whole structure must be correct to score.",
+      "Double-check all three before you submit."
     ]
   },
   "tile-match": {
+    brief:
+      "The Periodic Table has 118 elements. You need to know them fast.\n\nMatch each clue to the right element tile before time runs out.",
     items: [
-      "Find and match the correct pairs of tiles.",
-      "Clear the whole board.",
-      "Earn bonus XP for fewer wrong attempts."
+      "Read the clue and tap the right element.",
+      "Clear the board before time runs out.",
+      "Fewer wrong taps = more XP."
     ]
   },
   "molecule-builder": {
+    brief:
+      "Molecules are built by connecting atoms with bonds. Every atom has a limit — go over it and the molecule breaks.\n\nBuild the target molecule. Get the structure right.",
     items: [
-      "Drag atoms onto the build surface and bond them together.",
-      "Respect every atom's maximum bond count — watch the counters.",
-      "Hit Submit when your structure matches the target."
+      "Place atoms into their slots.",
+      "Each atom has a max bond count — stay within it.",
+      "Tap a bond line to set it as single, double, or triple.",
+      "Submit when your molecule matches the target."
     ]
   }
 };
 
 const FALLBACK_OBJECTIVES: MissionObjectives = {
-  items: ["Complete the mission's challenge.", "Earn XP for a successful finish."]
+  brief: "Your mission is ready. Complete the challenge to earn XP.",
+  items: [
+    "Follow the on-screen instructions.",
+    "Earn XP for a successful finish."
+  ]
 };
 
-export function resolveMissionObjectives(engineType: string, missionPayload?: Record<string, unknown>): MissionObjectives {
-  const base = OBJECTIVES_BY_ENGINE[engineType] ?? FALLBACK_OBJECTIVES;
+export function resolveMissionObjectives(
+  engineType: string,
+  gameSlug?: string,
+  missionPayload?: Record<string, unknown>
+): MissionObjectives {
+  const bySlug = gameSlug ? OBJECTIVES_BY_SLUG[gameSlug] : undefined;
+  const base = bySlug ?? OBJECTIVES_BY_ENGINE[engineType] ?? FALLBACK_OBJECTIVES;
   const override = missionPayload?.objectivesOverride as string[] | undefined;
   if (!override) return base;
-  return { items: override };
+  return { ...base, items: override };
 }

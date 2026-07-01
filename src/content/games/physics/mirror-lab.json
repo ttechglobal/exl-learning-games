@@ -1,0 +1,187 @@
+{
+  "slug": "mirror-lab",
+  "title": "Mirror Lab",
+  "engineType": "optics-experiment",
+  "subject": "physics",
+  "topicId": "reflection-of-light",
+  "progressionMode": "trackMap",
+  "sharedConfig": {
+    "focalLength": 2,
+    "objectHeightUnits": 1,
+    "mirrorOptions": ["concave", "convex"],
+    "showFocusLabels": true,
+    "showCenterLabels": true,
+    "showRaysToggle": false,
+    "defaultShowRays": true
+  },
+  "snapshot": {
+    "cards": [
+      {
+        "title": "The Concave Mirror",
+        "body": "A concave mirror curves inward — like the inside of a bowl. It bends all incoming rays toward a single point in front of the mirror called the Focal Point (F).",
+        "visual": "mirror-concave"
+      },
+      {
+        "title": "The Convex Mirror",
+        "body": "A convex mirror curves outward — like the back of a spoon. It spreads rays outward. Reflected rays never converge, so a convex mirror always forms a smaller, upright virtual image.",
+        "visual": "mirror-convex"
+      },
+      {
+        "title": "Object Position Changes Everything",
+        "body": "Moving the object changes the size, location, and type of image. F (Focal Point) and C (Centre of Curvature) divide the space into regions — each one produces a different kind of image.",
+        "visual": "mirror-object-position"
+      },
+      {
+        "title": "Real vs Virtual Images",
+        "body": "A real image forms where reflected rays actually meet in front of the mirror — you can project it on a screen. A virtual image only appears to be behind the mirror — rays don't actually go there.",
+        "visual": "mirror-real-vs-virtual"
+      },
+      {
+        "title": "How to Play",
+        "body": "Drag the white arrow left or right to move the object. The image updates live as you go. Once you think you've met the mission target, press Run Experiment.",
+        "visual": "mirror-how-to-play"
+      }
+    ]
+  },
+  "missions": [
+    {
+      "missionKey": "real-easy",
+      "title": "Real Image — Guided",
+      "difficulty": "EASY",
+      "sequenceIndex": 1,
+      "xpReward": 40,
+      "topicId": "reflection-of-light",
+      "learningGoal": "Discover that a concave mirror forms a real image when the object is placed beyond the focal point.",
+      "estimatedMinutes": 3,
+      "payload": {
+        "resultLabel": "🔵 Real Image",
+        "mirrorOptions": ["concave"],
+        "showFocusLabels": true,
+        "showCenterLabels": true,
+        "showRaysToggle": false,
+        "defaultShowRays": true,
+        "winConditions": { "targetImageType": "real" },
+        "hint": "Drag the object to the LEFT, past F. A real image forms when the object is beyond the focal point."
+      }
+    },
+    {
+      "missionKey": "real-medium",
+      "title": "Real Image — Magnified",
+      "difficulty": "MEDIUM",
+      "sequenceIndex": 2,
+      "xpReward": 60,
+      "topicId": "reflection-of-light",
+      "learningGoal": "Understand that placing the object between F and C produces a magnified real image.",
+      "estimatedMinutes": 4,
+      "payload": {
+        "resultLabel": "🔵 Real Image ×2",
+        "mirrorOptions": ["concave"],
+        "showFocusLabels": true,
+        "showCenterLabels": true,
+        "showRaysToggle": true,
+        "defaultShowRays": true,
+        "winConditions": {
+          "targetImageType": "real",
+          "targetOrientation": "inverted",
+          "targetMagnificationMin": 1.2
+        },
+        "hint": "Place the object between F and C — the closer to F, the bigger the image."
+      }
+    },
+    {
+      "missionKey": "real-hard",
+      "title": "Real Image — Master",
+      "difficulty": "HARD",
+      "sequenceIndex": 3,
+      "xpReward": 90,
+      "topicId": "reflection-of-light",
+      "learningGoal": "Apply the mirror formula to produce exactly 2× magnification.",
+      "estimatedMinutes": 5,
+      "payload": {
+        "resultLabel": "🔵 Real Image ×2",
+        "mirrorOptions": ["concave"],
+        "showFocusLabels": false,
+        "showCenterLabels": false,
+        "showRaysToggle": true,
+        "defaultShowRays": false,
+        "winConditions": {
+          "targetImageType": "real",
+          "targetMagnificationMin": 1.85,
+          "targetMagnificationMax": 2.15
+        },
+        "hint": "For 2× magnification, the image must be twice as far from the mirror as the object."
+      }
+    },
+    {
+      "missionKey": "virtual-easy",
+      "title": "Virtual Image — Guided",
+      "difficulty": "EASY",
+      "sequenceIndex": 4,
+      "xpReward": 40,
+      "topicId": "reflection-of-light",
+      "learningGoal": "Discover that virtual images form when the object is inside F or when using a convex mirror.",
+      "estimatedMinutes": 3,
+      "payload": {
+        "resultLabel": "🟣 Virtual Image",
+        "mirrorOptions": ["concave", "convex"],
+        "showFocusLabels": true,
+        "showCenterLabels": true,
+        "showRaysToggle": false,
+        "defaultShowRays": true,
+        "winConditions": {
+          "targetImageType": "virtual",
+          "targetOrientation": "upright"
+        },
+        "hint": "Try the convex mirror — it always forms upright virtual images. Or move the object inside F with a concave mirror."
+      }
+    },
+    {
+      "missionKey": "virtual-medium",
+      "title": "Virtual Image — Convex",
+      "difficulty": "MEDIUM",
+      "sequenceIndex": 5,
+      "xpReward": 65,
+      "topicId": "reflection-of-light",
+      "learningGoal": "Understand that a convex mirror always forms a diminished virtual image.",
+      "estimatedMinutes": 4,
+      "payload": {
+        "resultLabel": "🟣 Convex Mirror",
+        "mirrorOptions": ["concave", "convex"],
+        "showFocusLabels": true,
+        "showCenterLabels": false,
+        "showRaysToggle": true,
+        "defaultShowRays": true,
+        "winConditions": {
+          "targetMirror": "convex",
+          "targetImageType": "virtual",
+          "targetMagnificationMax": 0.7
+        },
+        "hint": "Switch to the convex mirror. Move the object further away to make the image smaller."
+      }
+    },
+    {
+      "missionKey": "virtual-hard",
+      "title": "Virtual Image — Master",
+      "difficulty": "HARD",
+      "sequenceIndex": 6,
+      "xpReward": 90,
+      "topicId": "reflection-of-light",
+      "learningGoal": "Produce a precisely diminished virtual image using a convex mirror.",
+      "estimatedMinutes": 5,
+      "payload": {
+        "resultLabel": "🟣 Tiny Virtual",
+        "mirrorOptions": ["concave", "convex"],
+        "showFocusLabels": false,
+        "showCenterLabels": false,
+        "showRaysToggle": true,
+        "defaultShowRays": false,
+        "winConditions": {
+          "targetMirror": "convex",
+          "targetImageType": "virtual",
+          "targetMagnificationMax": 0.38
+        },
+        "hint": "Convex mirror, object far from the mirror — the further away, the smaller the virtual image."
+      }
+    }
+  ]
+}

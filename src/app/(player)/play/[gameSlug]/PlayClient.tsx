@@ -386,7 +386,7 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
         backLabel={supportsDifficultyChoice ? "Back to Difficulty" : "Back to Mission Briefing"}
       >
         <MissionObjectivesScreen
-          objectives={resolveMissionObjectives(game.engine_type, activeMission.payload)}
+          objectives={resolveMissionObjectives(game.engine_type, game.slug, activeMission.payload)}
           accentColor={resolveAccentColor()}
           onStart={() => setScreen("runtime")}
         />
@@ -496,7 +496,20 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
           setScreen("levelSelect");
         } else if (nextMission) {
           setActiveMissionId(nextMission.id);
-          setScreen(supportsDifficultyChoice ? "difficulty" : "entry");
+          // For games with a difficulty picker: go to difficulty first.
+          // For level-select games: handled above (goes to levelSelect).
+          // For linear games with no difficulty choice: skip the entry
+          // screen entirely — the player has already seen the game, they
+          // don't need to "Start" again. Go straight to the mission
+          // briefing so the flow is: Complete → Next → Briefing → Play.
+          // This is the same smooth "keep going" feel the trackMap already
+          // achieves (it goes to "runtime") but keeps the briefing screen
+          // so the student sees what the new experiment is asking for.
+          if (supportsDifficultyChoice) {
+            setScreen("difficulty");
+          } else {
+            setScreen("objectives");
+          }
         }
       }}
       onBackToHome={() => router.push("/worlds")}

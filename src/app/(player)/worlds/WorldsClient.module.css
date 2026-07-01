@@ -6,6 +6,50 @@
   transition: background 0.25s ease, color 0.25s ease;
 }
 
+/* Sticky subject jump bar — appears after the title section and sticks
+ * to the top as the student scrolls. Each chip jumps to that subject's
+ * section via anchor link. Horizontally scrollable so it works when
+ * there are 6+ subjects on a phone screen. */
+.subjectJumpBar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--eg-surface-bg);
+  border-bottom: 1px solid var(--eg-surface-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.subjectJumpScroll {
+  display: flex;
+  gap: 8px;
+  padding: 10px 20px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.subjectJumpScroll::-webkit-scrollbar { display: none; }
+
+.subjectJumpChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--c-tint);
+  color: var(--c);
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.82rem;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: filter 0.12s ease;
+}
+.subjectJumpChip:hover {
+  filter: brightness(0.92);
+}
+
 .container {
   max-width: 900px;
   margin: 0 auto;

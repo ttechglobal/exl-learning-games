@@ -8,6 +8,8 @@ import { BondMatchEngine } from "@/engines/bond-match/BondMatchEngine";
 import { BondMatchSharedConfigSchema } from "@/engines/bond-match/bondMatch.config";
 import { MoleculeBuilderEngine } from "@/engines/molecule-builder/MoleculeBuilderEngine";
 import { MoleculeBuilderSharedConfigSchema } from "@/engines/molecule-builder/moleculeBuilder.config";
+import { OpticsExperimentEngine } from "@/engines/optics-experiment/OpticsExperimentEngine";
+import { OpticsSharedConfigSchema } from "@/engines/optics-experiment/opticsExperiment.config";
 
 /**
  * Single source of truth mapping a Game's `engine_type` string to the
@@ -38,12 +40,18 @@ const moleculeBuilderDefinition: EngineDefinition = {
   Component: MoleculeBuilderEngine as unknown as EngineDefinition["Component"]
 };
 
+const opticsExperimentDefinition: EngineDefinition = {
+  engineType: "optics-experiment",
+  configSchema: OpticsSharedConfigSchema as unknown as z.ZodSchema<unknown>,
+  Component: OpticsExperimentEngine as unknown as EngineDefinition["Component"]
+};
+
 const registry: Record<string, EngineDefinition> = {
   "particle-assembly": particleAssemblyDefinition,
   "tile-match": tileMatchDefinition,
   "bond-match": bondMatchDefinition,
-  "molecule-builder": moleculeBuilderDefinition
-  // "multi-stage": multiStageDefinition  — add once src/engines/multi-stage is built
+  "molecule-builder": moleculeBuilderDefinition,
+  "optics-experiment": opticsExperimentDefinition
 };
 
 export function getEngineDefinition(engineType: string): EngineDefinition | undefined {

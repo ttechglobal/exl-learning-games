@@ -47,12 +47,14 @@ export const GAME_CARD_ART: Record<string, string> = {
    * specially"). Depicts methane (one carbon, four hydrogens) — Carbon
    * Builder's actual first mission, not a generic chemistry icon.
    */
-  "carbon-builder": "/mascot/card-carbon-builder.svg"
+  "carbon-builder": "/mascot/card-carbon-builder.svg",
+  "mirror-lab": "/mascot/card-mirror-lab.svg"
 };
 
 export const GAME_CARD_DESC: Record<string, string> = {
   "atom-forge": "Bond atoms together and repair the machine that builds the world's materials.",
   "element-hunter": "Race the clock to spot elements by atomic number, group, and valence electrons.",
   "build-the-atom": "Add protons, neutrons, and electrons to build the exact atom or isotope you're given.",
-  "carbon-builder": "Drag atoms together and build real molecules — one bond at a time, within carbon's strict 4-bond limit."
+  "carbon-builder": "Drag atoms together and build real molecules — one bond at a time, within carbon's strict 4-bond limit.",
+  "mirror-lab": "Perform real optics experiments. Move the object, switch mirrors, and observe how the image changes — then run the experiment."
 };

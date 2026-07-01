@@ -241,6 +241,17 @@ const MODIFIERS_BY_ENGINE: Record<string, ModifierSet> = {
     MEDIUM: () => ({ sessionDurationSec: 60, tileCount: 8, ...buildSingleTier(TILE_MATCH_CLUES.MEDIUM) }),
     HARD: () => ({ sessionDurationSec: 40, tileCount: 8, ...buildSingleTier(TILE_MATCH_CLUES.HARD) })
   },
+  "molecule-builder": {
+    EASY: { feedbackVerbose: true },
+    MEDIUM: { feedbackVerbose: true },
+    HARD: { feedbackVerbose: false }
+  },
+  // optics-experiment deliberately has NO entry here — no difficulty
+  // picker before Mirror Lab (or future optics games). The missions
+  // themselves ARE the progression (easy → hard through the mission
+  // list), and scaffolding (show/hide F and C labels, ray visibility)
+  // is embedded per-mission in the payload rather than being a
+  // player-chosen setting at the start.
   "particle-assembly": {
     // No timer to adjust honestly (see file header) — Easy/Medium keep the
     // engine's full authored feedbackRules AND visible target numbers.

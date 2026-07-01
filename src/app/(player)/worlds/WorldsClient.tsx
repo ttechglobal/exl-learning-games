@@ -68,10 +68,33 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
         <div className={styles.container}>
           <h1 className={styles.pageTitle}>All Worlds</h1>
           <p className={styles.pageSubtitle}>
-            {totalGames} game{totalGames === 1 ? "" : "s"} across {subjects.length} subject{subjects.length === 1 ? "" : "s"}. Pick one and dive in.
+            {totalGames} game{totalGames === 1 ? "" : "s"} across {subjects.length} subject{subjects.length === 1 ? "" : "s"}.
           </p>
         </div>
       </div>
+
+      {/* Sticky subject jump bar — lets students navigate directly to a
+          subject without scrolling through everything above it */}
+      {subjects.length > 1 && (
+        <div className={styles.subjectJumpBar}>
+          <div className={styles.subjectJumpScroll}>
+            {subjects.map(([subject]) => {
+              const meta = subjectMeta(subject);
+              return (
+                <a
+                  key={subject}
+                  href={`#subject-${subject}`}
+                  className={styles.subjectJumpChip}
+                  style={{ "--c": meta.color, "--c-tint": meta.tint } as React.CSSProperties}
+                >
+                  <span>{meta.emoji}</span>
+                  <span>{meta.name}</span>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className={styles.container}>
         {subjects.map(([subject, subjectGames]) => {
@@ -88,7 +111,7 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
             : subjectGames;
 
           return (
-            <section key={subject} className={styles.subjectSection} id={subject}>
+            <section key={subject} className={styles.subjectSection} id={`subject-${subject}`}>
               <div className={styles.subjectHead}>
                 <span className={styles.subjectIcon} style={{ background: meta.tint }}>
                   {meta.emoji}

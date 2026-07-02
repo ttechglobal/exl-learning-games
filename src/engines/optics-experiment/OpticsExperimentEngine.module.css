@@ -508,3 +508,348 @@
   background: rgba(78, 52, 6, 0.85);
   border: 1px solid rgba(251, 191, 36, 0.35);
 }
+
+/* ── ? Guide button ───────────────────────────────────────────────────────── */
+.guideBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(96, 165, 250, 0.45);
+  background: rgba(29, 78, 216, 0.25);
+  color: #93c5fd;
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s ease;
+}
+.guideBtn:hover { background: rgba(29, 78, 216, 0.5); }
+
+/* ── Onboarding formula tip ────────────────────────────────────────────────── */
+.onboardingFormulaTip {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.formulaChip {
+  font-family: monospace;
+  font-size: 0.82rem;
+  background: rgba(29, 78, 216, 0.3);
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  border-radius: 6px;
+  padding: 3px 10px;
+  color: #93c5fd;
+}
+
+/* ── Lab locked overlay (dimmed while prediction pending) ─────────────────── */
+.labSvgLocked {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* ── Prediction overlay ───────────────────────────────────────────────────── */
+.predictionOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  background: rgba(6, 14, 31, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  backdrop-filter: blur(4px);
+}
+
+.predictionCard {
+  background: #0f1e3a;
+  border: 1.5px solid rgba(96, 165, 250, 0.3);
+  border-radius: 20px;
+  padding: 22px 18px 18px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+}
+
+.predictionEyebrow {
+  font-family: var(--eg-font-display);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #93c5fd;
+  margin-bottom: 10px;
+}
+
+.predictionQuestion {
+  font-family: var(--eg-font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  line-height: 1.4;
+  margin: 0 0 16px;
+}
+
+.predictionOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.predOption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
+  font-size: 0.88rem;
+  font-family: var(--eg-font-body);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+.predOption:hover:not(:disabled) {
+  border-color: rgba(96, 165, 250, 0.5);
+  background: rgba(96, 165, 250, 0.1);
+  color: #e2e8f0;
+}
+.predOption:disabled { cursor: default; }
+
+.predOptionSelected {
+  border-color: rgba(96, 165, 250, 0.7) !important;
+  background: rgba(96, 165, 250, 0.15) !important;
+  color: #93c5fd !important;
+}
+
+.predOptionCorrect {
+  border-color: rgba(52, 211, 153, 0.7) !important;
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #6ee7b7 !important;
+}
+
+.predOptionWrong {
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: #fca5a5 !important;
+}
+
+.predOptionLetter {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  font-family: var(--eg-font-display);
+  flex-shrink: 0;
+}
+
+/* Prediction feedback strip */
+.predFeedbackRight,
+.predFeedbackWrong {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.predFeedbackRight {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+.predFeedbackWrong {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+.predFeedbackIcon {
+  font-size: 1rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+.predFeedbackRight .predFeedbackIcon { color: #34d399; }
+.predFeedbackWrong .predFeedbackIcon { color: #fbbf24; }
+
+.predFeedbackBody { flex: 1; }
+.predFeedbackTitle {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.82rem;
+  margin-bottom: 4px;
+}
+.predFeedbackRight .predFeedbackTitle { color: #6ee7b7; }
+.predFeedbackWrong .predFeedbackTitle { color: #fcd34d; }
+
+.predFeedbackText {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.predProceedBtn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: #1d4ed8;
+  color: #fff;
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.predProceedBtn:hover { background: #1e40af; }
+
+/* ── Formula / Magnification panel ────────────────────────────────────────── */
+.formulaPanel {
+  background: rgba(15, 30, 60, 0.8);
+  border: 1px solid rgba(96, 165, 250, 0.25);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 4px 8px 0;
+}
+.formulaPanelTitle {
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #93c5fd;
+  margin-bottom: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+.formulaHint {
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.45);
+  font-weight: 400;
+}
+.formulaRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.formulaField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.55);
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+}
+.formulaInput {
+  width: 100px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  color: #e2e8f0;
+  font-size: 0.88rem;
+  font-family: monospace;
+  outline: none;
+  transition: border-color 0.12s ease;
+}
+.formulaInput:focus { border-color: rgba(96, 165, 250, 0.6); }
+.inputOk { border-color: rgba(52, 211, 153, 0.7) !important; background: rgba(16, 185, 129, 0.1) !important; }
+.inputErr { border-color: rgba(239, 68, 68, 0.6) !important; background: rgba(239, 68, 68, 0.08) !important; }
+.formulaCheckBtn {
+  padding: 7px 18px;
+  border-radius: 8px;
+  border: none;
+  background: #1d4ed8;
+  color: #fff;
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+  align-self: flex-end;
+}
+.formulaCheckBtn:hover { background: #1e40af; }
+
+/* ── Worked solution ───────────────────────────────────────────────────────── */
+.solutionDetails {
+  margin-top: 8px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 0 10px;
+}
+.solutionSummary {
+  padding: 8px 0;
+  font-size: 0.8rem;
+  color: #93c5fd;
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.solutionPre {
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  margin: 0 0 10px;
+}
+
+/* ── Real-world application ────────────────────────────────────────────────── */
+.realWorld {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  margin: 4px 8px 0;
+  border-radius: 12px;
+  background: rgba(124, 58, 237, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+.realWorldIcon { font-size: 1.1rem; flex-shrink: 0; }
+.realWorldText { flex: 1; margin: 0; font-size: 0.83rem; color: #c4b5fd; line-height: 1.5; }
+
+/* ── Status extras ─────────────────────────────────────────────────────────── */
+.readoutSub {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.4);
+  font-family: var(--eg-font-display);
+  font-weight: 600;
+}
+
+/* ── Formula feedback kinds ────────────────────────────────────────────────── */
+.feedback_formula_error {
+  background: rgba(127, 29, 29, 0.85);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+.feedback_formula_partial {
+  background: rgba(78, 52, 6, 0.85);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+}
+
+/* ── Locked run button ─────────────────────────────────────────────────────── */
+.runBtnLocked {
+  background: rgba(255,255,255,0.08) !important;
+  box-shadow: none !important;
+  color: rgba(255,255,255,0.35) !important;
+  cursor: default !important;
+}

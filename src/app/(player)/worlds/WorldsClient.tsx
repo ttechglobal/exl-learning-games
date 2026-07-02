@@ -11,7 +11,6 @@ import { GameCardArt } from "@/components/ui/GameCardArt";
 import type { GameRow, Difficulty } from "@/types/db";
 import styles from "@/app/(player)/worlds/WorldsClient.module.css";
 
-// ─── Inline topic labels ──────────────────────────────────────────────────────
 const TOPIC_LABELS: Record<string, string> = {
   "periodic-table": "Periodic Table",
   "atomic-structure": "Atomic Structure",
@@ -30,7 +29,6 @@ function topicLabel(id: string): string {
   return TOPIC_LABELS[id] ?? id.replace(/-/g, " ");
 }
 
-// ─── Types ───────────────────────────────────────────────────────────────────
 export interface GameSummary {
   game: GameRow;
   missionCount: number;
@@ -45,7 +43,6 @@ export interface WorldsClientProps {
   bySubject: Record<string, GameSummary[]>;
 }
 
-// ─── Component ───────────────────────────────────────────────────────────────
 export function WorldsClient({ bySubject }: WorldsClientProps) {
   const { theme, toggleTheme } = useTheme();
   const [expandedSubject, setExpandedSubject] = useState<string | null>(null);
@@ -57,35 +54,41 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
     ? subjectMeta(subjects[0][0]).color
     : "var(--eg-brand)";
 
+  // ALL hooks at the top — never inside a conditional branch
+  const expandedGames = useMemo(
+    () => (expandedSubject ? (bySubject[expandedSubject] ?? []) : []),
+    [expandedSubject, bySubject]
+  );
+
+  const expandedTopics = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const { game } of expandedGames) {
+      if (!seen.has(game.topic_id)) {
+        seen.add(game.topic_id);
+        out.push(game.topic_id);
+      }
+    }
+    return out;
+  }, [expandedGames]);
+
+  const filteredGames = useMemo(
+    () =>
+      activeTopicFilter === "all"
+        ? expandedGames
+        : expandedGames.filter(({ game }) => game.topic_id === activeTopicFilter),
+    [expandedGames, activeTopicFilter]
+  );
+
   // ── Expanded view ─────────────────────────────────────────────────────────
   if (expandedSubject) {
     const meta = subjectMeta(expandedSubject);
-    const games = bySubject[expandedSubject] ?? [];
-
-    // Build unique topic list for filter tabs
-    const topics = useMemo(() => {
-      const seen = new Set<string>();
-      const out: string[] = [];
-      for (const { game } of games) {
-        if (!seen.has(game.topic_id)) {
-          seen.add(game.topic_id);
-          out.push(game.topic_id);
-        }
-      }
-      return out;
-    }, [games]);
-
-    const showTabs = topics.length > 1;
-
-    const filteredGames = activeTopicFilter === "all"
-      ? games
-      : games.filter(({ game }) => game.topic_id === activeTopicFilter);
+    const showTabs = expandedTopics.length > 1;
 
     return (
       <div className={styles.page} data-theme={theme}>
         <SiteHeader theme={theme} onToggleTheme={toggleTheme} active="games" />
 
-        {/* Header */}
         <div className={styles.titleRow}>
           <DepthBackdrop accentColor={meta.color} />
           <div className={styles.container}>
@@ -97,12 +100,11 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
             </button>
             <h1 className={styles.pageTitle}>{meta.emoji} {meta.name}</h1>
             <p className={styles.pageSubtitle}>
-              {games.length} game{games.length !== 1 ? "s" : ""}
+              {expandedGames.length} game{expandedGames.length !== 1 ? "s" : ""}
             </p>
           </div>
         </div>
 
-        {/* Topic filter tabs */}
         {showTabs && (
           <div className={styles.tabsWrap}>
             <div className={styles.tabsScroll}>
@@ -113,7 +115,7 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
               >
                 All
               </button>
-              {topics.map((t) => (
+              {expandedTopics.map((t) => (
                 <button
                   key={t}
                   className={`${styles.tab} ${activeTopicFilter === t ? styles.tabActive : ""}`}
@@ -127,31 +129,18 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
           </div>
         )}
 
-        {/* Game grid */}
         <div className={styles.container}>
           <div className={styles.gameGrid}>
             {filteredGames.length === 0 && (
               <p className={styles.emptyText}>No games for this topic yet.</p>
             )}
             {filteredGames.map(({ game }) => (
-              <Link
-                key={game.id}
-                href={`/play/${game.slug}`}
-                className={styles.gameCard}
-              >
+              <Link key={game.id} href={`/play/${game.slug}`} className={styles.gameCard}>
                 <div className={styles.gameCardArt}>
-                  <GameCardArt
-                    gameSlug={game.slug}
-                    emoji={meta.emoji}
-                    color={meta.color}
-                    tint={meta.tint}
-                  />
+                  <GameCardArt gameSlug={game.slug} emoji={meta.emoji} color={meta.color} tint={meta.tint} />
                 </div>
                 <div className={styles.gameCardBody}>
-                  <div
-                    className={styles.gameCardTag}
-                    style={{ color: meta.color, background: meta.tint }}
-                  >
+                  <div className={styles.gameCardTag} style={{ color: meta.color, background: meta.tint }}>
                     {topicLabel(game.topic_id)}
                   </div>
                   <div className={styles.gameCardTitle}>{game.title}</div>
@@ -167,7 +156,7 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
     );
   }
 
-  // ── Overview: horizontal scroll rows ─────────────────────────────────────
+  // ── Overview rows ─────────────────────────────────────────────────────────
   return (
     <div className={styles.page} data-theme={theme}>
       <SiteHeader theme={theme} onToggleTheme={toggleTheme} active="games" />
@@ -185,46 +174,26 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
         {subjects.length === 0 && (
           <p className={styles.emptyText}>No games yet — check back soon.</p>
         )}
-
         {subjects.map(([subject, games]) => {
           const meta = subjectMeta(subject);
           return (
             <section key={subject} className={styles.subjectSection}>
-
-              {/* Section header */}
               <div className={styles.sectionHead}>
                 <span className={styles.sectionEmoji}>{meta.emoji}</span>
                 <h2 className={styles.sectionName}>{meta.name}</h2>
                 <span className={styles.sectionCount}>{games.length}</span>
-                <button
-                  className={styles.viewAllBtn}
-                  onClick={() => setExpandedSubject(subject)}
-                >
+                <button className={styles.viewAllBtn} onClick={() => setExpandedSubject(subject)}>
                   View All →
                 </button>
               </div>
-
-              {/* Horizontal scroll row */}
               <div className={styles.scrollRow}>
                 {games.map(({ game }) => (
-                  <Link
-                    key={game.id}
-                    href={`/play/${game.slug}`}
-                    className={styles.miniCard}
-                  >
+                  <Link key={game.id} href={`/play/${game.slug}`} className={styles.miniCard}>
                     <div className={styles.miniCardArt} style={{ background: meta.tint }}>
-                      <GameCardArt
-                        gameSlug={game.slug}
-                        emoji={meta.emoji}
-                        color={meta.color}
-                        tint={meta.tint}
-                      />
+                      <GameCardArt gameSlug={game.slug} emoji={meta.emoji} color={meta.color} tint={meta.tint} />
                     </div>
                     <div className={styles.miniCardBody}>
-                      <div
-                        className={styles.miniCardTag}
-                        style={{ color: meta.color, background: meta.tint }}
-                      >
+                      <div className={styles.miniCardTag} style={{ color: meta.color, background: meta.tint }}>
                         {topicLabel(game.topic_id)}
                       </div>
                       <div className={styles.miniCardTitle}>{game.title}</div>
@@ -234,17 +203,12 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
                     </div>
                   </Link>
                 ))}
-
-                <button
-                  className={styles.seeAllTile}
-                  onClick={() => setExpandedSubject(subject)}
-                >
+                <button className={styles.seeAllTile} onClick={() => setExpandedSubject(subject)}>
                   <span>{meta.emoji}</span>
                   <span className={styles.seeAllText}>See all</span>
                   <span>→</span>
                 </button>
               </div>
-
             </section>
           );
         })}

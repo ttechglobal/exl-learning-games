@@ -3,27 +3,19 @@ import { z } from "zod";
 export const MirrorTypeSchema = z.enum(["concave", "convex"]);
 export type MirrorType = z.infer<typeof MirrorTypeSchema>;
 
-/**
- * Win conditions for one mirror-lab mission.
- * All fields are optional — only the ones specified are checked.
- */
 export const WinConditionsSchema = z.object({
   targetMirror: MirrorTypeSchema.optional(),
   targetImageType: z.enum(["real", "virtual"]).optional(),
   targetOrientation: z.enum(["inverted", "upright"]).optional(),
   targetMagnificationMin: z.number().optional(),
   targetMagnificationMax: z.number().optional(),
-  /** Formula challenge: student must enter correct u/v/f values */
   requiresFormulaEntry: z.boolean().optional(),
-  /** Linear magnification challenge: student must enter m value */
   requiresMagnificationEntry: z.boolean().optional(),
-  /** Acceptable tolerance for numeric entries (default 0.05 = 5%) */
   formulaTolerance: z.number().optional(),
 });
 export type WinConditions = z.infer<typeof WinConditionsSchema>;
 
 export const OpticsSharedConfigSchema = z.object({
-  /** Focal length in physics units (always positive). */
   focalLength: z.number().positive().default(2),
   objectHeightUnits: z.number().positive().default(1),
   mirrorOptions: z.array(MirrorTypeSchema).default(["concave"]),
@@ -43,22 +35,35 @@ export interface OpticsExperimentConfig {
   };
 }
 
+/**
+ * A prediction prompt shown BEFORE the student drags.
+ * They must answer correctly (or after one wrong attempt) before the lab unlocks.
+ */
+export interface PredictionPrompt {
+  question: string;
+  options: string[];
+  correctIndex: number;
+  /** Shown after a wrong answer — teaches the concept before they experiment. */
+  explanation: string;
+}
+
 export interface MirrorLabPayload {
   winConditions: WinConditions;
   hint?: string;
   mirrorOptions?: MirrorType[];
-  /** Scaffold overrides — these are VALID payload keys */
   showFocusLabels?: boolean;
   showCenterLabels?: boolean;
   showRaysToggle?: boolean;
   defaultShowRays?: boolean;
-  /** Formula / magnification challenge metadata */
   formulaChallenge?: {
-    /** Object distance u provided to student for calculation */
-    givenU?: number;
-    /** Whether to show worked solution after success */
     showSolution?: boolean;
   };
+  /**
+   * Tier 2 — Predict before you experiment.
+   * When present, the lab shows a prediction quiz before unlocking the drag controls.
+   * After the student answers (right or wrong), they see feedback then proceed.
+   */
+  prediction?: PredictionPrompt;
 }
 
 export interface OpticsExperimentOutcome {

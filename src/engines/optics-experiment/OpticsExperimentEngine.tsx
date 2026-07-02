@@ -25,7 +25,6 @@ import {
 import { OpticsSharedConfigSchema } from "./opticsExperiment.config";
 import styles from "./OpticsExperimentEngine.module.css";
 
-// ─── Layout constants ─────────────────────────────────────────────────────────
 const SVG_W = 900;
 const SVG_H = 430;
 const MIRROR_X = 700;
@@ -48,7 +47,6 @@ function extendTo(x1: number, y1: number, x2: number, y2: number, tx: number): [
   const t = (tx - x1) / (x2 - x1);
   return [tx, y1 + t * (y2 - y1)];
 }
-
 type Seg = [number, number, number, number];
 
 export function OpticsExperimentEngine({
@@ -74,6 +72,17 @@ export function OpticsExperimentEngine({
     ...(payload.defaultShowRays !== undefined && { defaultShowRays: payload.defaultShowRays }),
   });
 
+  // ── Prediction state ───────────────────────────────────────────────────────
+  const prediction = payload.prediction;
+  const [predictionPhase, setPredictionPhase] = useState<"question" | "feedback_wrong" | "feedback_right" | "done">(
+    prediction ? "question" : "done"
+  );
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const predictionCorrect = selectedOption !== null && prediction
+    ? selectedOption === prediction.correctIndex
+    : false;
+
+  // ── Lab state ──────────────────────────────────────────────────────────────
   const [objX, setObjX] = useState(DEFAULT_OBJ_X);
   const [mirrorType, setMirrorType] = useState<MirrorType>(effectiveMirrorOptions[0] ?? "concave");
   const [showRays, setShowRays] = useState(shared.defaultShowRays);
@@ -90,16 +99,12 @@ export function OpticsExperimentEngine({
     return !localStorage.getItem("lab_guide_seen_mirror-lab");
   });
   const [showGuideModal, setShowGuideModal] = useState(false);
-
-  // Formula challenge state
   const [enteredV, setEnteredV] = useState("");
   const [enteredM, setEnteredM] = useState("");
   const [formulaChecked, setFormulaChecked] = useState(false);
   const [formulaResult, setFormulaResult] = useState<{
     vOk: boolean; mOk: boolean; correct: boolean; solution: string;
   } | null>(null);
-
-  // Real-world application state
   const [showRealWorld, setShowRealWorld] = useState(false);
 
   const svgRef = useRef<SVGSVGElement>(null);
@@ -108,8 +113,9 @@ export function OpticsExperimentEngine({
 
   const requiresFormula = !!(winConditions.requiresFormulaEntry || winConditions.requiresMagnificationEntry);
   const formulaChallenge = payload.formulaChallenge;
+  const labLocked = predictionPhase !== "done";
 
-  // ─── Physics ────────────────────────────────────────────────────────────────
+  // ── Physics ────────────────────────────────────────────────────────────────
   const f = shared.focalLength;
   const F_X = MIRROR_X - f * SCALE;
   const C_X = MIRROR_X - 2 * f * SCALE;
@@ -125,13 +131,9 @@ export function OpticsExperimentEngine({
     imgResult.exists && imgSvgX !== null ? AXIS_Y - imgResult.m * OBJ_H_SVG : null;
   const objTopY = AXIS_Y - OBJ_H_SVG;
 
-  // ─── Rays ────────────────────────────────────────────────────────────────────
-  let r1Inc: Seg | null = null,
-    r1Ref: Seg | null = null,
-    r1Dash: Seg | null = null;
-  let r2Inc: Seg | null = null,
-    r2Ref: Seg | null = null,
-    r2Dash: Seg | null = null;
+  // ── Rays ───────────────────────────────────────────────────────────────────
+  let r1Inc: Seg | null = null, r1Ref: Seg | null = null, r1Dash: Seg | null = null;
+  let r2Inc: Seg | null = null, r2Ref: Seg | null = null, r2Dash: Seg | null = null;
 
   if (showRays && imgResult.exists && imgSvgX !== null && imgTopY !== null) {
     const isV = !imgResult.isReal;
@@ -156,16 +158,15 @@ export function OpticsExperimentEngine({
     }
   }
 
-  // ─── Drag ───────────────────────────────────────────────────────────────────
+  // ── Drag ──────────────────────────────────────────────────────────────────
   function toSvgX(clientX: number) {
     const rect = svgRef.current?.getBoundingClientRect();
     if (!rect) return objX;
     return ((clientX - rect.left) / rect.width) * SVG_W;
   }
   function onPointerDown(e: React.PointerEvent) {
-    if (isPaused || succeeded) return;
-    e.preventDefault();
-    e.stopPropagation();
+    if (isPaused || succeeded || labLocked) return;
+    e.preventDefault(); e.stopPropagation();
     isDragging.current = true;
     (e.target as Element).setPointerCapture(e.pointerId);
   }
@@ -177,11 +178,9 @@ export function OpticsExperimentEngine({
     setFormulaResult(null);
     setShowRealWorld(false);
   }
-  function onPointerUp() {
-    isDragging.current = false;
-  }
+  function onPointerUp() { isDragging.current = false; }
 
-  // ─── Success/failure messages ───────────────────────────────────────────────
+  // ── Success/failure messages ───────────────────────────────────────────────
   function buildSuccessMsg(): string {
     const mag = imgResult.magnitudeM;
     const cond = winConditions;
@@ -204,19 +203,19 @@ export function OpticsExperimentEngine({
     const cond = winConditions;
     if (attempt === 1 && payload.hint) return payload.hint;
     if (cond.targetImageType === "real" && !imgResult.isReal)
-      return `Your image is virtual — reflected rays are diverging instead of converging. Move the object to the LEFT, past F, so rays converge and form a real image in front of the mirror.`;
+      return `Your image is virtual — move the object to the LEFT, past F, so rays converge and form a real image.`;
     if (cond.targetImageType === "virtual" && imgResult.isReal)
-      return `Your image is real. To get a virtual image, move the object inside F (between mirror and F), or switch to the convex mirror.`;
+      return `Your image is real. Move the object inside F, or switch to the convex mirror.`;
     if (cond.targetMirror && cond.targetMirror !== mirrorType)
       return `Switch to the ${cond.targetMirror} mirror using the button below.`;
     if (cond.targetMagnificationMin !== undefined && imgResult.magnitudeM < cond.targetMagnificationMin)
-      return `Your image is ${imgResult.magnitudeM.toFixed(1)}× — not big enough. Move the object closer to F (but keep it beyond F). The closer to F, the bigger the real image.`;
+      return `Your image is ${imgResult.magnitudeM.toFixed(1)}× — not big enough. Move the object closer to F (but keep it beyond F).`;
     if (cond.targetMagnificationMax !== undefined && imgResult.magnitudeM > cond.targetMagnificationMax)
       return `Your image is ${imgResult.magnitudeM.toFixed(1)}× — too big. Move the object further from the mirror.`;
     return getHintMessage(imgResult, winConditions, mirrorType, payload.hint, attempt);
   }
 
-  // ─── Formula check ──────────────────────────────────────────────────────────
+  // ── Formula check ──────────────────────────────────────────────────────────
   function handleCheckFormula() {
     const vNum = parseFloat(enteredV);
     const mNum = parseFloat(enteredM);
@@ -224,28 +223,24 @@ export function OpticsExperimentEngine({
       setFeedback({ text: "Enter a number in each box before checking.", kind: "hint" });
       return;
     }
-
     const tol = winConditions.formulaTolerance ?? 0.08;
-
     if (winConditions.requiresMagnificationEntry && !winConditions.requiresFormulaEntry) {
       const ok = checkMagnificationEntry(mNum, imgResult, tol);
       const solution = buildWorkedSolution(u, f, mirrorType, imgResult);
       setFormulaResult({ vOk: true, mOk: ok, correct: ok, solution });
       setFormulaChecked(true);
       if (ok) {
-        setFeedback({ text: `✓ Correct! m = ${imgResult.m.toFixed(3)}. ${formulaChallenge?.showSolution !== false ? "See the worked solution below." : ""}`, kind: "success" });
+        setFeedback({ text: `✓ Correct! m = ${imgResult.m.toFixed(3)}.`, kind: "success" });
       } else {
-        setFeedback({ text: `Not quite. Check your sign: m = −v/u. The sign matters — it tells you if the image is upright (+) or inverted (−).`, kind: "formula_partial" });
+        setFeedback({ text: `Not quite. m = −v/u. The sign matters — positive means upright, negative means inverted.`, kind: "formula_partial" });
         setHintsUsed((h) => h + 1);
       }
       return;
     }
-
     const { correct, vOk, mOk } = checkFormulaEntry(vNum, mNum, imgResult, tol);
     const solution = buildWorkedSolution(u, f, mirrorType, imgResult);
     setFormulaResult({ vOk, mOk, correct, solution });
     setFormulaChecked(true);
-
     if (correct) {
       setFeedback({ text: `✓ Both correct! v = ${imgResult.v.toFixed(2)} cm, m = ${imgResult.m.toFixed(3)}.`, kind: "success" });
     } else if (vOk || mOk) {
@@ -255,53 +250,42 @@ export function OpticsExperimentEngine({
       });
       setHintsUsed((h) => h + 1);
     } else {
-      setFeedback({ text: `Both values need work. Apply the mirror formula: 1/v + 1/u = 1/f, then m = −v/u. Watch your signs!`, kind: "formula_error" });
+      setFeedback({ text: `Both values need work. Apply 1/v + 1/u = 1/f, then m = −v/u. Watch your signs!`, kind: "formula_error" });
       setHintsUsed((h) => h + 1);
     }
   }
 
-  // ─── Run experiment ─────────────────────────────────────────────────────────
+  // ── Run experiment ─────────────────────────────────────────────────────────
   function handleRun() {
-    if (isPaused || succeeded) return;
+    if (isPaused || succeeded || labLocked) return;
     if (!imgResult.exists) {
-      setFeedback({
-        text: "The image is at infinity — the object is at the focal point F. Move it slightly away.",
-        kind: "noimage",
-      });
+      setFeedback({ text: "The image is at infinity — object is at focal point F. Move it slightly.", kind: "noimage" });
       return;
     }
     const n = attempts + 1;
     setAttempts(n);
     const positionOk = checkWinConditions(imgResult, winConditions, mirrorType);
-
     if (positionOk) {
       if (requiresFormula && !formulaChecked) {
-        setFeedback({
-          text: "✓ Object position is correct! Now complete the formula calculation below before finishing.",
-          kind: "hint",
-        });
+        setFeedback({ text: "✓ Object position is correct! Now complete the formula calculation below.", kind: "hint" });
         return;
       }
       if (requiresFormula && formulaResult && !formulaResult.correct) {
-        setFeedback({
-          text: "Fix your formula calculation before finishing — check the feedback below the formula panel.",
-          kind: "hint",
-        });
+        setFeedback({ text: "Fix your formula calculation before finishing.", kind: "hint" });
         return;
       }
       setSucceeded(true);
       setFeedback({ text: buildSuccessMsg(), kind: "success" });
-      const totalHints = hintsUsed;
       const xpEarned = Math.max(
         Math.round(mission.xpReward * 0.35),
-        Math.round(mission.xpReward * (1 - (n - 1) * 0.12 - totalHints * 0.08))
+        Math.round(mission.xpReward * (1 - (n - 1) * 0.12 - hintsUsed * 0.08))
       );
+      // Bonus XP if they predicted correctly
+      const predBonus = predictionCorrect ? Math.round(mission.xpReward * 0.1) : 0;
       setPendingOutcome({
-        success: true,
-        attempts: n,
-        hintsUsed: totalHints,
+        success: true, attempts: n, hintsUsed,
         timeSpentSec: Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000)),
-        xpEarned,
+        xpEarned: xpEarned + predBonus,
       });
       setShowRealWorld(true);
     } else {
@@ -310,11 +294,11 @@ export function OpticsExperimentEngine({
     }
   }
 
-  const guide =
-    !feedback && !succeeded ? getContextualGuide(imgResult, winConditions, mirrorType) : null;
+  const guide = !feedback && !succeeded && !labLocked
+    ? getContextualGuide(imgResult, winConditions, mirrorType) : null;
   const realWorldApp = getRealWorldApplication(imgResult, mirrorType);
 
-  // ─── Mirror arc path ─────────────────────────────────────────────────────────
+  // ── Mirror arc path ────────────────────────────────────────────────────────
   const bowX = mirrorType === "concave" ? MIRROR_X - MIRROR_DEPTH : MIRROR_X + MIRROR_DEPTH;
   const mirrorArc = `M ${MIRROR_X},${AXIS_Y - MIRROR_HALF_H} Q ${bowX},${AXIS_Y} ${MIRROR_X},${AXIS_Y + MIRROR_HALF_H}`;
   const backClip =
@@ -322,7 +306,7 @@ export function OpticsExperimentEngine({
       ? `M ${MIRROR_X},${AXIS_Y - MIRROR_HALF_H} Q ${bowX},${AXIS_Y} ${MIRROR_X},${AXIS_Y + MIRROR_HALF_H} L ${MIRROR_X + 38},${AXIS_Y + MIRROR_HALF_H} L ${MIRROR_X + 38},${AXIS_Y - MIRROR_HALF_H} Z`
       : `M ${MIRROR_X},${AXIS_Y - MIRROR_HALF_H} Q ${bowX},${AXIS_Y} ${MIRROR_X},${AXIS_Y + MIRROR_HALF_H} L ${MIRROR_X - 38},${AXIS_Y + MIRROR_HALF_H} L ${MIRROR_X - 38},${AXIS_Y - MIRROR_HALF_H} Z`;
 
-  // ─── Onboarding modal (reused for both first-time and ? button) ───────────
+  // ── Guide/onboarding modal shared content ─────────────────────────────────
   const guideModalContent = (
     <div className={styles.onboarding}>
       <div className={styles.onboardingCard}>
@@ -355,21 +339,83 @@ export function OpticsExperimentEngine({
           <span className={styles.formulaChip}>1/v + 1/u = 1/f</span>
           <span className={styles.formulaChip}>m = −v/u</span>
         </div>
-        <button
-          className={styles.onboardingBtn}
-          onClick={() => {
-            localStorage.setItem("lab_guide_seen_mirror-lab", "1");
-            setShowOnboarding(false);
-            setShowGuideModal(false);
-          }}
-        >
+        <button className={styles.onboardingBtn} onClick={() => {
+          localStorage.setItem("lab_guide_seen_mirror-lab", "1");
+          setShowOnboarding(false);
+          setShowGuideModal(false);
+        }}>
           OK, let&apos;s start →
         </button>
       </div>
     </div>
   );
 
-  // ─── Render ──────────────────────────────────────────────────────────────────
+  // ── Prediction screen ──────────────────────────────────────────────────────
+  const renderPrediction = () => {
+    if (!prediction) return null;
+    const isAnswered = predictionPhase === "feedback_wrong" || predictionPhase === "feedback_right";
+
+    return (
+      <div className={styles.predictionOverlay}>
+        <div className={styles.predictionCard}>
+          <div className={styles.predictionEyebrow}>🧠 Predict First</div>
+          <p className={styles.predictionQuestion}>{prediction.question}</p>
+          <div className={styles.predictionOptions}>
+            {prediction.options.map((opt, i) => {
+              let cls = styles.predOption;
+              if (isAnswered) {
+                if (i === prediction.correctIndex) cls = `${styles.predOption} ${styles.predOptionCorrect}`;
+                else if (i === selectedOption && selectedOption !== prediction.correctIndex)
+                  cls = `${styles.predOption} ${styles.predOptionWrong}`;
+              } else if (i === selectedOption) {
+                cls = `${styles.predOption} ${styles.predOptionSelected}`;
+              }
+              return (
+                <button
+                  key={i}
+                  className={cls}
+                  disabled={isAnswered}
+                  onClick={() => {
+                    setSelectedOption(i);
+                    if (i === prediction.correctIndex) {
+                      setPredictionPhase("feedback_right");
+                    } else {
+                      setPredictionPhase("feedback_wrong");
+                    }
+                  }}
+                >
+                  <span className={styles.predOptionLetter}>{String.fromCharCode(65 + i)}</span>
+                  {opt}
+                </button>
+              );
+            })}
+          </div>
+
+          {isAnswered && (
+            <div className={predictionPhase === "feedback_right" ? styles.predFeedbackRight : styles.predFeedbackWrong}>
+              <div className={styles.predFeedbackIcon}>
+                {predictionPhase === "feedback_right" ? "✓" : "✗"}
+              </div>
+              <div className={styles.predFeedbackBody}>
+                <div className={styles.predFeedbackTitle}>
+                  {predictionPhase === "feedback_right" ? "Correct prediction!" : "Not quite — here's why:"}
+                </div>
+                <p className={styles.predFeedbackText}>{prediction.explanation}</p>
+              </div>
+            </div>
+          )}
+
+          {isAnswered && (
+            <button className={styles.predProceedBtn} onClick={() => setPredictionPhase("done")}>
+              {predictionPhase === "feedback_right" ? "✓ Now prove it in the lab →" : "Understood — now experiment →"}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <GameplayShell
       fallbackGradient="radial-gradient(ellipse 100% 80% at 60% 30%, #0c1c3a 0%, #060e1f 100%)"
@@ -382,260 +428,143 @@ export function OpticsExperimentEngine({
     >
       <div className={styles.wrap}>
 
-        {/* ── Guide modal (? button) ─────────────────────────────────── */}
+        {/* Prediction overlay — shown before lab unlocks */}
+        {labLocked && renderPrediction()}
+
+        {/* Guide modal (? button) */}
         {showGuideModal && guideModalContent}
 
-        {/* ── First-time onboarding ────────────────────────────────────── */}
+        {/* First-time onboarding */}
         {showOnboarding && !showGuideModal && guideModalContent}
 
-        {/* ── ? help button (always visible) ──────────────────────────── */}
+        {/* ? help button */}
         {!showOnboarding && !showGuideModal && (
-          <button
-            className={styles.guideBtn}
-            onClick={() => setShowGuideModal(true)}
-            title="Show lab guide"
-          >
-            ?
-          </button>
+          <button className={styles.guideBtn} onClick={() => setShowGuideModal(true)} title="Show lab guide">?</button>
         )}
 
-        {/* ── Lab SVG ──────────────────────────────────────────────────── */}
-        <svg
-          ref={svgRef}
-          viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-          className={styles.labSvg}
-          style={{ touchAction: "none" }}
-        >
+        {/* ── Lab SVG ─────────────────────────────────────────────────── */}
+        <svg ref={svgRef} viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+          className={`${styles.labSvg} ${labLocked ? styles.labSvgLocked : ""}`}
+          style={{ touchAction: "none" }}>
           <defs>
-            <pattern
-              id="hatch"
-              patternUnits="userSpaceOnUse"
-              width="8"
-              height="8"
-              patternTransform="rotate(45)"
-            >
+            <pattern id="hatch" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
               <line x1="0" y1="0" x2="0" y2="8" stroke="#1e3a5f" strokeWidth="3.5" />
             </pattern>
-            <clipPath id="backClip">
-              <path d={backClip} />
-            </clipPath>
+            <clipPath id="backClip"><path d={backClip} /></clipPath>
           </defs>
 
-          {/* Grid */}
           {Array.from({ length: 8 }, (_, i) => (
-            <line
-              key={i}
-              x1={MIRROR_X - (i + 1) * SCALE}
-              y1={50}
-              x2={MIRROR_X - (i + 1) * SCALE}
-              y2={SVG_H - 50}
-              stroke="rgba(255,255,255,0.04)"
-              strokeWidth="1"
-            />
+            <line key={i} x1={MIRROR_X - (i + 1) * SCALE} y1={50}
+              x2={MIRROR_X - (i + 1) * SCALE} y2={SVG_H - 50}
+              stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
           ))}
+          <line x1={20} y1={AXIS_Y} x2={SVG_W - 20} y2={AXIS_Y}
+            stroke="rgba(255,255,255,0.22)" strokeWidth="1.5" strokeDasharray="8 6" />
 
-          {/* Principal axis */}
-          <line
-            x1={20}
-            y1={AXIS_Y}
-            x2={SVG_W - 20}
-            y2={AXIS_Y}
-            stroke="rgba(255,255,255,0.22)"
-            strokeWidth="1.5"
-            strokeDasharray="8 6"
-          />
-
-          {/* u label — live distance readout */}
-          <text
-            x={(objX + MIRROR_X) / 2}
-            y={AXIS_Y + 20}
-            textAnchor="middle"
-            fill="rgba(255,255,255,0.38)"
-            fontSize="10"
-            fontFamily="var(--eg-font-body)"
-          >
+          {/* u label */}
+          <text x={(objX + MIRROR_X) / 2} y={AXIS_Y + 20} textAnchor="middle"
+            fill="rgba(255,255,255,0.38)" fontSize="10" fontFamily="var(--eg-font-body)">
             u = {u.toFixed(2)} cm
           </text>
 
-          {/* C marker */}
           {shared.showCenterLabels && C_X > 20 && (
             <g>
               <line x1={C_X} y1={AXIS_Y - 12} x2={C_X} y2={AXIS_Y + 12} stroke="#94a3b8" strokeWidth="2.5" />
-              <text x={C_X} y={AXIS_Y + 27} textAnchor="middle" fill="#94a3b8" fontSize="15" fontFamily="var(--eg-font-display)" fontWeight="800">
-                C
-              </text>
-              <text x={C_X} y={AXIS_Y + 42} textAnchor="middle" fill="#94a3b8" fontSize="9.5" fontFamily="var(--eg-font-body)" opacity={0.8}>
-                Centre of Curvature
-              </text>
+              <text x={C_X} y={AXIS_Y + 27} textAnchor="middle" fill="#94a3b8" fontSize="15" fontFamily="var(--eg-font-display)" fontWeight="800">C</text>
+              <text x={C_X} y={AXIS_Y + 42} textAnchor="middle" fill="#94a3b8" fontSize="9.5" fontFamily="var(--eg-font-body)" opacity={0.8}>Centre of Curvature</text>
             </g>
           )}
-
-          {/* F marker */}
           {shared.showFocusLabels && F_X > 20 && (
             <g>
               <line x1={F_X} y1={AXIS_Y - 12} x2={F_X} y2={AXIS_Y + 12} stroke="#60a5fa" strokeWidth="2.5" />
-              <text x={F_X} y={AXIS_Y + 27} textAnchor="middle" fill="#60a5fa" fontSize="15" fontFamily="var(--eg-font-display)" fontWeight="800">
-                F
-              </text>
-              <text x={F_X} y={AXIS_Y + 42} textAnchor="middle" fill="#60a5fa" fontSize="9.5" fontFamily="var(--eg-font-body)" opacity={0.8}>
-                Focal Point
-              </text>
+              <text x={F_X} y={AXIS_Y + 27} textAnchor="middle" fill="#60a5fa" fontSize="15" fontFamily="var(--eg-font-display)" fontWeight="800">F</text>
+              <text x={F_X} y={AXIS_Y + 42} textAnchor="middle" fill="#60a5fa" fontSize="9.5" fontFamily="var(--eg-font-body)" opacity={0.8}>Focal Point</text>
             </g>
           )}
 
-          {/* Rays */}
           {showRays && (
             <g>
-              {r1Inc && (
-                <line x1={r1Inc[0]} y1={r1Inc[1]} x2={r1Inc[2]} y2={r1Inc[3]} stroke="#f59e0b" strokeWidth="1.8" opacity="0.82" />
-              )}
-              {r1Ref && (
-                <line x1={r1Ref[0]} y1={r1Ref[1]} x2={r1Ref[2]} y2={r1Ref[3]} stroke="#f59e0b" strokeWidth="1.8" opacity="0.82" />
-              )}
-              {r1Dash && (
-                <line x1={r1Dash[0]} y1={r1Dash[1]} x2={r1Dash[2]} y2={r1Dash[3]} stroke="#f59e0b" strokeWidth="1.4" strokeDasharray="5 4" opacity="0.45" />
-              )}
-              {r2Inc && (
-                <line x1={r2Inc[0]} y1={r2Inc[1]} x2={r2Inc[2]} y2={r2Inc[3]} stroke="#22d3ee" strokeWidth="1.8" opacity="0.82" />
-              )}
-              {r2Ref && (
-                <line x1={r2Ref[0]} y1={r2Ref[1]} x2={r2Ref[2]} y2={r2Ref[3]} stroke="#22d3ee" strokeWidth="1.8" opacity="0.82" />
-              )}
-              {r2Dash && (
-                <line x1={r2Dash[0]} y1={r2Dash[1]} x2={r2Dash[2]} y2={r2Dash[3]} stroke="#22d3ee" strokeWidth="1.4" strokeDasharray="5 4" opacity="0.45" />
-              )}
+              {r1Inc && <line x1={r1Inc[0]} y1={r1Inc[1]} x2={r1Inc[2]} y2={r1Inc[3]} stroke="#f59e0b" strokeWidth="1.8" opacity="0.82" />}
+              {r1Ref && <line x1={r1Ref[0]} y1={r1Ref[1]} x2={r1Ref[2]} y2={r1Ref[3]} stroke="#f59e0b" strokeWidth="1.8" opacity="0.82" />}
+              {r1Dash && <line x1={r1Dash[0]} y1={r1Dash[1]} x2={r1Dash[2]} y2={r1Dash[3]} stroke="#f59e0b" strokeWidth="1.4" strokeDasharray="5 4" opacity="0.45" />}
+              {r2Inc && <line x1={r2Inc[0]} y1={r2Inc[1]} x2={r2Inc[2]} y2={r2Inc[3]} stroke="#22d3ee" strokeWidth="1.8" opacity="0.82" />}
+              {r2Ref && <line x1={r2Ref[0]} y1={r2Ref[1]} x2={r2Ref[2]} y2={r2Ref[3]} stroke="#22d3ee" strokeWidth="1.8" opacity="0.82" />}
+              {r2Dash && <line x1={r2Dash[0]} y1={r2Dash[1]} x2={r2Dash[2]} y2={r2Dash[3]} stroke="#22d3ee" strokeWidth="1.4" strokeDasharray="5 4" opacity="0.45" />}
             </g>
           )}
 
-          {/* Mirror backing + surface */}
-          <rect
-            x={MIRROR_X - 38}
-            y={AXIS_Y - MIRROR_HALF_H}
-            width={76}
-            height={MIRROR_HALF_H * 2}
-            fill="url(#hatch)"
-            clipPath="url(#backClip)"
-          />
+          <rect x={MIRROR_X - 38} y={AXIS_Y - MIRROR_HALF_H} width={76} height={MIRROR_HALF_H * 2}
+            fill="url(#hatch)" clipPath="url(#backClip)" />
           <path d={mirrorArc} fill="none" stroke="#94a3b8" strokeWidth={5} strokeLinecap="round" />
           <path d={mirrorArc} fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth={1.8} strokeLinecap="round" />
 
-          {/* v label near image */}
           {imgResult.exists && imgSvgX !== null && (
-            <text
-              x={imgSvgX}
-              y={AXIS_Y + 55}
-              textAnchor="middle"
-              fill="rgba(255,255,255,0.32)"
-              fontSize="9.5"
-              fontFamily="var(--eg-font-body)"
-            >
+            <text x={imgSvgX} y={AXIS_Y + 55} textAnchor="middle"
+              fill="rgba(255,255,255,0.32)" fontSize="9.5" fontFamily="var(--eg-font-body)">
               v = {imgResult.v.toFixed(2)} cm
             </text>
           )}
 
-          {/* Image arrow */}
-          {imgResult.exists &&
-            imgSvgX !== null &&
-            imgTopY !== null &&
-            (() => {
-              const isV = !imgResult.isReal;
-              const col = isV ? "#a78bfa" : "#34d399";
-              const inv = imgTopY > AXIS_Y;
-              const pts = `${imgSvgX - 7},${imgTopY + (inv ? 15 : -15)} ${imgSvgX + 7},${imgTopY + (inv ? 15 : -15)} ${imgSvgX},${imgTopY}`;
-              return (
-                <g opacity={isV ? 0.75 : 1}>
-                  <line
-                    x1={imgSvgX}
-                    y1={AXIS_Y}
-                    x2={imgSvgX}
-                    y2={imgTopY}
-                    stroke={col}
-                    strokeWidth={2.5}
-                    strokeDasharray={isV ? "7 4" : undefined}
-                  />
-                  <polygon points={pts} fill={col} />
-                  <text
-                    x={imgSvgX}
-                    y={inv ? imgTopY - 12 : imgTopY + 26}
-                    textAnchor="middle"
-                    fill={col}
-                    fontSize="11"
-                    fontFamily="var(--eg-font-display)"
-                    fontWeight="700"
-                  >
-                    {isV ? "Virtual Image" : "Image"}
-                  </text>
-                </g>
-              );
-            })()}
+          {imgResult.exists && imgSvgX !== null && imgTopY !== null && (() => {
+            const isV = !imgResult.isReal;
+            const col = isV ? "#a78bfa" : "#34d399";
+            const inv = imgTopY > AXIS_Y;
+            const pts = `${imgSvgX - 7},${imgTopY + (inv ? 15 : -15)} ${imgSvgX + 7},${imgTopY + (inv ? 15 : -15)} ${imgSvgX},${imgTopY}`;
+            return (
+              <g opacity={isV ? 0.75 : 1}>
+                <line x1={imgSvgX} y1={AXIS_Y} x2={imgSvgX} y2={imgTopY} stroke={col} strokeWidth={2.5} strokeDasharray={isV ? "7 4" : undefined} />
+                <polygon points={pts} fill={col} />
+                <text x={imgSvgX} y={inv ? imgTopY - 12 : imgTopY + 26} textAnchor="middle" fill={col} fontSize="11" fontFamily="var(--eg-font-display)" fontWeight="700">
+                  {isV ? "Virtual Image" : "Image"}
+                </text>
+              </g>
+            );
+          })()}
 
           {!imgResult.exists && (
-            <text
-              x={(objX + MIRROR_X) / 2}
-              y={AXIS_Y - 40}
-              textAnchor="middle"
-              fill="#fbbf24"
-              fontSize="12"
-              fontFamily="var(--eg-font-display)"
-              fontWeight="600"
-            >
+            <text x={(objX + MIRROR_X) / 2} y={AXIS_Y - 40} textAnchor="middle"
+              fill="#fbbf24" fontSize="12" fontFamily="var(--eg-font-display)" fontWeight="600">
               Image at ∞ — object is at the focal point
             </text>
           )}
 
-          {/* Object arrow (draggable) */}
-          <g
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={onPointerUp}
-            style={{ cursor: isDragging.current ? "grabbing" : "grab" }}
-          >
+          <g onPointerDown={onPointerDown} onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp} onPointerCancel={onPointerUp}
+            style={{ cursor: labLocked ? "default" : isDragging.current ? "grabbing" : "grab" }}>
             <rect x={objX - 28} y={objTopY - 16} width={56} height={OBJ_H_SVG + 32} fill="transparent" />
             <line x1={objX} y1={AXIS_Y} x2={objX} y2={objTopY} stroke="#f8fafc" strokeWidth={3.5} strokeLinecap="round" />
             <polygon points={`${objX - 9},${objTopY + 18} ${objX + 9},${objTopY + 18} ${objX},${objTopY}`} fill="#f8fafc" />
             <line x1={objX - 9} y1={AXIS_Y} x2={objX + 9} y2={AXIS_Y} stroke="#f8fafc" strokeWidth={2.5} strokeLinecap="round" />
-            <text x={objX} y={objTopY - 14} textAnchor="middle" fill="#f8fafc" fontSize="11" fontFamily="var(--eg-font-display)" fontWeight="700">
-              Object
-            </text>
-            {!succeeded && (
-              <text x={objX} y={AXIS_Y + 32} textAnchor="middle" fill="rgba(255,255,255,0.35)" fontSize="10" fontFamily="var(--eg-font-body)">
-                ← drag →
-              </text>
+            <text x={objX} y={objTopY - 14} textAnchor="middle" fill="#f8fafc" fontSize="11" fontFamily="var(--eg-font-display)" fontWeight="700">Object</text>
+            {!succeeded && !labLocked && (
+              <text x={objX} y={AXIS_Y + 32} textAnchor="middle" fill="rgba(255,255,255,0.35)" fontSize="10" fontFamily="var(--eg-font-body)">← drag →</text>
             )}
           </g>
         </svg>
 
-        {/* ── Status panel ─────────────────────────────────────────────── */}
+        {/* Status panel */}
         <div className={styles.statusPanel}>
           <div className={styles.imageReadout}>
             <span className={styles.readoutLabel}>Image:</span>
             <span className={styles.readoutValue}>{describeImage(imgResult)}</span>
             {imgResult.exists && (
-              <span className={styles.readoutSub}>
-                &nbsp;|&nbsp;m = {imgResult.m.toFixed(3)}
-              </span>
+              <span className={styles.readoutSub}>&nbsp;|&nbsp;m = {imgResult.m.toFixed(3)}</span>
             )}
           </div>
           {guide && (
             <div className={`${styles.guide} ${styles[`guide_${guide.tone}`]}`}>
-              {guide.tone === "success" ? "✓ " : guide.tone === "warning" ? "⚠ " : "→ "}
-              {guide.text}
+              {guide.tone === "success" ? "✓ " : guide.tone === "warning" ? "⚠ " : "→ "}{guide.text}
             </div>
           )}
         </div>
 
-        {/* ── Formula / Magnification challenge panel ───────────────── */}
+        {/* Formula panel */}
         {requiresFormula && !succeeded && (
           <div className={styles.formulaPanel}>
             <div className={styles.formulaPanelTitle}>
-              {winConditions.requiresFormulaEntry
-                ? "📐 Calculate: use the mirror formula to find v and m"
-                : "📐 Calculate: find the linear magnification m"}
+              {winConditions.requiresFormulaEntry ? "📐 Calculate: find v and m" : "📐 Calculate: find m"}
               <span className={styles.formulaHint}>
-                {winConditions.requiresFormulaEntry
-                  ? "1/v + 1/u = 1/f, then m = −v/u"
-                  : "m = −v/u"}
+                {winConditions.requiresFormulaEntry ? "1/v + 1/u = 1/f, then m = −v/u" : "m = −v/u"}
               </span>
             </div>
             <div className={styles.formulaRow}>
@@ -643,43 +572,22 @@ export function OpticsExperimentEngine({
                 <label className={styles.formulaField}>
                   <span>v (cm)</span>
                   <input
-                    className={`${styles.formulaInput} ${
-                      formulaResult ? (formulaResult.vOk ? styles.inputOk : styles.inputErr) : ""
-                    }`}
-                    type="number"
-                    step="0.01"
-                    placeholder="e.g. −4.00"
-                    value={enteredV}
-                    onChange={(e) => {
-                      setEnteredV(e.target.value);
-                      setFormulaChecked(false);
-                      setFormulaResult(null);
-                    }}
+                    className={`${styles.formulaInput} ${formulaResult ? (formulaResult.vOk ? styles.inputOk : styles.inputErr) : ""}`}
+                    type="number" step="0.01" placeholder="e.g. −4.00" value={enteredV}
+                    onChange={(e) => { setEnteredV(e.target.value); setFormulaChecked(false); setFormulaResult(null); }}
                   />
                 </label>
               )}
               <label className={styles.formulaField}>
                 <span>m</span>
                 <input
-                  className={`${styles.formulaInput} ${
-                    formulaResult ? (formulaResult.mOk ? styles.inputOk : styles.inputErr) : ""
-                  }`}
-                  type="number"
-                  step="0.001"
-                  placeholder="e.g. −2.000"
-                  value={enteredM}
-                  onChange={(e) => {
-                    setEnteredM(e.target.value);
-                    setFormulaChecked(false);
-                    setFormulaResult(null);
-                  }}
+                  className={`${styles.formulaInput} ${formulaResult ? (formulaResult.mOk ? styles.inputOk : styles.inputErr) : ""}`}
+                  type="number" step="0.001" placeholder="e.g. −2.000" value={enteredM}
+                  onChange={(e) => { setEnteredM(e.target.value); setFormulaChecked(false); setFormulaResult(null); }}
                 />
               </label>
-              <button className={styles.formulaCheckBtn} onClick={handleCheckFormula}>
-                Check
-              </button>
+              <button className={styles.formulaCheckBtn} onClick={handleCheckFormula}>Check</button>
             </div>
-            {/* Worked solution reveal */}
             {formulaResult?.correct && formulaChallenge?.showSolution !== false && (
               <details className={styles.solutionDetails}>
                 <summary className={styles.solutionSummary}>📖 View worked solution</summary>
@@ -689,7 +597,6 @@ export function OpticsExperimentEngine({
           </div>
         )}
 
-        {/* ── Succeeded worked solution ───────────────────────────────── */}
         {succeeded && requiresFormula && formulaResult?.correct && formulaChallenge?.showSolution !== false && (
           <details className={styles.solutionDetails}>
             <summary className={styles.solutionSummary}>📖 View worked solution</summary>
@@ -697,20 +604,18 @@ export function OpticsExperimentEngine({
           </details>
         )}
 
-        {/* ── Feedback ─────────────────────────────────────────────────── */}
+        {/* Feedback */}
         {feedback && (
           <div className={`${styles.feedback} ${styles[`feedback_${feedback.kind}`]}`}>
             <Mascot pose={feedback.kind === "success" ? "celebrate" : "encourage"} widthPx={42} />
             <p className={styles.feedbackText}>{feedback.text}</p>
             {feedback.kind !== "success" && (
-              <button className={styles.feedbackClose} onClick={() => setFeedback(null)}>
-                ✕
-              </button>
+              <button className={styles.feedbackClose} onClick={() => setFeedback(null)}>✕</button>
             )}
           </div>
         )}
 
-        {/* ── Real-world application nudge ────────────────────────────── */}
+        {/* Real-world application */}
         {showRealWorld && realWorldApp && (
           <div className={styles.realWorld}>
             <span className={styles.realWorldIcon}>🌍</span>
@@ -719,44 +624,32 @@ export function OpticsExperimentEngine({
           </div>
         )}
 
-        {/* ── Controls ─────────────────────────────────────────────────── */}
+        {/* Controls */}
         <div className={styles.controls}>
           {effectiveMirrorOptions.length > 1 && (
             <div className={styles.mirrorPicker}>
               {(["concave", "convex"] as MirrorType[])
                 .filter((m) => effectiveMirrorOptions.includes(m))
                 .map((m) => (
-                  <button
-                    key={m}
+                  <button key={m}
                     className={`${styles.mirrorBtn} ${mirrorType === m ? styles.mirrorBtnActive : ""}`}
-                    onClick={() => {
-                      setMirrorType(m);
-                      setFeedback(null);
-                      setFormulaChecked(false);
-                      setFormulaResult(null);
-                    }}
-                  >
+                    onClick={() => { setMirrorType(m); setFeedback(null); setFormulaChecked(false); setFormulaResult(null); }}>
                     {m === "concave" ? "⌓ Concave" : "⌔ Convex"}
                   </button>
                 ))}
             </div>
           )}
           {shared.showRaysToggle && (
-            <button
-              className={`${styles.raysBtn} ${showRays ? styles.raysBtnOn : ""}`}
-              onClick={() => setShowRays((r) => !r)}
-            >
+            <button className={`${styles.raysBtn} ${showRays ? styles.raysBtnOn : ""}`}
+              onClick={() => setShowRays((r) => !r)}>
               {showRays ? "Hide Rays" : "Show Rays"}
             </button>
           )}
           <button
-            className={`${styles.runBtn} ${succeeded ? styles.runBtnDone : ""}`}
-            onClick={() =>
-              succeeded && pendingOutcome ? onComplete(pendingOutcome) : handleRun()
-            }
-            disabled={isPaused}
-          >
-            {succeeded ? "✓ Done!" : "▶  Run Experiment"}
+            className={`${styles.runBtn} ${succeeded ? styles.runBtnDone : ""} ${labLocked ? styles.runBtnLocked : ""}`}
+            onClick={() => succeeded && pendingOutcome ? onComplete(pendingOutcome) : handleRun()}
+            disabled={isPaused || labLocked}>
+            {labLocked ? "⟳ Answer to unlock lab" : succeeded ? "✓ Done!" : "▶  Run Experiment"}
           </button>
         </div>
       </div>

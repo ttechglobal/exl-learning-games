@@ -8,21 +8,22 @@ import type {
   OpticsExperimentConfig,
   OpticsExperimentOutcome,
   MirrorType,
-  MirrorLabPayload
+  MirrorLabPayload,
 } from "./opticsExperiment.config";
 import {
   calculateImage,
   checkWinConditions,
+  checkFormulaEntry,
+  checkMagnificationEntry,
   getHintMessage,
   getContextualGuide,
   describeImage,
-  describeWinConditions
+  describeWinConditions,
+  buildWorkedSolution,
+  getRealWorldApplication,
 } from "./opticsExperiment.logic";
 import { OpticsSharedConfigSchema } from "./opticsExperiment.config";
 import styles from "./OpticsExperimentEngine.module.css";
-
-// NOTE: All SVG primitives are inlined here (no @/components/science-lab import)
-// so the engine is fully self-contained and deploys as a single file.
 
 // ─── Layout constants ─────────────────────────────────────────────────────────
 const SVG_W = 900;
@@ -55,37 +56,58 @@ export function OpticsExperimentEngine({
   onComplete,
   isPaused,
   menu,
-  gameTitle
+  gameTitle,
 }: EngineRuntimeProps<OpticsExperimentConfig, OpticsExperimentOutcome>) {
   const { shared: rawShared, mission } = config;
   const payload = (mission.payload ?? {}) as Partial<MirrorLabPayload>;
   const winConditions = payload.winConditions ?? {};
-  const effectiveMirrorOptions: MirrorType[] = payload.mirrorOptions ?? (rawShared as { mirrorOptions?: MirrorType[] }).mirrorOptions ?? ["concave"];
+  const effectiveMirrorOptions: MirrorType[] =
+    payload.mirrorOptions ??
+    (rawShared as { mirrorOptions?: MirrorType[] }).mirrorOptions ??
+    ["concave"];
 
   const shared = OpticsSharedConfigSchema.parse({
     ...rawShared,
-    ...(payload.showFocusLabels  !== undefined && { showFocusLabels:  payload.showFocusLabels }),
+    ...(payload.showFocusLabels !== undefined && { showFocusLabels: payload.showFocusLabels }),
     ...(payload.showCenterLabels !== undefined && { showCenterLabels: payload.showCenterLabels }),
-    ...(payload.showRaysToggle   !== undefined && { showRaysToggle:   payload.showRaysToggle }),
-    ...(payload.defaultShowRays  !== undefined && { defaultShowRays:  payload.defaultShowRays }),
+    ...(payload.showRaysToggle !== undefined && { showRaysToggle: payload.showRaysToggle }),
+    ...(payload.defaultShowRays !== undefined && { defaultShowRays: payload.defaultShowRays }),
   });
 
-  const [objX, setObjX]         = useState(DEFAULT_OBJ_X);
+  const [objX, setObjX] = useState(DEFAULT_OBJ_X);
   const [mirrorType, setMirrorType] = useState<MirrorType>(effectiveMirrorOptions[0] ?? "concave");
   const [showRays, setShowRays] = useState(shared.defaultShowRays);
   const [attempts, setAttempts] = useState(0);
   const [hintsUsed, setHintsUsed] = useState(0);
-  const [feedback, setFeedback] = useState<{ text: string; kind: "hint" | "success" | "noimage" } | null>(null);
+  const [feedback, setFeedback] = useState<{
+    text: string;
+    kind: "hint" | "success" | "noimage" | "formula_error" | "formula_partial";
+  } | null>(null);
   const [succeeded, setSucceeded] = useState(false);
   const [pendingOutcome, setPendingOutcome] = useState<OpticsExperimentOutcome | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(() => {
     if (typeof window === "undefined") return false;
     return !localStorage.getItem("lab_guide_seen_mirror-lab");
   });
+  const [showGuideModal, setShowGuideModal] = useState(false);
+
+  // Formula challenge state
+  const [enteredV, setEnteredV] = useState("");
+  const [enteredM, setEnteredM] = useState("");
+  const [formulaChecked, setFormulaChecked] = useState(false);
+  const [formulaResult, setFormulaResult] = useState<{
+    vOk: boolean; mOk: boolean; correct: boolean; solution: string;
+  } | null>(null);
+
+  // Real-world application state
+  const [showRealWorld, setShowRealWorld] = useState(false);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const isDragging = useRef(false);
   const startTimeRef = useRef(Date.now());
+
+  const requiresFormula = !!(winConditions.requiresFormulaEntry || winConditions.requiresMagnificationEntry);
+  const formulaChallenge = payload.formulaChallenge;
 
   // ─── Physics ────────────────────────────────────────────────────────────────
   const f = shared.focalLength;
@@ -99,13 +121,17 @@ export function OpticsExperimentEngine({
       ? MIRROR_X - clamp(imgResult.v, 0.1, MAX_REAL_V) * SCALE
       : MIRROR_X + clamp(-imgResult.v, 0.1, MAX_VIRTUAL_V) * SCALE
     : null;
-  const imgTopY: number | null = imgResult.exists && imgSvgX !== null
-    ? AXIS_Y - imgResult.m * OBJ_H_SVG : null;
+  const imgTopY: number | null =
+    imgResult.exists && imgSvgX !== null ? AXIS_Y - imgResult.m * OBJ_H_SVG : null;
   const objTopY = AXIS_Y - OBJ_H_SVG;
 
   // ─── Rays ────────────────────────────────────────────────────────────────────
-  let r1Inc: Seg|null=null, r1Ref: Seg|null=null, r1Dash: Seg|null=null;
-  let r2Inc: Seg|null=null, r2Ref: Seg|null=null, r2Dash: Seg|null=null;
+  let r1Inc: Seg | null = null,
+    r1Ref: Seg | null = null,
+    r1Dash: Seg | null = null;
+  let r2Inc: Seg | null = null,
+    r2Ref: Seg | null = null,
+    r2Dash: Seg | null = null;
 
   if (showRays && imgResult.exists && imgSvgX !== null && imgTopY !== null) {
     const isV = !imgResult.isReal;
@@ -138,7 +164,8 @@ export function OpticsExperimentEngine({
   }
   function onPointerDown(e: React.PointerEvent) {
     if (isPaused || succeeded) return;
-    e.preventDefault(); e.stopPropagation();
+    e.preventDefault();
+    e.stopPropagation();
     isDragging.current = true;
     (e.target as Element).setPointerCapture(e.pointerId);
   }
@@ -146,8 +173,13 @@ export function OpticsExperimentEngine({
     if (!isDragging.current) return;
     setObjX(clamp(toSvgX(e.clientX), MIN_OBJ_X, MAX_OBJ_X));
     setFeedback(null);
+    setFormulaChecked(false);
+    setFormulaResult(null);
+    setShowRealWorld(false);
   }
-  function onPointerUp() { isDragging.current = false; }
+  function onPointerUp() {
+    isDragging.current = false;
+  }
 
   // ─── Success/failure messages ───────────────────────────────────────────────
   function buildSuccessMsg(): string {
@@ -184,39 +216,158 @@ export function OpticsExperimentEngine({
     return getHintMessage(imgResult, winConditions, mirrorType, payload.hint, attempt);
   }
 
+  // ─── Formula check ──────────────────────────────────────────────────────────
+  function handleCheckFormula() {
+    const vNum = parseFloat(enteredV);
+    const mNum = parseFloat(enteredM);
+    if (isNaN(vNum) || (winConditions.requiresFormulaEntry && isNaN(mNum))) {
+      setFeedback({ text: "Enter a number in each box before checking.", kind: "hint" });
+      return;
+    }
+
+    const tol = winConditions.formulaTolerance ?? 0.08;
+
+    if (winConditions.requiresMagnificationEntry && !winConditions.requiresFormulaEntry) {
+      const ok = checkMagnificationEntry(mNum, imgResult, tol);
+      const solution = buildWorkedSolution(u, f, mirrorType, imgResult);
+      setFormulaResult({ vOk: true, mOk: ok, correct: ok, solution });
+      setFormulaChecked(true);
+      if (ok) {
+        setFeedback({ text: `✓ Correct! m = ${imgResult.m.toFixed(3)}. ${formulaChallenge?.showSolution !== false ? "See the worked solution below." : ""}`, kind: "success" });
+      } else {
+        setFeedback({ text: `Not quite. Check your sign: m = −v/u. The sign matters — it tells you if the image is upright (+) or inverted (−).`, kind: "formula_partial" });
+        setHintsUsed((h) => h + 1);
+      }
+      return;
+    }
+
+    const { correct, vOk, mOk } = checkFormulaEntry(vNum, mNum, imgResult, tol);
+    const solution = buildWorkedSolution(u, f, mirrorType, imgResult);
+    setFormulaResult({ vOk, mOk, correct, solution });
+    setFormulaChecked(true);
+
+    if (correct) {
+      setFeedback({ text: `✓ Both correct! v = ${imgResult.v.toFixed(2)} cm, m = ${imgResult.m.toFixed(3)}.`, kind: "success" });
+    } else if (vOk || mOk) {
+      setFeedback({
+        text: `${vOk ? "✓ v is correct!" : "✗ v is wrong — use 1/v = 1/f − 1/u and check your signs."} ${mOk ? "✓ m is correct!" : "✗ m is wrong — m = −v/u, include the sign."}`,
+        kind: "formula_partial",
+      });
+      setHintsUsed((h) => h + 1);
+    } else {
+      setFeedback({ text: `Both values need work. Apply the mirror formula: 1/v + 1/u = 1/f, then m = −v/u. Watch your signs!`, kind: "formula_error" });
+      setHintsUsed((h) => h + 1);
+    }
+  }
+
   // ─── Run experiment ─────────────────────────────────────────────────────────
   function handleRun() {
     if (isPaused || succeeded) return;
     if (!imgResult.exists) {
-      setFeedback({ text: "The image is at infinity — the object is at the focal point F. Move it slightly away.", kind: "noimage" });
+      setFeedback({
+        text: "The image is at infinity — the object is at the focal point F. Move it slightly away.",
+        kind: "noimage",
+      });
       return;
     }
     const n = attempts + 1;
     setAttempts(n);
-    if (checkWinConditions(imgResult, winConditions, mirrorType)) {
+    const positionOk = checkWinConditions(imgResult, winConditions, mirrorType);
+
+    if (positionOk) {
+      if (requiresFormula && !formulaChecked) {
+        setFeedback({
+          text: "✓ Object position is correct! Now complete the formula calculation below before finishing.",
+          kind: "hint",
+        });
+        return;
+      }
+      if (requiresFormula && formulaResult && !formulaResult.correct) {
+        setFeedback({
+          text: "Fix your formula calculation before finishing — check the feedback below the formula panel.",
+          kind: "hint",
+        });
+        return;
+      }
       setSucceeded(true);
       setFeedback({ text: buildSuccessMsg(), kind: "success" });
+      const totalHints = hintsUsed;
       const xpEarned = Math.max(
         Math.round(mission.xpReward * 0.35),
-        Math.round(mission.xpReward * (1 - (n - 1) * 0.12 - hintsUsed * 0.08))
+        Math.round(mission.xpReward * (1 - (n - 1) * 0.12 - totalHints * 0.08))
       );
-      setPendingOutcome({ success: true, attempts: n, hintsUsed,
-        timeSpentSec: Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000)), xpEarned });
+      setPendingOutcome({
+        success: true,
+        attempts: n,
+        hintsUsed: totalHints,
+        timeSpentSec: Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000)),
+        xpEarned,
+      });
+      setShowRealWorld(true);
     } else {
       setFeedback({ text: buildFailureMsg(n), kind: "hint" });
-      if (n > 1) setHintsUsed(h => h + 1);
+      if (n > 1) setHintsUsed((h) => h + 1);
     }
   }
 
-  const guide = !feedback && !succeeded
-    ? getContextualGuide(imgResult, winConditions, mirrorType) : null;
+  const guide =
+    !feedback && !succeeded ? getContextualGuide(imgResult, winConditions, mirrorType) : null;
+  const realWorldApp = getRealWorldApplication(imgResult, mirrorType);
 
   // ─── Mirror arc path ─────────────────────────────────────────────────────────
   const bowX = mirrorType === "concave" ? MIRROR_X - MIRROR_DEPTH : MIRROR_X + MIRROR_DEPTH;
   const mirrorArc = `M ${MIRROR_X},${AXIS_Y - MIRROR_HALF_H} Q ${bowX},${AXIS_Y} ${MIRROR_X},${AXIS_Y + MIRROR_HALF_H}`;
-  const backClip = mirrorType === "concave"
-    ? `M ${MIRROR_X},${AXIS_Y - MIRROR_HALF_H} Q ${bowX},${AXIS_Y} ${MIRROR_X},${AXIS_Y + MIRROR_HALF_H} L ${MIRROR_X + 38},${AXIS_Y + MIRROR_HALF_H} L ${MIRROR_X + 38},${AXIS_Y - MIRROR_HALF_H} Z`
-    : `M ${MIRROR_X},${AXIS_Y - MIRROR_HALF_H} Q ${bowX},${AXIS_Y} ${MIRROR_X},${AXIS_Y + MIRROR_HALF_H} L ${MIRROR_X - 38},${AXIS_Y + MIRROR_HALF_H} L ${MIRROR_X - 38},${AXIS_Y - MIRROR_HALF_H} Z`;
+  const backClip =
+    mirrorType === "concave"
+      ? `M ${MIRROR_X},${AXIS_Y - MIRROR_HALF_H} Q ${bowX},${AXIS_Y} ${MIRROR_X},${AXIS_Y + MIRROR_HALF_H} L ${MIRROR_X + 38},${AXIS_Y + MIRROR_HALF_H} L ${MIRROR_X + 38},${AXIS_Y - MIRROR_HALF_H} Z`
+      : `M ${MIRROR_X},${AXIS_Y - MIRROR_HALF_H} Q ${bowX},${AXIS_Y} ${MIRROR_X},${AXIS_Y + MIRROR_HALF_H} L ${MIRROR_X - 38},${AXIS_Y + MIRROR_HALF_H} L ${MIRROR_X - 38},${AXIS_Y - MIRROR_HALF_H} Z`;
+
+  // ─── Onboarding modal (reused for both first-time and ? button) ───────────
+  const guideModalContent = (
+    <div className={styles.onboarding}>
+      <div className={styles.onboardingCard}>
+        <div className={styles.onboardingTitle}>🔬 Mirror Lab — Quick Guide</div>
+        <p className={styles.onboardingBody}>Here is what you are looking at:</p>
+        <svg viewBox="0 0 320 160" className={styles.onboardingDiagram}>
+          <rect x="0" y="0" width="320" height="160" fill="#0c1c3a" rx="8" />
+          <line x1="15" y1="80" x2="285" y2="80" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeDasharray="6 4" />
+          <path d="M 268,30 Q 250,80 268,130" fill="none" stroke="#94a3b8" strokeWidth="5" strokeLinecap="round" />
+          <line x1="190" y1="74" x2="190" y2="86" stroke="#94a3b8" strokeWidth="2" />
+          <text x="190" y="98" textAnchor="middle" fontSize="9" fill="#94a3b8" fontWeight="800">C</text>
+          <line x1="230" y1="74" x2="230" y2="86" stroke="#60a5fa" strokeWidth="2" />
+          <text x="230" y="98" textAnchor="middle" fontSize="9" fill="#60a5fa" fontWeight="800">F</text>
+          <line x1="140" y1="80" x2="140" y2="56" stroke="#f8fafc" strokeWidth="2.5" />
+          <polygon points="134,63 146,63 140,56" fill="#f8fafc" />
+          <line x1="215" y1="80" x2="215" y2="96" stroke="#34d399" strokeWidth="2" />
+          <polygon points="209,89 221,89 215,96" fill="#34d399" />
+          <line x1="140" y1="52" x2="86" y2="30" stroke="#fbbf24" strokeWidth="1" strokeDasharray="3 2" />
+          <text x="82" y="26" textAnchor="end" fontSize="8.5" fill="#fbbf24" fontWeight="700">① Object — drag it!</text>
+          <line x1="230" y1="98" x2="230" y2="118" stroke="#60a5fa" strokeWidth="1" strokeDasharray="3 2" />
+          <text x="230" y="128" textAnchor="middle" fontSize="8.5" fill="#60a5fa" fontWeight="700">② F = Focal Point</text>
+          <line x1="190" y1="98" x2="160" y2="130" stroke="#94a3b8" strokeWidth="1" strokeDasharray="3 2" />
+          <text x="155" y="140" textAnchor="end" fontSize="8.5" fill="#94a3b8" fontWeight="700">③ C = Centre of Curvature</text>
+          <line x1="215" y1="100" x2="255" y2="118" stroke="#34d399" strokeWidth="1" strokeDasharray="3 2" />
+          <text x="258" y="128" textAnchor="start" fontSize="8.5" fill="#34d399" fontWeight="700">④ Image forms here</text>
+          <line x1="268" y1="80" x2="292" y2="55" stroke="#94a3b8" strokeWidth="1" strokeDasharray="3 2" />
+          <text x="295" y="52" textAnchor="start" fontSize="8.5" fill="#94a3b8" fontWeight="700">⑤ Mirror</text>
+        </svg>
+        <div className={styles.onboardingFormulaTip}>
+          <span className={styles.formulaChip}>1/v + 1/u = 1/f</span>
+          <span className={styles.formulaChip}>m = −v/u</span>
+        </div>
+        <button
+          className={styles.onboardingBtn}
+          onClick={() => {
+            localStorage.setItem("lab_guide_seen_mirror-lab", "1");
+            setShowOnboarding(false);
+            setShowGuideModal(false);
+          }}
+        >
+          OK, let&apos;s start →
+        </button>
+      </div>
+    </div>
+  );
 
   // ─── Render ──────────────────────────────────────────────────────────────────
   return (
@@ -231,143 +382,226 @@ export function OpticsExperimentEngine({
     >
       <div className={styles.wrap}>
 
-        {/* ── Onboarding overlay ────────────────────────────────────────── */}
-        {showOnboarding && (
-          <div className={styles.onboarding}>
-            <div className={styles.onboardingCard}>
-              <div className={styles.onboardingTitle}>🔬 Welcome to Mirror Lab</div>
-              <p className={styles.onboardingBody}>Here is what you are looking at:</p>
-              <svg viewBox="0 0 320 160" className={styles.onboardingDiagram}>
-                <rect x="0" y="0" width="320" height="160" fill="#0c1c3a" rx="8" />
-                <line x1="15" y1="80" x2="285" y2="80" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeDasharray="6 4" />
-                <path d="M 268,30 Q 250,80 268,130" fill="none" stroke="#94a3b8" strokeWidth="5" strokeLinecap="round" />
-                <line x1="190" y1="74" x2="190" y2="86" stroke="#94a3b8" strokeWidth="2" />
-                <text x="190" y="98" textAnchor="middle" fontSize="9" fill="#94a3b8" fontWeight="800">C</text>
-                <line x1="230" y1="74" x2="230" y2="86" stroke="#60a5fa" strokeWidth="2" />
-                <text x="230" y="98" textAnchor="middle" fontSize="9" fill="#60a5fa" fontWeight="800">F</text>
-                <line x1="140" y1="80" x2="140" y2="56" stroke="#f8fafc" strokeWidth="2.5" />
-                <polygon points="134,63 146,63 140,56" fill="#f8fafc" />
-                <line x1="215" y1="80" x2="215" y2="96" stroke="#34d399" strokeWidth="2" />
-                <polygon points="209,89 221,89 215,96" fill="#34d399" />
-                <line x1="140" y1="52" x2="86" y2="30" stroke="#fbbf24" strokeWidth="1" strokeDasharray="3 2" />
-                <text x="82" y="26" textAnchor="end" fontSize="8.5" fill="#fbbf24" fontWeight="700">① Object — drag it!</text>
-                <line x1="230" y1="98" x2="230" y2="118" stroke="#60a5fa" strokeWidth="1" strokeDasharray="3 2" />
-                <text x="230" y="128" textAnchor="middle" fontSize="8.5" fill="#60a5fa" fontWeight="700">② F = Focal Point</text>
-                <line x1="190" y1="98" x2="160" y2="130" stroke="#94a3b8" strokeWidth="1" strokeDasharray="3 2" />
-                <text x="155" y="140" textAnchor="end" fontSize="8.5" fill="#94a3b8" fontWeight="700">③ C = Centre of Curvature</text>
-                <line x1="215" y1="100" x2="255" y2="118" stroke="#34d399" strokeWidth="1" strokeDasharray="3 2" />
-                <text x="258" y="128" textAnchor="start" fontSize="8.5" fill="#34d399" fontWeight="700">④ Image forms here</text>
-                <line x1="268" y1="80" x2="292" y2="55" stroke="#94a3b8" strokeWidth="1" strokeDasharray="3 2" />
-                <text x="295" y="52" textAnchor="start" fontSize="8.5" fill="#94a3b8" fontWeight="700">⑤ Mirror</text>
-              </svg>
-              <button className={styles.onboardingBtn} onClick={() => {
-                localStorage.setItem("lab_guide_seen_mirror-lab", "1");
-                setShowOnboarding(false);
-              }}>
-                OK, let&apos;s start →
-              </button>
-            </div>
-          </div>
+        {/* ── Guide modal (? button) ─────────────────────────────────── */}
+        {showGuideModal && guideModalContent}
+
+        {/* ── First-time onboarding ────────────────────────────────────── */}
+        {showOnboarding && !showGuideModal && guideModalContent}
+
+        {/* ── ? help button (always visible) ──────────────────────────── */}
+        {!showOnboarding && !showGuideModal && (
+          <button
+            className={styles.guideBtn}
+            onClick={() => setShowGuideModal(true)}
+            title="Show lab guide"
+          >
+            ?
+          </button>
         )}
 
         {/* ── Lab SVG ──────────────────────────────────────────────────── */}
-        <svg ref={svgRef} viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-          className={styles.labSvg} style={{ touchAction: "none" }}>
-
+        <svg
+          ref={svgRef}
+          viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+          className={styles.labSvg}
+          style={{ touchAction: "none" }}
+        >
           <defs>
-            <pattern id="hatch" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+            <pattern
+              id="hatch"
+              patternUnits="userSpaceOnUse"
+              width="8"
+              height="8"
+              patternTransform="rotate(45)"
+            >
               <line x1="0" y1="0" x2="0" y2="8" stroke="#1e3a5f" strokeWidth="3.5" />
             </pattern>
-            <clipPath id="backClip"><path d={backClip} /></clipPath>
+            <clipPath id="backClip">
+              <path d={backClip} />
+            </clipPath>
           </defs>
 
           {/* Grid */}
           {Array.from({ length: 8 }, (_, i) => (
-            <line key={i} x1={MIRROR_X - (i+1)*SCALE} y1={50}
-              x2={MIRROR_X - (i+1)*SCALE} y2={SVG_H - 50}
-              stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
+            <line
+              key={i}
+              x1={MIRROR_X - (i + 1) * SCALE}
+              y1={50}
+              x2={MIRROR_X - (i + 1) * SCALE}
+              y2={SVG_H - 50}
+              stroke="rgba(255,255,255,0.04)"
+              strokeWidth="1"
+            />
           ))}
 
           {/* Principal axis */}
-          <line x1={20} y1={AXIS_Y} x2={SVG_W - 20} y2={AXIS_Y}
-            stroke="rgba(255,255,255,0.22)" strokeWidth="1.5" strokeDasharray="8 6" />
+          <line
+            x1={20}
+            y1={AXIS_Y}
+            x2={SVG_W - 20}
+            y2={AXIS_Y}
+            stroke="rgba(255,255,255,0.22)"
+            strokeWidth="1.5"
+            strokeDasharray="8 6"
+          />
+
+          {/* u label — live distance readout */}
+          <text
+            x={(objX + MIRROR_X) / 2}
+            y={AXIS_Y + 20}
+            textAnchor="middle"
+            fill="rgba(255,255,255,0.38)"
+            fontSize="10"
+            fontFamily="var(--eg-font-body)"
+          >
+            u = {u.toFixed(2)} cm
+          </text>
 
           {/* C marker */}
           {shared.showCenterLabels && C_X > 20 && (
             <g>
-              <line x1={C_X} y1={AXIS_Y-12} x2={C_X} y2={AXIS_Y+12} stroke="#94a3b8" strokeWidth="2.5" />
-              <text x={C_X} y={AXIS_Y+27} textAnchor="middle" fill="#94a3b8" fontSize="15" fontFamily="var(--eg-font-display)" fontWeight="800">C</text>
-              <text x={C_X} y={AXIS_Y+42} textAnchor="middle" fill="#94a3b8" fontSize="9.5" fontFamily="var(--eg-font-body)" opacity={0.8}>Centre of Curvature</text>
+              <line x1={C_X} y1={AXIS_Y - 12} x2={C_X} y2={AXIS_Y + 12} stroke="#94a3b8" strokeWidth="2.5" />
+              <text x={C_X} y={AXIS_Y + 27} textAnchor="middle" fill="#94a3b8" fontSize="15" fontFamily="var(--eg-font-display)" fontWeight="800">
+                C
+              </text>
+              <text x={C_X} y={AXIS_Y + 42} textAnchor="middle" fill="#94a3b8" fontSize="9.5" fontFamily="var(--eg-font-body)" opacity={0.8}>
+                Centre of Curvature
+              </text>
             </g>
           )}
 
           {/* F marker */}
           {shared.showFocusLabels && F_X > 20 && (
             <g>
-              <line x1={F_X} y1={AXIS_Y-12} x2={F_X} y2={AXIS_Y+12} stroke="#60a5fa" strokeWidth="2.5" />
-              <text x={F_X} y={AXIS_Y+27} textAnchor="middle" fill="#60a5fa" fontSize="15" fontFamily="var(--eg-font-display)" fontWeight="800">F</text>
-              <text x={F_X} y={AXIS_Y+42} textAnchor="middle" fill="#60a5fa" fontSize="9.5" fontFamily="var(--eg-font-body)" opacity={0.8}>Focal Point</text>
+              <line x1={F_X} y1={AXIS_Y - 12} x2={F_X} y2={AXIS_Y + 12} stroke="#60a5fa" strokeWidth="2.5" />
+              <text x={F_X} y={AXIS_Y + 27} textAnchor="middle" fill="#60a5fa" fontSize="15" fontFamily="var(--eg-font-display)" fontWeight="800">
+                F
+              </text>
+              <text x={F_X} y={AXIS_Y + 42} textAnchor="middle" fill="#60a5fa" fontSize="9.5" fontFamily="var(--eg-font-body)" opacity={0.8}>
+                Focal Point
+              </text>
             </g>
           )}
 
           {/* Rays */}
           {showRays && (
             <g>
-              {r1Inc && <line x1={r1Inc[0]} y1={r1Inc[1]} x2={r1Inc[2]} y2={r1Inc[3]} stroke="#f59e0b" strokeWidth="1.8" opacity="0.82" />}
-              {r1Ref && <line x1={r1Ref[0]} y1={r1Ref[1]} x2={r1Ref[2]} y2={r1Ref[3]} stroke="#f59e0b" strokeWidth="1.8" opacity="0.82" />}
-              {r1Dash && <line x1={r1Dash[0]} y1={r1Dash[1]} x2={r1Dash[2]} y2={r1Dash[3]} stroke="#f59e0b" strokeWidth="1.4" strokeDasharray="5 4" opacity="0.45" />}
-              {r2Inc && <line x1={r2Inc[0]} y1={r2Inc[1]} x2={r2Inc[2]} y2={r2Inc[3]} stroke="#22d3ee" strokeWidth="1.8" opacity="0.82" />}
-              {r2Ref && <line x1={r2Ref[0]} y1={r2Ref[1]} x2={r2Ref[2]} y2={r2Ref[3]} stroke="#22d3ee" strokeWidth="1.8" opacity="0.82" />}
-              {r2Dash && <line x1={r2Dash[0]} y1={r2Dash[1]} x2={r2Dash[2]} y2={r2Dash[3]} stroke="#22d3ee" strokeWidth="1.4" strokeDasharray="5 4" opacity="0.45" />}
+              {r1Inc && (
+                <line x1={r1Inc[0]} y1={r1Inc[1]} x2={r1Inc[2]} y2={r1Inc[3]} stroke="#f59e0b" strokeWidth="1.8" opacity="0.82" />
+              )}
+              {r1Ref && (
+                <line x1={r1Ref[0]} y1={r1Ref[1]} x2={r1Ref[2]} y2={r1Ref[3]} stroke="#f59e0b" strokeWidth="1.8" opacity="0.82" />
+              )}
+              {r1Dash && (
+                <line x1={r1Dash[0]} y1={r1Dash[1]} x2={r1Dash[2]} y2={r1Dash[3]} stroke="#f59e0b" strokeWidth="1.4" strokeDasharray="5 4" opacity="0.45" />
+              )}
+              {r2Inc && (
+                <line x1={r2Inc[0]} y1={r2Inc[1]} x2={r2Inc[2]} y2={r2Inc[3]} stroke="#22d3ee" strokeWidth="1.8" opacity="0.82" />
+              )}
+              {r2Ref && (
+                <line x1={r2Ref[0]} y1={r2Ref[1]} x2={r2Ref[2]} y2={r2Ref[3]} stroke="#22d3ee" strokeWidth="1.8" opacity="0.82" />
+              )}
+              {r2Dash && (
+                <line x1={r2Dash[0]} y1={r2Dash[1]} x2={r2Dash[2]} y2={r2Dash[3]} stroke="#22d3ee" strokeWidth="1.4" strokeDasharray="5 4" opacity="0.45" />
+              )}
             </g>
           )}
 
           {/* Mirror backing + surface */}
-          <rect x={MIRROR_X-38} y={AXIS_Y-MIRROR_HALF_H} width={76} height={MIRROR_HALF_H*2}
-            fill="url(#hatch)" clipPath="url(#backClip)" />
+          <rect
+            x={MIRROR_X - 38}
+            y={AXIS_Y - MIRROR_HALF_H}
+            width={76}
+            height={MIRROR_HALF_H * 2}
+            fill="url(#hatch)"
+            clipPath="url(#backClip)"
+          />
           <path d={mirrorArc} fill="none" stroke="#94a3b8" strokeWidth={5} strokeLinecap="round" />
           <path d={mirrorArc} fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth={1.8} strokeLinecap="round" />
 
+          {/* v label near image */}
+          {imgResult.exists && imgSvgX !== null && (
+            <text
+              x={imgSvgX}
+              y={AXIS_Y + 55}
+              textAnchor="middle"
+              fill="rgba(255,255,255,0.32)"
+              fontSize="9.5"
+              fontFamily="var(--eg-font-body)"
+            >
+              v = {imgResult.v.toFixed(2)} cm
+            </text>
+          )}
+
           {/* Image arrow */}
-          {imgResult.exists && imgSvgX !== null && imgTopY !== null && (() => {
-            const isV = !imgResult.isReal;
-            const col = isV ? "#a78bfa" : "#34d399";
-            const inv = imgTopY > AXIS_Y;
-            const pts = `${imgSvgX-7},${imgTopY+(inv?15:-15)} ${imgSvgX+7},${imgTopY+(inv?15:-15)} ${imgSvgX},${imgTopY}`;
-            return (
-              <g opacity={isV ? 0.75 : 1}>
-                <line x1={imgSvgX} y1={AXIS_Y} x2={imgSvgX} y2={imgTopY}
-                  stroke={col} strokeWidth={2.5} strokeDasharray={isV ? "7 4" : undefined} />
-                <polygon points={pts} fill={col} />
-                <text x={imgSvgX} y={inv ? imgTopY-12 : imgTopY+26}
-                  textAnchor="middle" fill={col} fontSize="11"
-                  fontFamily="var(--eg-font-display)" fontWeight="700">
-                  {isV ? "Virtual Image" : "Image"}
-                </text>
-              </g>
-            );
-          })()}
+          {imgResult.exists &&
+            imgSvgX !== null &&
+            imgTopY !== null &&
+            (() => {
+              const isV = !imgResult.isReal;
+              const col = isV ? "#a78bfa" : "#34d399";
+              const inv = imgTopY > AXIS_Y;
+              const pts = `${imgSvgX - 7},${imgTopY + (inv ? 15 : -15)} ${imgSvgX + 7},${imgTopY + (inv ? 15 : -15)} ${imgSvgX},${imgTopY}`;
+              return (
+                <g opacity={isV ? 0.75 : 1}>
+                  <line
+                    x1={imgSvgX}
+                    y1={AXIS_Y}
+                    x2={imgSvgX}
+                    y2={imgTopY}
+                    stroke={col}
+                    strokeWidth={2.5}
+                    strokeDasharray={isV ? "7 4" : undefined}
+                  />
+                  <polygon points={pts} fill={col} />
+                  <text
+                    x={imgSvgX}
+                    y={inv ? imgTopY - 12 : imgTopY + 26}
+                    textAnchor="middle"
+                    fill={col}
+                    fontSize="11"
+                    fontFamily="var(--eg-font-display)"
+                    fontWeight="700"
+                  >
+                    {isV ? "Virtual Image" : "Image"}
+                  </text>
+                </g>
+              );
+            })()}
 
           {!imgResult.exists && (
-            <text x={(objX+MIRROR_X)/2} y={AXIS_Y-40} textAnchor="middle"
-              fill="#fbbf24" fontSize="12" fontFamily="var(--eg-font-display)" fontWeight="600">
+            <text
+              x={(objX + MIRROR_X) / 2}
+              y={AXIS_Y - 40}
+              textAnchor="middle"
+              fill="#fbbf24"
+              fontSize="12"
+              fontFamily="var(--eg-font-display)"
+              fontWeight="600"
+            >
               Image at ∞ — object is at the focal point
             </text>
           )}
 
           {/* Object arrow (draggable) */}
-          <g onPointerDown={onPointerDown} onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp} onPointerCancel={onPointerUp}
-            style={{ cursor: isDragging.current ? "grabbing" : "grab" }}>
-            <rect x={objX-28} y={objTopY-16} width={56} height={OBJ_H_SVG+32} fill="transparent" />
+          <g
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+            style={{ cursor: isDragging.current ? "grabbing" : "grab" }}
+          >
+            <rect x={objX - 28} y={objTopY - 16} width={56} height={OBJ_H_SVG + 32} fill="transparent" />
             <line x1={objX} y1={AXIS_Y} x2={objX} y2={objTopY} stroke="#f8fafc" strokeWidth={3.5} strokeLinecap="round" />
-            <polygon points={`${objX-9},${objTopY+18} ${objX+9},${objTopY+18} ${objX},${objTopY}`} fill="#f8fafc" />
-            <line x1={objX-9} y1={AXIS_Y} x2={objX+9} y2={AXIS_Y} stroke="#f8fafc" strokeWidth={2.5} strokeLinecap="round" />
-            <text x={objX} y={objTopY-14} textAnchor="middle" fill="#f8fafc"
-              fontSize="11" fontFamily="var(--eg-font-display)" fontWeight="700">Object</text>
+            <polygon points={`${objX - 9},${objTopY + 18} ${objX + 9},${objTopY + 18} ${objX},${objTopY}`} fill="#f8fafc" />
+            <line x1={objX - 9} y1={AXIS_Y} x2={objX + 9} y2={AXIS_Y} stroke="#f8fafc" strokeWidth={2.5} strokeLinecap="round" />
+            <text x={objX} y={objTopY - 14} textAnchor="middle" fill="#f8fafc" fontSize="11" fontFamily="var(--eg-font-display)" fontWeight="700">
+              Object
+            </text>
             {!succeeded && (
-              <text x={objX} y={AXIS_Y+32} textAnchor="middle"
-                fill="rgba(255,255,255,0.35)" fontSize="10" fontFamily="var(--eg-font-body)">← drag →</text>
+              <text x={objX} y={AXIS_Y + 32} textAnchor="middle" fill="rgba(255,255,255,0.35)" fontSize="10" fontFamily="var(--eg-font-body)">
+                ← drag →
+              </text>
             )}
           </g>
         </svg>
@@ -377,22 +611,111 @@ export function OpticsExperimentEngine({
           <div className={styles.imageReadout}>
             <span className={styles.readoutLabel}>Image:</span>
             <span className={styles.readoutValue}>{describeImage(imgResult)}</span>
+            {imgResult.exists && (
+              <span className={styles.readoutSub}>
+                &nbsp;|&nbsp;m = {imgResult.m.toFixed(3)}
+              </span>
+            )}
           </div>
           {guide && (
             <div className={`${styles.guide} ${styles[`guide_${guide.tone}`]}`}>
-              {guide.tone === "success" ? "✓ " : guide.tone === "warning" ? "⚠ " : "→ "}{guide.text}
+              {guide.tone === "success" ? "✓ " : guide.tone === "warning" ? "⚠ " : "→ "}
+              {guide.text}
             </div>
           )}
         </div>
+
+        {/* ── Formula / Magnification challenge panel ───────────────── */}
+        {requiresFormula && !succeeded && (
+          <div className={styles.formulaPanel}>
+            <div className={styles.formulaPanelTitle}>
+              {winConditions.requiresFormulaEntry
+                ? "📐 Calculate: use the mirror formula to find v and m"
+                : "📐 Calculate: find the linear magnification m"}
+              <span className={styles.formulaHint}>
+                {winConditions.requiresFormulaEntry
+                  ? "1/v + 1/u = 1/f, then m = −v/u"
+                  : "m = −v/u"}
+              </span>
+            </div>
+            <div className={styles.formulaRow}>
+              {winConditions.requiresFormulaEntry && (
+                <label className={styles.formulaField}>
+                  <span>v (cm)</span>
+                  <input
+                    className={`${styles.formulaInput} ${
+                      formulaResult ? (formulaResult.vOk ? styles.inputOk : styles.inputErr) : ""
+                    }`}
+                    type="number"
+                    step="0.01"
+                    placeholder="e.g. −4.00"
+                    value={enteredV}
+                    onChange={(e) => {
+                      setEnteredV(e.target.value);
+                      setFormulaChecked(false);
+                      setFormulaResult(null);
+                    }}
+                  />
+                </label>
+              )}
+              <label className={styles.formulaField}>
+                <span>m</span>
+                <input
+                  className={`${styles.formulaInput} ${
+                    formulaResult ? (formulaResult.mOk ? styles.inputOk : styles.inputErr) : ""
+                  }`}
+                  type="number"
+                  step="0.001"
+                  placeholder="e.g. −2.000"
+                  value={enteredM}
+                  onChange={(e) => {
+                    setEnteredM(e.target.value);
+                    setFormulaChecked(false);
+                    setFormulaResult(null);
+                  }}
+                />
+              </label>
+              <button className={styles.formulaCheckBtn} onClick={handleCheckFormula}>
+                Check
+              </button>
+            </div>
+            {/* Worked solution reveal */}
+            {formulaResult?.correct && formulaChallenge?.showSolution !== false && (
+              <details className={styles.solutionDetails}>
+                <summary className={styles.solutionSummary}>📖 View worked solution</summary>
+                <pre className={styles.solutionPre}>{formulaResult.solution}</pre>
+              </details>
+            )}
+          </div>
+        )}
+
+        {/* ── Succeeded worked solution ───────────────────────────────── */}
+        {succeeded && requiresFormula && formulaResult?.correct && formulaChallenge?.showSolution !== false && (
+          <details className={styles.solutionDetails}>
+            <summary className={styles.solutionSummary}>📖 View worked solution</summary>
+            <pre className={styles.solutionPre}>{formulaResult.solution}</pre>
+          </details>
+        )}
 
         {/* ── Feedback ─────────────────────────────────────────────────── */}
         {feedback && (
           <div className={`${styles.feedback} ${styles[`feedback_${feedback.kind}`]}`}>
             <Mascot pose={feedback.kind === "success" ? "celebrate" : "encourage"} widthPx={42} />
             <p className={styles.feedbackText}>{feedback.text}</p>
-            {feedback.kind === "hint" && (
-              <button className={styles.feedbackClose} onClick={() => setFeedback(null)}>✕</button>
+            {feedback.kind !== "success" && (
+              <button className={styles.feedbackClose} onClick={() => setFeedback(null)}>
+                ✕
+              </button>
             )}
+          </div>
+        )}
+
+        {/* ── Real-world application nudge ────────────────────────────── */}
+        {showRealWorld && realWorldApp && (
+          <div className={styles.realWorld}>
+            <span className={styles.realWorldIcon}>🌍</span>
+            <p className={styles.realWorldText}>{realWorldApp}</p>
+            <button className={styles.feedbackClose} onClick={() => setShowRealWorld(false)}>✕</button>
           </div>
         )}
 
@@ -400,29 +723,42 @@ export function OpticsExperimentEngine({
         <div className={styles.controls}>
           {effectiveMirrorOptions.length > 1 && (
             <div className={styles.mirrorPicker}>
-              {(["concave","convex"] as MirrorType[]).filter(m => effectiveMirrorOptions.includes(m)).map(m => (
-                <button key={m}
-                  className={`${styles.mirrorBtn} ${mirrorType===m ? styles.mirrorBtnActive : ""}`}
-                  onClick={() => { setMirrorType(m); setFeedback(null); }}>
-                  {m === "concave" ? "⌓ Concave" : "⌔ Convex"}
-                </button>
-              ))}
+              {(["concave", "convex"] as MirrorType[])
+                .filter((m) => effectiveMirrorOptions.includes(m))
+                .map((m) => (
+                  <button
+                    key={m}
+                    className={`${styles.mirrorBtn} ${mirrorType === m ? styles.mirrorBtnActive : ""}`}
+                    onClick={() => {
+                      setMirrorType(m);
+                      setFeedback(null);
+                      setFormulaChecked(false);
+                      setFormulaResult(null);
+                    }}
+                  >
+                    {m === "concave" ? "⌓ Concave" : "⌔ Convex"}
+                  </button>
+                ))}
             </div>
           )}
           {shared.showRaysToggle && (
-            <button className={`${styles.raysBtn} ${showRays ? styles.raysBtnOn : ""}`}
-              onClick={() => setShowRays(r => !r)}>
+            <button
+              className={`${styles.raysBtn} ${showRays ? styles.raysBtnOn : ""}`}
+              onClick={() => setShowRays((r) => !r)}
+            >
               {showRays ? "Hide Rays" : "Show Rays"}
             </button>
           )}
           <button
             className={`${styles.runBtn} ${succeeded ? styles.runBtnDone : ""}`}
-            onClick={() => succeeded && pendingOutcome ? onComplete(pendingOutcome) : handleRun()}
-            disabled={isPaused}>
+            onClick={() =>
+              succeeded && pendingOutcome ? onComplete(pendingOutcome) : handleRun()
+            }
+            disabled={isPaused}
+          >
             {succeeded ? "✓ Done!" : "▶  Run Experiment"}
           </button>
         </div>
-
       </div>
     </GameplayShell>
   );

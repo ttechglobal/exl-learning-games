@@ -17,28 +17,38 @@
   "snapshot": {
     "cards": [
       {
+        "title": "The Mirror Formula",
+        "body": "1/v + 1/u = 1/f — where u is object distance, v is image distance, and f is focal length. For a concave mirror f is positive; for convex f is negative. All distances are from the mirror.",
+        "visual": "mirror-formula"
+      },
+      {
+        "title": "Linear Magnification",
+        "body": "m = −v/u. The sign matters! A negative m means the image is inverted. |m| > 1 means magnified; |m| < 1 means diminished. An upright virtual image always has m > 0.",
+        "visual": "mirror-magnification"
+      },
+      {
         "title": "The Concave Mirror",
-        "body": "A concave mirror curves inward — like the inside of a bowl. It bends all incoming rays toward a single point in front of the mirror called the Focal Point (F).",
+        "body": "A concave mirror curves inward — like the inside of a bowl. It bends all incoming rays toward a single point in front of the mirror called the Focal Point (F). f is positive.",
         "visual": "mirror-concave"
       },
       {
         "title": "The Convex Mirror",
-        "body": "A convex mirror curves outward — like the back of a spoon. It spreads rays outward. Reflected rays never converge, so a convex mirror always forms a smaller, upright virtual image.",
+        "body": "A convex mirror curves outward — like the back of a spoon. It spreads rays outward. f is negative. It always forms a smaller, upright virtual image — used in rear-view mirrors.",
         "visual": "mirror-convex"
       },
       {
         "title": "Object Position Changes Everything",
-        "body": "Moving the object changes the size, location, and type of image. F (Focal Point) and C (Centre of Curvature) divide the space into regions — each one produces a different kind of image.",
+        "body": "Moving the object changes the size, location, and type of image. F (Focal Point) and C (Centre of Curvature, where C = 2F) divide the space — each region produces a different image.",
         "visual": "mirror-object-position"
       },
       {
         "title": "Real vs Virtual Images",
-        "body": "A real image forms where reflected rays actually meet in front of the mirror — you can project it on a screen. A virtual image only appears to be behind the mirror — rays don't actually go there.",
+        "body": "A real image forms where reflected rays actually meet in front of the mirror — v is positive, image is inverted, can be projected on a screen. A virtual image: v is negative, upright, seen behind mirror.",
         "visual": "mirror-real-vs-virtual"
       },
       {
         "title": "How to Play",
-        "body": "Drag the white arrow left or right to move the object. The image updates live as you go. Once you think you've met the mission target, press Run Experiment.",
+        "body": "Drag the white arrow left or right to move the object. The image updates live. Some missions ask you to calculate v and m using the formula — enter your answers in the panel below the diagram.",
         "visual": "mirror-how-to-play"
       }
     ]
@@ -181,6 +191,161 @@
           "targetMagnificationMax": 0.38
         },
         "hint": "Convex mirror, object far from the mirror — the further away, the smaller the virtual image."
+      }
+    },
+    {
+      "missionKey": "formula-intro",
+      "title": "Mirror Formula — First Calculation",
+      "difficulty": "MEDIUM",
+      "sequenceIndex": 7,
+      "xpReward": 75,
+      "topicId": "reflection-of-light",
+      "learningGoal": "Apply 1/v + 1/u = 1/f and m = −v/u to calculate image distance and magnification.",
+      "estimatedMinutes": 6,
+      "payload": {
+        "resultLabel": "📐 Formula",
+        "mirrorOptions": ["concave"],
+        "showFocusLabels": true,
+        "showCenterLabels": true,
+        "showRaysToggle": true,
+        "defaultShowRays": true,
+        "winConditions": {
+          "targetImageType": "real",
+          "targetMagnificationMin": 0.9,
+          "targetMagnificationMax": 1.1,
+          "requiresFormulaEntry": true,
+          "formulaTolerance": 0.08
+        },
+        "hint": "Place the object at C (2F from mirror). A real same-size image forms there. Then use 1/v = 1/f − 1/u to calculate v.",
+        "formulaChallenge": {
+          "showSolution": true
+        }
+      }
+    },
+    {
+      "missionKey": "formula-magnified",
+      "title": "Mirror Formula — Magnified Image",
+      "difficulty": "HARD",
+      "sequenceIndex": 8,
+      "xpReward": 100,
+      "topicId": "reflection-of-light",
+      "learningGoal": "Calculate v and m for a magnified real image using the mirror formula.",
+      "estimatedMinutes": 7,
+      "payload": {
+        "resultLabel": "📐 Magnified",
+        "mirrorOptions": ["concave"],
+        "showFocusLabels": true,
+        "showCenterLabels": false,
+        "showRaysToggle": true,
+        "defaultShowRays": false,
+        "winConditions": {
+          "targetImageType": "real",
+          "targetMagnificationMin": 1.8,
+          "targetMagnificationMax": 2.5,
+          "requiresFormulaEntry": true,
+          "formulaTolerance": 0.08
+        },
+        "hint": "Place the object between F and C so the image is magnified. Note the u value shown on the diagram, then calculate 1/v = 1/f − 1/u.",
+        "formulaChallenge": {
+          "showSolution": true
+        }
+      }
+    },
+    {
+      "missionKey": "magnification-only",
+      "title": "Magnification Challenge",
+      "difficulty": "MEDIUM",
+      "sequenceIndex": 9,
+      "xpReward": 70,
+      "topicId": "reflection-of-light",
+      "learningGoal": "Calculate linear magnification m = −v/u, including the correct sign.",
+      "estimatedMinutes": 5,
+      "payload": {
+        "resultLabel": "📐 Find m",
+        "mirrorOptions": ["concave", "convex"],
+        "showFocusLabels": true,
+        "showCenterLabels": true,
+        "showRaysToggle": true,
+        "defaultShowRays": true,
+        "winConditions": {
+          "requiresMagnificationEntry": true,
+          "formulaTolerance": 0.08
+        },
+        "hint": "m = −v/u. Read the v value shown below the image arrow. Don't forget the negative sign — it tells you whether the image is upright or inverted.",
+        "formulaChallenge": {
+          "showSolution": true
+        }
+      }
+    },
+    {
+      "missionKey": "realworld-dentist",
+      "title": "Dentist's Mirror",
+      "difficulty": "EASY",
+      "sequenceIndex": 10,
+      "xpReward": 50,
+      "topicId": "reflection-of-light",
+      "learningGoal": "Understand why a dentist's mirror produces a magnified upright virtual image of teeth.",
+      "estimatedMinutes": 4,
+      "payload": {
+        "resultLabel": "🦷 Dentist Mirror",
+        "mirrorOptions": ["concave"],
+        "showFocusLabels": true,
+        "showCenterLabels": true,
+        "showRaysToggle": false,
+        "defaultShowRays": true,
+        "winConditions": {
+          "targetImageType": "virtual",
+          "targetOrientation": "upright",
+          "targetMagnificationMin": 1.3
+        },
+        "hint": "A dentist's mirror is concave, held so the tooth is inside F. The image appears upright and magnified behind the mirror. Move the object inside F to see this."
+      }
+    },
+    {
+      "missionKey": "realworld-rearview",
+      "title": "Rear-View Mirror",
+      "difficulty": "EASY",
+      "sequenceIndex": 11,
+      "xpReward": 50,
+      "topicId": "reflection-of-light",
+      "learningGoal": "Explain why a convex rear-view mirror gives a wide field of view but makes objects look smaller.",
+      "estimatedMinutes": 4,
+      "payload": {
+        "resultLabel": "🚗 Rear-View",
+        "mirrorOptions": ["convex"],
+        "showFocusLabels": true,
+        "showCenterLabels": false,
+        "showRaysToggle": false,
+        "defaultShowRays": true,
+        "winConditions": {
+          "targetMirror": "convex",
+          "targetImageType": "virtual",
+          "targetMagnificationMax": 0.6
+        },
+        "hint": "A rear-view mirror is always convex — objects appear smaller and upright. Move the object far away to simulate a car far behind."
+      }
+    },
+    {
+      "missionKey": "realworld-telescope",
+      "title": "Telescope Mirror",
+      "difficulty": "HARD",
+      "sequenceIndex": 12,
+      "xpReward": 95,
+      "topicId": "reflection-of-light",
+      "learningGoal": "Produce a large real image as a concave reflecting telescope mirror would for a distant star.",
+      "estimatedMinutes": 6,
+      "payload": {
+        "resultLabel": "🔭 Telescope",
+        "mirrorOptions": ["concave"],
+        "showFocusLabels": false,
+        "showCenterLabels": false,
+        "showRaysToggle": true,
+        "defaultShowRays": false,
+        "winConditions": {
+          "targetImageType": "real",
+          "targetMagnificationMin": 2.5
+        },
+        "hint": "A reflecting telescope uses a large concave mirror to gather and focus starlight. Place the object just outside F to get a large, inverted real image — this is where the eyepiece would be placed."
       }
     }
   ]

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { DepthBackdrop } from "@/motion/DepthBackdrop";
 import { SiteHeader } from "@/components/ui/SiteHeader";
@@ -11,7 +11,7 @@ import { GameCardArt } from "@/components/ui/GameCardArt";
 import type { GameRow, Difficulty } from "@/types/db";
 import styles from "@/app/(player)/worlds/WorldsClient.module.css";
 
-// ─── Inline topic labels — no external file dependency ───────────────────────
+// ─── Inline topic labels ──────────────────────────────────────────────────────
 const TOPIC_LABELS: Record<string, string> = {
   "periodic-table": "Periodic Table",
   "atomic-structure": "Atomic Structure",
@@ -49,6 +49,7 @@ export interface WorldsClientProps {
 export function WorldsClient({ bySubject }: WorldsClientProps) {
   const { theme, toggleTheme } = useTheme();
   const [expandedSubject, setExpandedSubject] = useState<string | null>(null);
+  const [activeTopicFilter, setActiveTopicFilter] = useState<string>("all");
 
   const subjects = Object.entries(bySubject).filter(([, g]) => g.length > 0);
   const totalGames = subjects.reduce((s, [, g]) => s + g.length, 0);
@@ -56,34 +57,101 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
     ? subjectMeta(subjects[0][0]).color
     : "var(--eg-brand)";
 
-  // ── Expanded view ────────────────────────────────────────────────────────
+  // ── Expanded view ─────────────────────────────────────────────────────────
   if (expandedSubject) {
     const meta = subjectMeta(expandedSubject);
     const games = bySubject[expandedSubject] ?? [];
+
+    // Build unique topic list for filter tabs
+    const topics = useMemo(() => {
+      const seen = new Set<string>();
+      const out: string[] = [];
+      for (const { game } of games) {
+        if (!seen.has(game.topic_id)) {
+          seen.add(game.topic_id);
+          out.push(game.topic_id);
+        }
+      }
+      return out;
+    }, [games]);
+
+    const showTabs = topics.length > 1;
+
+    const filteredGames = activeTopicFilter === "all"
+      ? games
+      : games.filter(({ game }) => game.topic_id === activeTopicFilter);
+
     return (
       <div className={styles.page} data-theme={theme}>
         <SiteHeader theme={theme} onToggleTheme={toggleTheme} active="games" />
+
+        {/* Header */}
         <div className={styles.titleRow}>
           <DepthBackdrop accentColor={meta.color} />
           <div className={styles.container}>
-            <button className={styles.backBtn} onClick={() => setExpandedSubject(null)}>
+            <button
+              className={styles.backBtn}
+              onClick={() => { setExpandedSubject(null); setActiveTopicFilter("all"); }}
+            >
               ← All Worlds
             </button>
             <h1 className={styles.pageTitle}>{meta.emoji} {meta.name}</h1>
+            <p className={styles.pageSubtitle}>
+              {games.length} game{games.length !== 1 ? "s" : ""}
+            </p>
           </div>
         </div>
+
+        {/* Topic filter tabs */}
+        {showTabs && (
+          <div className={styles.tabsWrap}>
+            <div className={styles.tabsScroll}>
+              <button
+                className={`${styles.tab} ${activeTopicFilter === "all" ? styles.tabActive : ""}`}
+                style={activeTopicFilter === "all" ? { borderColor: meta.color, color: meta.color } : {}}
+                onClick={() => setActiveTopicFilter("all")}
+              >
+                All
+              </button>
+              {topics.map((t) => (
+                <button
+                  key={t}
+                  className={`${styles.tab} ${activeTopicFilter === t ? styles.tabActive : ""}`}
+                  style={activeTopicFilter === t ? { borderColor: meta.color, color: meta.color } : {}}
+                  onClick={() => setActiveTopicFilter(t)}
+                >
+                  {topicLabel(t)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Game grid */}
         <div className={styles.container}>
           <div className={styles.gameGrid}>
-            {games.map(({ game }) => (
-              <Link key={game.id} href={`/play/${game.slug}`}
-                className={styles.gameCard}>
+            {filteredGames.length === 0 && (
+              <p className={styles.emptyText}>No games for this topic yet.</p>
+            )}
+            {filteredGames.map(({ game }) => (
+              <Link
+                key={game.id}
+                href={`/play/${game.slug}`}
+                className={styles.gameCard}
+              >
                 <div className={styles.gameCardArt}>
-                  <GameCardArt gameSlug={game.slug} emoji={meta.emoji}
-                    color={meta.color} tint={meta.tint} />
+                  <GameCardArt
+                    gameSlug={game.slug}
+                    emoji={meta.emoji}
+                    color={meta.color}
+                    tint={meta.tint}
+                  />
                 </div>
                 <div className={styles.gameCardBody}>
-                  <div className={styles.gameCardTag}
-                    style={{ color: meta.color, background: meta.tint }}>
+                  <div
+                    className={styles.gameCardTag}
+                    style={{ color: meta.color, background: meta.tint }}
+                  >
                     {topicLabel(game.topic_id)}
                   </div>
                   <div className={styles.gameCardTitle}>{game.title}</div>
@@ -123,13 +191,15 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
           return (
             <section key={subject} className={styles.subjectSection}>
 
-              {/* Section header — plain text, no CSS variable colors */}
+              {/* Section header */}
               <div className={styles.sectionHead}>
                 <span className={styles.sectionEmoji}>{meta.emoji}</span>
                 <h2 className={styles.sectionName}>{meta.name}</h2>
                 <span className={styles.sectionCount}>{games.length}</span>
-                <button className={styles.viewAllBtn}
-                  onClick={() => setExpandedSubject(subject)}>
+                <button
+                  className={styles.viewAllBtn}
+                  onClick={() => setExpandedSubject(subject)}
+                >
                   View All →
                 </button>
               </div>
@@ -137,25 +207,38 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
               {/* Horizontal scroll row */}
               <div className={styles.scrollRow}>
                 {games.map(({ game }) => (
-                  <Link key={game.id} href={`/play/${game.slug}`}
-                    className={styles.miniCard}>
-                    <div className={styles.miniCardArt}
-                      style={{ background: meta.tint }}>
-                      <GameCardArt gameSlug={game.slug} emoji={meta.emoji}
-                        color={meta.color} tint={meta.tint} />
+                  <Link
+                    key={game.id}
+                    href={`/play/${game.slug}`}
+                    className={styles.miniCard}
+                  >
+                    <div className={styles.miniCardArt} style={{ background: meta.tint }}>
+                      <GameCardArt
+                        gameSlug={game.slug}
+                        emoji={meta.emoji}
+                        color={meta.color}
+                        tint={meta.tint}
+                      />
                     </div>
                     <div className={styles.miniCardBody}>
-                      <div className={styles.miniCardTag}
-                        style={{ color: meta.color, background: meta.tint }}>
+                      <div
+                        className={styles.miniCardTag}
+                        style={{ color: meta.color, background: meta.tint }}
+                      >
                         {topicLabel(game.topic_id)}
                       </div>
                       <div className={styles.miniCardTitle}>{game.title}</div>
+                      {GAME_CARD_DESC[game.slug] && (
+                        <p className={styles.miniCardDesc}>{GAME_CARD_DESC[game.slug]}</p>
+                      )}
                     </div>
                   </Link>
                 ))}
 
-                <button className={styles.seeAllTile}
-                  onClick={() => setExpandedSubject(subject)}>
+                <button
+                  className={styles.seeAllTile}
+                  onClick={() => setExpandedSubject(subject)}
+                >
                   <span>{meta.emoji}</span>
                   <span className={styles.seeAllText}>See all</span>
                   <span>→</span>

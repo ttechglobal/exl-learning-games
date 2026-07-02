@@ -375,7 +375,7 @@ export function OpticsExperimentEngine({
       fallbackGradient="radial-gradient(ellipse 100% 80% at 60% 30%, #0c1c3a 0%, #060e1f 100%)"
       accentColor="var(--eg-subject-physics)"
       gameTitle={gameTitle ?? "Mirror Lab"}
-      stats={[{ label: "Attempts", value: attempts, tone: "neutral" }]}
+      stats={[{ label: "Attempts", value: attempts, tone: "default" }]}
       missionPrompt={{ label: "Mission", text: describeWinConditions(winConditions) }}
       menu={menu}
       isPaused={isPaused}

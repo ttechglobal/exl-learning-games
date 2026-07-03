@@ -73,7 +73,7 @@ const SolutionStepSchema = z.object({
   /**
    * True if this is the final step — engine shows "CASE CLOSED" payoff.
    */
-  isFinal: z.boolean().default(false),
+  isFinal: z.boolean().default(false).optional(),
   /**
    * Which variable is being isolated/eliminated in this step.
    * Used for feedback copy ("Variable Y has been eliminated.")

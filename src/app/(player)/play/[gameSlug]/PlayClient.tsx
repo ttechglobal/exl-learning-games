@@ -28,7 +28,7 @@ export interface PlayClientProps {
   completedMissionIds: Set<string>;
 }
 
-type Screen = "levelSelect" | "trackMap" | "entry" | "difficulty" | "objectives" | "runtime";
+type Screen = "levelSelect" | "trackMap" | "difficultyTrack" | "entry" | "difficulty" | "objectives" | "runtime";
 
 const SUBJECT_FALLBACK_ACCENT: Record<string, string> = {
   chemistry: "var(--eg-subject-chemistry)",
@@ -143,11 +143,23 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
 
   const isLevelBased = progressionMode === "levelSelect";
   const isTrackMap = progressionMode === "trackMap";
+  /** True when a trackMap game has missions spanning EASY/MEDIUM/HARD — 
+   *  show a difficulty picker before the track map. */
+  const trackMapHasDifficultyTiers = isTrackMap &&
+    new Set(sortedMissions.map((m) => m.difficulty)).size > 1;
   const supportsDifficultyChoice = engineSupportsDifficultyChoice(game.engine_type);
 
-  const [screen, setScreen] = useState<Screen>(isLevelBased ? "levelSelect" : isTrackMap ? "trackMap" : "entry");
+  const [screen, setScreen] = useState<Screen>(
+    isLevelBased ? "levelSelect"
+    : trackMapHasDifficultyTiers ? "difficultyTrack"
+    : isTrackMap ? "trackMap"
+    : "entry"
+  );
   const [activeMissionId, setActiveMissionId] = useState(initialMissionId);
   const [playerDifficulty, setPlayerDifficulty] = useState<PlayerDifficulty | null>(null);
+  /** For trackMap games with multiple difficulty tiers (e.g. stepwise-equation-solver),
+   *  the player picks a tier first, then sees only that tier's missions on the track map. */
+  const [selectedTrackDifficulty, setSelectedTrackDifficulty] = useState<string | null>(null);
   /**
    * Mirrors the server-fetched completedMissionIds prop, but kept as
    * local state so a freshly-completed mission can flip TrackMapScreen's
@@ -176,6 +188,11 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
    *  again, which React could otherwise bail out of re-running setup
    *  effects for. */
   const [runtimeResetKey, setRuntimeResetKey] = useState(0);
+
+  /** When a difficulty tier is selected, only show that tier's missions on the track map */
+  const trackMissions = selectedTrackDifficulty
+    ? sortedMissions.filter((m) => m.difficulty === selectedTrackDifficulty)
+    : sortedMissions;
 
   const activeMissionIndex = sortedMissions.findIndex((m) => m.id === activeMissionId);
   const activeMission = sortedMissions[activeMissionIndex];
@@ -256,6 +273,7 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
   function handleBack() {
     if (screen === "entry") {
       if (isLevelBased) setScreen("levelSelect");
+      else if (trackMapHasDifficultyTiers) setScreen("trackMap"); // back to filtered track
       else if (isTrackMap) setScreen("trackMap");
       else router.push("/worlds");
       return;
@@ -303,6 +321,73 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
     );
   }
 
+  if (screen === "difficultyTrack") {
+    const tiers = ["EASY", "MEDIUM", "HARD"] as const;
+    const availableTiers = tiers.filter((t) => sortedMissions.some((m) => m.difficulty === t));
+    const TIER_INFO: Record<string, { emoji: string; label: string; desc: string }> = {
+      EASY:   { emoji: "🟢", label: "Easy",   desc: "Guided step by step — great for building confidence." },
+      MEDIUM: { emoji: "🟡", label: "Medium", desc: "Some guidance removed — you choose the strategy." },
+      HARD:   { emoji: "🔴", label: "Hard",   desc: "Full independence — exam-level challenge." }
+    };
+    return (
+      <PrePlayShell
+        gameSlug={game.slug}
+        gameTitle={game.title}
+        subject={game.subject}
+        onBack={() => router.push("/worlds")}
+        backLabel="Back to Worlds"
+      >
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "24px 16px" }}>
+          <div style={{ fontFamily: "var(--eg-font-display)", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.14em", color: "rgba(255,255,255,0.45)", textTransform: "uppercase" }}>
+            Choose a level
+          </div>
+          <div style={{ fontFamily: "var(--eg-font-display)", fontSize: "1.4rem", fontWeight: 900, color: "#fff", textAlign: "center" }}>
+            How would you like to play?
+          </div>
+          {availableTiers.map((tier) => {
+            const info = TIER_INFO[tier];
+            const tierMissions = sortedMissions.filter((m) => m.difficulty === tier);
+            const completedInTier = tierMissions.filter((m) => completedMissionIds.has(m.id)).length;
+            return (
+              <button
+                key={tier}
+                onClick={() => {
+                  setSelectedTrackDifficulty(tier);
+                  // Resume at first incomplete mission in this tier, or first mission
+                  const firstIncomplete = tierMissions.find((m) => !completedMissionIds.has(m.id));
+                  const resumeMission = firstIncomplete ?? tierMissions[0];
+                  if (resumeMission) setActiveMissionId(resumeMission.id);
+                  resetConceptsSeen(game.engine_type);
+                  setScreen("trackMap");
+                }}
+                style={{
+                  width: "min(420px, 100%)", boxSizing: "border-box", textAlign: "left",
+                  background: "rgba(255,255,255,0.05)", border: "1.5px solid rgba(255,255,255,0.12)",
+                  borderRadius: 14, padding: "18px 20px", cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: 16,
+                  transition: "background 0.15s, border-color 0.15s"
+                }}
+              >
+                <span style={{ fontSize: "1.8rem", flexShrink: 0 }}>{info.emoji}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: "var(--eg-font-display)", fontWeight: 800, fontSize: "1rem", color: "#fff", marginBottom: 4 }}>
+                    {info.label}
+                  </div>
+                  <div style={{ fontFamily: "var(--eg-font-body)", fontSize: "0.8rem", color: "rgba(255,255,255,0.55)", lineHeight: 1.4 }}>
+                    {info.desc}
+                  </div>
+                </div>
+                <div style={{ fontFamily: "var(--eg-font-body)", fontSize: "0.72rem", color: "rgba(255,255,255,0.35)", flexShrink: 0, textAlign: "right" }}>
+                  {completedInTier}/{tierMissions.length}<br />done
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </PrePlayShell>
+    );
+  }
+
   if (screen === "trackMap") {
     return (
       <PrePlayShell
@@ -314,7 +399,7 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
       >
         <TrackMapScreen
           gameTitle={game.title}
-          missions={sortedMissions}
+          missions={trackMissions}
           completedMissionIds={locallyCompletedIds}
           onSelect={(missionId: string) => {
             // THE FIX for the reported bug: Quick Concepts wasn't
@@ -342,7 +427,7 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
         subject={game.subject}
         accentColor={resolveAccentColor()}
         onBack={handleBack}
-        backLabel={isLevelBased ? "Back to Levels" : isTrackMap ? "Back to Map" : "Back to Worlds"}
+        backLabel={isLevelBased ? "Back to Levels" : trackMapHasDifficultyTiers ? "Back to Level" : isTrackMap ? "Back to Map" : "Back to Worlds"}
       >
         <EntryScreen
           gameSlug={game.slug}
@@ -484,10 +569,9 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
             setActiveMissionId(nextMission.id);
             setScreen("runtime");
           } else {
-            // Finished the whole track — nothing left to unlock, so
-            // there's nowhere more useful to land than the map itself,
-            // now showing every step completed.
-            setScreen("trackMap");
+            // Finished this tier — go back to difficulty picker if we have tiers,
+            // otherwise show the completed track.
+            setScreen(trackMapHasDifficultyTiers ? "difficultyTrack" : "trackMap");
           }
         } else if (isLevelBased) {
           // Level-based games return to the level picker rather than

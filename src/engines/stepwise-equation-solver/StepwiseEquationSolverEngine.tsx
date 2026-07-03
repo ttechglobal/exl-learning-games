@@ -63,13 +63,16 @@ const OPERATION_LABELS: Record<OperationType, { label: string; sublabel: string 
 };
 
 const GUIDE_PROMPTS = [
-  "What do we do here?",
-  "What's your next move?",
+  "What do we do first?",
+  "Good — now what?",
+  "What's the next move?",
   "Now, what do we do?",
-  "What should we do next?",
-  "Your turn — what's the next step?",
-  "Think it through — what comes next?",
-  "What do we need to do?",
+  "Keep going — what comes next?",
+  "You're doing well. What now?",
+  "Almost there — next step?",
+  "What should we do here?",
+  "Think it through — what's next?",
+  "One more decision. What do we do?",
 ];
 
 function getRelevantOperations(
@@ -469,19 +472,19 @@ export function StepwiseEquationSolverEngine({
       environmentImages={environmentImages}
       fallbackGradient="linear-gradient(160deg, #0b1330 0%, #0e1a2e 50%, #0b2340 100%)"
       accentColor="var(--eg-subject-mathematics)"
-      stats={[]}
+      stats={[{
+        label: tierConfig.label,
+        value: `Case ${missionPayload.caseNumber}`,
+        tone: "default"
+      }]}
+      missionPrompt={{
+        label: "Learning goal",
+        text: missionPayload.learningGoal
+      }}
       menu={menu}
       isPaused={isPaused}
     >
       <div className={styles.engineColumn}>
-
-        <div className={styles.topBar}>
-          <div className={styles.topBarCase}>
-            <span className={styles.topBarCaseLabel}>Case</span>
-            <span className={styles.topBarCaseNumber}>{missionPayload.caseNumber}</span>
-          </div>
-          <span className={styles.topBarDifficulty}>{tierConfig.label}</span>
-        </div>
 
         <div className={styles.caseFile}>
           <div className={styles.equationList}>

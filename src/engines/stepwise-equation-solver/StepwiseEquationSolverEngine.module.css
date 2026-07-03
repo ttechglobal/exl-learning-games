@@ -761,3 +761,123 @@
 }
 .tryYourselfBtn:hover  { background: rgba(47, 155, 214, 0.2); }
 .tryYourselfBtn:active { transform: scale(0.97); }
+
+/* ── Next step confirmation section ──────────────────────────────────────── */
+
+.nextStepSection {
+  box-sizing: border-box;
+  width: min(520px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: feedbackFadeIn 0.25s ease both;
+}
+
+.nextStepBtn {
+  box-sizing: border-box;
+  width: 100%;
+  font-family: var(--eg-font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #0b1330;
+  background: var(--eg-subject-mathematics);
+  border: none;
+  border-radius: 12px;
+  padding: 15px 24px;
+  cursor: pointer;
+  transition: transform var(--eg-duration-press) ease, opacity 0.15s ease;
+}
+.nextStepBtn:hover  { opacity: 0.88; }
+.nextStepBtn:active { transform: scale(0.97); }
+
+/* ── Case header override — clean minimal top bar ────────────────────────── */
+/* GameplayShell's stats row is empty (stats=[]) so the shell renders only   */
+/* the menu button. We show the case number + divider inside the engine.     */
+
+.caseHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.caseNumber {
+  font-family: var(--eg-font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--eg-subject-mathematics);
+  text-transform: uppercase;
+}
+
+.caseDifficulty {
+  font-family: var(--eg-font-body);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--eg-gold);
+  text-transform: uppercase;
+  background: rgba(255, 178, 60, 0.12);
+  border: 1px solid rgba(255, 178, 60, 0.3);
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+/* ── Top bar — case title + difficulty badge ─────────────────────────────── */
+/* Sits above the equation card. The GameplayShell menu button is pinned      */
+/* top-right by the shell itself; this bar lives below it in the scroll flow. */
+
+.topBar {
+  box-sizing: border-box;
+  width: min(520px, 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 4px 2px;
+}
+
+.topBarCase {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.topBarCaseLabel {
+  font-family: var(--eg-font-display);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.topBarCaseNumber {
+  font-family: var(--eg-font-display);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+}
+
+.topBarDifficulty {
+  font-family: var(--eg-font-body);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--eg-gold);
+  background: rgba(255, 178, 60, 0.1);
+  border: 1px solid rgba(255, 178, 60, 0.3);
+  border-radius: 6px;
+  padding: 3px 10px;
+}
+
+@media (max-width: 480px) {
+  .topBar {
+    padding: 8px 2px 0;
+  }
+  .topBarCaseNumber {
+    font-size: 0.9rem;
+  }
+}

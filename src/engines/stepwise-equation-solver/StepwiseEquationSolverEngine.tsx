@@ -76,13 +76,77 @@ type UIStage =
  * The multiply and other operations needed clearer language.
  */
 const OPERATION_LABELS: Record<OperationType, { label: string; sublabel: string }> = {
-  add:           { label: "Add both equations",         sublabel: "Eq1 + Eq2" },
-  subtract:      { label: "Subtract one equation",      sublabel: "Eq1 − Eq2" },
-  multiply_eq1:  { label: "Multiply the 1st equation",  sublabel: "scale Eq1 by a number" },
-  multiply_eq2:  { label: "Multiply the 2nd equation",  sublabel: "scale Eq2 by a number" },
-  solve:         { label: "Divide to find the value",   sublabel: "isolate x or y" },
-  substitute:    { label: "Substitute back",            sublabel: "find the other variable" },
+  add:           { label: "Add the equations",           sublabel: "combine both rows" },
+  subtract:      { label: "Subtract the equations",      sublabel: "remove one row from the other" },
+  multiply_eq1:  { label: "Scale the 1st equation",      sublabel: "multiply every term by a number" },
+  multiply_eq2:  { label: "Scale the 2nd equation",      sublabel: "multiply every term by a number" },
+  solve:         { label: "Divide to find the value",    sublabel: "isolate the remaining variable" },
+  substitute:    { label: "Substitute back",             sublabel: "find the second variable" },
 };
+
+// Dynamic guide prompts — rotate so the voice feels alive, not like a UI label
+const GUIDE_PROMPTS = [
+  "What do we do here?",
+  "What's your next move?",
+  "Now, what do we do?",
+  "What should we do next?",
+  "Your turn — what's the next step?",
+  "Think it through — what comes next?",
+  "What do we need to do?",
+];
+
+/**
+ * Returns the 4 most contextually useful operations for the current step.
+ * Reduces cognitive load — no need to see "Substitute back" when we're
+ * still in the elimination phase.
+ */
+function getRelevantOperations(
+  stepIndex: number,
+  totalSteps: number,
+  solutionSteps: import("./stepwiseEquationSolver.config").SolutionStep[]
+): OperationType[] {
+  // Look ahead at what operations appear in this mission
+  const upcoming = new Set(solutionSteps.slice(stepIndex).map((s) => s.operation as OperationType));
+  const current = solutionSteps[stepIndex]?.operation as OperationType | undefined;
+
+  // Always include the correct operation for the current step
+  const pool = new Set<OperationType>();
+  if (current) pool.add(current);
+
+  // Add contextually relevant alternatives based on phase
+  const isEliminationPhase = stepIndex < totalSteps - 2;
+  const isSolvePhase = upcoming.has("solve") || upcoming.has("substitute");
+
+  if (isEliminationPhase) {
+    pool.add("add");
+    pool.add("subtract");
+    // Only show multiply if it's needed in this mission
+    if (solutionSteps.some((s) => s.operation === "multiply_eq1")) pool.add("multiply_eq1");
+    if (solutionSteps.some((s) => s.operation === "multiply_eq2")) pool.add("multiply_eq2");
+  }
+
+  if (isSolvePhase) {
+    pool.add("solve");
+    pool.add("substitute");
+  }
+
+  // Cap at 4, always keeping the correct answer in the set
+  const result = Array.from(pool);
+  if (result.length > 4) {
+    // Keep current op + pick 3 others
+    const others = result.filter((op) => op !== current).slice(0, 3);
+    return current ? [current, ...others] : others.slice(0, 4);
+  }
+  // Pad to at least 2 options so it never feels like a giveaway
+  if (result.length < 2) {
+    const fallback: OperationType[] = ["add", "subtract", "solve", "substitute"];
+    for (const op of fallback) {
+      if (!pool.has(op)) { pool.add(op); break; }
+    }
+    return Array.from(pool).slice(0, 4);
+  }
+  return result;
+}
 
 // ─── component ───────────────────────────────────────────────────────────────
 
@@ -109,6 +173,9 @@ export function StepwiseEquationSolverEngine({
   // When the student taps "Try it yourself", we replay the mission as independent.
   // Declared before pedagogicalStage because pedagogicalStage depends on it.
   const [selfPracticeMode, setSelfPracticeMode] = useState(false);
+  // After a correct step, show the result and wait for the user to tap Next
+  // before advancing. This gives them time to read what happened.
+  const [stepConfirmed, setStepConfirmed] = useState(false);
 
   // In self-practice mode treat the mission as independent regardless of authored stage.
   const authoredStage: PedagogicalStage = missionPayload.stage ?? "supported";
@@ -152,6 +219,7 @@ export function StepwiseEquationSolverEngine({
   const startTimeRef = useRef(Date.now());
   const endedRef = useRef(false);
   const stepLogRef = useRef<Array<{ operation: string; outcome: StepOutcome }>>([]);
+  const pendingAdvanceRef = useRef<{ finalStepsTaken: number; isFinal: boolean; nextIndex: number } | null>(null);
 
   const currentStep: SolutionStep | undefined = missionPayload.solutionSteps[currentStepIndex];
 
@@ -211,32 +279,25 @@ export function StepwiseEquationSolverEngine({
   }, [totalWrongAttempts, hintsUsed, suboptimalSteps, shared, mission, onComplete, missionPayload, pedagogicalStage]);
 
   // ── Advance to next step ──────────────────────────────────────────────────
-  const advanceStep = useCallback((finalStepsTaken: number, isFinal: boolean) => {
+  const advanceStep = useCallback((finalStepsTaken: number, isFinal: boolean, nextIndex: number) => {
     if (isFinal) {
-      setTimeout(() => {
-        setUIStage("case_closed");
-        playSound("mission_complete");
-        completeMission(finalStepsTaken); // stores pendingOutcome, does NOT call onComplete
-      }, 700);
+      setUIStage("case_closed");
+      playSound("mission_complete");
+      completeMission(finalStepsTaken); // stores pendingOutcome, does NOT call onComplete
     } else {
-      const nextIndex = currentStepIndex + 1;
-      setTimeout(() => {
-        setCurrentStepIndex(nextIndex);
-        setLastFeedback(null);
-        setFlashedButton(null);
-        setWrongAttemptsOnStep(0);
-        setHintsRevealedForStep(false);
-        setHintRequestedByPlayer(false);
-        setMascotPose("idle");
-        setMascotLine(null);
-        // Guided stage: stay on guided_action for the next step
-        // Assisted stage: go back to variable_choice for each new step
-        if (pedagogicalStage === "guided") setUIStage("guided_action");
-        else if (pedagogicalStage === "assisted") setUIStage("variable_choice");
-        // supported/independent/mastery stay on operation_choice
-      }, 900);
+      setCurrentStepIndex(nextIndex);
+      setLastFeedback(null);
+      setFlashedButton(null);
+      setWrongAttemptsOnStep(0);
+      setHintsRevealedForStep(false);
+      setHintRequestedByPlayer(false);
+      setMascotPose("idle");
+      setMascotLine(null);
+      if (pedagogicalStage === "guided") setUIStage("guided_action");
+      else if (pedagogicalStage === "assisted") setUIStage("variable_choice");
+      // supported/independent/mastery stay on operation_choice
     }
-  }, [currentStepIndex, pedagogicalStage, completeMission]);
+  }, [pedagogicalStage, completeMission]);
 
   // ── Handle guided tap (confirm the next step) ─────────────────────────────
   const handleGuidedTap = useCallback(() => {
@@ -253,7 +314,8 @@ export function StepwiseEquationSolverEngine({
     const nextTotal = totalStepsTaken + 1;
     setTotalStepsTaken(nextTotal);
     stepLogRef.current.push({ operation: currentStep.operation, outcome: "correct" });
-    advanceStep(nextTotal, currentStep.isFinal ?? false);
+    setStepConfirmed(true);
+    pendingAdvanceRef.current = { finalStepsTaken: nextTotal, isFinal: currentStep.isFinal ?? false, nextIndex: currentStepIndex + 1 };
   }, [currentStep, uiStage, totalStepsTaken, advanceStep]);
 
   // ── Handle operation selection ────────────────────────────────────────────
@@ -284,7 +346,9 @@ export function StepwiseEquationSolverEngine({
 
       const nextTotal = totalStepsTaken + 1;
       setTotalStepsTaken(nextTotal);
-      advanceStep(nextTotal, validation.isFinal);
+      // Don't auto-advance — show result, wait for user to tap Next
+      setStepConfirmed(true);
+      pendingAdvanceRef.current = { finalStepsTaken: nextTotal, isFinal: validation.isFinal, nextIndex: currentStepIndex + 1 };
 
     } else if (validation.outcome === "suboptimal") {
       playSound("suboptimal");
@@ -323,26 +387,35 @@ export function StepwiseEquationSolverEngine({
     }
   }, [currentStep, uiStage, missionPayload, shared, tierConfig, totalStepsTaken, autoHints, advanceStep]);
 
+  // ── Next step — fires when user taps the "Next" / "Got it" button ──────────
+  const handleNextStep = useCallback(() => {
+    const pending = pendingAdvanceRef.current;
+    if (!pending) return;
+    pendingAdvanceRef.current = null;
+    setStepConfirmed(false);
+    setFlashedButton(null);
+    setLastFeedback(null);
+    setMascotPose("idle");
+    setMascotLine(null);
+    advanceStep(pending.finalStepsTaken, pending.isFinal, pending.nextIndex);
+  }, [advanceStep]);
+
   // ── Variable choice (assisted stage) ─────────────────────────────────────
   const handleVariableChoice = useCallback((_variable: string) => {
     setUIStage("operation_choice");
   }, []);
 
-  // ── HUD ──────────────────────────────────────────────────────────────────
-  const stats = [
-    {
-      label: "Step",
-      value: `${Math.min(currentStepIndex + 1, missionPayload.solutionSteps.length)} / ${missionPayload.solutionSteps.length}`,
-      tone: "default" as const
-    },
-    {
-      label: "Mistakes",
-      value: totalWrongAttempts === 0 ? "—" : String(totalWrongAttempts),
-      tone: totalWrongAttempts > 0 ? ("danger" as const) : ("default" as const)
-    }
-  ];
-
   const variablesInSystem = Object.keys(missionPayload.solution.variables).sort();
+
+  // Dynamic guide prompt — cycles so it doesn't feel like a static UI label
+  const guidePrompt = GUIDE_PROMPTS[currentStepIndex % GUIDE_PROMPTS.length];
+
+  // 4 contextually relevant operation buttons for this step
+  const relevantOps = getRelevantOperations(
+    currentStepIndex,
+    missionPayload.solutionSteps.length,
+    missionPayload.solutionSteps
+  );
   const environmentImages = GAME_ENVIRONMENT_IMAGES["simultaneous-equations-detective"];
 
   // ── Handle "Try it yourself" — reset state, replay as independent ───────────
@@ -363,6 +436,8 @@ export function StepwiseEquationSolverEngine({
     setMascotPose("idle");
     setMascotLine(null);
     setFlashedButton(null);
+    setStepConfirmed(false);
+    pendingAdvanceRef.current = null;
     startTimeRef.current = Date.now();
     endedRef.current = false;
     stepLogRef.current = [];
@@ -451,23 +526,24 @@ export function StepwiseEquationSolverEngine({
       environmentImages={environmentImages}
       fallbackGradient="linear-gradient(160deg, #0b1330 0%, #0e1a2e 50%, #0b2340 100%)"
       accentColor="var(--eg-subject-mathematics)"
-      stats={stats}
-      missionPrompt={{
-        label: `CASE ${missionPayload.caseNumber}`,
-        text: missionPayload.learningGoal
-      }}
+      stats={[]}
       menu={menu}
-      gameTitle={gameTitle}
       isPaused={isPaused}
     >
       <div className={styles.engineColumn}>
 
+        {/* ── Top bar: case title + menu (menu rendered by shell, we mirror the label) */}
+        <div className={styles.topBar}>
+          <div className={styles.topBarCase}>
+            <span className={styles.topBarCaseLabel}>Case</span>
+            <span className={styles.topBarCaseNumber}>{missionPayload.caseNumber}</span>
+          </div>
+          <span className={styles.topBarDifficulty}>{tierConfig.label}</span>
+        </div>
+
         {/* ── Equations ────────────────────────────────────────────────── */}
         <div className={styles.caseFile}>
           <div className={styles.caseHeader}>
-            <span className={styles.caseNumber}>Case {missionPayload.caseNumber}</span>
-            <span className={styles.caseDifficulty}>{tierConfig.label}</span>
-          </div>
           <div className={styles.equationList}>
             {missionPayload.equations.map((eq) => (
               <div key={eq.id} className={styles.equationRow}>{eq.display}</div>
@@ -517,22 +593,16 @@ export function StepwiseEquationSolverEngine({
         )}
 
         {/* ── SUPPORTED / INDEPENDENT / MASTERY: operation buttons ─────── */}
-        {uiStage === "operation_choice" && (
+        {uiStage === "operation_choice" && !stepConfirmed && (
           <div className={styles.operationSection}>
-            <div className={styles.sectionLabel}>
-              {pedagogicalStage === "assisted"
-                ? "Now choose your operation:"
-                : "What do you want to do?"}
-            </div>
+            <div className={styles.sectionLabel}>{guidePrompt}</div>
             <div className={styles.operationGrid}>
-              {(Object.keys(OPERATION_LABELS) as OperationType[]).map((opId) => {
+              {relevantOps.map((opId) => {
                 const { label, sublabel } = OPERATION_LABELS[opId];
-                // For multiply buttons, show the factor if we know it
                 const factor = missionPayload.solutionSteps.find(
                   (s) => s.operation === opId
                 )?.multiplyFactor;
                 const displaySublabel = factor ? `× ${factor}` : sublabel;
-
                 const isFlashed = flashedButton?.id === opId;
                 const flashTone = isFlashed ? flashedButton?.tone : undefined;
                 const isHighlighted = showHintHighlight && currentStep?.operation === opId;
@@ -557,8 +627,22 @@ export function StepwiseEquationSolverEngine({
           </div>
         )}
 
-        {/* ── Feedback ────────────────────────────────────────────────── */}
-        {lastFeedback && (
+        {/* ── NEXT STEP button — appears after correct step, before advancing ── */}
+        {stepConfirmed && uiStage === "operation_choice" && (
+          <div className={styles.nextStepSection}>
+            {lastFeedback && (
+              <div className={`${styles.feedbackStrip} ${styles[lastFeedback.tone]}`}>
+                {lastFeedback.text}
+              </div>
+            )}
+            <button className={styles.nextStepBtn} onClick={handleNextStep}>
+              {pendingAdvanceRef.current?.isFinal ? "See the answer →" : "Next step →"}
+            </button>
+          </div>
+        )}
+
+        {/* Feedback shown inline in nextStepSection when stepConfirmed, or here for invalid */}
+        {!stepConfirmed && lastFeedback && (
           <div className={`${styles.feedbackStrip} ${styles[lastFeedback.tone]}`}>
             {lastFeedback.text}
           </div>

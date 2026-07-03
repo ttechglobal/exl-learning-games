@@ -11,7 +11,7 @@ import type { GameRow } from "@/types/db";
 // leaderboard fetch is served from CDN cache on the client side.
 export const dynamic = "force-dynamic";
 
-const FEATURED_SLUGS = ["atom-forge", "element-hunter"];
+const FEATURED_SLUGS = ["atom-forge", "element-hunter", "mirror-lab", "simultaneous-equations-detective"];
 
 /** Homepage shows the top 5 (1 champion + 4 more) — per direct decision,
  *  trimmed down from the previous top 10 now that a full /leaderboard

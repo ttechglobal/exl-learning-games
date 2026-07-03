@@ -48,6 +48,24 @@ import styles from "@/app/HomePage.module.css";
 
 const SUBJECTS = Object.entries(SUBJECT_META).map(([key, meta]) => ({ key, ...meta }));
 
+/** Format large XP numbers for mobile display — 1200 → "1.2k", 10000 → "10k" */
+function formatXp(xp: number): string {
+  if (xp >= 10000) return `${Math.floor(xp / 1000)}k`;
+  if (xp >= 1000) return `${(xp / 1000).toFixed(1).replace(/\.0$/, "")}k`;
+  return xp.toLocaleString();
+}
+
+/** Rotate featured games so user sees different ones on each visit.
+ *  Uses the day of the week (0–6) as the rotation seed — stable per day,
+ *  different each day of the week. */
+function rotateFeaturedGames(games: GameRow[], count = 4): GameRow[] {
+  if (games.length <= count) return games;
+  const seed = new Date().getDay();
+  const start = seed % games.length;
+  const rotated = [...games.slice(start), ...games.slice(0, start)];
+  return rotated.slice(0, count);
+}
+
 type Badge = "featured" | "new" | "trending" | "popular";
 
 /** Difficulty (EASY/MEDIUM/HARD) lives on MissionRow, not GameRow, so a
@@ -104,6 +122,7 @@ export interface HomePageProps {
 export function HomePage({ gamesBySubject, featuredGames, leaderboard, currentStudentXp }: HomePageProps) {
   const { theme, toggleTheme } = useTheme();
 
+  const displayedGames = rotateFeaturedGames(featuredGames);
   const champion = leaderboard?.[0];
   // Top 5 total on the homepage (1 champion + 4 more) — see page.tsx's
   // HOMEPAGE_LEADERBOARD_SIZE comment for why this shrank from the
@@ -202,7 +221,7 @@ export function HomePage({ gamesBySubject, featuredGames, leaderboard, currentSt
             </div>
 
             <div className={styles.popularGrid}>
-              {featuredGames.map((game, i) => {
+              {displayedGames.map((game, i) => {
                 const subject = SUBJECTS.find((s) => s.key === game.subject);
                 const badge = badgeForIndex(i);
                 return (
@@ -258,7 +277,7 @@ export function HomePage({ gamesBySubject, featuredGames, leaderboard, currentSt
                   <div className={styles.championLabel}>Weekly Champion</div>
                   <div className={styles.championStats}>
                     <div>
-                      <b className={styles.fd}>{champion.xpTotal.toLocaleString()}</b>
+                      <b className={styles.fd}>{formatXp(champion.xpTotal)}</b>
                       <span>XP</span>
                     </div>
                     {champion.school && (
@@ -283,7 +302,7 @@ export function HomePage({ gamesBySubject, featuredGames, leaderboard, currentSt
                       </div>
                     </div>
                     <div className={styles.lbXp}>
-                      {entry.xpTotal.toLocaleString()} <span>XP</span>
+                      {formatXp(entry.xpTotal)} <span>XP</span>
                     </div>
                   </div>
                 ))}

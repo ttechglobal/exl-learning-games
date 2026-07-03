@@ -148,7 +148,7 @@ export function StepwiseEquationSolverEngine({
   gameTitle
 }: EngineRuntimeProps<StepwiseEquationSolverConfig, StepwiseEquationSolverOutcome>) {
   const { shared, mission } = config;
-  const missionPayload = mission.payload as MissionPayload;
+  const missionPayload = mission.payload as unknown as MissionPayload;
 
   // selfPracticeMode must be declared before pedagogicalStage (depends on it)
   const [selfPracticeMode, setSelfPracticeMode] = useState(false);

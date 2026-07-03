@@ -24,6 +24,8 @@
   justify-content: center;
   padding: 24px 20px;
   overflow: hidden;
+  /* Deep navy fallback — matches PrePlayShell and GameplayShell */
+  background: linear-gradient(160deg, #0b1330 0%, #0e1a2e 55%, #0a1f3a 100%);
 }
 
 /* Matches PrePlayShell.module.css's .headerRow exactly — same visual
@@ -43,8 +45,16 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 16px 20px 4px;
+  /* Match PrePlayShell.inner — same max-width + auto margin so the
+   * back button and title don't stretch edge-to-edge on wide screens */
+  max-width: 920px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px 24px 4px;
   box-sizing: border-box;
+  /* Re-center: position:absolute needs left:0/right:0 + margin:auto */
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .mascotRow {

@@ -47,11 +47,15 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
   const { theme, toggleTheme } = useTheme();
   const [expandedSubject, setExpandedSubject] = useState<string | null>(null);
   const [activeTopicFilter, setActiveTopicFilter] = useState<string>("all");
+  const [activeSubjectFilter, setActiveSubjectFilter] = useState<string>("all");
 
-  const subjects = Object.entries(bySubject).filter(([, g]) => g.length > 0);
-  const totalGames = subjects.reduce((s, [, g]) => s + g.length, 0);
-  const primaryAccent = subjects.length > 0
-    ? subjectMeta(subjects[0][0]).color
+  const allSubjects = Object.entries(bySubject).filter(([, g]) => g.length > 0);
+  const subjects = activeSubjectFilter === "all"
+    ? allSubjects
+    : allSubjects.filter(([key]) => key === activeSubjectFilter);
+  const totalGames = allSubjects.reduce((s, [, g]) => s + g.length, 0);
+  const primaryAccent = allSubjects.length > 0
+    ? subjectMeta(allSubjects[0][0]).color
     : "var(--eg-brand)";
 
   // ALL hooks at the top — never inside a conditional branch
@@ -169,6 +173,31 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
           </p>
         </div>
       </div>
+
+      {/* Subject filter pills */}
+      {allSubjects.length > 1 && (
+        <div className={styles.subjectFilterRow}>
+          <button
+            className={`${styles.subjectPill} ${activeSubjectFilter === "all" ? styles.subjectPillActive : ""}`}
+            onClick={() => setActiveSubjectFilter("all")}
+          >
+            🌍 All
+          </button>
+          {allSubjects.map(([key]) => {
+            const m = subjectMeta(key);
+            return (
+              <button
+                key={key}
+                className={`${styles.subjectPill} ${activeSubjectFilter === key ? styles.subjectPillActive : ""}`}
+                style={activeSubjectFilter === key ? { borderColor: m.color, color: m.color, background: m.tint } as React.CSSProperties : {}}
+                onClick={() => setActiveSubjectFilter(activeSubjectFilter === key ? "all" : key)}
+              >
+                {m.emoji} {m.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <div className={styles.overviewWrap}>
         {subjects.length === 0 && (

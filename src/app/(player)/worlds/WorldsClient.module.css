@@ -125,10 +125,12 @@
 .scrollRow {
   display: flex;
   gap: 12px;
-  padding: 0 16px 20px;
+  padding: 0 0 20px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  /* Extend scroll to edges on mobile with padding trick */
+  padding-left: 0;
 }
 .scrollRow::-webkit-scrollbar { display: none; }
 
@@ -226,10 +228,18 @@
 .tabsScroll {
   display: flex;
   gap: 0;
-  padding: 0 16px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 40px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  box-sizing: border-box;
+}
+@media (max-width: 600px) {
+  .tabsScroll {
+    padding: 0 16px;
+  }
 }
 .tabsScroll::-webkit-scrollbar { display: none; }
 
@@ -352,5 +362,67 @@
   .miniCard {
     width: calc(75vw);
     max-width: 260px;
+  }
+}
+/* ── Subject filter pills (overview) ─────────────────────────────────────── */
+
+.subjectFilterRow {
+  display: flex;
+  gap: 8px;
+  padding: 14px 40px 0;
+  max-width: 1180px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  flex-wrap: wrap;
+}
+.subjectFilterRow::-webkit-scrollbar { display: none; }
+
+@media (max-width: 600px) {
+  .subjectFilterRow {
+    padding: 12px 16px 0;
+    flex-wrap: nowrap;
+  }
+}
+
+.subjectPill {
+  flex-shrink: 0;
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--eg-surface-border);
+  background: var(--eg-surface-card);
+  color: var(--eg-surface-text-dim);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.subjectPill:hover {
+  color: var(--eg-surface-text);
+  border-color: var(--eg-surface-text-dim);
+}
+
+.subjectPillActive {
+  border-color: var(--eg-brand);
+  color: var(--eg-brand);
+  background: color-mix(in srgb, var(--eg-brand) 10%, transparent);
+}
+
+/* Also fix the overviewWrap to use container-aware padding */
+.overviewWrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 8px 40px 60px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .overviewWrap {
+    padding: 8px 16px 60px;
   }
 }

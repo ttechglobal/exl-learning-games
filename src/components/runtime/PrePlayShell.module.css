@@ -30,6 +30,10 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /* Deep navy fallback — shows when environment art is missing or fails
+   * to load. Matches the game engine backdrop so pre-game screens feel
+   * consistent even without illustration assets. */
+  background: linear-gradient(160deg, #0b1330 0%, #0e1a2e 55%, #0a1f3a 100%);
 }
 
 .inner {

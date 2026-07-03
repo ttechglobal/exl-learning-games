@@ -242,7 +242,7 @@ export function StepwiseEquationSolverEngine({
   const advanceStep = useCallback((finalStepsTaken: number, isFinal: boolean, nextIndex: number) => {
     if (isFinal) {
       setUIStage("case_closed");
-      playSound("mission_complete");
+      playSound("success");
       completeMission(finalStepsTaken);
     } else {
       setCurrentStepIndex(nextIndex);
@@ -261,7 +261,7 @@ export function StepwiseEquationSolverEngine({
   // ── handle guided tap ─────────────────────────────────────────────────────
   const handleGuidedTap = useCallback(() => {
     if (!currentStep || uiStage !== "guided_action") return;
-    playSound("correct");
+    playSound("submit");
     setMascotPose("celebrate");
     setMascotLine("Exactly right. Watch what happens.");
     if (currentStep.resultDisplay) {
@@ -290,7 +290,7 @@ export function StepwiseEquationSolverEngine({
     stepLogRef.current.push({ operation: operationId, outcome: validation.outcome });
 
     if (validation.outcome === "correct") {
-      playSound("correct");
+      playSound("submit");
       setFlashedButton({ id: operationId, tone: "correct" });
       setMascotPose("celebrate");
       setMascotLine(pickMascotLine("correct") ?? shared.feedback.correctStep[0]);
@@ -310,7 +310,7 @@ export function StepwiseEquationSolverEngine({
         nextIndex: currentStepIndex + 1
       };
     } else if (validation.outcome === "suboptimal") {
-      playSound("suboptimal");
+      playSound("fail");
       setFlashedButton({ id: operationId, tone: "suboptimal" });
       setMascotPose("encourage");
       setMascotLine("That works, but there's a shorter path.");
@@ -325,7 +325,7 @@ export function StepwiseEquationSolverEngine({
         nextIndex: currentStepIndex + 1
       };
     } else {
-      playSound("wrong");
+      playSound("fail");
       setFlashedButton({ id: operationId, tone: "invalid" });
       setMascotPose("encourage");
       setLastFeedback({ text: shared.feedback.invalidStep, tone: "invalid" });

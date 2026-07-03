@@ -80,7 +80,7 @@ const OPERATION_LABELS: Record<OperationType, { label: string; sublabel: string 
   subtract:      { label: "Subtract one equation",      sublabel: "Eq1 − Eq2" },
   multiply_eq1:  { label: "Multiply the 1st equation",  sublabel: "scale Eq1 by a number" },
   multiply_eq2:  { label: "Multiply the 2nd equation",  sublabel: "scale Eq2 by a number" },
-  solve:         { label: "Solve for the variable",     sublabel: "isolate x or y" },
+  solve:         { label: "Divide to find the value",   sublabel: "isolate x or y" },
   substitute:    { label: "Substitute back",            sublabel: "find the other variable" },
 };
 
@@ -106,7 +106,13 @@ export function StepwiseEquationSolverEngine({
     caseHints: string[];
   };
 
-  const pedagogicalStage: PedagogicalStage = missionPayload.stage ?? "supported";
+  // When the student taps "Try it yourself", we replay the mission as independent.
+  // Declared before pedagogicalStage because pedagogicalStage depends on it.
+  const [selfPracticeMode, setSelfPracticeMode] = useState(false);
+
+  // In self-practice mode treat the mission as independent regardless of authored stage.
+  const authoredStage: PedagogicalStage = missionPayload.stage ?? "supported";
+  const pedagogicalStage: PedagogicalStage = selfPracticeMode ? "independent" : authoredStage;
 
   // ── Resolve difficulty tier config ────────────────────────────────────────
   const tierConfig: DifficultyTier =
@@ -134,6 +140,10 @@ export function StepwiseEquationSolverEngine({
   const [lastFeedback, setLastFeedback] = useState<{ text: string; tone: StepOutcome } | null>(null);
   const [visibleResults, setVisibleResults] = useState<string[]>([]);
   const [efficiencyComparison, setEfficiencyComparison] = useState<string[] | null>(null);
+  // Stores the completed outcome until the student taps Continue on the
+  // case-closed screen. onComplete is NOT called until that tap so GameRuntime
+  // doesn't navigate away before the student has read their results.
+  const [pendingOutcome, setPendingOutcome] = useState<StepwiseEquationSolverOutcome | null>(null);
 
   const [mascotPose, setMascotPose] = useState<"idle" | "celebrate" | "encourage" | null>("idle");
   const [mascotLine, setMascotLine] = useState<string | null>(null);
@@ -185,7 +195,7 @@ export function StepwiseEquationSolverEngine({
       setEfficiencyComparison(optimalPath);
     }
 
-    onComplete({
+    const outcome: StepwiseEquationSolverOutcome = {
       success: true,
       score,
       finalScore: Math.round(score * 100),
@@ -195,7 +205,9 @@ export function StepwiseEquationSolverEngine({
       efficiency,
       stepLog: stepLogRef.current,
       xpEarned: Math.round(mission.xpReward * score)
-    });
+    };
+    // Store outcome — onComplete fires only when the student taps Continue.
+    setPendingOutcome(outcome);
   }, [totalWrongAttempts, hintsUsed, suboptimalSteps, shared, mission, onComplete, missionPayload, pedagogicalStage]);
 
   // ── Advance to next step ──────────────────────────────────────────────────
@@ -204,7 +216,7 @@ export function StepwiseEquationSolverEngine({
       setTimeout(() => {
         setUIStage("case_closed");
         playSound("mission_complete");
-        completeMission(finalStepsTaken);
+        completeMission(finalStepsTaken); // stores pendingOutcome, does NOT call onComplete
       }, 700);
     } else {
       const nextIndex = currentStepIndex + 1;
@@ -333,13 +345,45 @@ export function StepwiseEquationSolverEngine({
   const variablesInSystem = Object.keys(missionPayload.solution.variables).sort();
   const environmentImages = GAME_ENVIRONMENT_IMAGES["simultaneous-equations-detective"];
 
+  // ── Handle "Try it yourself" — reset state, replay as independent ───────────
+  const handleTryYourself = useCallback(() => {
+    setSelfPracticeMode(true);
+    setUIStage("operation_choice");
+    setCurrentStepIndex(0);
+    setWrongAttemptsOnStep(0);
+    setTotalWrongAttempts(0);
+    setHintsUsed(0);
+    setSuboptimalSteps(0);
+    setTotalStepsTaken(0);
+    setHintsRevealedForStep(false);
+    setHintRequestedByPlayer(false);
+    setLastFeedback(null);
+    setVisibleResults([]);
+    setEfficiencyComparison(null);
+    setMascotPose("idle");
+    setMascotLine(null);
+    setFlashedButton(null);
+    startTimeRef.current = Date.now();
+    endedRef.current = false;
+    stepLogRef.current = [];
+    // pendingOutcome intentionally kept — if they complete again it will update
+  }, []);
+
   // ── Case closed ───────────────────────────────────────────────────────────
   if (uiStage === "case_closed") {
     const solutionLines = getSolutionLines(missionPayload.solution.variables);
+    // Build the full worked solution from the authored steps
+    const workedSolution = missionPayload.solutionSteps.map((step) => ({
+      label: step.description,
+      lines: step.resultDisplay
+    }));
+
     return (
       <div className={styles.caseClosedOverlay}>
         <div className={styles.caseClosedBadge}>{shared.feedback.caseClosedPrimary}</div>
         <div className={styles.caseClosedLine}>{shared.feedback.caseClosedSecondary}</div>
+
+        {/* Final answer */}
         <div className={styles.solutionBox}>
           {solutionLines.map(({ variable, value }) => (
             <div key={variable} className={styles.solutionVar}>
@@ -348,7 +392,24 @@ export function StepwiseEquationSolverEngine({
             </div>
           ))}
         </div>
-        {/* Mastery stage: show the optimal path for comparison */}
+
+        {/* Full worked solution — always shown so student can review */}
+        <div className={styles.workedSolution}>
+          <div className={styles.workedSolutionLabel}>How it was solved</div>
+          {workedSolution.map((step, i) => (
+            <div key={i} className={styles.workedStep}>
+              <div className={styles.workedStepHeader}>
+                <span className={styles.workedStepNum}>{i + 1}</span>
+                <span className={styles.workedStepLabel}>{step.label}</span>
+              </div>
+              {step.lines.map((line, j) => (
+                <div key={j} className={styles.workedStepLine}>{line}</div>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        {/* Mastery stage: efficiency comparison */}
         {efficiencyComparison && (
           <div className={styles.masteryComparison}>
             <div className={styles.masteryLabel}>Most efficient path</div>
@@ -360,6 +421,26 @@ export function StepwiseEquationSolverEngine({
             ))}
           </div>
         )}
+
+        {/* Action buttons */}
+        <div className={styles.caseClosedActions}>
+          {/* Only offer "Try it yourself" if they were in a guided/assisted stage */}
+          {!selfPracticeMode &&
+            (pedagogicalStage === "guided" || pedagogicalStage === "assisted") && (
+            <button
+              className={styles.tryYourselfBtn}
+              onClick={handleTryYourself}
+            >
+              Try it yourself →
+            </button>
+          )}
+          <button
+            className={styles.continueBtn}
+            onClick={() => { if (pendingOutcome) onComplete(pendingOutcome); }}
+          >
+            Continue →
+          </button>
+        </div>
       </div>
     );
   }

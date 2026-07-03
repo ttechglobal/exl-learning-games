@@ -635,3 +635,129 @@
   font-weight: 700;
   color: var(--eg-subject-mathematics);
 }
+
+/* ── Continue button (case closed screen) ────────────────────────────────── */
+
+.continueBtn {
+  margin-top: 32px;
+  font-family: var(--eg-font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #0b1330;
+  background: var(--eg-gold);
+  border: none;
+  border-radius: 14px;
+  padding: 16px 40px;
+  cursor: pointer;
+  transition:
+    transform var(--eg-duration-press) ease,
+    opacity 0.15s ease;
+  animation: fadeUp 0.4s ease both;
+  animation-delay: 1s;
+}
+
+.continueBtn:hover  { opacity: 0.88; }
+.continueBtn:active { transform: scale(0.97); }
+
+/* ── Worked solution (case closed review) ────────────────────────────────── */
+
+.workedSolution {
+  box-sizing: border-box;
+  width: min(460px, 90vw);
+  margin-top: 20px;
+  background: rgba(11, 19, 48, 0.7);
+  border: 1px solid rgba(47, 155, 214, 0.2);
+  border-radius: 14px;
+  padding: 16px 20px;
+  animation: fadeUp 0.4s ease both;
+  animation-delay: 0.5s;
+}
+
+.workedSolutionLabel {
+  font-family: var(--eg-font-display);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--eg-subject-mathematics);
+  margin-bottom: 14px;
+}
+
+.workedStep {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.workedStep:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.workedStepHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.workedStepNum {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(47, 155, 214, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--eg-font-display);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--eg-subject-mathematics);
+}
+
+.workedStepLabel {
+  font-family: var(--eg-font-body);
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.workedStepLine {
+  font-family: "Courier New", monospace;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #ffffff;
+  padding-left: 32px;
+  line-height: 1.6;
+}
+
+/* ── Case closed action buttons ──────────────────────────────────────────── */
+
+.caseClosedActions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+  animation: fadeUp 0.4s ease both;
+  animation-delay: 1s;
+}
+
+.tryYourselfBtn {
+  font-family: var(--eg-font-display);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--eg-subject-mathematics);
+  background: rgba(47, 155, 214, 0.12);
+  border: 1.5px solid rgba(47, 155, 214, 0.4);
+  border-radius: 12px;
+  padding: 13px 32px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform var(--eg-duration-press) ease;
+  min-width: 200px;
+  text-align: center;
+}
+.tryYourselfBtn:hover  { background: rgba(47, 155, 214, 0.2); }
+.tryYourselfBtn:active { transform: scale(0.97); }

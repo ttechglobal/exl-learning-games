@@ -84,6 +84,34 @@ export const GAME_ENVIRONMENT_IMAGES: Record<string, GameEnvironmentImages> = {
   "carbon-builder": {
     desktop: "/illustrations/carbon-builder-desktop.png",
     mobile: "/illustrations/carbon-builder-mobile.png"
+  },
+  /**
+   * Math Detective headquarters — the environment for the
+   * stepwise-equation-solver engine's simultaneous equations game.
+   *
+   * Art direction (from game spec):
+   * A modern mathematical detective headquarters for teenagers 12-15,
+   * featuring investigation boards covered in equations, digital displays,
+   * notebooks, mathematical diagrams, subtle detective atmosphere,
+   * educational game environment, painted illustration style, dark navy
+   * and cyan lighting, cinematic but clean composition, low-detail center
+   * gameplay area.
+   *
+   * AI art prompt for generation:
+   * "A modern mathematical detective headquarters for teenagers aged 12-15,
+   * featuring investigation boards covered in equations, digital displays,
+   * notebooks, mathematical diagrams, subtle detective atmosphere,
+   * educational game environment, painted illustration style, dark navy
+   * and cyan lighting, cinematic but clean composition, low-detail center
+   * gameplay area. Left: case files, evidence board, investigation
+   * timeline. Right: mathematical tools, notebooks, solved case archives."
+   *
+   * Both variants point to the same placeholder until dedicated assets
+   * are produced against this prompt (see docs/ILLUSTRATION_GUIDE.md).
+   */
+  "simultaneous-equations-detective": {
+    desktop: "/illustrations/simultaneous-equations-detective-desktop.png",
+    mobile: "/illustrations/simultaneous-equations-detective-mobile.png"
   }
 };
 

@@ -11,6 +11,7 @@ import { resolveQuickConceptsForSlug } from "@/lib/content/quickConcepts";
 import type { AttemptResult } from "@/types/result";
 import { enqueueAttempt } from "@/lib/offline/attemptQueue";
 import { track } from "@/lib/analytics/track";
+import { requestPlayerNamePrompt } from "@/lib/content/localPlayerName";
 
 export interface GameRuntimeMission {
   id: string;
@@ -298,7 +299,12 @@ export function GameRuntime({
       // comment on GameRuntimeProps for exactly why this can't wait for
       // onAdvanceToNextMission (the player might tap Back instead, and
       // the mission still completed).
-      if (result.success) onMissionSucceeded();
+      if (result.success) {
+        onMissionSucceeded();
+        // After the player's first completed game, prompt for their name.
+        // No-op if already set. See lib/content/localPlayerName.ts.
+        requestPlayerNamePrompt();
+      }
 
       // Flip BEFORE the mission_abandoned-on-unmount effect could ever
       // run — a mission that just completed should never also report as

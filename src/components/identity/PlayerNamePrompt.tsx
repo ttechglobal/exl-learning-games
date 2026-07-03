@@ -1,36 +1,55 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { hasSeenPlayerNamePrompt, markPlayerNamePromptSeen, setLocalPlayerName } from "@/lib/content/localPlayerName";
+import {
+  hasSeenPlayerNamePrompt,
+  isPlayerNamePromptRequested,
+  markPlayerNamePromptSeen,
+  setLocalPlayerName
+} from "@/lib/content/localPlayerName";
 import styles from "@/components/identity/PlayerNamePrompt.module.css";
 
 /**
  * components/identity/PlayerNamePrompt.tsx
  *
- * REPLACES IdentityBootstrap.tsx in the actual UI (that file/the
- * server-side device-cookie system it called into are NOT deleted —
- * see lib/content/localPlayerName.ts's header comment for why — but
- * this is what's actually mounted in app/layout.tsx now).
+ * TRIGGER CHANGE: this prompt no longer fires on first app open.
+ * It now appears after the player completes their first game, which is
+ * a far better moment — they've experienced something, have a reason to
+ * care about their name (leaderboard / personal best), and aren't being
+ * interrupted before they've even seen what the app does.
  *
- * Per corrected scope: no server round-trip, no cookie, no account. One
- * job — ask for a name once, on first-ever app open, purely so
- * HighScoreEntry.tsx's local high-score save can pre-fill it instead of
- * making the player retype their name every single time they set a
- * local high score on every game.
+ * How the trigger works:
+ *   1. GameRuntime calls requestPlayerNamePrompt() (lib/content/localPlayerName.ts)
+ *      on the first mission_completed event.
+ *   2. That function sets a localStorage flag AND dispatches a custom
+ *      "exl:namePromptRequested" event on window.
+ *   3. This component listens for that event and sets showPrompt=true.
+ *   4. On dismiss (Save or Skip), markPlayerNamePromptSeen() clears the
+ *      flag and sets the "already seen" key so it never shows again.
  *
- * Skipping is allowed and doesn't nag again (see
- * markPlayerNamePromptSeen) — a player who skips still gets a normal
- * empty name field the first time they actually save a high score, and
- * THAT save (in HighScoreEntry.tsx) also calls setLocalPlayerName, so
- * the name still ends up remembered from then on even if it was never
- * set via this prompt specifically.
+ * Mounted in app/layout.tsx (renders nothing until triggered — zero cost
+ * to keep it in the tree at all times).
  */
 export function PlayerNamePrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [name, setName] = useState("");
 
   useEffect(() => {
-    if (!hasSeenPlayerNamePrompt()) setShowPrompt(true);
+    // Check immediately in case the flag was set before this component mounted
+    // (e.g. user navigates away and back to the reflection screen).
+    if (!hasSeenPlayerNamePrompt() && isPlayerNamePromptRequested()) {
+      setShowPrompt(true);
+    }
+
+    // Listen for the custom event dispatched by requestPlayerNamePrompt()
+    // so the prompt appears in real time on the reflection screen after
+    // the first game completes — no page reload needed.
+    function handleRequest() {
+      if (!hasSeenPlayerNamePrompt()) setShowPrompt(true);
+    }
+
+    window.addEventListener("exl:namePromptRequested", handleRequest);
+    return () => window.removeEventListener("exl:namePromptRequested", handleRequest);
   }, []);
 
   function dismiss() {
@@ -49,9 +68,9 @@ export function PlayerNamePrompt() {
   return (
     <div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Choose a name for high scores">
       <div className={styles.card}>
-        <div className={styles.title}>What should we call you?</div>
+        <div className={styles.title}>Nice work, Detective! 🎉</div>
         <div className={styles.subtitle}>
-          This name will be used for your high scores on this device. You can skip this — no account needed.
+          What should we call you? Your name will appear on high scores on this device. You can skip this anytime.
         </div>
         <input
           className={styles.input}
@@ -70,7 +89,7 @@ export function PlayerNamePrompt() {
             Skip
           </button>
           <button className={styles.saveButton} onClick={handleSave}>
-            Save
+            Save name
           </button>
         </div>
       </div>

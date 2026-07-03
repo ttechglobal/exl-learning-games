@@ -49,6 +49,9 @@ export const GAME_CARD_ART: Record<string, string> = {
    */
   "carbon-builder": "/mascot/card-carbon-builder.svg",
   // "mirror-lab" has no custom art yet — GameCardArt shows subject emoji fallback
+
+  "simultaneous-equations-detective": "/mascot/card-simultaneous-equations.svg",
+
 };
 
 export const GAME_CARD_DESC: Record<string, string> = {
@@ -56,5 +59,7 @@ export const GAME_CARD_DESC: Record<string, string> = {
   "element-hunter": "Race the clock to spot elements by atomic number, group, and valence electrons.",
   "build-the-atom": "Add protons, neutrons, and electrons to build the exact atom or isotope you're given.",
   "carbon-builder": "Drag atoms together and build real molecules — one bond at a time, within carbon's strict 4-bond limit.",
-  "mirror-lab": "Perform real optics experiments. Move the object, switch mirrors, and observe how the image changes — then run the experiment."
+  "mirror-lab": "Perform real optics experiments. Move the object, switch mirrors, and observe how the image changes — then run the experiment.",
+  "simultaneous-equations-detective": "Crack mathematical cases by choosing the right sequence of elimination steps to uncover hidden values.",
+
 };

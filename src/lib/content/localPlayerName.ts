@@ -1,43 +1,33 @@
 /**
  * lib/content/localPlayerName.ts
  *
- * Pure client-side, no backend, no account, no device cookie. Originally
- * built so a player wouldn't have to retype their name on every local
- * high-score save (lib/content/localHighScores.ts, since replaced by
- * lib/content/personalBest.ts — see that file's header for why the
- * name-entry high-score flow was retired). What's left is the genuinely
- * independent piece: the one-time onboarding name prompt
- * (PlayerNamePrompt.tsx / IdentityBootstrap.tsx) still needs somewhere
- * to read/write a locally-remembered display name, with no per-game
- * high-score flow involved at all anymore.
+ * Pure client-side, no backend, no account, no device cookie. Stores a
+ * locally-remembered display name so the player doesn't retype it on
+ * every high-score save.
  *
- * Deliberately NOT the same thing as the server-side anonymous-identity
- * system built in an earlier round (lib/identity/deviceId.ts,
- * lib/db/queries/students.ts, the eg_device_id cookie) — that system
- * still exists in the codebase (not deleted; it's real, tested,
- * functioning infrastructure for the global/DB-backed leaderboard) but
- * is NOT what currently drives this local name prompt. Per direct
- * decision: revisit wiring the two together (so a chosen local name
- * could also become the DB display_name) only once a real
- * account/cross-device system is actually being built — not now.
+ * TRIGGER CHANGE: the one-time onboarding prompt is no longer shown on
+ * first app open. It now fires after the player completes their FIRST
+ * game — a much better moment. The player has experienced the product
+ * and has a natural reason to care about their name (it's about to
+ * appear on a leaderboard or personal best). See:
+ *   - GameRuntime.tsx → calls requestPlayerNamePrompt() on first mission_completed
+ *   - PlayerNamePrompt.tsx → watches for the flag, shows the modal
  *
- * Same "exl:" localStorage key prefix and SSR-safety pattern as every
- * other local-preference module in this codebase (ThemeProvider.tsx,
- * conceptPrefs.ts, personalBest.ts) — kept consistent rather than
- * introducing a third naming convention.
+ * Two separate localStorage keys, intentionally:
+ *   exl:playerName        — the actual name string
+ *   exl:playerNamePromptSeen — whether the prompt has been shown/dismissed
+ *   exl:playerNamePromptRequested — set by GameRuntime to trigger the prompt
  */
 
 const STORAGE_KEY = "exl:playerName";
+const ONBOARDED_KEY = "exl:playerNamePromptSeen";
+const TRIGGER_KEY = "exl:playerNamePromptRequested";
 
 function isBrowser(): boolean {
   return typeof window !== "undefined";
 }
 
-/** Returns the saved local player name, or null if one was never set
- *  (including: storage unavailable, or the player explicitly skipped
- *  the prompt — skipping does NOT save an empty string, it saves
- *  nothing, leaving a real empty/unset state rather than a confusing
- *  pre-filled blank). */
+/** Returns the saved local player name, or null if one was never set. */
 export function getLocalPlayerName(): string | null {
   if (!isBrowser()) return null;
   try {
@@ -48,9 +38,7 @@ export function getLocalPlayerName(): string | null {
   }
 }
 
-/** Saves the local player name — called from the one-time onboarding
- *  prompt (PlayerNamePrompt.tsx / IdentityBootstrap.tsx), the only
- *  caller now that the per-game high-score name-entry flow is retired. */
+/** Saves the local player name. */
 export function setLocalPlayerName(name: string): void {
   if (!isBrowser()) return;
   const trimmed = name.trim().slice(0, 20);
@@ -58,20 +46,13 @@ export function setLocalPlayerName(name: string): void {
   try {
     window.localStorage.setItem(STORAGE_KEY, trimmed);
   } catch {
-    // Losing this preference is a much smaller problem than crashing —
-    // same reasoning as every other localStorage write in this app.
+    // Losing this preference is a smaller problem than crashing.
   }
 }
 
-/** Tracks whether the one-time onboarding prompt has already been
- *  shown/dismissed on this browser — separate key from the name itself,
- *  since "the player explicitly skipped" and "the player has no saved
- *  name yet" need to be distinguishable (skipping should not show the
- *  prompt again on every visit). */
-const ONBOARDED_KEY = "exl:playerNamePromptSeen";
-
+/** Whether the one-time prompt has already been shown and dismissed. */
 export function hasSeenPlayerNamePrompt(): boolean {
-  if (!isBrowser()) return true; // fail toward NOT nagging if storage is unavailable
+  if (!isBrowser()) return true;
   try {
     return window.localStorage.getItem(ONBOARDED_KEY) === "1";
   } catch {
@@ -83,7 +64,38 @@ export function markPlayerNamePromptSeen(): void {
   if (!isBrowser()) return;
   try {
     window.localStorage.setItem(ONBOARDED_KEY, "1");
+    window.localStorage.removeItem(TRIGGER_KEY);
   } catch {
     // Same reasoning as above.
+  }
+}
+
+/**
+ * Called by GameRuntime after the player's FIRST completed mission.
+ * Sets a flag that PlayerNamePrompt.tsx polls for, causing it to appear
+ * on the Reflection screen without needing a full page re-render.
+ * No-ops if the player has already seen and dismissed the prompt.
+ */
+export function requestPlayerNamePrompt(): void {
+  if (!isBrowser()) return;
+  if (hasSeenPlayerNamePrompt()) return;
+  try {
+    window.localStorage.setItem(TRIGGER_KEY, "1");
+    // Fire a storage event so PlayerNamePrompt catches it immediately
+    // even within the same tab (storage events normally only fire in
+    // OTHER tabs; we dispatch a custom event for same-tab listening).
+    window.dispatchEvent(new CustomEvent("exl:namePromptRequested"));
+  } catch {
+    // Non-critical.
+  }
+}
+
+/** Checks whether the prompt has been requested but not yet shown. */
+export function isPlayerNamePromptRequested(): boolean {
+  if (!isBrowser()) return false;
+  try {
+    return window.localStorage.getItem(TRIGGER_KEY) === "1";
+  } catch {
+    return false;
   }
 }

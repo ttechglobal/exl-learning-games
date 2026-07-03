@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
-import { IdentityBootstrap } from "@/components/identity/IdentityBootstrap";
+import { PlayerNamePrompt } from "@/components/identity/PlayerNamePrompt";
 import { OfflineQueueFlusher } from "@/components/identity/OfflineQueueFlusher";
 import "@/motion/tokens.css";
 
@@ -44,7 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         }}
       >
         <ThemeProvider>
-          <IdentityBootstrap />
+          <PlayerNamePrompt />
           <OfflineQueueFlusher />
           {children}
         </ThemeProvider>

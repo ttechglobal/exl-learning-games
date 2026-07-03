@@ -227,11 +227,20 @@ export const StepwiseEquationSolverMissionPayloadSchema = z.object({
 
 export interface StepwiseEquationSolverConfig {
   shared: StepwiseEquationSolverSharedConfig;
-  mission: StepwiseEquationSolverMissionPayload & {
+  /**
+   * Matches the actual GameRuntimeMission shape — payload fields are
+   * nested under .payload, not merged onto mission directly.
+   * The engine casts: const missionPayload = mission.payload as MissionPayload
+   */
+  mission: {
     id: string;
+    missionKey: string;
     title: string;
     xpReward: number;
-    difficulty: "easy" | "medium" | "hard";
+    topicId: string;
+    subtopicId?: string;
+    difficulty?: string;
+    payload: Record<string, unknown>;
   };
 }
 

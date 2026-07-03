@@ -614,7 +614,12 @@ export function StepwiseEquationSolverEngine({
         )}
 
         {mascotPose && (
-          <Mascot pose={mascotPose} line={mascotLine ?? undefined} />
+          <div className={styles.mascotRow}>
+            <Mascot pose={mascotPose} />
+            {mascotLine && (
+              <div className={styles.mascotSpeech}>{mascotLine}</div>
+            )}
+          </div>
         )}
 
       </div>

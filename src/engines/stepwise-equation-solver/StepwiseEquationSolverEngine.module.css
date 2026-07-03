@@ -881,3 +881,26 @@
     font-size: 0.9rem;
   }
 }
+
+/* ── Mascot + speech bubble ──────────────────────────────────────────────── */
+
+.mascotRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  box-sizing: border-box;
+  width: min(520px, 100%);
+}
+
+.mascotSpeech {
+  flex: 1;
+  background: var(--eg-surface-card);
+  border: 1px solid var(--eg-surface-border);
+  border-radius: 14px 14px 14px 4px;
+  padding: 10px 14px;
+  font-family: var(--eg-font-body);
+  font-size: 0.82rem;
+  color: var(--eg-surface-text);
+  line-height: 1.45;
+  animation: feedbackFadeIn 0.25s ease both;
+}

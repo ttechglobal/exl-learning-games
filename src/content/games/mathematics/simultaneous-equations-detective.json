@@ -5,7 +5,7 @@
   "subject": "mathematics",
   "topicId": "simultaneous-linear-equations",
   "subtopicId": "elimination-method",
-  "progressionMode": "trackMap",
+  "progressionMode": "levelSelect",
   "sharedConfig": {
     "entry": {
       "title": "Math Detective",

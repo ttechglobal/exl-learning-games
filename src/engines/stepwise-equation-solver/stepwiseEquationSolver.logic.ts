@@ -21,12 +21,22 @@ import type {
 // ─── types ───────────────────────────────────────────────────────────────────
 
 export type OperationType =
+  // Simultaneous equations
   | "add"
   | "subtract"
   | "multiply_eq1"
   | "multiply_eq2"
   | "solve"
-  | "substitute";
+  | "substitute"
+  // Formula rearrangement (Nova the Explorer)
+  | "divide_both"
+  | "multiply_both"
+  | "add_both"
+  | "subtract_both"
+  | "square_root"
+  | "square_both"
+  | "cube_root"
+  | "cube_both";
 
 export type StepOutcome = "correct" | "suboptimal" | "invalid";
 

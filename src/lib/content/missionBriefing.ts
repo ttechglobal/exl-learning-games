@@ -22,7 +22,9 @@ const BRIEFING_BY_SLUG: Record<string, string> = {
   "element-hunter":
     "Welcome, Scientist. Elements have scattered across the lab shelves. Track down the right ones before the timer runs out.",
   "carbon-builder":
-    "Welcome, Scientist. The lab needs working molecules, not loose atoms — bond them correctly, respecting every element's bonding limit, or the structure won't hold."
+    "Welcome, Scientist. The lab needs working molecules, not loose atoms — bond them correctly, respecting every element's bonding limit, or the structure won't hold.",
+  "nova-explorer":
+    "Welcome, Explorer. Ancient formulae have been discovered in the Lost Worlds — but their variables are buried under layers of mathematical obstacles. Help Nova excavate the hidden variables and restore knowledge to the Archive."
 };
 
 const FALLBACK_BRIEFING = "Welcome back. Your next challenge is ready — complete it to earn XP and keep climbing.";

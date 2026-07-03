@@ -112,9 +112,33 @@ export const GAME_ENVIRONMENT_IMAGES: Record<string, GameEnvironmentImages> = {
   "simultaneous-equations-detective": {
     desktop: "/illustrations/simultaneous-equations-detective-desktop.png",
     mobile: "/illustrations/simultaneous-equations-detective-mobile.png"
+  },
+  /**
+   * Nova the Explorer: The Lost Formula Worlds
+   *
+   * Art direction: A lush, overgrown jungle temple environment for
+   * teenagers 13-17. Ancient stone ruins half-buried in forest, with
+   * glowing formula runes carved into the walls, warm golden torch light,
+   * a sense of discovery and exploration. Painted illustration style.
+   * Low-detail center gameplay area. Left margin: ancient carved stone
+   * columns. Right margin: Nova's expedition journal, compass, glowing
+   * artifacts on a makeshift camp table.
+   *
+   * AI art prompt:
+   * "Lush jungle temple ruins at dusk, ancient stone walls carved with
+   * glowing mathematical formulas, golden torchlight, exploration
+   * atmosphere, painted illustration style for educational game,
+   * teenagers 13-17, cinematic composition, low-detail center area,
+   * left: carved stone pillars and vines, right: explorer camp with
+   * journal and compass, deep green and gold palette."
+   */
+  "nova-explorer": {
+    desktop: "/illustrations/nova-explorer-desktop.png",
+    mobile: "/illustrations/nova-explorer-mobile.png"
   }
 };
 
 export function resolveGameEnvironmentImages(gameSlug: string): GameEnvironmentImages | undefined {
   return GAME_ENVIRONMENT_IMAGES[gameSlug];
-}
+}// This is appended — the actual export object needs to be updated in place.
+// See patch below.

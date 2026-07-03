@@ -46,6 +46,7 @@ const TOPIC_LIST: GameTopic[] = [
   { id: "electricity",       label: "Electricity",         subject: "physics" },
   { id: "reflection-of-light", label: "Reflection of Light", subject: "physics" },
   { id: "algebra",           label: "Algebra",            subject: "mathematics" },
+  { id: "change-of-subject",  label: "Change of Subject",  subject: "mathematics" },
   { id: "geometry",          label: "Geometry",           subject: "mathematics" },
   { id: "statistics",        label: "Statistics",         subject: "mathematics" },
   { id: "cells",             label: "Cells",              subject: "biology" },

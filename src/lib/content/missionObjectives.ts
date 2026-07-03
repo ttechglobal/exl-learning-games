@@ -110,6 +110,26 @@ const OBJECTIVES_BY_ENGINE: Record<string, MissionObjectives> = {
       "Tap a bond line to set it as single, double, or triple.",
       "Submit when your molecule matches the target."
     ]
+  },
+  "nova-explorer": {
+    brief:
+      "Ancient formulae have been discovered in the Lost Worlds — but every hidden variable is buried under layers of mathematical obstacles.\n\nHelp Nova remove the obstacles one by one and uncover the variable.",
+    items: [
+      "Read the formula and identify the target variable.",
+      "Choose the correct inverse operation to remove the top layer.",
+      "Repeat until the variable is free.",
+      "Collect the formula artifact and continue the expedition."
+    ]
+  },
+  "simultaneous-equations-detective": {
+    brief:
+      "Two equations. Two unknowns. One solution.\n\nEliminate variables strategically until you find both values. Close the case.",
+    items: [
+      "Choose which variable to eliminate first.",
+      "Select the right operation to cancel it out.",
+      "Solve for the remaining variable.",
+      "Substitute back to find the second value."
+    ]
   }
 };
 

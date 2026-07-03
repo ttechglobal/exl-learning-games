@@ -51,6 +51,7 @@ export const GAME_CARD_ART: Record<string, string> = {
   // "mirror-lab" has no custom art yet — GameCardArt shows subject emoji fallback
 
   "simultaneous-equations-detective": "/mascot/card-simultaneous-equations.svg",
+  "nova-explorer": "/mascot/card-nova-explorer.svg",
 
 };
 
@@ -61,5 +62,6 @@ export const GAME_CARD_DESC: Record<string, string> = {
   "carbon-builder": "Drag atoms together and build real molecules — one bond at a time, within carbon's strict 4-bond limit.",
   "mirror-lab": "Perform real optics experiments. Move the object, switch mirrors, and observe how the image changes — then run the experiment.",
   "simultaneous-equations-detective": "Crack mathematical cases by choosing the right sequence of elimination steps to uncover hidden values.",
+  "nova-explorer": "Explore lost mathematical worlds and excavate hidden variables by removing their obstacles one inverse operation at a time.",
 
 };

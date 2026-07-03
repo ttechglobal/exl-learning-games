@@ -49,17 +49,34 @@ interface MissionPayload {
   alternativeValidOperations: string[];
   solution: { variables: Record<string, number> };
   caseHints: string[];
+  // Nova the Explorer extensions
+  novaMode?: boolean;
+  formula?: string;           // Original formula e.g. "A = πr²"
+  targetVariable?: string;    // The variable to isolate e.g. "r"
+  layers?: string[];          // Human-readable obstacles e.g. ["π shield", "square lock"]
+  discoveryName?: string;     // Artifact name e.g. "Area Relic"
+  world?: string;             // e.g. "World 4 — Power Peaks"
 }
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
 const OPERATION_LABELS: Record<OperationType, { label: string; sublabel: string }> = {
-  add:          { label: "Add the equations",        sublabel: "combine both rows" },
-  subtract:     { label: "Subtract the equations",   sublabel: "remove one row from the other" },
-  multiply_eq1: { label: "Scale the 1st equation",   sublabel: "multiply every term by a number" },
-  multiply_eq2: { label: "Scale the 2nd equation",   sublabel: "multiply every term by a number" },
-  solve:        { label: "Divide to find the value", sublabel: "isolate the remaining variable" },
-  substitute:   { label: "Substitute back",          sublabel: "find the second variable" },
+  // Simultaneous equations
+  add:           { label: "Add the equations",        sublabel: "combine both rows" },
+  subtract:      { label: "Subtract the equations",   sublabel: "remove one row from the other" },
+  multiply_eq1:  { label: "Scale the 1st equation",   sublabel: "multiply every term by a number" },
+  multiply_eq2:  { label: "Scale the 2nd equation",   sublabel: "multiply every term by a number" },
+  solve:         { label: "Divide to find the value", sublabel: "isolate the remaining variable" },
+  substitute:    { label: "Substitute back",          sublabel: "find the second variable" },
+  // Formula rearrangement (Nova the Explorer)
+  divide_both:   { label: "Divide both sides",        sublabel: "removes multiplication" },
+  multiply_both: { label: "Multiply both sides",      sublabel: "removes division" },
+  add_both:      { label: "Add to both sides",        sublabel: "removes subtraction" },
+  subtract_both: { label: "Subtract from both sides", sublabel: "removes addition" },
+  square_root:   { label: "Square root both sides",   sublabel: "removes a square" },
+  square_both:   { label: "Square both sides",        sublabel: "removes a square root" },
+  cube_root:     { label: "Cube root both sides",     sublabel: "removes a cube" },
+  cube_both:     { label: "Cube both sides",          sublabel: "removes a cube root" },
 };
 
 const GUIDE_PROMPTS = [
@@ -75,13 +92,37 @@ const GUIDE_PROMPTS = [
   "One more decision. What do we do?",
 ];
 
+// Nova formula-rearrangement operation families, grouped by what they undo.
+// Each step gets 4 buttons: the correct one + 3 plausible distractors.
+const NOVA_OPERATION_DISTRACTORS: Record<string, OperationType[]> = {
+  divide_both:   ["multiply_both", "subtract_both", "square_root"],
+  multiply_both: ["divide_both", "add_both", "square_both"],
+  add_both:      ["subtract_both", "multiply_both", "divide_both"],
+  subtract_both: ["add_both", "divide_both", "multiply_both"],
+  square_root:   ["square_both", "divide_both", "cube_root"],
+  square_both:   ["square_root", "multiply_both", "cube_both"],
+  cube_root:     ["cube_both", "square_root", "divide_both"],
+  cube_both:     ["cube_root", "multiply_both", "square_both"],
+};
+
 function getRelevantOperations(
   stepIndex: number,
   totalSteps: number,
-  solutionSteps: SolutionStep[]
+  solutionSteps: SolutionStep[],
+  isNova?: boolean
 ): OperationType[] {
-  const upcoming = new Set(solutionSteps.slice(stepIndex).map((s) => s.operation as OperationType));
   const current = solutionSteps[stepIndex]?.operation as OperationType | undefined;
+
+  // Nova mode: show the correct operation + 3 pedagogically meaningful distractors
+  if (isNova && current) {
+    const distractors = NOVA_OPERATION_DISTRACTORS[current] ?? [];
+    const pool: OperationType[] = [current, ...distractors.slice(0, 3)];
+    // Shuffle so the correct answer isn't always first
+    return pool.sort(() => Math.random() - 0.5);
+  }
+
+  // Simultaneous equations mode — original logic unchanged
+  const upcoming = new Set(solutionSteps.slice(stepIndex).map((s) => s.operation as OperationType));
   const pool = new Set<OperationType>();
   if (current) pool.add(current);
 
@@ -116,25 +157,45 @@ function getRelevantOperations(
 
 function getGuidedDescription(step: SolutionStep): string {
   switch (step.operation) {
+    // Simultaneous equations
     case "add":          return "Add the two equations together. The chosen variable will cancel out.";
     case "subtract":     return "Subtract one equation from the other. The chosen variable will cancel out.";
     case "multiply_eq1": return `Multiply the first equation by ${step.multiplyFactor ?? "a number"} so the coefficients match.`;
     case "multiply_eq2": return `Multiply the second equation by ${step.multiplyFactor ?? "a number"} so the coefficients match.`;
     case "solve":        return "We now have one variable. Divide both sides to find its value.";
     case "substitute":   return "Put the value we found back into one of the original equations to find the other variable.";
-    default:             return step.description;
+    // Nova formula rearrangement
+    case "divide_both":   return "Something is multiplied on the same side as the target variable. Dividing both sides removes it.";
+    case "multiply_both": return "The target variable is in a fraction (being divided). Multiplying both sides removes the fraction.";
+    case "add_both":      return "Something is being subtracted from the target variable. Adding it to both sides cancels it out.";
+    case "subtract_both": return "Something is being added to the target variable. Subtracting it from both sides removes it.";
+    case "square_root":   return "The variable is squared. Taking the square root of both sides removes the square.";
+    case "square_both":   return "The variable is under a square root. Squaring both sides removes the square root.";
+    case "cube_root":     return "The variable is cubed. Taking the cube root of both sides removes the cube.";
+    case "cube_both":     return "The variable is under a cube root. Cubing both sides removes it.";
+    default:              return step.description;
   }
 }
 
 function getGuidedButtonLabel(step: SolutionStep): string {
   switch (step.operation) {
+    // Simultaneous equations
     case "add":          return "Add the equations";
     case "subtract":     return "Subtract the equations";
     case "multiply_eq1": return `Multiply equation 1 by ${step.multiplyFactor ?? "?"}`;
     case "multiply_eq2": return `Multiply equation 2 by ${step.multiplyFactor ?? "?"}`;
     case "solve":        return "Divide to find the value";
     case "substitute":   return "Substitute back";
-    default:             return step.description;
+    // Nova formula rearrangement
+    case "divide_both":   return "Divide both sides →";
+    case "multiply_both": return "Multiply both sides →";
+    case "add_both":      return "Add to both sides →";
+    case "subtract_both": return "Subtract from both sides →";
+    case "square_root":   return "Square root both sides →";
+    case "square_both":   return "Square both sides →";
+    case "cube_root":     return "Cube root both sides →";
+    case "cube_both":     return "Cube both sides →";
+    default:              return step.description;
   }
 }
 
@@ -392,12 +453,16 @@ export function StepwiseEquationSolverEngine({
 
   const variablesInSystem = Object.keys(missionPayload.solution.variables).sort();
   const guidePrompt = GUIDE_PROMPTS[currentStepIndex % GUIDE_PROMPTS.length];
+  const isNova = Boolean(missionPayload.novaMode);
   const relevantOps = getRelevantOperations(
     currentStepIndex,
     missionPayload.solutionSteps.length,
-    missionPayload.solutionSteps
+    missionPayload.solutionSteps,
+    isNova
   );
-  const environmentImages = GAME_ENVIRONMENT_IMAGES["simultaneous-equations-detective"];
+  const environmentImages = isNova
+    ? GAME_ENVIRONMENT_IMAGES["nova-explorer"] ?? GAME_ENVIRONMENT_IMAGES["simultaneous-equations-detective"]
+    : GAME_ENVIRONMENT_IMAGES["simultaneous-equations-detective"];
 
   // ── case closed screen ────────────────────────────────────────────────────
   if (uiStage === "case_closed") {
@@ -411,6 +476,11 @@ export function StepwiseEquationSolverEngine({
       <div className={styles.caseClosedOverlay}>
         <div className={styles.caseClosedBadge}>{shared.feedback.caseClosedPrimary}</div>
         <div className={styles.caseClosedLine}>{shared.feedback.caseClosedSecondary}</div>
+        {isNova && missionPayload.discoveryName && (
+          <div className={styles.discoveryArtifact}>
+            🏺 {missionPayload.discoveryName} recovered
+          </div>
+        )}
 
         <div className={styles.solutionBox}>
           {solutionLines.map(({ variable, value }) => (
@@ -470,15 +540,17 @@ export function StepwiseEquationSolverEngine({
   return (
     <GameplayShell
       environmentImages={environmentImages}
-      fallbackGradient="linear-gradient(160deg, #0b1330 0%, #0e1a2e 50%, #0b2340 100%)"
+      fallbackGradient={isNova
+        ? "linear-gradient(160deg, #0e1a0a 0%, #0a1a0e 50%, #061410 100%)"
+        : "linear-gradient(160deg, #0b1330 0%, #0e1a2e 50%, #0b2340 100%)"}
       accentColor="var(--eg-subject-mathematics)"
       stats={[{
-        label: tierConfig.label,
-        value: `Case ${missionPayload.caseNumber}`,
+        label: isNova ? (missionPayload.world ?? "Expedition") : tierConfig.label,
+        value: isNova ? `Uncover ${missionPayload.targetVariable ?? "?"}` : `Case ${missionPayload.caseNumber}`,
         tone: "default"
       }]}
       missionPrompt={{
-        label: "Learning goal",
+        label: isNova ? "Mission" : "Learning goal",
         text: missionPayload.learningGoal
       }}
       menu={menu}
@@ -486,21 +558,54 @@ export function StepwiseEquationSolverEngine({
     >
       <div className={styles.engineColumn}>
 
-        <div className={styles.caseFile}>
-          <div className={styles.equationList}>
-            {missionPayload.equations.map((eq) => (
-              <div key={eq.id} className={styles.equationRow}>{eq.display}</div>
-            ))}
-            {visibleResults.length > 0 && (
-              <>
-                <div className={styles.equationDivider} />
-                {visibleResults.map((line, i) => (
-                  <div key={i} className={styles.resultLine}>{line}</div>
+        {isNova ? (
+          <div className={styles.novaFormulaPanel}>
+            {missionPayload.world && (
+              <div className={styles.novaWorld}>{missionPayload.world}</div>
+            )}
+            <div className={styles.novaFormulaLabel}>Formula discovered</div>
+            <div className={styles.novaFormulaDisplay}>{missionPayload.formula}</div>
+            {missionPayload.targetVariable && (
+              <div className={styles.novaTarget}>
+                Uncover: <span className={styles.novaTargetVar}>{missionPayload.targetVariable}</span>
+              </div>
+            )}
+            {missionPayload.layers && currentStepIndex < missionPayload.layers.length && (
+              <div className={styles.novaLayers}>
+                {missionPayload.layers.slice(currentStepIndex).map((layer, i) => (
+                  <div key={i} className={`${styles.novaLayer} ${i === 0 ? styles.novaLayerActive : ""}`}>
+                    <span className={styles.novaLayerIcon}>🔒</span>
+                    <span>{layer}</span>
+                  </div>
                 ))}
-              </>
+              </div>
+            )}
+            {visibleResults.length > 0 && (
+              <div className={styles.novaSteps}>
+                <div className={styles.novaStepsLabel}>Nova's expedition log</div>
+                {visibleResults.map((line, i) => (
+                  <div key={i} className={styles.novaStepLine}>{line}</div>
+                ))}
+              </div>
             )}
           </div>
-        </div>
+        ) : (
+          <div className={styles.caseFile}>
+            <div className={styles.equationList}>
+              {missionPayload.equations.map((eq) => (
+                <div key={eq.id} className={styles.equationRow}>{eq.display}</div>
+              ))}
+              {visibleResults.length > 0 && (
+                <>
+                  <div className={styles.equationDivider} />
+                  {visibleResults.map((line, i) => (
+                    <div key={i} className={styles.resultLine}>{line}</div>
+                  ))}
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         {uiStage === "guided_action" && currentStep && (
           <div className={styles.guidedSection}>

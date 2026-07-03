@@ -53,12 +53,22 @@ const SolutionStepSchema = z.object({
    * checks — the player's tap must match this value.
    */
   operation: z.enum([
-    "add",           // add eq1 + eq2
-    "subtract",      // subtract one equation from the other
-    "multiply_eq1",  // multiply equation 1 by a scalar
-    "multiply_eq2",  // multiply equation 2 by a scalar
-    "solve",         // algebraically solve the single-variable equation
-    "substitute"     // substitute known value back into original equation
+    // ── Simultaneous equations operations ────────────────────────
+    "add",              // add eq1 + eq2
+    "subtract",         // subtract one equation from the other
+    "multiply_eq1",     // multiply equation 1 by a scalar
+    "multiply_eq2",     // multiply equation 2 by a scalar
+    "solve",            // algebraically solve the single-variable equation
+    "substitute",       // substitute known value back into original equation
+    // ── Formula rearrangement operations (Nova the Explorer) ─────
+    "divide_both",      // divide both sides by a term (remove multiplication)
+    "multiply_both",    // multiply both sides by a term (remove division)
+    "add_both",         // add a term to both sides (remove subtraction)
+    "subtract_both",    // subtract a term from both sides (remove addition)
+    "square_root",      // take the square root of both sides (remove square)
+    "square_both",      // square both sides (remove square root)
+    "cube_root",        // take the cube root of both sides (remove cube)
+    "cube_both"         // cube both sides (remove cube root)
   ]),
   /**
    * Resulting equation(s) after this step, displayed as feedback.

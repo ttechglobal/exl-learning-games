@@ -1,0 +1,591 @@
+{
+  "slug": "nova-explorer",
+  "title": "Nova the Explorer",
+  "engineType": "stepwise-equation-solver",
+  "subject": "mathematics",
+  "topicId": "change-of-subject",
+  "subtopicId": "formula-manipulation",
+  "progressionMode": "trackMap",
+  "sharedConfig": {
+    "entry": {
+      "title": "Nova the Explorer",
+      "missionLabel": "Active Expedition"
+    },
+    "tiers": [
+      {
+        "tier": "easy",
+        "label": "GUIDED",
+        "xpReward": 20,
+        "showTargetVariable": true,
+        "showVariableChoice": false,
+        "hintAfterAttempts": 1
+      },
+      {
+        "tier": "medium",
+        "label": "EXPLORER",
+        "xpReward": 40,
+        "showTargetVariable": false,
+        "showVariableChoice": false,
+        "hintAfterAttempts": 1
+      },
+      {
+        "tier": "hard",
+        "label": "MASTER",
+        "xpReward": 75,
+        "showTargetVariable": false,
+        "showVariableChoice": false,
+        "hintAfterAttempts": 2
+      }
+    ],
+    "feedback": {
+      "correctStep": [
+        "Layer removed!",
+        "Excellent — obstacle cleared.",
+        "Nova pushes through!",
+        "The path is opening up."
+      ],
+      "suboptimalStep": "That works, but there is a more direct route. Expedition efficiency reduced.",
+      "invalidStep": "That tool cannot remove this obstacle. Try another approach.",
+      "caseClosedPrimary": "DISCOVERY MADE",
+      "caseClosedSecondary": "Ancient formula recovered. Knowledge restored to the Archive."
+    },
+    "hints": {
+      "levels": [
+        "What operation is currently attached to the target variable?",
+        "Think about the inverse: what undoes the operation protecting it?",
+        "The correct operation is highlighted."
+      ]
+    },
+    "review": {
+      "title": "EXPEDITION ROUTE",
+      "efficiencyLabel": "Efficiency",
+      "successLines": [
+        "Discovery logged. Formula archived.",
+        "Another hidden variable uncovered, Explorer.",
+        "The Formula Archive grows stronger."
+      ]
+    },
+    "scoring": {
+      "strategyWeight": 0.4,
+      "efficiencyWeight": 0.3,
+      "hintWeight": 0.2,
+      "speedWeight": 0.1,
+      "speedBaselineSec": 120
+    }
+  },
+  "snapshot": {
+    "cards": [
+      {
+        "title": "What Is Change of Subject?",
+        "body": "Every formula has a 'subject' — the variable on its own. Changing the subject means rearranging so a DIFFERENT variable is isolated."
+      },
+      {
+        "title": "Inverse Operations",
+        "body": "To free a variable, reverse what is done to it. Addition → subtract. Multiplication → divide. Square → square root."
+      },
+      {
+        "title": "Work Layer by Layer",
+        "body": "Remove one obstacle at a time. Start with whatever is FURTHEST from the variable — the outermost layer first."
+      },
+      {
+        "title": "Nova's Method",
+        "body": "1. Identify target variable. 2. Spot the obstacle. 3. Apply the inverse. 4. Repeat until free."
+      }
+    ]
+  },
+  "missions": [
+    {
+      "missionKey": "w1-001",
+      "title": "World 1 · Formula 1 — The First Ruin",
+      "difficulty": "EASY",
+      "sequenceIndex": 1,
+      "xpReward": 20,
+      "topicId": "change-of-subject",
+      "subtopicId": "addition-subtraction",
+      "learningGoal": "Subtract a constant from both sides to isolate a variable.",
+      "estimatedMinutes": 2,
+      "payload": {
+        "caseNumber": "W1-001",
+        "stage": "guided",
+        "novaMode": true,
+        "world": "World 1 — Addition Valley",
+        "formula": "x + 5 = 12",
+        "targetVariable": "x",
+        "layers": ["added 5"],
+        "discoveryName": "Valley Shard",
+        "equations": [
+          { "id": "eq1", "display": "x + 5 = 12" }
+        ],
+        "learningGoal": "Subtract a constant from both sides to isolate a variable.",
+        "solutionSteps": [
+          {
+            "description": "Subtract 5 from both sides",
+            "operation": "subtract_both",
+            "resultDisplay": ["x = 12 − 5", "x = 7"],
+            "targetVariable": "x",
+            "isFinal": true
+          }
+        ],
+        "alternativeValidOperations": [],
+        "solution": { "variables": { "x": 7 } },
+        "caseHints": [
+          "5 is being added to x. What is the opposite of adding?",
+          "The opposite of adding 5 is subtracting 5.",
+          "Select 'Subtract from both sides'."
+        ]
+      }
+    },
+    {
+      "missionKey": "w1-002",
+      "title": "World 1 · Formula 2 — The Stone Tablet",
+      "difficulty": "EASY",
+      "sequenceIndex": 2,
+      "xpReward": 20,
+      "topicId": "change-of-subject",
+      "subtopicId": "addition-subtraction",
+      "learningGoal": "Subtract a variable term from both sides to isolate another variable.",
+      "estimatedMinutes": 2,
+      "payload": {
+        "caseNumber": "W1-002",
+        "stage": "guided",
+        "novaMode": true,
+        "world": "World 1 — Addition Valley",
+        "formula": "P = Q + r",
+        "targetVariable": "r",
+        "layers": ["added Q"],
+        "discoveryName": "Desert Compass",
+        "equations": [
+          { "id": "eq1", "display": "P = Q + r" }
+        ],
+        "learningGoal": "Subtract a variable term from both sides to isolate another variable.",
+        "solutionSteps": [
+          {
+            "description": "Subtract Q from both sides",
+            "operation": "subtract_both",
+            "resultDisplay": ["P − Q = r", "r = P − Q"],
+            "targetVariable": "r",
+            "isFinal": true
+          }
+        ],
+        "alternativeValidOperations": [],
+        "solution": { "variables": { "r": 0 } },
+        "caseHints": [
+          "Q is being added to r. What removes addition?",
+          "Subtracting Q from both sides will isolate r.",
+          "Select 'Subtract from both sides'."
+        ]
+      }
+    },
+    {
+      "missionKey": "w1-003",
+      "title": "World 1 · Formula 3 — The Ancient Scroll",
+      "difficulty": "EASY",
+      "sequenceIndex": 3,
+      "xpReward": 20,
+      "topicId": "change-of-subject",
+      "subtopicId": "addition-subtraction",
+      "learningGoal": "Add a term to both sides to isolate a variable protected by subtraction.",
+      "estimatedMinutes": 2,
+      "payload": {
+        "caseNumber": "W1-003",
+        "stage": "assisted",
+        "novaMode": true,
+        "world": "World 1 — Addition Valley",
+        "formula": "y = x − a",
+        "targetVariable": "x",
+        "layers": ["subtracted a"],
+        "discoveryName": "Sand Relic",
+        "equations": [
+          { "id": "eq1", "display": "y = x − a" }
+        ],
+        "learningGoal": "Add a term to both sides to isolate a variable protected by subtraction.",
+        "solutionSteps": [
+          {
+            "description": "Add a to both sides",
+            "operation": "add_both",
+            "resultDisplay": ["y + a = x", "x = y + a"],
+            "targetVariable": "x",
+            "isFinal": true
+          }
+        ],
+        "alternativeValidOperations": [],
+        "solution": { "variables": { "x": 0 } },
+        "caseHints": [
+          "a is being subtracted from x. What reverses subtraction?",
+          "Adding a to both sides will cancel the subtraction.",
+          "Select 'Add to both sides'."
+        ]
+      }
+    },
+    {
+      "missionKey": "w1-004",
+      "title": "World 1 · Formula 4 — The Carved Wall",
+      "difficulty": "EASY",
+      "sequenceIndex": 4,
+      "xpReward": 20,
+      "topicId": "change-of-subject",
+      "subtopicId": "addition-subtraction",
+      "learningGoal": "Rearrange a multi-term addition formula to isolate one variable.",
+      "estimatedMinutes": 3,
+      "payload": {
+        "caseNumber": "W1-004",
+        "stage": "assisted",
+        "novaMode": true,
+        "world": "World 1 — Addition Valley",
+        "formula": "T = S + 20",
+        "targetVariable": "S",
+        "layers": ["added 20"],
+        "discoveryName": "Valley Relic",
+        "equations": [
+          { "id": "eq1", "display": "T = S + 20" }
+        ],
+        "learningGoal": "Rearrange a multi-term addition formula to isolate one variable.",
+        "solutionSteps": [
+          {
+            "description": "Subtract 20 from both sides",
+            "operation": "subtract_both",
+            "resultDisplay": ["T − 20 = S", "S = T − 20"],
+            "targetVariable": "S",
+            "isFinal": true
+          }
+        ],
+        "alternativeValidOperations": [],
+        "solution": { "variables": { "S": 0 } },
+        "caseHints": [
+          "20 has been added to S. What removes addition?",
+          "Subtracting 20 from both sides isolates S.",
+          "Select 'Subtract from both sides'."
+        ]
+      }
+    },
+    {
+      "missionKey": "w1-005",
+      "title": "World 1 · Formula 5 — The Three Pillars",
+      "difficulty": "MEDIUM",
+      "sequenceIndex": 5,
+      "xpReward": 40,
+      "topicId": "change-of-subject",
+      "subtopicId": "addition-subtraction",
+      "learningGoal": "Remove multiple added terms in sequence to isolate a variable.",
+      "estimatedMinutes": 4,
+      "payload": {
+        "caseNumber": "W1-005",
+        "stage": "supported",
+        "novaMode": true,
+        "world": "World 1 — Addition Valley",
+        "formula": "C = A + B + D",
+        "targetVariable": "B",
+        "layers": ["added A", "added D"],
+        "discoveryName": "Three-Pillar Stone",
+        "equations": [
+          { "id": "eq1", "display": "C = A + B + D" }
+        ],
+        "learningGoal": "Remove multiple added terms in sequence to isolate a variable.",
+        "solutionSteps": [
+          {
+            "description": "Subtract A from both sides",
+            "operation": "subtract_both",
+            "resultDisplay": ["C − A = B + D"],
+            "targetVariable": "B",
+            "isFinal": false
+          },
+          {
+            "description": "Subtract D from both sides",
+            "operation": "subtract_both",
+            "resultDisplay": ["C − A − D = B", "B = C − A − D"],
+            "targetVariable": "B",
+            "isFinal": true
+          }
+        ],
+        "alternativeValidOperations": [],
+        "solution": { "variables": { "B": 0 } },
+        "caseHints": [
+          "B has two obstacles — A and D are both added to it. Remove them one at a time.",
+          "Start by subtracting A from both sides, then D.",
+          "Select 'Subtract from both sides' — twice."
+        ]
+      }
+    },
+    {
+      "missionKey": "w1-boss",
+      "title": "World 1 · BOSS — The Guardian Formula",
+      "difficulty": "HARD",
+      "sequenceIndex": 6,
+      "xpReward": 75,
+      "topicId": "change-of-subject",
+      "subtopicId": "addition-subtraction",
+      "learningGoal": "Isolate a variable surrounded by multiple additive terms — the valley's ultimate challenge.",
+      "estimatedMinutes": 5,
+      "payload": {
+        "caseNumber": "W1-BOSS",
+        "stage": "independent",
+        "novaMode": true,
+        "world": "World 1 — Addition Valley · BOSS",
+        "formula": "P = Q + R + S",
+        "targetVariable": "Q",
+        "layers": ["added R", "added S"],
+        "discoveryName": "Valley Guardian Crystal",
+        "equations": [
+          { "id": "eq1", "display": "P = Q + R + S" }
+        ],
+        "learningGoal": "Isolate a variable surrounded by multiple additive terms — the valley's ultimate challenge.",
+        "solutionSteps": [
+          {
+            "description": "Subtract R from both sides",
+            "operation": "subtract_both",
+            "resultDisplay": ["P − R = Q + S"],
+            "targetVariable": "Q",
+            "isFinal": false
+          },
+          {
+            "description": "Subtract S from both sides",
+            "operation": "subtract_both",
+            "resultDisplay": ["P − R − S = Q", "Q = P − R − S"],
+            "targetVariable": "Q",
+            "isFinal": true
+          }
+        ],
+        "alternativeValidOperations": [],
+        "solution": { "variables": { "Q": 0 } },
+        "caseHints": [
+          "Q is protected by R and S — both added to it. Two steps needed.",
+          "Subtract R first, then S from both sides.",
+          "Select 'Subtract from both sides' for each term blocking Q."
+        ]
+      }
+    },
+    {
+      "missionKey": "w2-001",
+      "title": "World 2 · Formula 1 — Force Crystal",
+      "difficulty": "EASY",
+      "sequenceIndex": 7,
+      "xpReward": 20,
+      "topicId": "change-of-subject",
+      "subtopicId": "multiplication-division",
+      "learningGoal": "Divide both sides by a term to remove multiplication and isolate a variable.",
+      "estimatedMinutes": 3,
+      "payload": {
+        "caseNumber": "W2-001",
+        "stage": "guided",
+        "novaMode": true,
+        "world": "World 2 — Multiplication Mountains",
+        "formula": "F = ma",
+        "targetVariable": "a",
+        "layers": ["multiplied by m"],
+        "discoveryName": "Force Crystal",
+        "equations": [
+          { "id": "eq1", "display": "F = ma" }
+        ],
+        "learningGoal": "Divide both sides by a term to remove multiplication and isolate a variable.",
+        "solutionSteps": [
+          {
+            "description": "Divide both sides by m",
+            "operation": "divide_both",
+            "resultDisplay": ["F/m = a", "a = F/m"],
+            "targetVariable": "a",
+            "isFinal": true
+          }
+        ],
+        "alternativeValidOperations": [],
+        "solution": { "variables": { "a": 0 } },
+        "caseHints": [
+          "m is multiplied by a. What is the opposite of multiplying?",
+          "Dividing both sides by m removes the multiplication.",
+          "Select 'Divide both sides'."
+        ]
+      }
+    },
+    {
+      "missionKey": "w2-002",
+      "title": "World 2 · Formula 2 — Velocity Map",
+      "difficulty": "EASY",
+      "sequenceIndex": 8,
+      "xpReward": 20,
+      "topicId": "change-of-subject",
+      "subtopicId": "multiplication-division",
+      "learningGoal": "Divide both sides by a variable to isolate a second variable in a product formula.",
+      "estimatedMinutes": 3,
+      "payload": {
+        "caseNumber": "W2-002",
+        "stage": "guided",
+        "novaMode": true,
+        "world": "World 2 — Multiplication Mountains",
+        "formula": "V = IR",
+        "targetVariable": "I",
+        "layers": ["multiplied by R"],
+        "discoveryName": "Velocity Map",
+        "equations": [
+          { "id": "eq1", "display": "V = IR" }
+        ],
+        "learningGoal": "Divide both sides by a variable to isolate a second variable in a product formula.",
+        "solutionSteps": [
+          {
+            "description": "Divide both sides by R",
+            "operation": "divide_both",
+            "resultDisplay": ["V/R = I", "I = V/R"],
+            "targetVariable": "I",
+            "isFinal": true
+          }
+        ],
+        "alternativeValidOperations": [],
+        "solution": { "variables": { "I": 0 } },
+        "caseHints": [
+          "I is multiplied by R. What reverses multiplication?",
+          "Dividing by R will cancel the R on the right side.",
+          "Select 'Divide both sides'."
+        ]
+      }
+    },
+    {
+      "missionKey": "w2-003",
+      "title": "World 2 · Formula 3 — Mountain Seal",
+      "difficulty": "MEDIUM",
+      "sequenceIndex": 9,
+      "xpReward": 40,
+      "topicId": "change-of-subject",
+      "subtopicId": "multiplication-division",
+      "learningGoal": "Multiply both sides to remove a fraction and isolate a variable.",
+      "estimatedMinutes": 3,
+      "payload": {
+        "caseNumber": "W2-003",
+        "stage": "assisted",
+        "novaMode": true,
+        "world": "World 2 — Multiplication Mountains",
+        "formula": "v = s/t",
+        "targetVariable": "t",
+        "layers": ["divided by t"],
+        "discoveryName": "Mountain Seal",
+        "equations": [
+          { "id": "eq1", "display": "v = s/t" }
+        ],
+        "learningGoal": "Multiply both sides to remove a fraction and isolate a variable in the denominator.",
+        "solutionSteps": [
+          {
+            "description": "Multiply both sides by t",
+            "operation": "multiply_both",
+            "resultDisplay": ["vt = s"],
+            "targetVariable": "t",
+            "isFinal": false
+          },
+          {
+            "description": "Divide both sides by v",
+            "operation": "divide_both",
+            "resultDisplay": ["t = s/v"],
+            "targetVariable": "t",
+            "isFinal": true
+          }
+        ],
+        "alternativeValidOperations": [],
+        "solution": { "variables": { "t": 0 } },
+        "caseHints": [
+          "t is in the denominator (being divided). To move it up, multiply both sides by t first.",
+          "After multiplying by t: vt = s. Now t is on the left — divide by v.",
+          "Step 1: 'Multiply both sides'. Step 2: 'Divide both sides'."
+        ]
+      }
+    },
+    {
+      "missionKey": "w4-001",
+      "title": "World 4 · Formula 1 — Area Relic",
+      "difficulty": "MEDIUM",
+      "sequenceIndex": 10,
+      "xpReward": 40,
+      "topicId": "change-of-subject",
+      "subtopicId": "powers-roots",
+      "learningGoal": "Divide then square-root to uncover a variable protected by pi and a square.",
+      "estimatedMinutes": 4,
+      "payload": {
+        "caseNumber": "W4-001",
+        "stage": "supported",
+        "novaMode": true,
+        "world": "World 4 — Power Peaks",
+        "formula": "A = \u03c0r\u00b2",
+        "targetVariable": "r",
+        "layers": ["\u03c0 shield", "square lock"],
+        "discoveryName": "Area Relic",
+        "equations": [
+          { "id": "eq1", "display": "A = \u03c0r\u00b2" }
+        ],
+        "learningGoal": "Divide by \u03c0 then take the square root to isolate r in the circle area formula.",
+        "solutionSteps": [
+          {
+            "description": "Divide both sides by \u03c0",
+            "operation": "divide_both",
+            "resultDisplay": ["A/\u03c0 = r\u00b2"],
+            "targetVariable": "r",
+            "isFinal": false
+          },
+          {
+            "description": "Take the square root of both sides",
+            "operation": "square_root",
+            "resultDisplay": ["\u221a(A/\u03c0) = r", "r = \u221a(A/\u03c0)"],
+            "targetVariable": "r",
+            "isFinal": true
+          }
+        ],
+        "alternativeValidOperations": [],
+        "solution": { "variables": { "r": 0 } },
+        "caseHints": [
+          "r has two protections: it is multiplied by \u03c0 AND squared. Remove them outermost first.",
+          "\u03c0 is the outermost layer. Divide both sides by \u03c0 first, then deal with the square.",
+          "Step 1: 'Divide both sides'. Step 2: 'Square root both sides'."
+        ]
+      }
+    },
+    {
+      "missionKey": "w5-001",
+      "title": "World 5 · Formula 1 — Volume Cube",
+      "difficulty": "HARD",
+      "sequenceIndex": 11,
+      "xpReward": 75,
+      "topicId": "change-of-subject",
+      "subtopicId": "complex-rearrangement",
+      "learningGoal": "Use three inverse operations in sequence to uncover r in a complex volume formula.",
+      "estimatedMinutes": 6,
+      "payload": {
+        "caseNumber": "W5-001",
+        "stage": "independent",
+        "novaMode": true,
+        "world": "World 5 — Ancient Temple of Roots",
+        "formula": "V = (4/3)\u03c0r\u00b3",
+        "targetVariable": "r",
+        "layers": ["4/3 fraction", "\u03c0 shield", "cube lock"],
+        "discoveryName": "Volume Cube",
+        "equations": [
+          { "id": "eq1", "display": "V = (4/3)\u03c0r\u00b3" }
+        ],
+        "learningGoal": "Apply three inverse operations in sequence to isolate r in the sphere volume formula.",
+        "solutionSteps": [
+          {
+            "description": "Multiply both sides by 3/4",
+            "operation": "multiply_both",
+            "resultDisplay": ["3V/4 = \u03c0r\u00b3"],
+            "targetVariable": "r",
+            "isFinal": false
+          },
+          {
+            "description": "Divide both sides by \u03c0",
+            "operation": "divide_both",
+            "resultDisplay": ["3V/(4\u03c0) = r\u00b3"],
+            "targetVariable": "r",
+            "isFinal": false
+          },
+          {
+            "description": "Take the cube root of both sides",
+            "operation": "cube_root",
+            "resultDisplay": ["\u00b3\u221a(3V/4\u03c0) = r", "r = \u00b3\u221a(3V/4\u03c0)"],
+            "targetVariable": "r",
+            "isFinal": true
+          }
+        ],
+        "alternativeValidOperations": [],
+        "solution": { "variables": { "r": 0 } },
+        "caseHints": [
+          "Three layers protect r: the fraction 4/3, pi, and the cube. Work outermost to innermost.",
+          "Remove 4/3 by multiplying by 3/4. Then remove \u03c0 by dividing. Then cube root.",
+          "Step 1: Multiply by 3/4. Step 2: Divide by \u03c0. Step 3: Cube root."
+        ]
+      }
+    }
+  ]
+}

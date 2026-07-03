@@ -95,7 +95,25 @@ const QUICK_CONCEPTS_BY_SLUG: Record<string, QuickConceptCard[]> = {
       title: "Stuck? Use a Hint",
       body: "Tap Hint to see what's still missing. It won't place the bond for you."
     }
-  ]
+  ],
+  "nova-explorer": [
+    {
+      title: "What Is Change of Subject?",
+      body: "Rearranging a formula means rewriting it so a DIFFERENT variable is on its own. The formula stays true — we just reveal it from a new angle."
+    },
+    {
+      title: "Inverse Operations",
+      body: "To remove an obstacle, use the opposite operation. Added something? Subtract it. Multiplied? Divide. Squared? Square root."
+    },
+    {
+      title: "Remove Outermost First",
+      body: "When multiple operations protect a variable, remove the outermost layer first. Think of it like unwrapping a package — outside in."
+    },
+    {
+      title: "Check Your Route",
+      body: "After Nova finds the variable, the expedition log shows every step. Reading it back is the best way to remember the method."
+    }
+  ],
 };
 
 export function resolveQuickConceptsForSlug(gameSlug: string): QuickConceptCard[] | undefined {

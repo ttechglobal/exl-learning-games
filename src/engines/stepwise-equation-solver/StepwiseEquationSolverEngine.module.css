@@ -904,3 +904,171 @@
   line-height: 1.45;
   animation: feedbackFadeIn 0.25s ease both;
 }
+/* ═══════════════════════════════════════════════════════════════════════════
+   NOVA THE EXPLORER — Formula Excavation skin
+   Palette: deep forest green (#0e1a0a bg), gold (#c9a227 accent),
+   emerald (#3ecf8e = --eg-subject-mathematics reused), aged parchment text
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Nova formula discovery panel ───────────────────────────────────────── */
+
+.novaFormulaPanel {
+  box-sizing: border-box;
+  width: min(520px, 100%);
+  background: rgba(6, 20, 10, 0.85);
+  border: 1.5px solid rgba(201, 162, 39, 0.4);
+  border-radius: 16px;
+  padding: 18px 22px;
+  backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.novaWorld {
+  font-family: var(--eg-font-display);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(201, 162, 39, 0.7);
+}
+
+.novaFormulaLabel {
+  font-family: var(--eg-font-display);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.novaFormulaDisplay {
+  font-family: "Courier New", "Fira Code", monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  padding: 4px 0;
+}
+
+.novaTarget {
+  font-family: var(--eg-font-body);
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.novaTargetVar {
+  font-family: "Courier New", monospace;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #c9a227;
+  padding: 1px 8px;
+  background: rgba(201, 162, 39, 0.12);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  border-radius: 6px;
+}
+
+/* ── Layer stack (obstacles protecting the variable) ────────────────────── */
+
+.novaLayers {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(201, 162, 39, 0.15);
+}
+
+.novaLayer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: var(--eg-font-body);
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.4);
+  transition: opacity 0.3s ease;
+}
+
+.novaLayer.novaLayerActive {
+  background: rgba(201, 162, 39, 0.1);
+  border-color: rgba(201, 162, 39, 0.35);
+  color: rgba(201, 162, 39, 0.9);
+  animation: layerPulse 2s ease-in-out infinite;
+}
+
+@keyframes layerPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.2); }
+  50% { box-shadow: 0 0 0 4px rgba(201, 162, 39, 0); }
+}
+
+.novaLayerIcon {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* ── Nova expedition log (visible results trail) ────────────────────────── */
+
+.novaSteps {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(62, 207, 142, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.novaStepsLabel {
+  font-family: var(--eg-font-display);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(62, 207, 142, 0.5);
+  margin-bottom: 4px;
+}
+
+.novaStepLine {
+  font-family: "Courier New", "Fira Code", monospace;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #3ecf8e;
+  line-height: 1.5;
+  padding-left: 4px;
+  animation: resultReveal 0.35s var(--eg-ease-pop) both;
+}
+
+/* ── Nova discovery artifact (case closed) ──────────────────────────────── */
+
+.discoveryArtifact {
+  margin-top: 10px;
+  font-family: var(--eg-font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(201, 162, 39, 0.9);
+  background: rgba(201, 162, 39, 0.1);
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  border-radius: 10px;
+  padding: 8px 18px;
+  animation: fadeUp 0.4s ease both;
+  animation-delay: 0.35s;
+}
+
+/* ── Mobile adjustments ─────────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .novaFormulaPanel {
+    padding: 14px 16px;
+  }
+  .novaFormulaDisplay {
+    font-size: 1.2rem;
+  }
+}

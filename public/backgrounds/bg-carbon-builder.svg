@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="yardBg" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#1a1008"/>
+      <stop offset="100%" stop-color="#0a0800"/>
+    </radialGradient>
+    <radialGradient id="centralGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="carbonAtom" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#555566"/>
+      <stop offset="100%" stop-color="#222230"/>
+    </radialGradient>
+    <radialGradient id="hydrogenAtom" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#aaddff"/>
+      <stop offset="100%" stop-color="#446688"/>
+    </radialGradient>
+    <filter id="blur8"><feGaussianBlur stdDeviation="8"/></filter>
+    <filter id="blur4"><feGaussianBlur stdDeviation="4"/></filter>
+    <filter id="blur2"><feGaussianBlur stdDeviation="2"/></filter>
+  </defs>
+
+  <rect width="1200" height="800" fill="url(#yardBg)"/>
+
+  <!-- Central glow — molecular construction zone -->
+  <ellipse cx="600" cy="400" rx="350" ry="280" fill="url(#centralGlow)" filter="url(#blur8)"/>
+
+  <!-- Construction grid lines -->
+  <g stroke="#1a1208" stroke-width="1" opacity="0.5">
+    <line x1="0" y1="200" x2="1200" y2="200"/>
+    <line x1="0" y1="400" x2="1200" y2="400"/>
+    <line x1="0" y1="600" x2="1200" y2="600"/>
+    <line x1="300" y1="0" x2="300" y2="800"/>
+    <line x1="600" y1="0" x2="600" y2="800"/>
+    <line x1="900" y1="0" x2="900" y2="800"/>
+  </g>
+
+  <!-- METHANE molecule (centre, large) -->
+  <!-- Bonds from centre carbon to 4 hydrogens -->
+  <line x1="600" y1="380" x2="600" y2="290" stroke="#f97316" stroke-width="4" opacity="0.7"/>
+  <line x1="600" y1="380" x2="600" y2="470" stroke="#f97316" stroke-width="4" opacity="0.7"/>
+  <line x1="600" y1="380" x2="510" y2="380" stroke="#f97316" stroke-width="4" opacity="0.7"/>
+  <line x1="600" y1="380" x2="690" y2="380" stroke="#f97316" stroke-width="4" opacity="0.7"/>
+  <!-- Bond energy glow -->
+  <line x1="600" y1="380" x2="600" y2="290" stroke="#fbbf24" stroke-width="1.5" opacity="0.4" filter="url(#blur2)"/>
+  <line x1="600" y1="380" x2="600" y2="470" stroke="#fbbf24" stroke-width="1.5" opacity="0.4" filter="url(#blur2)"/>
+  <line x1="600" y1="380" x2="510" y2="380" stroke="#fbbf24" stroke-width="1.5" opacity="0.4" filter="url(#blur2)"/>
+  <line x1="600" y1="380" x2="690" y2="380" stroke="#fbbf24" stroke-width="1.5" opacity="0.4" filter="url(#blur2)"/>
+  <!-- Carbon centre -->
+  <circle cx="600" cy="380" r="32" fill="url(#carbonAtom)"/>
+  <circle cx="600" cy="380" r="32" fill="none" stroke="#f97316" stroke-width="1.5" opacity="0.5"/>
+  <text x="600" y="378" font-family="Georgia,serif" font-size="20" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">C</text>
+  <text x="600" y="395" font-family="Arial" font-size="10" fill="#f97316" text-anchor="middle" opacity="0.7">4 bonds</text>
+  <!-- Hydrogen atoms -->
+  <circle cx="600" cy="264" r="22" fill="url(#hydrogenAtom)"/>
+  <text x="600" y="264" font-family="Georgia,serif" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">H</text>
+  <circle cx="600" cy="496" r="22" fill="url(#hydrogenAtom)"/>
+  <text x="600" y="496" font-family="Georgia,serif" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">H</text>
+  <circle cx="478" cy="380" r="22" fill="url(#hydrogenAtom)"/>
+  <text x="478" y="380" font-family="Georgia,serif" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">H</text>
+  <circle cx="722" cy="380" r="22" fill="url(#hydrogenAtom)"/>
+  <text x="722" y="380" font-family="Georgia,serif" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">H</text>
+  <!-- Molecule label -->
+  <text x="600" y="540" font-family="Georgia,serif" font-size="14" fill="#f97316" text-anchor="middle" opacity="0.6">CH₄ — Methane</text>
+
+  <!-- Background molecule — ethane (left) -->
+  <g opacity="0.18">
+    <line x1="180" y1="260" x2="260" y2="260" stroke="#f97316" stroke-width="3"/>
+    <circle cx="158" cy="260" r="22" fill="url(#carbonAtom)" stroke="#f97316" stroke-width="1"/>
+    <circle cx="282" cy="260" r="22" fill="url(#carbonAtom)" stroke="#f97316" stroke-width="1"/>
+    <text x="158" y="260" font-family="Georgia,serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle" dominant-baseline="middle">C</text>
+    <text x="282" y="260" font-family="Georgia,serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle" dominant-baseline="middle">C</text>
+    <!-- Hydrogens -->
+    <circle cx="120" cy="220" r="14" fill="url(#hydrogenAtom)"/>
+    <circle cx="120" cy="300" r="14" fill="url(#hydrogenAtom)"/>
+    <circle cx="100" cy="260" r="14" fill="url(#hydrogenAtom)"/>
+    <circle cx="320" cy="220" r="14" fill="url(#hydrogenAtom)"/>
+    <circle cx="320" cy="300" r="14" fill="url(#hydrogenAtom)"/>
+    <circle cx="340" cy="260" r="14" fill="url(#hydrogenAtom)"/>
+    <line x1="158" y1="260" x2="120" y2="220" stroke="#f97316" stroke-width="2"/>
+    <line x1="158" y1="260" x2="120" y2="300" stroke="#f97316" stroke-width="2"/>
+    <line x1="158" y1="260" x2="100" y2="260" stroke="#f97316" stroke-width="2"/>
+    <line x1="282" y1="260" x2="320" y2="220" stroke="#f97316" stroke-width="2"/>
+    <line x1="282" y1="260" x2="320" y2="300" stroke="#f97316" stroke-width="2"/>
+    <line x1="282" y1="260" x2="340" y2="260" stroke="#f97316" stroke-width="2"/>
+    <text x="220" y="310" font-family="Arial" font-size="11" fill="#f97316" text-anchor="middle">C₂H₆</text>
+  </g>
+
+  <!-- Bond counter / atom roster (right panel) -->
+  <rect x="950" y="200" width="200" height="280" rx="8" fill="#0e0a06" opacity="0.9" stroke="#f97316" stroke-width="0.8" opacity="0.4"/>
+  <text x="1050" y="228" font-family="Arial" font-size="11" fill="#f97316" text-anchor="middle" font-weight="700" opacity="0.7">ATOM ROSTER</text>
+  <line x1="960" y1="236" x2="1140" y2="236" stroke="#f97316" stroke-width="0.5" opacity="0.3"/>
+  <!-- Carbon entry -->
+  <circle cx="988" cy="262" r="14" fill="url(#carbonAtom)" stroke="#f97316" stroke-width="0.8" opacity="0.8"/>
+  <text x="988" y="262" font-family="Georgia,serif" font-size="10" font-weight="700" fill="#fff" text-anchor="middle" dominant-baseline="middle">C</text>
+  <text x="1020" y="258" font-family="Arial" font-size="10" fill="#fff" opacity="0.7">Carbon</text>
+  <text x="1020" y="270" font-family="Arial" font-size="9" fill="#f97316" opacity="0.6">4 bonds max</text>
+  <line x1="960" y1="280" x2="1140" y2="280" stroke="#333" stroke-width="0.5" opacity="0.4"/>
+  <!-- Hydrogen entry -->
+  <circle cx="988" cy="300" r="14" fill="url(#hydrogenAtom)" stroke="#aaddff" stroke-width="0.8" opacity="0.8"/>
+  <text x="988" y="300" font-family="Georgia,serif" font-size="10" font-weight="700" fill="#fff" text-anchor="middle" dominant-baseline="middle">H</text>
+  <text x="1020" y="296" font-family="Arial" font-size="10" fill="#fff" opacity="0.7">Hydrogen</text>
+  <text x="1020" y="308" font-family="Arial" font-size="9" fill="#aaddff" opacity="0.6">1 bond max</text>
+  <line x1="960" y1="318" x2="1140" y2="318" stroke="#333" stroke-width="0.5" opacity="0.4"/>
+  <!-- Progress -->
+  <text x="1050" y="350" font-family="Arial" font-size="10" fill="#f97316" text-anchor="middle" opacity="0.6">BONDS USED</text>
+  <rect x="965" y="358" width="170" height="12" rx="6" fill="#1a1008" opacity="0.8"/>
+  <rect x="965" y="358" width="102" height="12" rx="6" fill="#f97316" opacity="0.6"/>
+  <text x="1050" y="390" font-family="Arial" font-size="10" fill="#fff" text-anchor="middle" opacity="0.5">3 / 5 complete</text>
+  <text x="1050" y="440" font-family="Georgia,serif" font-size="14" fill="#f97316" text-anchor="middle" opacity="0.55">Methane</text>
+  <text x="1050" y="458" font-family="Arial" font-size="10" fill="#aaa" text-anchor="middle" opacity="0.45">CH₄ · 1 carbon · 4 hydrogen</text>
+
+  <!-- Floor -->
+  <rect x="0" y="700" width="1200" height="100" fill="#060400" opacity="0.9"/>
+  <line x1="0" y1="700" x2="1200" y2="700" stroke="#1a1008" stroke-width="1.5"/>
+</svg>

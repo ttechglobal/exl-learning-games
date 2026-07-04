@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="labBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#060a10"/>
+      <stop offset="100%" stop-color="#0e1828"/>
+    </linearGradient>
+    <radialGradient id="rayGlow" cx="20%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur6"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="blur12"><feGaussianBlur stdDeviation="12"/></filter>
+    <filter id="blur2"><feGaussianBlur stdDeviation="2"/></filter>
+  </defs>
+
+  <rect width="1200" height="800" fill="url(#labBg)"/>
+
+  <!-- Ray source glow -->
+  <ellipse cx="120" cy="420" rx="200" ry="180" fill="url(#rayGlow)" filter="url(#blur12)"/>
+
+  <!-- Optical bench (principal axis) -->
+  <rect x="60" y="416" width="1100" height="8" rx="4" fill="#1a2535" opacity="0.8"/>
+  <rect x="60" y="418" width="1100" height="4" rx="2" fill="#2a3545" opacity="0.6"/>
+  <!-- Bench legs -->
+  <rect x="150" y="424" width="12" height="80" rx="2" fill="#1a2535" opacity="0.7"/>
+  <rect x="600" y="424" width="12" height="80" rx="2" fill="#1a2535" opacity="0.7"/>
+  <rect x="1000" y="424" width="12" height="80" rx="2" fill="#1a2535" opacity="0.7"/>
+
+  <!-- Light source (left) -->
+  <rect x="60" y="370" width="70" height="100" rx="6" fill="#1a2535"/>
+  <rect x="65" y="375" width="60" height="90" rx="4" fill="#0e1620"/>
+  <!-- Aperture -->
+  <rect x="127" y="405" width="8" height="30" rx="2" fill="#0a1018"/>
+  <line x1="131" y1="412" x2="131" y2="432" stroke="#fbbf24" stroke-width="2" opacity="0.8"/>
+
+  <!-- Light rays -->
+  <!-- Top ray -->
+  <line x1="135" y1="408" x2="900" y2="290" stroke="#fbbf24" stroke-width="1.5" opacity="0.55"/>
+  <!-- Principal ray -->
+  <line x1="135" y1="420" x2="900" y2="420" stroke="#fbbf24" stroke-width="1.5" opacity="0.6"/>
+  <!-- Bottom ray -->
+  <line x1="135" y1="432" x2="900" y2="550" stroke="#fbbf24" stroke-width="1.5" opacity="0.55"/>
+
+  <!-- Reflected rays converging at image point -->
+  <line x1="900" y1="290" x2="680" y2="380" stroke="#fbbf24" stroke-width="1.2" opacity="0.5" stroke-dasharray="8 4"/>
+  <line x1="900" y1="420" x2="680" y2="380" stroke="#fbbf24" stroke-width="1.2" opacity="0.5" stroke-dasharray="8 4"/>
+  <line x1="900" y1="550" x2="680" y2="380" stroke="#fbbf24" stroke-width="1.2" opacity="0.5" stroke-dasharray="8 4"/>
+  <!-- Image point glow -->
+  <circle cx="680" cy="380" r="8" fill="#fbbf24" opacity="0.3" filter="url(#blur6)"/>
+  <circle cx="680" cy="380" r="3" fill="#fbbf24" opacity="0.8"/>
+
+  <!-- Concave mirror (right) -->
+  <path d="M900 250 Q960 420 900 590" stroke="#3a5070" stroke-width="12" fill="none" stroke-linecap="round"/>
+  <path d="M900 250 Q960 420 900 590" stroke="#8aacd0" stroke-width="2"  fill="none" stroke-linecap="round" opacity="0.5"/>
+  <!-- Mirror stand -->
+  <rect x="896" y="590" width="28" height="16" rx="3" fill="#1a2535"/>
+  <rect x="900" y="606" width="20" height="8"  rx="2" fill="#121c2a"/>
+  <!-- Mirror label -->
+  <text x="985" y="430" font-family="Arial" font-size="14" fill="#8aacd0" text-anchor="middle" opacity="0.5">Concave</text>
+  <text x="985" y="448" font-family="Arial" font-size="14" fill="#8aacd0" text-anchor="middle" opacity="0.5">Mirror</text>
+
+  <!-- Object arrow -->
+  <line x1="340" y1="420" x2="340" y2="320" stroke="#ffffff" stroke-width="2.5" opacity="0.8"/>
+  <polygon points="340,308 333,326 347,326" fill="#ffffff" opacity="0.8"/>
+  <!-- Object base -->
+  <rect x="334" y="418" width="12" height="8" rx="2" fill="#2a3545"/>
+  <text x="340" y="450" font-family="Arial" font-size="12" fill="#aaaacc" text-anchor="middle" opacity="0.6">Object</text>
+
+  <!-- Image arrow (inverted, smaller) -->
+  <line x1="680" y1="420" x2="680" y2="340" stroke="#f97316" stroke-width="2" opacity="0.7"/>
+  <polygon points="680,430 673,412 687,412" fill="#f97316" opacity="0.7"/>
+  <text x="680" y="455" font-family="Arial" font-size="11" fill="#f97316" text-anchor="middle" opacity="0.65">Image</text>
+
+  <!-- Focal point marker -->
+  <circle cx="900" cy="420" r="5" fill="#fbbf24" opacity="0.6" filter="url(#blur2)"/>
+  <circle cx="900" cy="420" r="2.5" fill="#fbbf24" opacity="0.9"/>
+  <text x="900" y="400" font-family="Arial" font-size="11" fill="#fbbf24" text-anchor="middle" opacity="0.6">F</text>
+
+  <!-- Centre of curvature marker -->
+  <circle cx="960" cy="420" r="4" fill="none" stroke="#fbbf24" stroke-width="1" opacity="0.4"/>
+  <text x="960" y="400" font-family="Arial" font-size="11" fill="#fbbf24" text-anchor="middle" opacity="0.4">C</text>
+
+  <!-- Measurement annotations -->
+  <line x1="340" y1="475" x2="680" y2="475" stroke="#4488ff" stroke-width="0.8" opacity="0.35"/>
+  <line x1="340" y1="471" x2="340" y2="479" stroke="#4488ff" stroke-width="0.8" opacity="0.35"/>
+  <line x1="680" y1="471" x2="680" y2="479" stroke="#4488ff" stroke-width="0.8" opacity="0.35"/>
+  <text x="510" y="472" font-family="Arial" font-size="10" fill="#4488ff" text-anchor="middle" opacity="0.45">v (image distance)</text>
+
+  <line x1="340" y1="500" x2="900" y2="500" stroke="#4488ff" stroke-width="0.8" opacity="0.25"/>
+  <line x1="340" y1="496" x2="340" y2="504" stroke="#4488ff" stroke-width="0.8" opacity="0.25"/>
+  <line x1="900" y1="496" x2="900" y2="504" stroke="#4488ff" stroke-width="0.8" opacity="0.25"/>
+  <text x="620" y="497" font-family="Arial" font-size="10" fill="#4488ff" text-anchor="middle" opacity="0.35">u (object distance)</text>
+
+  <!-- Lab equipment right side -->
+  <rect x="1060" y="340" width="100" height="160" rx="6" fill="#1a2535" opacity="0.8"/>
+  <rect x="1068" y="350" width="84" height="140" rx="4" fill="#0e1620" opacity="0.9"/>
+  <text x="1110" y="385" font-family="Arial" font-size="9" fill="#4488ff" text-anchor="middle" opacity="0.6">1/v + 1/u</text>
+  <text x="1110" y="400" font-family="Arial" font-size="9" fill="#4488ff" text-anchor="middle" opacity="0.6">= 1/f</text>
+  <line x1="1076" y1="410" x2="1144" y2="410" stroke="#4488ff" stroke-width="0.5" opacity="0.3"/>
+  <text x="1110" y="430" font-family="Arial" font-size="9" fill="#fbbf24" text-anchor="middle" opacity="0.5">f = R/2</text>
+
+  <!-- Ceiling lights -->
+  <rect x="200"  y="0" width="80" height="12" rx="3" fill="#fbbf24" opacity="0.08" filter="url(#blur6)"/>
+  <rect x="560"  y="0" width="80" height="12" rx="3" fill="#fbbf24" opacity="0.08" filter="url(#blur6)"/>
+  <rect x="920"  y="0" width="80" height="12" rx="3" fill="#fbbf24" opacity="0.08" filter="url(#blur6)"/>
+
+  <!-- Floor -->
+  <rect x="0" y="660" width="1200" height="140" fill="#060810" opacity="0.9"/>
+  <line x1="0" y1="660" x2="1200" y2="660" stroke="#1a2535" stroke-width="1.5"/>
+</svg>

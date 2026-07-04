@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="cosmicBg" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#0e1240"/>
+      <stop offset="100%" stop-color="#060820"/>
+    </radialGradient>
+    <radialGradient id="nucleusGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orbitGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4488ff" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#4488ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="protonR" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#ff8888"/>
+      <stop offset="100%" stop-color="#cc2200"/>
+    </radialGradient>
+    <radialGradient id="neutronR" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#bbbbdd"/>
+      <stop offset="100%" stop-color="#445566"/>
+    </radialGradient>
+    <radialGradient id="electronR" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#88ccff"/>
+      <stop offset="100%" stop-color="#1144aa"/>
+    </radialGradient>
+    <filter id="blur10"><feGaussianBlur stdDeviation="10"/></filter>
+    <filter id="blur5"><feGaussianBlur stdDeviation="5"/></filter>
+    <filter id="blur3"><feGaussianBlur stdDeviation="3"/></filter>
+  </defs>
+
+  <rect width="1200" height="800" fill="url(#cosmicBg)"/>
+
+  <!-- Stars -->
+  <g opacity="0.6">
+    <circle cx="80"  cy="60"  r="1.2" fill="#fff" opacity="0.7"/>
+    <circle cx="200" cy="30"  r="0.9" fill="#fff" opacity="0.5"/>
+    <circle cx="350" cy="80"  r="1.1" fill="#fff" opacity="0.6"/>
+    <circle cx="500" cy="40"  r="0.8" fill="#fff" opacity="0.5"/>
+    <circle cx="700" cy="25"  r="1.3" fill="#fff" opacity="0.7"/>
+    <circle cx="850" cy="65"  r="0.9" fill="#fff" opacity="0.5"/>
+    <circle cx="1000" cy="35" r="1.0" fill="#fff" opacity="0.6"/>
+    <circle cx="1100" cy="75" r="0.8" fill="#fff" opacity="0.5"/>
+    <circle cx="160" cy="200" r="0.7" fill="#fff" opacity="0.4"/>
+    <circle cx="420" cy="680" r="0.9" fill="#fff" opacity="0.4"/>
+    <circle cx="900" cy="700" r="0.8" fill="#fff" opacity="0.4"/>
+  </g>
+
+  <!-- Orbital glow halos -->
+  <ellipse cx="600" cy="400" rx="380" ry="380" fill="url(#orbitGlow)" filter="url(#blur10)"/>
+
+  <!-- Shell 3 (outermost visible) -->
+  <ellipse cx="600" cy="400" rx="320" ry="115" fill="none" stroke="#4488ff" stroke-width="1" opacity="0.15"/>
+  <ellipse cx="600" cy="400" rx="240" ry="210" fill="none" stroke="#4488ff" stroke-width="1" opacity="0.15" transform="rotate(60 600 400)"/>
+  <ellipse cx="600" cy="400" rx="240" ry="210" fill="none" stroke="#4488ff" stroke-width="1" opacity="0.15" transform="rotate(-60 600 400)"/>
+
+  <!-- Shell 2 -->
+  <ellipse cx="600" cy="400" rx="200" ry="72"  fill="none" stroke="#4488ff" stroke-width="1.2" opacity="0.22"/>
+  <ellipse cx="600" cy="400" rx="150" ry="130" fill="none" stroke="#4488ff" stroke-width="1.2" opacity="0.22" transform="rotate(60 600 400)"/>
+  <ellipse cx="600" cy="400" rx="150" ry="130" fill="none" stroke="#4488ff" stroke-width="1.2" opacity="0.22" transform="rotate(-60 600 400)"/>
+
+  <!-- Shell 1 (innermost) -->
+  <ellipse cx="600" cy="400" rx="100" ry="36"  fill="none" stroke="#4488ff" stroke-width="1.5" opacity="0.3"/>
+  <ellipse cx="600" cy="400" rx="75"  cy="65"  fill="none" stroke="#4488ff" stroke-width="1.5" opacity="0.3" transform="rotate(60 600 400)"/>
+  <ellipse cx="600" cy="400" rx="75"  cy="65"  fill="none" stroke="#4488ff" stroke-width="1.5" opacity="0.3" transform="rotate(-60 600 400)"/>
+
+  <!-- Nucleus glow -->
+  <ellipse cx="600" cy="400" rx="80" ry="80" fill="url(#nucleusGlow)" filter="url(#blur10)"/>
+
+  <!-- Nucleus particles (Carbon-12: 6p 6n) -->
+  <circle cx="585" cy="388" r="12" fill="url(#protonR)"/>
+  <circle cx="600" cy="382" r="12" fill="url(#neutronR)"/>
+  <circle cx="615" cy="388" r="12" fill="url(#protonR)"/>
+  <circle cx="585" cy="402" r="12" fill="url(#neutronR)"/>
+  <circle cx="600" cy="408" r="12" fill="url(#protonR)"/>
+  <circle cx="615" cy="402" r="12" fill="url(#neutronR)"/>
+  <circle cx="592" cy="394" r="10" fill="url(#protonR)" opacity="0.85"/>
+  <circle cx="608" cy="394" r="10" fill="url(#neutronR)" opacity="0.85"/>
+  <!-- P and N labels -->
+  <text x="585" y="391" font-family="Arial" font-size="8" font-weight="700" fill="#fff" text-anchor="middle">P</text>
+  <text x="600" y="385" font-family="Arial" font-size="8" font-weight="700" fill="#fff" text-anchor="middle">N</text>
+  <text x="615" y="391" font-family="Arial" font-size="8" font-weight="700" fill="#fff" text-anchor="middle">P</text>
+  <text x="585" y="405" font-family="Arial" font-size="8" font-weight="700" fill="#fff" text-anchor="middle">N</text>
+  <text x="600" y="411" font-family="Arial" font-size="8" font-weight="700" fill="#fff" text-anchor="middle">P</text>
+  <text x="615" y="405" font-family="Arial" font-size="8" font-weight="700" fill="#fff" text-anchor="middle">N</text>
+
+  <!-- Electrons on shells -->
+  <!-- Shell 1 (2 electrons) -->
+  <circle cx="700" cy="400" r="9" fill="url(#electronR)" filter="url(#blur3)"/>
+  <circle cx="500" cy="400" r="9" fill="url(#electronR)" filter="url(#blur3)"/>
+  <!-- Shell 2 (4 electrons) -->
+  <circle cx="776" cy="318" r="9" fill="url(#electronR)" filter="url(#blur3)"/>
+  <circle cx="424" cy="482" r="9" fill="url(#electronR)" filter="url(#blur3)"/>
+  <circle cx="776" cy="482" r="9" fill="url(#electronR)" filter="url(#blur3)"/>
+  <circle cx="424" cy="318" r="9" fill="url(#electronR)" filter="url(#blur3)"/>
+  <!-- e⁻ labels -->
+  <text x="700" y="404" font-family="Arial" font-size="7" fill="#fff" text-anchor="middle">e⁻</text>
+  <text x="500" y="404" font-family="Arial" font-size="7" fill="#fff" text-anchor="middle">e⁻</text>
+  <text x="776" y="322" font-family="Arial" font-size="7" fill="#fff" text-anchor="middle">e⁻</text>
+  <text x="424" y="486" font-family="Arial" font-size="7" fill="#fff" text-anchor="middle">e⁻</text>
+
+  <!-- Element box (top right) -->
+  <rect x="960" y="80" width="160" height="160" rx="10" fill="#1a1240" stroke="#4488ff" stroke-width="2" opacity="0.8"/>
+  <text x="1040" y="120" font-family="Arial" font-size="14" fill="#aaaacc" text-anchor="middle" opacity="0.8">6</text>
+  <text x="1040" y="175" font-family="Georgia,serif" font-size="55" font-weight="700" fill="#ffffff" text-anchor="middle">C</text>
+  <text x="1040" y="205" font-family="Arial" font-size="16" fill="#aaaacc" text-anchor="middle" opacity="0.7">12.011</text>
+  <text x="1040" y="225" font-family="Arial" font-size="10" fill="#4488ff" text-anchor="middle" opacity="0.6">Carbon</text>
+
+  <!-- Labels panel (left) -->
+  <rect x="40" y="160" width="180" height="200" rx="8" fill="#080c20" stroke="#4488ff" stroke-width="0.8" opacity="0.7"/>
+  <text x="130" y="185" font-family="Arial" font-size="11" fill="#4488ff" text-anchor="middle" font-weight="700" opacity="0.7">BUILD TARGET</text>
+  <line x1="50" y1="192" x2="210" y2="192" stroke="#4488ff" stroke-width="0.5" opacity="0.3"/>
+  <circle cx="65" cy="215" r="8" fill="url(#protonR)" opacity="0.8"/>
+  <text x="82" y="219" font-family="Arial" font-size="10" fill="#ff8888" opacity="0.75">× 6  Protons</text>
+  <line x1="50" y1="228" x2="210" y2="228" stroke="#333" stroke-width="0.4" opacity="0.4"/>
+  <circle cx="65" cy="244" r="8" fill="url(#neutronR)" opacity="0.8"/>
+  <text x="82" y="248" font-family="Arial" font-size="10" fill="#bbbbdd" opacity="0.75">× 6  Neutrons</text>
+  <line x1="50" y1="258" x2="210" y2="258" stroke="#333" stroke-width="0.4" opacity="0.4"/>
+  <circle cx="65" cy="274" r="8" fill="url(#electronR)" opacity="0.8"/>
+  <text x="82" y="278" font-family="Arial" font-size="10" fill="#88ccff" opacity="0.75">× 6  Electrons</text>
+  <line x1="50" y1="288" x2="210" y2="288" stroke="#4488ff" stroke-width="0.5" opacity="0.2"/>
+  <text x="130" y="310" font-family="Arial" font-size="10" fill="#fbbf24" text-anchor="middle" opacity="0.65">Charge: 0 (neutral)</text>
+  <text x="130" y="328" font-family="Arial" font-size="10" fill="#aaa" text-anchor="middle" opacity="0.5">Mass number: 12</text>
+  <text x="130" y="346" font-family="Georgia,serif" font-size="14" fill="#4488ff" text-anchor="middle" opacity="0.65">¹²₆C</text>
+
+  <!-- Floor -->
+  <rect x="0" y="710" width="1200" height="90" fill="#040610" opacity="0.9"/>
+</svg>

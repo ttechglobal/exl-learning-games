@@ -12,6 +12,8 @@ import { OpticsExperimentEngine } from "@/engines/optics-experiment/OpticsExperi
 import { OpticsSharedConfigSchema } from "@/engines/optics-experiment/opticsExperiment.config";
 import { StepwiseEquationSolverEngine } from "@/engines/stepwise-equation-solver/StepwiseEquationSolverEngine";
 import { StepwiseEquationSolverSharedConfigSchema } from "@/engines/stepwise-equation-solver/stepwiseEquationSolver.config";
+import { FormulaExcavationEngine } from "@/engines/formula-excavation/FormulaExcavationEngine";
+import { FormulaExcavationSharedConfigSchema } from "@/engines/formula-excavation/formulaExcavation.config";
 
 /**
  * Single source of truth mapping a Game's `engine_type` string to the
@@ -54,13 +56,20 @@ const stepwiseEquationSolverDefinition: EngineDefinition = {
   Component: StepwiseEquationSolverEngine as unknown as EngineDefinition["Component"]
 };
 
+const formulaExcavationDefinition: EngineDefinition = {
+  engineType: "formula-excavation",
+  configSchema: FormulaExcavationSharedConfigSchema as unknown as z.ZodSchema<unknown>,
+  Component: FormulaExcavationEngine as unknown as EngineDefinition["Component"]
+};
+
 const registry: Record<string, EngineDefinition> = {
   "particle-assembly": particleAssemblyDefinition,
   "tile-match": tileMatchDefinition,
   "bond-match": bondMatchDefinition,
   "molecule-builder": moleculeBuilderDefinition,
   "optics-experiment": opticsExperimentDefinition,
-  "stepwise-equation-solver": stepwiseEquationSolverDefinition
+  "stepwise-equation-solver": stepwiseEquationSolverDefinition,
+  "formula-excavation": formulaExcavationDefinition
 };
 
 export function getEngineDefinition(engineType: string): EngineDefinition | undefined {

@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 200" fill="none">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0e1240"/>
+      <stop offset="100%" stop-color="#060820"/>
+    </radialGradient>
+    <radialGradient id="nucleusGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="protonGrad" cx="35%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#ff6b6b"/>
+      <stop offset="100%" stop-color="#cc2200"/>
+    </radialGradient>
+    <radialGradient id="neutronGrad" cx="35%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#aaaacc"/>
+      <stop offset="100%" stop-color="#445566"/>
+    </radialGradient>
+    <radialGradient id="electronGrad" cx="35%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#88ccff"/>
+      <stop offset="100%" stop-color="#1144aa"/>
+    </radialGradient>
+    <filter id="glow3"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="glow6"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="280" height="200" fill="url(#bg)"/>
+
+  <!-- Stars -->
+  <circle cx="20" cy="18" r="0.8" fill="#fff" opacity="0.5"/>
+  <circle cx="55" cy="8"  r="1.0" fill="#fff" opacity="0.6"/>
+  <circle cx="100" cy="22" r="0.7" fill="#fff" opacity="0.4"/>
+  <circle cx="220" cy="14" r="0.9" fill="#fff" opacity="0.55"/>
+  <circle cx="255" cy="25" r="0.8" fill="#fff" opacity="0.4"/>
+  <circle cx="268" cy="8"  r="1.1" fill="#fff" opacity="0.6"/>
+
+  <!-- Orbital rings -->
+  <ellipse cx="140" cy="100" rx="90" ry="35" fill="none" stroke="#4488ff" stroke-width="0.8" opacity="0.25"/>
+  <ellipse cx="140" cy="100" rx="65" ry="55" fill="none" stroke="#4488ff" stroke-width="0.8" opacity="0.2"
+    transform="rotate(60 140 100)"/>
+  <ellipse cx="140" cy="100" rx="65" ry="55" fill="none" stroke="#4488ff" stroke-width="0.8" opacity="0.2"
+    transform="rotate(-60 140 100)"/>
+
+  <!-- Nucleus glow -->
+  <ellipse cx="140" cy="100" rx="40" ry="40" fill="url(#nucleusGlow)" filter="url(#glow6)"/>
+
+  <!-- Nucleus particles -->
+  <circle cx="133" cy="95"  r="8" fill="url(#protonGrad)"/>
+  <circle cx="148" cy="92"  r="8" fill="url(#neutronGrad)"/>
+  <circle cx="135" cy="108" r="8" fill="url(#neutronGrad)"/>
+  <circle cx="150" cy="106" r="8" fill="url(#protonGrad)"/>
+  <circle cx="141" cy="99"  r="6" fill="url(#protonGrad)" opacity="0.8"/>
+
+  <!-- Nucleus labels -->
+  <text x="133" y="99"  font-family="Arial,sans-serif" font-size="7" font-weight="700" fill="#fff" text-anchor="middle" opacity="0.9">P</text>
+  <text x="148" y="96"  font-family="Arial,sans-serif" font-size="7" font-weight="700" fill="#fff" text-anchor="middle" opacity="0.9">N</text>
+  <text x="135" y="112" font-family="Arial,sans-serif" font-size="7" font-weight="700" fill="#fff" text-anchor="middle" opacity="0.9">N</text>
+  <text x="150" y="110" font-family="Arial,sans-serif" font-size="7" font-weight="700" fill="#fff" text-anchor="middle" opacity="0.9">P</text>
+
+  <!-- Electrons on orbits -->
+  <!-- Orbit 1 -->
+  <circle cx="230" cy="100" r="5.5" fill="url(#electronGrad)" filter="url(#glow3)"/>
+  <circle cx="50"  cy="100" r="5.5" fill="url(#electronGrad)" filter="url(#glow3)"/>
+  <!-- Orbit 2 -->
+  <circle cx="187" cy="54"  r="5.5" fill="url(#electronGrad)" filter="url(#glow3)"/>
+  <circle cx="93"  cy="146" r="5.5" fill="url(#electronGrad)" filter="url(#glow3)"/>
+  <!-- Orbit 3 -->
+  <circle cx="187" cy="146" r="5.5" fill="url(#electronGrad)" filter="url(#glow3)"/>
+  <circle cx="93"  cy="54"  r="5.5" fill="url(#electronGrad)" filter="url(#glow3)"/>
+
+  <!-- Electron labels -->
+  <text x="230" y="104" font-family="Arial,sans-serif" font-size="6" font-weight="700" fill="#fff" text-anchor="middle">e⁻</text>
+  <text x="50"  y="104" font-family="Arial,sans-serif" font-size="6" font-weight="700" fill="#fff" text-anchor="middle">e⁻</text>
+
+  <!-- Element badge -->
+  <rect x="118" y="76" width="44" height="22" rx="4" fill="rgba(68,136,255,0.15)" stroke="#4488ff" stroke-width="0.8" opacity="0.7"/>
+  <text x="140" y="84" font-family="Arial,sans-serif" font-size="5.5" fill="#4488ff" text-anchor="middle" letter-spacing="1" opacity="0.8">HELIUM</text>
+  <text x="140" y="94" font-family="Georgia,serif" font-size="10" font-weight="700" fill="#4488ff" text-anchor="middle">He</text>
+
+  <!-- Title bar -->
+  <rect x="0" y="170" width="280" height="30" fill="#04060e" opacity="0.95"/>
+  <line x1="0" y1="170" x2="280" y2="170" stroke="#4488ff" stroke-width="0.7" opacity="0.4"/>
+  <text x="140" y="183" font-family="Georgia,serif" font-size="9" font-weight="700" fill="#4488ff" text-anchor="middle" letter-spacing="2">BUILD THE ATOM</text>
+  <text x="140" y="195" font-family="Georgia,serif" font-size="6.5" fill="#aaaacc" text-anchor="middle" letter-spacing="1.2" opacity="0.75">Atomic Structure · Chemistry</text>
+</svg>

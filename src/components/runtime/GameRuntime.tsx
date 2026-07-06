@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { LearnScreen } from "@/components/runtime/LearnScreen";
 import { ConceptSnapshot } from "@/components/runtime/ConceptSnapshot";
 import { ReflectionScreen } from "@/components/runtime/ReflectionScreen";
 import { PeriodicTableReveal } from "@/motion/PeriodicTableReveal";
@@ -8,6 +9,7 @@ import { PersonalBest } from "@/components/runtime/PersonalBest";
 import { getEngineDefinition } from "@/engines/registry";
 import { applyDifficultyModifiers, type PlayerDifficulty } from "@/lib/content/difficultyModifiers";
 import { resolveQuickConceptsForSlug } from "@/lib/content/quickConcepts";
+import { hasSeenLearn, markLearnSeen } from "@/lib/content/contentPrefs";
 import type { AttemptResult } from "@/types/result";
 import { enqueueAttempt } from "@/lib/offline/attemptQueue";
 import { track } from "@/lib/analytics/track";
@@ -74,6 +76,16 @@ export interface GameRuntimeProps {
    *  true for this game; GameRuntime itself has no opinion on which
    *  engines support this, it just forwards whatever it's given. */
   onChangeDifficulty?: () => void;
+  /** Accent colour for the Learn screen — same value PlayClient already
+   *  resolves for PrePlayShell. Optional: falls back to subject default. */
+  accentColor?: string;
+  /**
+   * When true, GameRuntime opens immediately in "reviewingLearn" phase —
+   * triggered by "Review Concepts" in the game menu. The parent resets
+   * this via onReviewModeConsumed after the phase is set.
+   */
+  openInReviewMode?: boolean;
+  onReviewModeConsumed?: () => void;
   /**
    * Returns to the Mission Objectives screen — the literal previous step
    * before GameRuntime mounts (see PlayClient.tsx: `screen ===
@@ -122,7 +134,7 @@ export interface GameRuntimeProps {
   menu?: React.ReactNode;
 }
 
-type Phase = "snapshot" | "playing" | "reflection" | "reviewingConcepts";
+type Phase = "learn" | "playing" | "reflection" | "reviewingLearn" | "snapshot" | "reviewingConcepts";
 
 /** Last-resort fallback when a game has NEITHER a real snapshot.cards
  *  row in the DB NOR an entry in lib/content/quickConcepts.ts — see the
@@ -188,7 +200,10 @@ export function GameRuntime({
   onBackFromConcepts,
   playerDifficulty,
   isPaused,
-  menu
+  menu,
+  accentColor = "var(--eg-subject-chemistry)",
+  openInReviewMode,
+  onReviewModeConsumed
 }: GameRuntimeProps) {
   /**
    * Always starts at "snapshot" now. An EARLIER revision initialized
@@ -206,7 +221,22 @@ export function GameRuntime({
    * visible (see its own canSkip change) — one tap, not a silent,
    * permanent, cross-game disappearance.
    */
-  const [phase, setPhase] = useState<Phase>("snapshot");
+  // Learn shows on first visit per game. After that, go straight to playing.
+  // openInReviewMode forces the reviewingLearn phase (from game menu).
+  const [phase, setPhase] = useState<Phase>(() => {
+    if (openInReviewMode) return "reviewingLearn";
+    if (typeof window === "undefined") return "learn";
+    return hasSeenLearn(gameSlug) ? "playing" : "learn";
+  });
+
+  // Notify parent that review mode has been consumed so it resets the flag
+  const reviewConsumedRef = useRef(false);
+  useEffect(() => {
+    if (openInReviewMode && !reviewConsumedRef.current) {
+      reviewConsumedRef.current = true;
+      onReviewModeConsumed?.();
+    }
+  }, [openInReviewMode, onReviewModeConsumed]);
   const [lastResult, setLastResult] = useState<AttemptResult | null>(null);
 
   /**
@@ -362,16 +392,30 @@ export function GameRuntime({
     [studentId, gameId, mission, onMissionSucceeded]
   );
 
+  if (phase === "learn" || phase === "reviewingLearn") {
+    const cards = resolveSnapshotCards(gameSlug, snapshot);
+    const isReview = phase === "reviewingLearn";
+    return (
+      <LearnScreen
+        cards={cards}
+        gameSlug={gameSlug}
+        gameTitle={gameTitle}
+        subject={subject}
+        accentColor={accentColor}
+        onStartPlaying={() => {
+          markLearnSeen(gameSlug);
+          setPhase("playing");
+        }}
+        onBack={!isReview ? onBackFromConcepts : undefined}
+        isReview={isReview}
+        onBackToGame={() => setPhase("reflection")}
+      />
+    );
+  }
+
+  // Legacy path — keep snapshot/reviewingConcepts working for any
+  // call sites that haven't migrated yet
   if (phase === "snapshot" || phase === "reviewingConcepts") {
-    // See resolveSnapshotCards() above for the 3-tier resolution order
-    // (real DB content -> per-slug code fallback -> generic last
-    // resort). The defensive Array.isArray check inside it still
-    // matters: until a DB migration rewrites every game's `snapshot`
-    // column from the old `{lines, readTimeSec}` shape to `{cards}`, a
-    // live Supabase row can arrive here with the OLD shape — `snapshot`
-    // is typed as `{cards: [...]}` (see GameRow.snapshot's migration
-    // caveat in types/db.ts) but TypeScript types don't change what
-    // Postgres actually returns.
     const cards = resolveSnapshotCards(gameSlug, snapshot);
     return (
       <ConceptSnapshot
@@ -381,11 +425,6 @@ export function GameRuntime({
         gameSlug={gameSlug}
         gameTitle={gameTitle}
         subject={subject}
-        // Only the initial pre-mission "snapshot" phase gets a working
-        // Back — there's nowhere sensible to navigate "back" to from
-        // the post-mission "reviewingConcepts" revisit (the mission is
-        // already done; Reflection already has its own way back). See
-        // ConceptSnapshotProps.onBack's doc comment.
         onBack={phase === "snapshot" ? onBackFromConcepts : undefined}
         backLabel="Back to Objectives"
       />
@@ -460,7 +499,7 @@ export function GameRuntime({
         setPhase("playing");
       }}
       onNextMission={onAdvanceToNextMission}
-      onViewConceptSummary={() => setPhase("reviewingConcepts")}
+      onViewConceptSummary={() => setPhase("reviewingLearn")}
       onBackToHome={onBackToHome}
       onChangeDifficulty={onChangeDifficulty}
       gameSlug={gameSlug}

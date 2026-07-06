@@ -137,7 +137,7 @@
 /* Mini card — wider on mobile so description fits */
 .miniCard {
   flex-shrink: 0;
-  width: 210px;
+  width: 170px;
   background: var(--eg-surface-card);
   border-radius: 14px;
   overflow: hidden;
@@ -149,7 +149,7 @@
 .miniCard:hover { opacity: 0.9; }
 
 .miniCardArt {
-  height: 110px;
+  height: 90px;
   overflow: hidden;
   position: relative;
   flex-shrink: 0;
@@ -335,8 +335,8 @@
 @media (min-width: 520px) {
   /* On tablets/desktop, switch back to a real grid */
   .gameGrid {
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 22px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 18px;
   }
 
   /* Cards go back to column-direction in grid */
@@ -346,7 +346,7 @@
 
   .gameCardArt {
     width: 100%;
-    height: 175px;
+    height: 155px;
   }
 
   /* Clamp description to 3 lines on grid cards */
@@ -425,4 +425,140 @@
   .overviewWrap {
     padding: 8px 16px 60px;
   }
+}
+/* ── Search ── */
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.searchWrap {
+  position: relative;
+  flex: 1;
+  max-width: 520px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 40px 11px 40px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.07);
+  color: var(--eg-text-bright);
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.searchInput::placeholder { color: rgba(255,255,255,0.35); }
+.searchInput:focus { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); }
+
+.searchClear {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.searchCount {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.45);
+  white-space: nowrap;
+}
+
+/* ── Filters row ── */
+.filtersRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.filterSelect {
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: var(--eg-text-bright);
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.12s;
+}
+
+.filterSelect:focus { border-color: rgba(255,255,255,0.25); }
+
+.clearFilters {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: none;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.75rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.12s, border-color 0.12s;
+}
+.clearFilters:hover { color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.25); }
+
+/* ── No results ── */
+.noResults {
+  text-align: center;
+  padding: 64px 24px;
+}
+.noResultsIcon { font-size: 2.5rem; margin-bottom: 14px; }
+.noResultsTitle { font-size: 1.05rem; font-weight: 700; color: var(--eg-text-bright); margin-bottom: 6px; }
+.noResultsSub { font-size: 0.82rem; color: var(--eg-text-dim); margin-bottom: 20px; }
+.noResultsClear {
+  padding: 9px 22px; border-radius: 9px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: var(--eg-text-bright);
+  font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+}
+.noResultsClear:hover { background: rgba(255,255,255,0.14); }
+
+/* ── Year group / exam board badges on game cards ── */
+.gameTags {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.gameTag {
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.5);
+}
+
+.gameTagExam {
+  background: rgba(245,158,11,0.12);
+  color: rgba(245,158,11,0.8);
 }

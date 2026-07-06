@@ -1,0 +1,112 @@
+.nav {
+  width: 200px;
+  flex-shrink: 0;
+  background: #050a10;
+  border-right: 1px solid #0f1c2e;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+}
+
+/* Wordmark */
+.brand {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid #0f1c2e;
+  margin-bottom: 8px;
+}
+
+.brandMark {
+  font-family: "Inter", sans-serif;
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: #fff;
+  line-height: 1;
+}
+
+.brandSub {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #7c3aed;
+  margin-top: 3px;
+}
+
+/* Nav links */
+.links {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 10px;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 500;
+  position: relative;
+  transition: color 0.12s, background 0.12s;
+}
+
+.link:hover {
+  color: #e2e8f0;
+  background: #0f1c2e;
+}
+
+.link.active {
+  color: #e2e8f0;
+  background: #0f1c2e;
+  font-weight: 600;
+}
+
+.linkIcon {
+  font-size: 0.85rem;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.linkLabel {
+  flex: 1;
+}
+
+.activePip {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #7c3aed;
+  flex-shrink: 0;
+}
+
+/* Bottom */
+.bottom {
+  padding: 16px 10px;
+  border-top: 1px solid #0f1c2e;
+}
+
+.backLink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #475569;
+  font-size: 0.8rem;
+  transition: color 0.12s;
+}
+
+.backLink:hover {
+  color: #94a3b8;
+}

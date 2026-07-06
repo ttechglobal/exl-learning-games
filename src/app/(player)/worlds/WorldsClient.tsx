@@ -48,11 +48,46 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
   const [expandedSubject, setExpandedSubject] = useState<string | null>(null);
   const [activeTopicFilter, setActiveTopicFilter] = useState<string>("all");
   const [activeSubjectFilter, setActiveSubjectFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [yearGroupFilter, setYearGroupFilter] = useState("all");
+  const [examBoardFilter, setExamBoardFilter] = useState("all");
+  const [termFilter, setTermFilter] = useState("all");
 
   const allSubjects = Object.entries(bySubject).filter(([, g]) => g.length > 0);
-  const subjects = activeSubjectFilter === "all"
-    ? allSubjects
-    : allSubjects.filter(([key]) => key === activeSubjectFilter);
+
+  // Collect all year groups and exam boards for filter dropdowns
+  const allYearGroups = Array.from(new Set(
+    allSubjects.flatMap(([, games]) => games.flatMap(g => g.game.year_groups ?? []))
+  )).sort();
+  const allExamBoards = Array.from(new Set(
+    allSubjects.flatMap(([, games]) => games.flatMap(g => g.game.exam_boards ?? []))
+  )).sort();
+
+  const q = searchQuery.toLowerCase().trim();
+
+  const subjects = allSubjects
+    .map(([key, games]) => {
+      const filtered = games.filter(g => {
+        const game = g.game;
+        if (activeSubjectFilter !== "all" && key !== activeSubjectFilter) return false;
+        if (yearGroupFilter !== "all" && !(game.year_groups ?? []).includes(yearGroupFilter)) return false;
+        if (examBoardFilter !== "all" && !(game.exam_boards ?? []).includes(examBoardFilter)) return false;
+        if (termFilter !== "all" && game.curriculum_term !== termFilter) return false;
+        if (q) {
+          const haystack = [
+            game.title,
+            game.topic_id,
+            game.card_description ?? "",
+            key,
+            ...(game.year_groups ?? []),
+          ].join(" ").toLowerCase();
+          if (!haystack.includes(q)) return false;
+        }
+        return true;
+      });
+      return [key, filtered] as [string, GameSummary[]];
+    })
+    .filter(([, games]) => games.length > 0);
   const totalGames = allSubjects.reduce((s, [, g]) => s + g.length, 0);
   const primaryAccent = allSubjects.length > 0
     ? subjectMeta(allSubjects[0][0]).color
@@ -174,6 +209,74 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
         </div>
       </div>
 
+      {/* Search bar */}
+      <div className={styles.searchRow}>
+        <div className={styles.searchWrap}>
+          <span className={styles.searchIcon}>🔍</span>
+          <input
+            className={styles.searchInput}
+            type="text"
+            placeholder="Search by topic, subject, year group…"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button className={styles.searchClear} onClick={() => setSearchQuery("")}>✕</button>
+          )}
+        </div>
+        {searchQuery && (
+          <div className={styles.searchCount}>
+            {searchResultCount} game{searchResultCount !== 1 ? "s" : ""} found
+          </div>
+        )}
+      </div>
+
+      {/* Filters row */}
+      <div className={styles.filtersRow}>
+        {/* Year group filter */}
+        {allYearGroups.length > 0 && (
+          <select
+            className={styles.filterSelect}
+            value={yearGroupFilter}
+            onChange={e => setYearGroupFilter(e.target.value)}
+          >
+            <option value="all">All Year Groups</option>
+            {allYearGroups.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+        )}
+        {/* Exam board filter */}
+        {allExamBoards.length > 0 && (
+          <select
+            className={styles.filterSelect}
+            value={examBoardFilter}
+            onChange={e => setExamBoardFilter(e.target.value)}
+          >
+            <option value="all">All Exam Boards</option>
+            {allExamBoards.map(b => <option key={b} value={b}>{b}</option>)}
+          </select>
+        )}
+        {/* Term filter */}
+        <select
+          className={styles.filterSelect}
+          value={termFilter}
+          onChange={e => setTermFilter(e.target.value)}
+        >
+          <option value="all">All Terms</option>
+          <option value="First Term">First Term</option>
+          <option value="Second Term">Second Term</option>
+          <option value="Third Term">Third Term</option>
+        </select>
+        {/* Clear all filters */}
+        {(yearGroupFilter !== "all" || examBoardFilter !== "all" || termFilter !== "all" || searchQuery) && (
+          <button
+            className={styles.clearFilters}
+            onClick={() => { setYearGroupFilter("all"); setExamBoardFilter("all"); setTermFilter("all"); setSearchQuery(""); }}
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
+
       {/* Subject filter pills */}
       {allSubjects.length > 1 && (
         <div className={styles.subjectFilterRow}>
@@ -200,7 +303,15 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
       )}
 
       <div className={styles.overviewWrap}>
-        {subjects.length === 0 && (
+        {subjects.length === 0 && searchQuery && (
+        <div className={styles.noResults}>
+          <div className={styles.noResultsIcon}>🔍</div>
+          <div className={styles.noResultsTitle}>No games found for "{searchQuery}"</div>
+          <div className={styles.noResultsSub}>Try a different search — topic name, subject, or year group</div>
+          <button className={styles.noResultsClear} onClick={() => setSearchQuery("")}>Clear search</button>
+        </div>
+      )}
+      {subjects.length === 0 && !searchQuery && (
           <p className={styles.emptyText}>No games yet — check back soon.</p>
         )}
         {subjects.map(([subject, games]) => {

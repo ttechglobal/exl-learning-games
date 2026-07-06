@@ -1,0 +1,72 @@
+.page { max-width: 1100px; margin: 0 auto; padding: 36px 32px 80px; }
+
+.header { margin-bottom: 24px; }
+.heading { font-size: 1.5rem; font-weight: 800; color: #f1f5f9; margin: 0 0 4px; letter-spacing: -0.01em; }
+.sub { font-size: 0.8rem; color: #475569; margin: 0; }
+
+.statsRow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+.statCard {
+  background: #0d1520; border: 1px solid #0f1c2e; border-radius: 12px;
+  padding: 16px 18px;
+}
+.statLabel { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #475569; margin-bottom: 6px; }
+.statValue { font-size: 1.7rem; font-weight: 800; color: #e2e8f0; letter-spacing: -0.02em; }
+
+/* Table */
+.tableWrap { background: #0d1520; border: 1px solid #0f1c2e; border-radius: 12px; overflow: hidden; }
+
+.tableHead {
+  display: grid; grid-template-columns: 56px 1fr 180px 90px 140px 90px;
+  padding: 10px 18px; gap: 12px;
+  background: #060d14; border-bottom: 1px solid #0f1c2e;
+  font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: #334155;
+}
+
+.tableRow {
+  display: grid; grid-template-columns: 56px 1fr 180px 90px 140px 90px;
+  padding: 12px 18px; gap: 12px; align-items: center;
+  border-bottom: 1px solid #0a1018;
+  transition: background 0.1s;
+}
+.tableRow:last-child { border-bottom: none; }
+.tableRow:hover { background: #0a1018; }
+
+.rank { display: flex; align-items: center; justify-content: center; }
+.rankBadge {
+  width: 24px; height: 24px; border-radius: 6px;
+  font-size: 0.7rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+.rankNum { font-size: 0.78rem; color: #334155; font-weight: 600; }
+
+.studentInfo { min-width: 0; }
+.studentName { font-size: 0.88rem; font-weight: 600; color: #e2e8f0; margin-bottom: 2px; }
+.studentId { font-size: 0.65rem; color: #1e2a3a; font-family: "Fira Code", monospace; }
+
+.schoolInfo { min-width: 0; }
+.schoolName { font-size: 0.78rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.className { font-size: 0.68rem; color: #475569; margin-top: 1px; }
+.noData { font-size: 0.72rem; color: #1e2a3a; }
+
+.xp { display: flex; align-items: baseline; gap: 4px; }
+.xpValue { font-size: 0.95rem; font-weight: 800; color: #f59e0b; }
+.xpLabel { font-size: 0.65rem; color: #475569; font-weight: 600; }
+
+.activity { display: flex; align-items: center; }
+.activityBars { display: flex; align-items: flex-end; gap: 2px; }
+.activityBar { width: 6px; height: 14px; border-radius: 2px; }
+.activityCount { font-size: 0.65rem; color: #475569; margin-left: 6px; font-weight: 600; }
+
+.joined { font-size: 0.72rem; color: #475569; }
+
+.empty { text-align: center; padding: 80px 24px; background: #0d1520; border-radius: 14px; border: 1px dashed #0f1c2e; margin-top: 20px; }
+.emptyIcon { font-size: 2rem; color: #1e2a3a; margin-bottom: 12px; }
+.emptyTitle { font-size: 1rem; font-weight: 700; color: #64748b; margin-bottom: 6px; }
+.emptySub { font-size: 0.8rem; color: #334155; }
+
+@media (max-width: 900px) {
+  .statsRow { grid-template-columns: repeat(2, 1fr); }
+  .tableHead, .tableRow { grid-template-columns: 40px 1fr 80px 100px 80px; }
+  .tableHead > div:nth-child(3), .tableRow > div:nth-child(3) { display: none; }
+}

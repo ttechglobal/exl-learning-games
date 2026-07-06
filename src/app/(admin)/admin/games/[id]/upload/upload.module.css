@@ -1,0 +1,574 @@
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 36px 32px 80px;
+}
+
+/* ── Header ── */
+.header { margin-bottom: 32px; }
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: #475569;
+  margin-bottom: 10px;
+}
+
+.breadcrumbLink {
+  color: #64748b;
+  text-decoration: none;
+}
+.breadcrumbLink:hover { color: #94a3b8; }
+
+.breadcrumbSep { color: #1e2a3a; }
+
+.heading {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+}
+
+.sub {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.sub code {
+  font-family: "Fira Code", monospace;
+  background: #0f1c2e;
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: #94a3b8;
+  font-size: 0.78rem;
+}
+
+/* ── Two-column workspace ── */
+.workspace {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+/* ── Editor panel ── */
+.editorPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.editorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.editorLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #475569;
+}
+
+.fileBtn {
+  padding: 6px 14px;
+  border-radius: 7px;
+  border: 1px solid #1e2a3a;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s;
+}
+.fileBtn:hover { border-color: #7c3aed; color: #e2e8f0; }
+
+.dropZone {
+  position: relative;
+  border: 1.5px solid #0f1c2e;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+  background: #0a1018;
+}
+
+.dropZone.dragging {
+  border-color: #7c3aed;
+  background: rgba(124, 58, 237, 0.04);
+}
+
+.dropZone.dropZoneValid {
+  border-color: #166534;
+}
+
+.dropZone.dropZoneError {
+  border-color: #7f1d1d;
+}
+
+.dropPrompt {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.dropIcon {
+  font-size: 2rem;
+  font-family: "Fira Code", monospace;
+  color: #475569;
+}
+
+.dropTitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.dropSub {
+  font-size: 0.75rem;
+  color: #475569;
+}
+
+.editor {
+  width: 100%;
+  min-height: 520px;
+  box-sizing: border-box;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: vertical;
+  color: #7ecf8e;
+  font-family: "Fira Code", "Courier New", monospace;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  padding: 18px 20px;
+  caret-color: #7c3aed;
+}
+
+/* ── Validation messages ── */
+.validationBox {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.validationError,
+.validationWarn,
+.validationOk {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 7px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.validationError {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+.validationWarn {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: #fcd34d;
+}
+
+.validationOk {
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: #86efac;
+}
+
+.validationIcon {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  margin-top: 1px;
+}
+
+/* ── Preview panel ── */
+.previewPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: sticky;
+  top: 24px;
+}
+
+/* ── Preview card ── */
+.previewCard {
+  background: #0d1520;
+  border: 1px solid #0f1c2e;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.previewCardBar {
+  height: 4px;
+  width: 100%;
+}
+
+.previewCardInner {
+  padding: 18px 18px 14px;
+}
+
+.previewCardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.previewTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  line-height: 1.2;
+  margin-bottom: 3px;
+}
+
+.previewSlug {
+  font-size: 0.68rem;
+  color: #334155;
+  font-family: "Fira Code", monospace;
+}
+
+.previewArt {
+  width: 64px;
+  height: 46px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #0f1c2e;
+  flex-shrink: 0;
+}
+
+.previewDesc {
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.4;
+  margin: 0 0 12px;
+}
+
+.previewMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #0f1c2e;
+}
+
+.previewMetaItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.previewMetaLabel {
+  color: #475569;
+  font-size: 0.7rem;
+}
+
+.gradientPreview {
+  height: 28px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+}
+
+.gradientLabel {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── Mission breakdown ── */
+.missionBreakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.missionBreakdownTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.diffPills {
+  display: flex;
+  gap: 8px;
+}
+
+.diffPill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: #0a1018;
+  border: 1px solid #0f1c2e;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.diffPillDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.diffPillLabel {
+  color: #475569;
+  font-weight: 500;
+}
+
+.missionList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.missionItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #0a1018;
+}
+
+.missionNum {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: #0f1c2e;
+  color: #475569;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.missionInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.missionTitle {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.missionFormula {
+  font-size: 0.65rem;
+  color: #334155;
+  font-family: "Fira Code", monospace;
+  margin-top: 1px;
+}
+
+.missionDiff {
+  font-size: 0.65rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.missionMore {
+  font-size: 0.7rem;
+  color: #334155;
+  padding: 4px 8px;
+  text-align: center;
+}
+
+/* ── Preview empty state ── */
+.previewEmpty {
+  background: #0d1520;
+  border: 1.5px dashed #0f1c2e;
+  border-radius: 14px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 32px;
+}
+
+.previewEmptyIcon {
+  font-size: 1.8rem;
+  color: #1e2a3a;
+}
+
+.previewEmptyText {
+  font-size: 0.78rem;
+  color: #334155;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ── Upload button ── */
+.uploadError {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #fca5a5;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.uploadBtn {
+  width: 100%;
+  padding: 13px;
+  border-radius: 10px;
+  background: #1e2a3a;
+  border: none;
+  color: #475569;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: not-allowed;
+  transition: background 0.15s, color 0.15s;
+  font-family: inherit;
+}
+
+.uploadBtn:not(:disabled) {
+  color: #fff;
+  cursor: pointer;
+}
+
+.uploadBtn:not(:disabled):hover {
+  filter: brightness(1.15);
+}
+
+.uploadBtnSpinner {
+  opacity: 0.7;
+}
+
+.uploadNote {
+  font-size: 0.72rem;
+  color: #334155;
+  line-height: 1.5;
+  text-align: center;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+  .previewPanel {
+    position: static;
+  }
+}
+
+/* Mode tips */
+.modeTips {
+  display: flex; align-items: center; gap: 0;
+  background: #0d1520; border: 1px solid #0f1c2e;
+  border-radius: 10px; padding: 14px 20px;
+  margin-bottom: 24px; gap: 0;
+}
+.modeTip { display: flex; align-items: flex-start; gap: 12px; flex: 1; }
+.modeTipIcon {
+  width: 28px; height: 28px; border-radius: 7px;
+  background: #0f1c2e; color: #475569;
+  font-size: 0.9rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.modeTipTitle { font-size: 0.82rem; font-weight: 700; color: #94a3b8; margin-bottom: 3px; }
+.modeTipSub { font-size: 0.72rem; color: #334155; line-height: 1.4; }
+.modeTipSub code { font-family: "Fira Code", monospace; background: #0a1018; padding: 1px 4px; border-radius: 3px; color: #475569; font-size: 0.68rem; }
+.modeTipDivider { width: 1px; background: #0f1c2e; margin: 0 20px; align-self: stretch; flex-shrink: 0; }
+
+/* Mode tags in editor header */
+.editorModeTag { flex: 1; }
+.modeTagNeutral { font-size: 0.72rem; color: #334155; }
+.modeTagCreate { font-size: 0.72rem; font-weight: 700; color: #a78bfa; }
+.modeTagPatch  { font-size: 0.72rem; font-weight: 700; color: #60a5fa; }
+
+/* Preview mode header */
+.previewMode {
+  padding: 12px 16px; border: 1px solid;
+  border-radius: 8px; margin-bottom: 0;
+}
+.previewModeTitle { font-size: 0.82rem; font-weight: 700; color: #e2e8f0; margin-bottom: 3px; }
+.previewModeSub { font-size: 0.72rem; color: #64748b; line-height: 1.4; }
+
+/* Upload success */
+.uploadSuccess {
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  border-radius: 8px; padding: 10px 14px;
+  color: #86efac; font-size: 0.8rem; line-height: 1.4;
+}
+
+/* Upload button active state */
+.uploadBtnActive {
+  background: #7c3aed !important;
+  color: #fff !important;
+  cursor: pointer !important;
+}
+.uploadBtnActive:hover { filter: brightness(1.12); }
+
+/* Prompt section */
+.promptSection { margin-top: 48px; }
+.promptTitle { font-size: 1rem; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; }
+.promptSub { font-size: 0.8rem; color: #475569; margin-bottom: 20px; line-height: 1.5; }
+.promptGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+
+.promptCard {
+  background: #0d1520; border: 1px solid #0f1c2e;
+  border-radius: 12px; overflow: hidden;
+}
+.promptCardBar { height: 3px; }
+.promptCardInner { padding: 16px; }
+.promptCardHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.promptLabel { font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
+.copyBtn {
+  padding: 4px 10px; border-radius: 5px;
+  border: 1px solid #1e2a3a; background: none;
+  color: #64748b; font-size: 0.68rem; font-weight: 600;
+  cursor: pointer; transition: border-color 0.12s, color 0.12s;
+  font-family: inherit;
+}
+.copyBtn:hover { border-color: currentColor; }
+.promptCardTitle { font-size: 0.88rem; font-weight: 700; color: #e2e8f0; margin-bottom: 10px; }
+.promptPreview {
+  font-size: 0.68rem; color: #334155; line-height: 1.5;
+  font-family: "Fira Code", monospace;
+  white-space: pre-wrap; word-break: break-word;
+  background: #0a1018; border-radius: 6px;
+  padding: 10px 12px; margin: 0;
+  max-height: 120px; overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .promptGrid { grid-template-columns: 1fr; }
+}

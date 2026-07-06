@@ -1,0 +1,246 @@
+/**
+ * LearnScreen.module.css
+ *
+ * Visual identity: warm, welcoming — this is the "safe" zone before
+ * the game starts. Uses the game's accent colour for highlights.
+ * More spacious and readable than ConceptSnapshot — the content is
+ * richer so the layout needs to breathe more.
+ */
+
+.wrap {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 20px 32px;
+  overflow: hidden;
+}
+
+/* ── Header ── */
+.headerRow {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 520px;
+  padding: 16px 0 4px;
+  box-sizing: border-box;
+}
+
+/* ── Mode label row ── */
+.modeRow {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 520px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.modeChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: var(--accent-color, var(--eg-subject-chemistry));
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.modeIcon {
+  font-size: 0.65rem;
+}
+
+.skipLink {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.55);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.12s;
+}
+.skipLink:hover { color: rgba(255,255,255,0.85); }
+
+/* ── Mascot ── */
+.mascotRow {
+  position: relative;
+  z-index: 1;
+  margin-bottom: -10px;
+  margin-top: 4px;
+}
+
+/* ── Card ── */
+.card {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  width: calc(100% - 16px);
+  max-width: 520px;
+  margin: 0 8px;
+  background: #ffffff;
+  border-radius: 22px;
+  border: 3px solid var(--accent-color, var(--eg-subject-chemistry));
+  padding: 24px 24px 22px;
+  box-shadow: 0 10px 0 rgba(0,0,0,0.06), 0 16px 36px rgba(43,28,74,0.12);
+}
+
+[data-theme="dark"] .card {
+  background: #181c28;
+}
+
+/* ── Progress dots ── */
+.progressRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.dots {
+  display: flex;
+  gap: 6px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  background: color-mix(in srgb,
+    var(--accent-color, var(--eg-subject-chemistry)) 18%, transparent);
+  transition: background 0.18s, transform 0.18s;
+}
+
+.dotActive {
+  background: var(--accent-color, var(--eg-subject-chemistry));
+  transform: scale(1.3);
+}
+
+.dotDone {
+  background: color-mix(in srgb,
+    var(--accent-color, var(--eg-subject-chemistry)) 50%, transparent);
+}
+
+.counter {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: color-mix(in srgb,
+    var(--accent-color, var(--eg-subject-chemistry)) 60%, transparent);
+  text-transform: uppercase;
+}
+
+/* ── Card content ── */
+.cardTitle {
+  font-family: var(--eg-font-display);
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--eg-text-bright);
+  margin-bottom: 12px;
+  line-height: 1.2;
+}
+
+[data-theme="dark"] .cardTitle {
+  color: #eef0fa;
+}
+
+.visual {
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 14px;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+[data-theme="dark"] .visual {
+  border-color: rgba(255,255,255,0.08);
+}
+
+.cardBody {
+  font-size: 0.97rem;
+  line-height: 1.7;
+  color: var(--eg-text-bright);
+  margin-bottom: 22px;
+  min-height: 72px;
+}
+
+[data-theme="dark"] .cardBody {
+  color: #c8cde8;
+}
+
+/* ── Actions ── */
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.prevBtn {
+  flex-shrink: 0;
+  min-height: 52px;
+  min-width: 52px;
+  border-radius: 14px;
+  border: 2px solid var(--accent-color, var(--eg-subject-chemistry));
+  background: transparent;
+  color: var(--accent-color, var(--eg-subject-chemistry));
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.prevBtn:hover {
+  background: color-mix(in srgb,
+    var(--accent-color, var(--eg-subject-chemistry)) 10%, transparent);
+}
+
+.nextBtn {
+  flex: 1;
+  min-height: 52px;
+  border-radius: 14px;
+  border: none;
+  background: var(--accent-color, var(--eg-subject-chemistry));
+  color: #ffffff;
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 5px 0 color-mix(in srgb,
+    var(--accent-color, var(--eg-subject-chemistry)) 65%, black);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.nextBtn:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 color-mix(in srgb,
+    var(--accent-color, var(--eg-subject-chemistry)) 65%, black);
+}
+
+/* ── Revisit note ── */
+.revisitNote {
+  position: relative;
+  z-index: 1;
+  margin-top: 16px;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.45);
+  text-align: center;
+}
+
+@media (max-width: 420px) {
+  .card {
+    padding: 20px 18px 18px;
+    margin: 0 4px;
+  }
+  .cardTitle { font-size: 1.05rem; }
+  .cardBody  { font-size: 0.9rem; }
+}

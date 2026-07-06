@@ -15,7 +15,7 @@ import { resetConceptsSeen } from "@/lib/content/contentPrefs";
 import { engineSupportsDifficultyChoice, type PlayerDifficulty } from "@/lib/content/difficultyModifiers";
 import { getElementByAtomicNumber, CATEGORY_COLORS } from "@/motion/periodicTableData";
 import { track } from "@/lib/analytics/track";
-import { getGameTheme } from "@/lib/content/gameThemes";
+import { resetLearnSeen } from "@/lib/content/contentPrefs";
 import type { GameRow, MissionRow } from "@/types/db";
 
 export interface PlayClientProps {
@@ -189,6 +189,9 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
    *  again, which React could otherwise bail out of re-running setup
    *  effects for. */
   const [runtimeResetKey, setRuntimeResetKey] = useState(0);
+  // Tracks whether GameRuntime should open in review-concepts mode
+  // (triggered by "Review Concepts" in the in-game menu)
+  const [openInReview, setOpenInReview] = useState(false);
 
   /** When a difficulty tier is selected, only show that tier's missions on the track map */
   const trackMissions = selectedTrackDifficulty
@@ -235,18 +238,10 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
    *  GameRuntime/ReflectionScreen already use (proton-target -> periodic
    *  category color, else subject fallback). */
   function resolveAccentColor(): string {
-    // 1. Element-specific colour for chemistry games with a proton target
     const target = (activeMission.payload as { target?: Record<string, number> }).target;
     const protonCount = target?.proton;
     const element = typeof protonCount === "number" ? getElementByAtomicNumber(protonCount) : undefined;
-    if (element) return CATEGORY_COLORS[element.category];
-
-    // 2. Per-game accent from the theme registry (each game's own colour)
-    const gameAccent = getGameTheme(game.slug).accent;
-    if (gameAccent && gameAccent !== "var(--eg-brand)") return gameAccent;
-
-    // 3. Subject-level fallback
-    return SUBJECT_FALLBACK_ACCENT[game.subject] ?? "var(--eg-subject-chemistry)";
+    return element ? CATEGORY_COLORS[element.category] : SUBJECT_FALLBACK_ACCENT[game.subject] ?? "var(--eg-subject-chemistry)";
   }
 
   function handleRestart() {
@@ -608,6 +603,9 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
       onBackToHome={() => router.push("/worlds")}
       onChangeDifficulty={supportsDifficultyChoice ? handleChangeDifficulty : undefined}
       onBackFromConcepts={() => setScreen("objectives")}
+      accentColor={resolveAccentColor()}
+      openInReviewMode={openInReview}
+      onReviewModeConsumed={() => setOpenInReview(false)}
     />
   );
 }

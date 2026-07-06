@@ -17,6 +17,12 @@ export interface GameMenuProps {
    * whether to show the picker in the first place.
    */
   onChangeDifficulty?: () => void;
+  /**
+   * Opens the Learn screen in review mode — always available so
+   * students can revisit the concept cards at any point during play.
+   * Part of the Learn → Practice → Challenge → Master framework.
+   */
+  onReviewConcepts?: () => void;
 }
 
 /**
@@ -47,7 +53,7 @@ export interface GameMenuProps {
  * mid-mission should land somewhere coherent, not wherever history
  * happens to point.
  */
-export function GameMenu({ onRestart, onChangeDifficulty }: GameMenuProps) {
+export function GameMenu({ onRestart, onChangeDifficulty, onReviewConcepts }: GameMenuProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -70,6 +76,18 @@ export function GameMenu({ onRestart, onChangeDifficulty }: GameMenuProps) {
             >
               ↻ Restart Mission
             </button>
+
+            {onReviewConcepts && (
+              <button
+                className={styles.sheetButton}
+                onClick={() => {
+                  onReviewConcepts();
+                  setOpen(false);
+                }}
+              >
+                ✦ Review Concepts
+              </button>
+            )}
 
             {onChangeDifficulty && (
               <button

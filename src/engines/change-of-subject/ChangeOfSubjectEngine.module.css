@@ -696,3 +696,65 @@
   border-radius: 8px;
   padding: 4px 10px;
 }
+
+
+/* ════════════════════════════════
+   MOBILE RESPONSIVE
+════════════════════════════════ */
+@media (max-width: 600px) {
+  .hub { padding: 28px 16px 60px 20px; }
+  .hubTitle { font-size: 26px; }
+
+  .game { padding: 14px 12px 60px 14px; }
+
+  .card { padding: 18px 14px 20px; }
+
+  /* Equation — smaller font on mobile */
+  .eqWrap { padding: 6px 0 14px; min-height: 64px; }
+  .eqSide { padding: 8px 8px; }
+
+  /* Tiles — full row, easier to tap */
+  .tileBank { gap: 8px; }
+  .tile {
+    font-size: 15px;
+    padding: 14px 18px;
+    flex: 1;
+    min-width: 80px;
+    text-align: center;
+  }
+
+  /* Drop zones — stack on very small screens */
+  .eqWrap { flex-direction: row; }
+
+  /* MCQ buttons — bigger tap targets */
+  .mcqBtn {
+    font-size: 16px;
+    padding: 14px 16px;
+    flex: 1;
+    min-width: 60px;
+  }
+  .mcqOpts { gap: 8px; }
+
+  /* Question intro */
+  .questionHeader { padding: 10px 12px; }
+  .questionGoal { font-size: 18px; }
+
+  /* Level complete */
+  .levelComplete { padding: 20px 10px; }
+  .lcTitle { font-size: 22px; }
+
+  /* Buttons */
+  .btnTeal, .btnGold { padding: 12px 20px; width: 100%; max-width: 280px; }
+  .actRow { flex-direction: column; align-items: center; }
+
+  /* Game over card */
+  .goCard { padding: 24px 18px; }
+
+  /* Strip dots */
+  .strip { margin-bottom: 12px; }
+}
+
+@media (max-width: 380px) {
+  .tile { font-size: 13px; padding: 12px 12px; }
+  .mcqBtn { font-size: 14px; padding: 12px 10px; }
+}

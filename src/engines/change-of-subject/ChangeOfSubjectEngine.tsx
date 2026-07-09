@@ -240,6 +240,15 @@ export function ChangeOfSubjectEngine({
   // Cleanup on unmount
   useEffect(() => () => stopTimer(), []);
 
+  // Prevent page scroll while dragging on mobile
+  useEffect(() => {
+    const prevent = (e: TouchEvent) => {
+      if (dragStateRef.current) e.preventDefault();
+    };
+    document.addEventListener("touchmove", prevent, { passive: false });
+    return () => document.removeEventListener("touchmove", prevent);
+  }, []);
+
   // ── Wrong-line ─────────────────────────────────────────────────────────
   function showWrong(msg: string) {
     clearTimeout(wrongTimerRef.current ?? undefined);
@@ -298,66 +307,66 @@ export function ChangeOfSubjectEngine({
   }
 
   // ── Tile drag ──────────────────────────────────────────────────────────
+  // Uses pointer capture on the button so events track correctly on mobile.
+  // The ghost is an absolutely-positioned clone that follows the pointer.
   function onTilePointerDown(e: React.PointerEvent<HTMLButtonElement>, op: string) {
     if (stepPhase !== "drag") return;
+    e.preventDefault();
 
-    // Wrong tile — shake + explain
+    // Wrong tile — shake + explain, no drag
     if (op !== step.tileOk) {
       const btn = e.currentTarget;
       btn.style.animation = "none";
-      void btn.offsetWidth; // reflow
+      void btn.offsetWidth;
       btn.style.animation = "shake 0.3s ease";
       setTimeout(() => (btn.style.animation = ""), 360);
-      if (tier !== "challenge") {
-        showWrong(
-          step.whyNot[op] ?? "That doesn't isolate the variable here."
-        );
-      } else {
-        showWrong("Not quite — try another.");
-      }
+      showWrong(
+        tier !== "challenge"
+          ? step.whyNot[op] ?? "That doesn't isolate the variable here."
+          : "Not quite — try another."
+      );
       return;
     }
 
     setWrongVisible(false);
-
-    // Create ghost
     const btn = e.currentTarget;
+
+    // Capture pointer so move/up fire on the button even if pointer leaves it
     btn.setPointerCapture(e.pointerId);
+
     const rect = btn.getBoundingClientRect();
+    const ox = e.clientX - rect.left;
+    const oy = e.clientY - rect.top;
+
+    // Ghost follows the pointer
     const ghost = document.createElement("div");
     ghost.className = "cos-tile-ghost";
     ghost.textContent = op;
-    ghost.style.left = rect.left + "px";
-    ghost.style.top = rect.top + "px";
+    ghost.style.left = (e.clientX - ox) + "px";
+    ghost.style.top  = (e.clientY - oy) + "px";
     ghost.style.width = rect.width + "px";
     document.body.appendChild(ghost);
-    dragStateRef.current = {
-      ghost,
-      ox: e.clientX - rect.left,
-      oy: e.clientY - rect.top,
-      op,
-    };
+    dragStateRef.current = { ghost, ox, oy, op };
     btn.style.opacity = "0.3";
 
-    function onMove(ev: PointerEvent) {
+    // All move/up events come to the captured button
+    const onMove = (ev: PointerEvent) => {
       if (!dragStateRef.current) return;
-      dragStateRef.current.ghost.style.left =
-        ev.clientX - dragStateRef.current.ox + "px";
-      dragStateRef.current.ghost.style.top =
-        ev.clientY - dragStateRef.current.oy + "px";
-      updateHover(dragStateRef.current.ghost);
-    }
+      ghost.style.left = (ev.clientX - ox) + "px";
+      ghost.style.top  = (ev.clientY - oy) + "px";
+      updateHover(ghost);
+    };
 
-    function onUp() {
+    const onUp = (ev: PointerEvent) => {
       if (!dragStateRef.current) return;
-      const { ghost, op } = dragStateRef.current;
       clearHover();
       const landed = getZone(ghost);
       ghost.remove();
       btn.style.opacity = "";
       dragStateRef.current = null;
-      document.removeEventListener("pointermove", onMove);
-      document.removeEventListener("pointerup", onUp);
+      btn.removeEventListener("pointermove", onMove);
+      btn.removeEventListener("pointerup", onUp);
+      btn.removeEventListener("pointercancel", onUp);
 
       if (landed === "left" && !lApplied) {
         setLApplied(true);
@@ -368,10 +377,12 @@ export function ChangeOfSubjectEngine({
         markSide("right", op);
         checkBothApplied("right", op);
       }
-    }
+    };
 
-    document.addEventListener("pointermove", onMove);
-    document.addEventListener("pointerup", onUp);
+    // Listen on the button (pointer capture ensures delivery)
+    btn.addEventListener("pointermove", onMove);
+    btn.addEventListener("pointerup", onUp);
+    btn.addEventListener("pointercancel", onUp);
   }
 
   function updateHover(ghost: HTMLElement) {
@@ -808,7 +819,7 @@ export function ChangeOfSubjectEngine({
 
   if (screen === "hub") {
     return (
-      <div className={styles.root} style={{"--cos-paper":"#fbf6ea","--cos-line":"#c9d9ea","--cos-margin":"#e3a7a0","--cos-ink":"#2b2a28","--cos-ink-soft":"#6b6a66","--cos-gold":"#d98e3b","--cos-gold-dark":"#8f5a1e","--cos-gold-light":"#fef3dc","--cos-teal":"#2f6f62","--cos-teal-dark":"#1c443b","--cos-teal-light":"#e1f0ea","--cos-coral":"#c24c3f","--cos-coral-bg":"#fbe4e0","--cos-card":"#ffffff"} as React.CSSProperties}>
+      <div className={styles.root} style={{"--cos-paper":"#fbf6ea","--cos-line":"#c9d9ea","--cos-margin":"#e3a7a0","--cos-ink":"#2b2a28","--cos-ink-soft":"#6b6a66","--cos-gold":"#d98e3b","--cos-gold-dark":"#8f5a1e","--cos-gold-light":"#fef3dc","--cos-teal":"#2f6f62","--cos-teal-dark":"#1c443b","--cos-teal-light":"#e1f0ea","--cos-coral":"#c24c3f","--cos-coral-bg":"#fbe4e0","--cos-card":"#ffffff","touchAction":"pan-y"} as React.CSSProperties}>
         <div className={styles.hub}>
           <div className={styles.hubTitle}>Change of Subject</div>
           <div className={styles.hubSub}>
@@ -858,7 +869,7 @@ export function ChangeOfSubjectEngine({
 
   if (screen === "question_intro") {
     return (
-      <div className={styles.root} style={{"--cos-paper":"#fbf6ea","--cos-line":"#c9d9ea","--cos-margin":"#e3a7a0","--cos-ink":"#2b2a28","--cos-ink-soft":"#6b6a66","--cos-gold":"#d98e3b","--cos-gold-dark":"#8f5a1e","--cos-gold-light":"#fef3dc","--cos-teal":"#2f6f62","--cos-teal-dark":"#1c443b","--cos-teal-light":"#e1f0ea","--cos-coral":"#c24c3f","--cos-coral-bg":"#fbe4e0","--cos-card":"#ffffff"} as React.CSSProperties}>
+      <div className={styles.root} style={{"--cos-paper":"#fbf6ea","--cos-line":"#c9d9ea","--cos-margin":"#e3a7a0","--cos-ink":"#2b2a28","--cos-ink-soft":"#6b6a66","--cos-gold":"#d98e3b","--cos-gold-dark":"#8f5a1e","--cos-gold-light":"#fef3dc","--cos-teal":"#2f6f62","--cos-teal-dark":"#1c443b","--cos-teal-light":"#e1f0ea","--cos-coral":"#c24c3f","--cos-coral-bg":"#fbe4e0","--cos-card":"#ffffff","touchAction":"pan-y"} as React.CSSProperties}>
         <div className={styles.game}>
           <div className={styles.strip}>
             <button className={styles.backBtn} onClick={() => setScreen("hub")}>
@@ -918,7 +929,7 @@ export function ChangeOfSubjectEngine({
   if (screen === "level_complete") {
     const cfg = LEVEL_COMPLETE_CONFIG[tier];
     return (
-      <div className={styles.root} style={{"--cos-paper":"#fbf6ea","--cos-line":"#c9d9ea","--cos-margin":"#e3a7a0","--cos-ink":"#2b2a28","--cos-ink-soft":"#6b6a66","--cos-gold":"#d98e3b","--cos-gold-dark":"#8f5a1e","--cos-gold-light":"#fef3dc","--cos-teal":"#2f6f62","--cos-teal-dark":"#1c443b","--cos-teal-light":"#e1f0ea","--cos-coral":"#c24c3f","--cos-coral-bg":"#fbe4e0","--cos-card":"#ffffff"} as React.CSSProperties}>
+      <div className={styles.root} style={{"--cos-paper":"#fbf6ea","--cos-line":"#c9d9ea","--cos-margin":"#e3a7a0","--cos-ink":"#2b2a28","--cos-ink-soft":"#6b6a66","--cos-gold":"#d98e3b","--cos-gold-dark":"#8f5a1e","--cos-gold-light":"#fef3dc","--cos-teal":"#2f6f62","--cos-teal-dark":"#1c443b","--cos-teal-light":"#e1f0ea","--cos-coral":"#c24c3f","--cos-coral-bg":"#fbe4e0","--cos-card":"#ffffff","touchAction":"pan-y"} as React.CSSProperties}>
         <div className={styles.game}>
           <div className={styles.card}>
             <div className={styles.levelComplete}>
@@ -959,7 +970,7 @@ export function ChangeOfSubjectEngine({
   const isMCQ = stepPhase === "mcq_left" || stepPhase === "mcq_right";
 
   return (
-    <div className={styles.root} style={{"--cos-paper":"#fbf6ea","--cos-line":"#c9d9ea","--cos-margin":"#e3a7a0","--cos-ink":"#2b2a28","--cos-ink-soft":"#6b6a66","--cos-gold":"#d98e3b","--cos-gold-dark":"#8f5a1e","--cos-gold-light":"#fef3dc","--cos-teal":"#2f6f62","--cos-teal-dark":"#1c443b","--cos-teal-light":"#e1f0ea","--cos-coral":"#c24c3f","--cos-coral-bg":"#fbe4e0","--cos-card":"#ffffff"} as React.CSSProperties}>
+    <div className={styles.root} style={{"--cos-paper":"#fbf6ea","--cos-line":"#c9d9ea","--cos-margin":"#e3a7a0","--cos-ink":"#2b2a28","--cos-ink-soft":"#6b6a66","--cos-gold":"#d98e3b","--cos-gold-dark":"#8f5a1e","--cos-gold-light":"#fef3dc","--cos-teal":"#2f6f62","--cos-teal-dark":"#1c443b","--cos-teal-light":"#e1f0ea","--cos-coral":"#c24c3f","--cos-coral-bg":"#fbe4e0","--cos-card":"#ffffff","touchAction":"pan-y"} as React.CSSProperties}>
       {/* Game-over overlay */}
       {showGameOver && (
         <div className={styles.goOverlay}>

@@ -15,6 +15,9 @@
   min-height: 100vh;
   padding: 0 0 80px;
   position: relative;
+  overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 .root::before {
   content: "";
@@ -33,7 +36,9 @@
 .hub {
   max-width: 480px;
   margin: 0 auto;
-  padding: 40px 20px 60px 32px;
+  padding: 40px 16px 60px 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 .hubTitle {
   font-family: "Kalam", cursive;
@@ -56,15 +61,16 @@
   background: var(--cos-card);
   border: 2px solid transparent;
   border-radius: 12px;
-  padding: 16px 18px;
+  padding: 14px 14px;
   cursor: pointer;
   text-align: left;
   width: 100%;
+  box-sizing: border-box;
   box-shadow: 0 2px 0 rgba(0, 0, 0, 0.04), 0 4px 16px rgba(80, 60, 30, 0.08);
   transition: border-color 0.15s, box-shadow 0.15s;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
 .modeBtn:hover {
   border-color: var(--cos-gold);
@@ -113,7 +119,10 @@
 .game {
   max-width: 520px;
   margin: 0 auto;
-  padding: 20px 16px 60px 22px;
+  padding: 20px 16px 60px 16px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 /* strip: back · dots · tier chip · score */
@@ -200,9 +209,12 @@
 .card {
   background: var(--cos-card);
   border-radius: 12px;
-  padding: 26px 22px 24px;
+  padding: 22px 16px 22px;
   box-shadow: 0 2px 0 rgba(0, 0, 0, 0.04), 0 8px 28px rgba(80, 60, 30, 0.1);
   transform: rotate(-0.3deg);
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* question header — new question callout */
@@ -278,6 +290,9 @@
   gap: 6px;
   padding: 10px 4px 18px;
   min-height: 80px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 .eqSide {
   display: flex;
@@ -285,10 +300,13 @@
   gap: 5px;
   flex-wrap: wrap;
   justify-content: center;
-  padding: 10px 12px;
+  padding: 8px 8px;
   border-radius: 10px;
   border: 2px dashed transparent;
   transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
 }
 .eqSideDroppable {
   border-color: var(--cos-line);

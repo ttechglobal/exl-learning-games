@@ -189,6 +189,14 @@ export function ChangeOfSubjectEngine({
     op: string;
   } | null>(null);
 
+  // Mirror refs so native event handlers always read current values
+  // (native listeners capture closures at attachment time, not call time)
+  const stepPhaseRef   = useRef(stepPhase);
+  const stepRef        = useRef<CosStep | null>(null);
+  const tierRef        = useRef(tier);
+  const lAppliedRef2   = useRef(false);   // renamed to avoid collision
+  const rAppliedRef2   = useRef(false);
+
   // Refs to the two droppable side divs
   const leftSideRef = useRef<HTMLDivElement | null>(null);
   const rightSideRef = useRef<HTMLDivElement | null>(null);
@@ -196,6 +204,8 @@ export function ChangeOfSubjectEngine({
   // ── Derived ────────────────────────────────────────────────────────────
   const q = questions[qIdx];
   const step: CosStep = q.steps[sIdx];
+  // Keep stepRef current — used by native drag handler to avoid stale closure
+  stepRef.current = step;
   const totalSteps = q.steps.length;
 
   // ── Timer logic ────────────────────────────────────────────────────────
@@ -243,6 +253,12 @@ export function ChangeOfSubjectEngine({
   // Cleanup on unmount
   useEffect(() => () => stopTimer(), []);
 
+  // Keep mirror refs in sync with state
+  useEffect(() => { stepPhaseRef.current = stepPhase; }, [stepPhase]);
+  useEffect(() => { tierRef.current = tier; }, [tier]);
+  useEffect(() => { lAppliedRef2.current = lApplied; }, [lApplied]);
+  useEffect(() => { rAppliedRef2.current = rApplied; }, [rApplied]);
+
   // Prevent page scroll while dragging on mobile
   useEffect(() => {
     const prevent = (e: TouchEvent) => {
@@ -251,6 +267,28 @@ export function ChangeOfSubjectEngine({
     document.addEventListener("touchmove", prevent, { passive: false });
     return () => document.removeEventListener("touchmove", prevent);
   }, []);
+
+  // Wire native pointer listeners on tiles.
+  // Runs whenever step/phase/choices change so closures are always fresh.
+  useEffect(() => {
+    if (stepPhase !== "drag") return;
+    const container = tileBankRef.current;
+    if (!container) return;
+
+    const cleanups: (() => void)[] = [];
+
+    const buttons = container.querySelectorAll<HTMLButtonElement>("button[data-cos-tile]");
+    buttons.forEach((btn) => {
+      const op = btn.dataset.cosOp ?? "";
+      const handler = (e: PointerEvent) => nativeTilePointerDown(e, btn, op);
+      btn.addEventListener("pointerdown", handler, { passive: false });
+      cleanups.push(() => btn.removeEventListener("pointerdown", handler));
+    });
+
+    return () => cleanups.forEach(fn => fn());
+  // Re-wire whenever the step, phase, or choices change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepPhase, sIdx, qIdx, tileChoices, tier]);
 
   // ── Wrong-line ─────────────────────────────────────────────────────────
   function showWrong(msg: string) {
@@ -315,22 +353,22 @@ export function ChangeOfSubjectEngine({
   // Uses pointer capture on the button so events track correctly on mobile.
   // The ghost is an absolutely-positioned clone that follows the pointer.
   function nativeTilePointerDown(e: PointerEvent, btn: HTMLButtonElement, op: string) {
-    if (stepPhase !== "drag") return;
+    // Read from refs — not closed-over state — so this is always current
+    if (stepPhaseRef.current !== "drag") return;
+    const currentStep = stepRef.current;
+    if (!currentStep) return;
 
-    const pointerId = e.pointerId;
-    const clientX = e.clientX;
-    const clientY = e.clientY;
     e.preventDefault();
 
-    // Wrong tile — shake + explain, no drag
-    if (op !== step.tileOk) {
+    // Wrong tile
+    if (op !== currentStep.tileOk) {
       btn.style.animation = "none";
       void btn.offsetWidth;
       btn.style.animation = "shake 0.3s ease";
       setTimeout(() => { btn.style.animation = ""; }, 360);
       showWrong(
-        tier !== "challenge"
-          ? (step.whyNot[op] ?? "That doesn't isolate the variable here.")
+        tierRef.current !== "challenge"
+          ? (currentStep.whyNot[op] ?? "That doesn't isolate the variable here.")
           : "Not quite — try another."
       );
       return;
@@ -338,22 +376,35 @@ export function ChangeOfSubjectEngine({
 
     setWrongVisible(false);
 
+    const pointerId = e.pointerId;
+    const clientX = e.clientX;
+    const clientY = e.clientY;
     const rect = btn.getBoundingClientRect();
     const ox = clientX - rect.left;
     const oy = clientY - rect.top;
 
-    // Ghost clone that follows the pointer
     const ghost = document.createElement("div");
     ghost.className = "cos-tile-ghost";
     ghost.textContent = op;
-    ghost.style.left  = (clientX - ox) + "px";
-    ghost.style.top   = (clientY - oy) + "px";
+    ghost.style.position = "fixed";
+    ghost.style.zIndex = "300";
+    ghost.style.pointerEvents = "none";
+    ghost.style.touchAction = "none";
+    ghost.style.fontFamily = "'JetBrains Mono',monospace";
+    ghost.style.fontSize = "17px";
+    ghost.style.fontWeight = "700";
+    ghost.style.background = "var(--cos-gold,#D98E3B)";
+    ghost.style.color = "#fff";
+    ghost.style.padding = "12px 22px";
+    ghost.style.borderRadius = "8px";
+    ghost.style.boxShadow = "0 8px 20px rgba(0,0,0,.22)";
+    ghost.style.left = (clientX - ox) + "px";
+    ghost.style.top = (clientY - oy) + "px";
     ghost.style.width = rect.width + "px";
     document.body.appendChild(ghost);
     dragStateRef.current = { ghost, ox, oy, op };
     btn.style.opacity = "0.3";
 
-    // Capture so all subsequent pointer events route to btn
     btn.setPointerCapture(pointerId);
 
     const onMove = (ev: PointerEvent) => {
@@ -363,8 +414,8 @@ export function ChangeOfSubjectEngine({
     };
 
     const cleanup = () => {
-      btn.removeEventListener("pointermove", onMove);
-      btn.removeEventListener("pointerup",   cleanup);
+      btn.removeEventListener("pointermove",   onMove);
+      btn.removeEventListener("pointerup",     cleanup);
       btn.removeEventListener("pointercancel", cleanup);
       if (!dragStateRef.current) return;
       clearHover();
@@ -374,19 +425,20 @@ export function ChangeOfSubjectEngine({
       const capturedOp = dragStateRef.current.op;
       dragStateRef.current = null;
 
-      if (landed === "left" && !lApplied) {
+      // Read from refs for current applied state
+      if (landed === "left" && !lAppliedRef2.current) {
         setLApplied(true);
         markSide("left", capturedOp);
         checkBothApplied("left", capturedOp);
-      } else if (landed === "right" && !rApplied) {
+      } else if (landed === "right" && !rAppliedRef2.current) {
         setRApplied(true);
         markSide("right", capturedOp);
         checkBothApplied("right", capturedOp);
       }
     };
 
-    btn.addEventListener("pointermove",  onMove);
-    btn.addEventListener("pointerup",    cleanup);
+    btn.addEventListener("pointermove",   onMove);
+    btn.addEventListener("pointerup",     cleanup);
     btn.addEventListener("pointercancel", cleanup);
   }
 
@@ -641,18 +693,8 @@ export function ChangeOfSubjectEngine({
     );
   }
 
-  // Tile bank — uses a callback ref to wire native pointer events
-  // (avoids React synthetic event pooling issues with setPointerCapture)
-  const tileBankRef = useCallback((container: HTMLDivElement | null) => {
-    if (!container) return;
-    const buttons = container.querySelectorAll<HTMLButtonElement>("button[data-cos-tile]");
-    buttons.forEach((btn) => {
-      const op = btn.dataset.cosOp ?? "";
-      btn.addEventListener("pointerdown", (e: PointerEvent) => {
-        nativeTilePointerDown(e, btn, op);
-      }, { passive: false });
-    });
-  }, [tileChoices]); // re-run when choices change
+  // Tile bank — plain div ref; listeners wired in useEffect below
+  const tileBankRef = useRef<HTMLDivElement | null>(null);
 
   function renderTiles() {
     const tiles = tileChoices.length ? tileChoices : [step.tileOk, ...step.tilesNo];

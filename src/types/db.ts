@@ -84,6 +84,15 @@ export interface GameRow {
    * unchanged without needing a migration before this ships.
    */
   progression_mode: "linear" | "levelSelect" | "trackMap" | null;
+  /** Card / UI display fields */
+  accent_colour: string | null;
+  card_description: string | null;
+  card_art_url: string | null;
+  pre_game_gradient: string | null;
+  mission_briefing: string | null;
+  year_groups: string[];
+  exam_boards: string[];
+  curriculum_term: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;

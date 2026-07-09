@@ -125,22 +125,6 @@ const LEVEL_COMPLETE_CONFIG: Record<
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-
-const COS_GLOBAL_STYLES = `
-  .cos-frac{display:inline-flex;flex-direction:column;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:700;vertical-align:middle;line-height:1.1}
-  .cos-num{border-bottom:2.5px solid currentColor;padding:0 4px 2px}
-  .cos-den{padding:2px 4px 0}
-  .cos-term{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--cos-ink)}
-  .cos-op{color:var(--cos-ink-soft)}
-  .cos-sqrt{display:inline-flex;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:700}
-  .cos-rad{line-height:.88;padding-right:1px;font-size:1.15em}
-  .cos-ri{border-top:2.5px solid currentColor;padding:2px 4px 0}
-  .cos-block{display:inline-flex;flex-direction:column;align-items:center;background:var(--cos-coral-bg);border:1.5px dashed var(--cos-coral);border-radius:5px;padding:2px 7px;color:var(--cos-coral);font-family:'JetBrains Mono',monospace;font-weight:700;vertical-align:middle}
-  .cos-block-row{flex-direction:row}
-  .cos-tile-ghost{position:fixed;z-index:300;box-shadow:0 8px 20px rgba(0,0,0,.22);transform:scale(1.07);transition:none;pointer-events:none;font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700;background:var(--cos-gold);color:#fff;padding:12px 22px;border-radius:8px}
-  @keyframes cos-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-`;
-
 export function ChangeOfSubjectEngine({
   config,
   onComplete,
@@ -188,6 +172,8 @@ export function ChangeOfSubjectEngine({
   // MCQ choices (shuffled once per MCQ render)
   const [mcqChoices, setMcqChoices] = useState<string[]>([]);
   const [mcqChosen, setMcqChosen] = useState<string | null>(null);
+  // Tile choices (shuffled once per step, stored so re-renders don't reshuffle)
+  const [tileChoices, setTileChoices] = useState<string[]>([]);
 
   // Wrong-line auto-hide timer
   const wrongTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -271,6 +257,14 @@ export function ChangeOfSubjectEngine({
     setRetries(0);
     setTotalRetries(0);
     setTotalHints(0);
+    setLApplied(false);
+    setRApplied(false);
+    setStepPhase("drag");
+    setWrongVisible(false);
+    setHintVisible(false);
+    setHintUsedThisQ(false);
+    setMcqChosen(null);
+    setTileChoices(shuffle([questions[0].steps[0].tileOk, ...questions[0].steps[0].tilesNo]));
     startTimeRef.current = Date.now();
     setScreen("question_intro");
   }
@@ -283,6 +277,7 @@ export function ChangeOfSubjectEngine({
     setHintVisible(false);
     setHintUsedThisQ(false);
     setMcqChosen(null);
+    setTileChoices(shuffle([questions[qIdx].steps[0].tileOk, ...questions[qIdx].steps[0].tilesNo]));
     setScreen("playing");
     // Timer starts fresh per question
     if (needsTimer()) startTimer();
@@ -297,6 +292,7 @@ export function ChangeOfSubjectEngine({
     setHintVisible(false);
     setHintUsedThisQ(false);
     setMcqChosen(null);
+    setTileChoices(shuffle([q.steps[0].tileOk, ...q.steps[0].tilesNo]));
     // Timer with reduced time
     if (needsTimer()) startTimer();
   }
@@ -411,13 +407,18 @@ export function ChangeOfSubjectEngine({
 
   function markSide(side: "left" | "right", op: string) {
     const ref = side === "left" ? leftSideRef : rightSideRef;
-    ref.current?.classList.add(styles.eqSideApplied);
-    const badge = ref.current?.querySelector<HTMLElement>(
-      "[data-applied-badge]"
-    );
+    if (!ref.current) return;
+    ref.current.classList.add(styles.eqSideApplied);
+    // Show the expression with the operation applied inline
+    const exprEl = ref.current.querySelector<HTMLElement>("[data-side-expr]");
+    const badge = ref.current.querySelector<HTMLElement>("[data-applied-badge]");
+    if (exprEl) {
+      // Append the op token visually to the expression
+      exprEl.innerHTML = exprEl.innerHTML +
+        `<span class="cos-op" style="font-size:22px;color:var(--cos-gold-dark);font-family:'JetBrains Mono',monospace;font-weight:700"> ${op}</span>`;
+    }
     if (badge) {
-      badge.textContent = "✓ " + op;
-      badge.style.display = "block";
+      badge.style.display = "none"; // expression update is enough
     }
   }
 
@@ -429,11 +430,13 @@ export function ChangeOfSubjectEngine({
     if (justApplied === "left") lAppliedRef.current = true;
     if (justApplied === "right") rAppliedRef.current = true;
 
+    // Mark all tiles used visually
+    document.querySelectorAll<HTMLButtonElement>("[data-cos-tile]").forEach(
+      (t) => t.classList.add(styles.tileUsed)
+    );
+
     if (lAppliedRef.current && rAppliedRef.current) {
-      // Both sides filled — now grey out tiles and advance to MCQ
-      document.querySelectorAll<HTMLButtonElement>("[data-cos-tile]").forEach(
-        (t) => t.classList.add(styles.tileUsed)
-      );
+      // Brief pause then go to MCQ
       setTimeout(() => {
         lAppliedRef.current = false;
         rAppliedRef.current = false;
@@ -454,16 +457,12 @@ export function ChangeOfSubjectEngine({
   function pickMCQ(chosen: string) {
     const isLeft = stepPhase === "mcq_left";
     const correct = isLeft ? step.lAns : step.rAns;
+    setMcqChosen(chosen);
     if (chosen === correct) {
-      setMcqChosen(chosen);
       setTimeout(() => {
         if (isLeft) openMCQ("right");
         else advanceStep();
       }, 480);
-    } else {
-      // Flash red then reset — user must keep trying, never auto-reveal
-      setMcqChosen(chosen);
-      setTimeout(() => setMcqChosen(null), 500);
     }
   }
 
@@ -487,7 +486,8 @@ export function ChangeOfSubjectEngine({
   }
 
   function goNextStep() {
-    setSIdx((i) => i + 1);
+    const nextIdx = sIdx + 1;
+    setSIdx(nextIdx);
     setLApplied(false);
     setRApplied(false);
     setStepPhase("drag");
@@ -495,6 +495,8 @@ export function ChangeOfSubjectEngine({
     setHintVisible(false);
     setHintUsedThisQ(false);
     setMcqChosen(null);
+    const nextStep = q.steps[nextIdx];
+    if (nextStep) setTileChoices(shuffle([nextStep.tileOk, ...nextStep.tilesNo]));
   }
 
   function goNextQuestion() {
@@ -595,7 +597,7 @@ export function ChangeOfSubjectEngine({
             .join(" ")}
           dangerouslySetInnerHTML={{
             __html:
-              renderTokens(leftToks, 27) +
+              '<div data-side-expr>' + renderTokens(leftToks, 27) + '</div>' +
               '<div data-applied-badge class="' +
               styles.appliedBadge +
               '" style="display:none"></div>',
@@ -613,7 +615,7 @@ export function ChangeOfSubjectEngine({
             .join(" ")}
           dangerouslySetInnerHTML={{
             __html:
-              renderTokens(rightToks, 27) +
+              '<div data-side-expr>' + renderTokens(rightToks, 27) + '</div>' +
               '<div data-applied-badge class="' +
               styles.appliedBadge +
               '" style="display:none"></div>',
@@ -625,7 +627,7 @@ export function ChangeOfSubjectEngine({
 
   // Tile bank
   function renderTiles() {
-    const tiles = shuffle([step.tileOk, ...step.tilesNo]);
+    const tiles = tileChoices.length ? tileChoices : [step.tileOk, ...step.tilesNo];
     return (
       <div className={styles.tileBank}>
         {tiles.map((op) => (
@@ -647,46 +649,46 @@ export function ChangeOfSubjectEngine({
     const isLeft = stepPhase === "mcq_left";
     const correct = isLeft ? step.lAns : step.rAns;
     const qTokens = isLeft ? step.lqT : step.rqT;
-    const sideLabel = isLeft ? "Left side" : "Right side";
-    const sideToks  = isLeft ? step.leftToks : step.rightToks;
+
+    const prompt = isLeft
+      ? "What does the <strong>left side</strong> simplify to?"
+      : `Left = <strong>${step.lAns}</strong> ✓ &nbsp; What does the <strong>right side</strong> simplify to?`;
 
     return (
       <div className={styles.mcqWrap}>
-        {/* Which side we are simplifying */}
-        <div className={styles.mcqSideLabel}>{sideLabel}</div>
-
-        {/* The expression being simplified, shown alone — no full equation */}
-        <div
-          className={styles.mcqExpr}
-          dangerouslySetInnerHTML={{ __html: renderTokens(sideToks, 24) }}
-        />
-
-        {/* The question */}
+        {/* MCQ prompt via mascot slot */}
         <div
           className={styles.mcqQ}
           dangerouslySetInnerHTML={{
-            __html: renderTokens(qTokens, 20) + " = ?",
+            __html:
+              renderTokens(qTokens, 20) + " = ?",
           }}
         />
-
         <div className={styles.mcqOpts}>
           {mcqChoices.map((c) => {
             let cls = styles.mcqBtn;
             if (mcqChosen !== null) {
               if (c === correct) cls += " " + styles.mcqBtnCorrect;
               else if (c === mcqChosen) cls += " " + styles.mcqBtnWrong;
-              // no .off class — other buttons stay clickable so user can retry
+              else cls += " " + styles.mcqBtnOff;
             }
             return (
               <button
                 key={c}
                 className={cls}
-                onClick={() => pickMCQ(c)}
+                onClick={() => mcqChosen === null && pickMCQ(c)}
                 dangerouslySetInnerHTML={{ __html: answerHTML(c) }}
               />
             );
           })}
         </div>
+        {/* Update mascot prompt */}
+        <style>{`#cos-mascot-dynamic{display:block!important}`}</style>
+        <div
+          id="cos-mascot-dynamic"
+          style={{ display: "none" }}
+          dangerouslySetInnerHTML={{ __html: prompt }}
+        />
       </div>
     );
   }
@@ -807,7 +809,6 @@ export function ChangeOfSubjectEngine({
   if (screen === "hub") {
     return (
       <div className={styles.root} style={{"--cos-paper":"#fbf6ea","--cos-line":"#c9d9ea","--cos-margin":"#e3a7a0","--cos-ink":"#2b2a28","--cos-ink-soft":"#6b6a66","--cos-gold":"#d98e3b","--cos-gold-dark":"#8f5a1e","--cos-gold-light":"#fef3dc","--cos-teal":"#2f6f62","--cos-teal-dark":"#1c443b","--cos-teal-light":"#e1f0ea","--cos-coral":"#c24c3f","--cos-coral-bg":"#fbe4e0","--cos-card":"#ffffff"} as React.CSSProperties}>
-      <style dangerouslySetInnerHTML={{__html: COS_GLOBAL_STYLES}} />
         <div className={styles.hub}>
           <div className={styles.hubTitle}>Change of Subject</div>
           <div className={styles.hubSub}>
@@ -858,7 +859,6 @@ export function ChangeOfSubjectEngine({
   if (screen === "question_intro") {
     return (
       <div className={styles.root} style={{"--cos-paper":"#fbf6ea","--cos-line":"#c9d9ea","--cos-margin":"#e3a7a0","--cos-ink":"#2b2a28","--cos-ink-soft":"#6b6a66","--cos-gold":"#d98e3b","--cos-gold-dark":"#8f5a1e","--cos-gold-light":"#fef3dc","--cos-teal":"#2f6f62","--cos-teal-dark":"#1c443b","--cos-teal-light":"#e1f0ea","--cos-coral":"#c24c3f","--cos-coral-bg":"#fbe4e0","--cos-card":"#ffffff"} as React.CSSProperties}>
-      <style dangerouslySetInnerHTML={{__html: COS_GLOBAL_STYLES}} />
         <div className={styles.game}>
           <div className={styles.strip}>
             <button className={styles.backBtn} onClick={() => setScreen("hub")}>
@@ -919,7 +919,6 @@ export function ChangeOfSubjectEngine({
     const cfg = LEVEL_COMPLETE_CONFIG[tier];
     return (
       <div className={styles.root} style={{"--cos-paper":"#fbf6ea","--cos-line":"#c9d9ea","--cos-margin":"#e3a7a0","--cos-ink":"#2b2a28","--cos-ink-soft":"#6b6a66","--cos-gold":"#d98e3b","--cos-gold-dark":"#8f5a1e","--cos-gold-light":"#fef3dc","--cos-teal":"#2f6f62","--cos-teal-dark":"#1c443b","--cos-teal-light":"#e1f0ea","--cos-coral":"#c24c3f","--cos-coral-bg":"#fbe4e0","--cos-card":"#ffffff"} as React.CSSProperties}>
-      <style dangerouslySetInnerHTML={{__html: COS_GLOBAL_STYLES}} />
         <div className={styles.game}>
           <div className={styles.card}>
             <div className={styles.levelComplete}>
@@ -961,7 +960,6 @@ export function ChangeOfSubjectEngine({
 
   return (
     <div className={styles.root} style={{"--cos-paper":"#fbf6ea","--cos-line":"#c9d9ea","--cos-margin":"#e3a7a0","--cos-ink":"#2b2a28","--cos-ink-soft":"#6b6a66","--cos-gold":"#d98e3b","--cos-gold-dark":"#8f5a1e","--cos-gold-light":"#fef3dc","--cos-teal":"#2f6f62","--cos-teal-dark":"#1c443b","--cos-teal-light":"#e1f0ea","--cos-coral":"#c24c3f","--cos-coral-bg":"#fbe4e0","--cos-card":"#ffffff"} as React.CSSProperties}>
-      <style dangerouslySetInnerHTML={{__html: COS_GLOBAL_STYLES}} />
       {/* Game-over overlay */}
       {showGameOver && (
         <div className={styles.goOverlay}>
@@ -1044,21 +1042,13 @@ export function ChangeOfSubjectEngine({
         )}
 
         <div className={styles.card}>
-          {/* Question header — always visible so student knows what they're solving */}
-          <div className={styles.questionHeader}>
-            <div className={styles.questionLabel}>
-              Q{qIdx + 1}/{questions.length} · {step.instChall.split("·")[0].trim()}
-            </div>
-            <div className={styles.questionGoal}>{q.qLabel}</div>
-            <div className={styles.questionFormula}>{q.formula}</div>
-          </div>
-
           {/* Instruction / mascot */}
           {renderInstruction()}
 
-          {/* Equation — hidden during MCQ so student focuses on one side */}
-          {stepPhase === "drag" && renderEquation()}
-          {stepPhase === "result" && null /* shown in result row */}
+          {/* Equation — the interactive surface */}
+          {stepPhase === "result"
+            ? null /* equation shown in result row */
+            : renderEquation()}
 
           {/* Hint (challenge only) */}
           {tier === "challenge" &&

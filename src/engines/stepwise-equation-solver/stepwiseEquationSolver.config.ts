@@ -93,7 +93,7 @@ const SolutionStepSchema = z.object({
 
 /**
  * Three-tier difficulty control. Matches the game spec's scaffolding model:
- * Easy = guided (show target variable), Medium = choose variable, Hard = fully open.
+ * Easy = practice (guided, system shows next step), Medium = challenge (student chooses, hints on request), Hard = master (student alone, hints on request only).
  */
 const DifficultyTierSchema = z.object({
   tier: z.enum(["easy", "medium", "hard"]),

@@ -17,9 +17,9 @@ const OPERATIONS = [
 ];
 
 const STAGES = [
-  { value: "guided",      label: "Guided"      },
-  { value: "assisted",    label: "Assisted"    },
-  { value: "independent", label: "Independent" },
+  { value: "practice",  label: "Practice (Guided)"   },
+  { value: "challenge", label: "Challenge (Hint/Assist on Request)" },
+  { value: "master",    label: "Master (Independent)" },
 ];
 
 const DIFF_COLOUR: Record<string, string> = {
@@ -243,7 +243,7 @@ function AddMissionForm({
   const [formula, setFormula] = useState("");
   const [targetVariable, setTargetVariable] = useState("");
   const [discoveryName, setDiscoveryName] = useState("");
-  const [stage, setStage] = useState("assisted");
+  const [stage, setStage] = useState("practice");
   const [learningGoal, setLearningGoal] = useState("");
   const [steps, setSteps] = useState<Step[]>([
     { operation: "divide_both", obstacleLabel: "", description: "", resultDisplay: [""], hints: ["", "", ""], isFinal: true },
@@ -395,9 +395,28 @@ export default function MissionsClient({
           <p className={styles.sub}>{missions.length} missions · <a href={`/play/${game.slug}`} target="_blank" style={{ color: "#64748b" }}>Preview ↗</a></p>
         </div>
         <div className={styles.headerActions}>
+          {(game as Record<string,unknown>).engine_pending && (
+            <Link href={`/admin/games/${game.id}/engine`} className={styles.btnEngine}>
+              ⚙ Build Engine
+            </Link>
+          )}
+          {!(game as Record<string,unknown>).engine_pending && (
+            <Link href={`/admin/games/${game.id}/engine`} className={styles.btnSecondary}>
+              ⚙ Engine
+            </Link>
+          )}
           <Link href={`/admin/games/${game.id}/edit`} className={styles.btnSecondary}>Edit Game</Link>
         </div>
       </div>
+
+      {(game as Record<string,unknown>).engine_pending && (
+        <div className={styles.engineBanner}>
+          <span>⚠ Engine <strong>{game.engine_type}</strong> is not yet registered — this game cannot be played until the engine is built.</span>
+          <Link href={`/admin/games/${game.id}/engine`} className={styles.engineBannerLink}>
+            View build instructions →
+          </Link>
+        </div>
+      )}
 
       <div className={styles.accentBar} style={{ background: accent }}/>
 

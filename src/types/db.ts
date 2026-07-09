@@ -15,6 +15,14 @@ export interface GameRow {
   slug: string;
   title: string;
   engine_type: string;
+  /** Populated when engineType is not yet registered in registry.ts.
+   *  Contains the full Claude-generated engine spec — objects, interactions,
+   *  payload contract, sharedConfig contract, reusable-for list.
+   *  This is the developer build ticket for the engine component. */
+  engine_spec: Record<string, unknown> | null;
+  /** True when the engine is not yet registered — game is a draft until the
+   *  engine is built and registered in src/engines/registry.ts */
+  engine_pending: boolean;
   subject: string;
   topic_id: string;
   subtopic_id: string | null;

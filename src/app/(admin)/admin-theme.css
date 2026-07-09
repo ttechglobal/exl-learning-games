@@ -1,0 +1,78 @@
+/* ══════════════════════════════════════════════════════
+   EXL Admin — Design Tokens
+   Light mode (default) + Dark mode via [data-theme="dark"]
+   ══════════════════════════════════════════════════════ */
+
+:root {
+  /* Surfaces */
+  --bg:          #f0ede8;
+  --surface:     #ffffff;
+  --surface-2:   #f8f5f0;
+  --surface-3:   #f0ede8;
+
+  /* Borders */
+  --border:      #e8e4df;
+  --border-2:    #ede9e3;
+
+  /* Text */
+  --text:        #0f1117;
+  --text-2:      #4a4560;
+  --text-3:      #8a8296;
+  --text-4:      #a89f96;
+  --text-5:      #c5bdb5;
+
+  /* Brand */
+  --brand:       #7c3aed;
+  --brand-hover: #6d28d9;
+  --brand-dim:   rgba(124,58,237,0.08);
+  --brand-border:rgba(124,58,237,0.2);
+
+  /* Subject accents */
+  --maths:  #059669;
+  --chem:   #0284c7;
+  --phys:   #7c3aed;
+  --bio:    #b45309;
+
+  /* Diff */
+  --easy:   #22c55e;
+  --medium: #f59e0b;
+  --hard:   #ef4444;
+
+  /* Shadows */
+  --shadow-sm:  0 1px 2px rgba(0,0,0,0.04), 0 2px 6px rgba(0,0,0,0.04);
+  --shadow-md:  0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg:  0 2px 4px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.1), 0 20px 40px rgba(0,0,0,0.08);
+  --shadow-card:0 1px 2px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.06), 0 12px 24px rgba(0,0,0,0.06);
+
+  /* Nav (always dark) */
+  --nav-bg:       #0f1117;
+  --nav-text:     rgba(255,255,255,0.38);
+  --nav-text-h:   rgba(255,255,255,0.75);
+  --nav-active:   #ffffff;
+  --nav-active-bg:rgba(124,58,237,0.18);
+  --nav-border:   rgba(255,255,255,0.06);
+}
+
+[data-theme="dark"] {
+  --bg:        #0c0e14;
+  --surface:   #161922;
+  --surface-2: #1e2230;
+  --surface-3: #252a38;
+
+  --border:    rgba(255,255,255,0.07);
+  --border-2:  rgba(255,255,255,0.05);
+
+  --text:   #f0f2f8;
+  --text-2: #b0b8cc;
+  --text-3: #7a859a;
+  --text-4: #566070;
+  --text-5: #3a4455;
+
+  --brand-dim:   rgba(124,58,237,0.15);
+  --brand-border:rgba(124,58,237,0.3);
+
+  --shadow-sm:   0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md:   0 2px 8px rgba(0,0,0,0.3);
+  --shadow-lg:   0 4px 20px rgba(0,0,0,0.4);
+  --shadow-card: 0 2px 4px rgba(0,0,0,0.2), 0 8px 20px rgba(0,0,0,0.25);
+}

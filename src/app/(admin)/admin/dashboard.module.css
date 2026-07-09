@@ -1,222 +1,533 @@
+/* ── Page shell ── */
 .page {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 36px 32px 80px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg);
 }
 
-.header { margin-bottom: 28px; }
+/* ── Top bar ── */
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 28px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  box-shadow: 0 1px 0 var(--border);
+}
+
+.topLeft { display: flex; flex-direction: column; gap: 1px; }
+
+.greeting {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-4);
+}
+
 .heading {
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 800;
-  color: #f1f5f9;
-  margin: 0 0 4px;
-  letter-spacing: -0.01em;
+  color: var(--text);
+  margin: 0;
+  letter-spacing: -0.025em;
 }
-.sub { font-size: 0.8rem; color: #475569; margin: 0; }
 
-/* ── KPI row ── */
-.kpiRow {
+.topActions { display: flex; gap: 8px; align-items: center; }
+
+.btnPrimary {
+  padding: 8px 18px;
+  background: #7c3aed;
+  border: none;
+  border-radius: 8px;
+  color: var(--surface);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.14s;
+  box-shadow: 0 1px 3px rgba(124,58,237,0.3), 0 4px 12px rgba(124,58,237,0.15);
+}
+.btnPrimary:hover {
+  background: #6d28d9;
+  box-shadow: 0 2px 6px rgba(124,58,237,0.4), 0 6px 18px rgba(124,58,237,0.25);
+  transform: translateY(-1px);
+}
+
+.btnSecondary {
+  padding: 8px 16px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-2);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.14s;
+}
+.btnSecondary:hover {
+  border-color: #7c3aed;
+  color: #7c3aed;
+  background: #faf8ff;
+}
+
+/* ── KPI strip ── */
+.kpiStrip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
-.kpiCard {
-  background: #0d1520;
-  border: 1px solid #0f1c2e;
-  border-radius: 12px;
-  padding: 18px 20px;
+.kpi {
+  padding: 16px 24px 14px;
+  border-right: 1px solid var(--bg);
   position: relative;
   overflow: hidden;
 }
+.kpi:last-child { border-right: none; }
 
-.kpiBar {
+/* Colored bottom accent line */
+.kpi::after {
+  content: "";
   position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
+  bottom: 0; left: 24px; right: 24px;
+  height: 2px;
+  background: var(--kpi-colour);
+  border-radius: 2px 2px 0 0;
+  opacity: 0.6;
 }
 
 .kpiLabel {
-  font-size: 0.68rem;
+  font-size: 0.6rem;
   font-weight: 700;
-  text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #475569;
+  text-transform: uppercase;
+  color: var(--text-4);
   margin-bottom: 6px;
 }
 
 .kpiValue {
-  font-size: 1.9rem;
+  font-size: 1.65rem;
   font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.025em;
   line-height: 1;
-  margin-bottom: 5px;
-  letter-spacing: -0.02em;
+  margin-bottom: 3px;
 }
 
-.kpiSub { font-size: 0.72rem; color: #475569; }
-
-/* ── Generic card ── */
-.card {
-  background: #0d1520;
-  border: 1px solid #0f1c2e;
-  border-radius: 12px;
-  padding: 20px 22px;
-  margin-bottom: 16px;
+.kpiBadge {
+  font-size: 0.62rem;
+  color: var(--text-5);
 }
 
-.cardTitle {
-  font-size: 0.78rem;
+/* ── Main content layout ── */
+.content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 230px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  overflow-y: auto;
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sideCard {
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.sideCardTitle {
+  font-size: 0.6rem;
   font-weight: 700;
-  text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #475569;
-  margin-bottom: 14px;
+  text-transform: uppercase;
+  color: var(--text-4);
+  margin-bottom: 12px;
 }
 
-.cardSub {
-  font-size: 0.72rem;
-  color: #334155;
-  margin-bottom: 14px;
-  margin-top: -8px;
-  line-height: 1.4;
-}
-
-.empty { font-size: 0.78rem; color: #334155; }
-
-/* ── Activity chart ── */
+/* Activity chart */
 .chart {
   display: flex;
   align-items: flex-end;
-  gap: 3px;
-  height: 88px;
+  gap: 2px;
+  height: 56px;
 }
 
-.chartBar {
+.barWrap {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   height: 100%;
   justify-content: flex-end;
 }
 
-.chartBarInner {
+.bar {
   width: 100%;
-  background: #7c3aed;
-  border-radius: 3px 3px 0 0;
-  opacity: 0.75;
-  min-height: 4px;
-  transition: opacity 0.12s;
+  background: #c4b5fd;
+  border-radius: 2px 2px 0 0;
+  min-height: 2px;
+  transition: background 0.1s;
 }
-.chartBarInner:hover { opacity: 1; }
+.bar:hover { background: #7c3aed; }
 
-.chartBarDate {
-  font-size: 0.48rem;
-  color: #334155;
+.barLabel {
+  font-size: 0.38rem;
+  color: #c5bdb5;
   transform: rotate(-35deg);
   white-space: nowrap;
 }
 
-/* ── Two-col ── */
-.twoCol {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 24px;
-}
+/* Quick links */
+.quickLinks { display: flex; flex-direction: column; gap: 4px; }
 
-/* ── Stat rows ── */
-.statRow { margin-bottom: 14px; }
-
-.statName {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #e2e8f0;
-  margin-bottom: 2px;
-  text-transform: capitalize;
-}
-
-.statMeta {
-  font-size: 0.68rem;
-  color: #475569;
-  margin-bottom: 4px;
-}
-
-.statBar {
-  height: 4px;
-  background: #0f1c2e;
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.statBarFill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.3s ease;
-}
-
-/* ── Quick actions ── */
-.actions {
-  margin-top: 8px;
-}
-
-.actionsTitle {
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #334155;
-  margin-bottom: 12px;
-}
-
-.actionRow {
-  display: flex;
-  gap: 12px;
-}
-
-.actionCard {
-  flex: 1;
+.quickLink {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 16px 18px;
-  background: #0d1520;
-  border: 1px solid #0f1c2e;
-  border-radius: 10px;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: 7px;
   text-decoration: none;
-  transition: border-color 0.14s, background 0.14s;
+  transition: all 0.12s;
 }
-.actionCard:hover {
+.quickLink:hover {
   border-color: #7c3aed;
-  background: rgba(124, 58, 237, 0.04);
+  background: #faf8ff;
+  transform: translateX(2px);
 }
 
-.actionIcon {
-  font-size: 1.2rem;
-  color: #475569;
-  width: 28px;
-  text-align: center;
+.quickLinkIcon { font-size: 0.8rem; color: #c5bdb5; width: 16px; text-align: center; }
+.quickLink:hover .quickLinkIcon { color: #7c3aed; }
+
+.quickLinkLabel { font-size: 0.76rem; font-weight: 600; color: var(--text-2); }
+.quickLink:hover .quickLinkLabel { color: var(--text); }
+
+.quickLinkSub { font-size: 0.6rem; color: var(--text-5); }
+
+/* ── Library ── */
+.library {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px 56px;
+}
+
+/* ── Subject section ── */
+.subjectSection { margin-bottom: 40px; }
+
+.subjectHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1.5px solid var(--border);
+}
+
+.subjectDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
   flex-shrink: 0;
 }
-.actionCard:hover .actionIcon { color: #7c3aed; }
 
-.actionLabel {
-  font-size: 0.82rem;
+.subjectLabel {
+  font-size: 0.88rem;
   font-weight: 700;
-  color: #94a3b8;
-  margin-bottom: 2px;
+  color: var(--text);
+  flex: 1;
 }
-.actionCard:hover .actionLabel { color: #e2e8f0; }
 
-.actionSub {
+.subjectCount {
   font-size: 0.7rem;
-  color: #334155;
+  font-weight: 600;
+  color: var(--text-4);
+  background: var(--bg);
+  padding: 2px 10px;
+  border-radius: 20px;
 }
 
-@media (max-width: 900px) {
-  .kpiRow { grid-template-columns: repeat(2, 1fr); }
-  .twoCol { grid-template-columns: 1fr; }
-  .actionRow { flex-direction: column; }
+/* ── Game grid ── */
+.gameGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+}
+
+/* ══════════════════════════════════
+   GAME CARD — the hero element
+   Goal: feels like a real game tile,
+   not a spreadsheet row
+   ══════════════════════════════════ */
+.gameCard {
+  background: var(--surface);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  /* Layered shadow — creates real depth */
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.04),
+    0 4px 8px rgba(0,0,0,0.06),
+    0 12px 24px rgba(0,0,0,0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+.gameCard:hover {
+  transform: translateY(-5px) scale(1.01);
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.04),
+    0 8px 20px rgba(0,0,0,0.1),
+    0 24px 48px rgba(0,0,0,0.1);
+}
+
+/* ── Art area — colorful, rich, game-like ── */
+.gameCardArt {
+  height: 120px;
+  background: var(--subject-gradient);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Light scrim for depth */
+.gameCardArt::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%, rgba(0,0,0,0.15) 100%);
+  z-index: 1;
+}
+
+/* Noise texture feel */
+.gameCardArt::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: 0.5;
+  z-index: 2;
+}
+
+.gameCardImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: relative;
+  z-index: 3;
+}
+
+.gameCardArtFallback {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.gameCardEmoji {
+  font-size: 2.8rem;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.25));
+  opacity: 0.85;
+}
+
+/* Status badge — overlaid on art */
+.gameCardStatus {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  z-index: 4;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(6px);
+  color: rgba(255,255,255,0.6);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.gameCardStatus[data-active="true"] {
+  background: rgba(21,128,61,0.7);
+  color: #bbf7d0;
+  border-color: rgba(134,239,172,0.3);
+}
+
+/* Accent color strip at bottom of art */
+.gameCardArtAccent {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--accent, #7c3aed);
+  z-index: 4;
+  opacity: 0.9;
+}
+
+/* ── Card body ── */
+.gameCardBody {
+  padding: 14px 16px 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.gameCardTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.gameCardDesc {
+  font-size: 0.72rem;
+  color: var(--text-3);
+  line-height: 1.45;
+}
+
+.gameCardStats {
+  font-size: 0.68rem;
+  color: var(--text-4);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 3px;
+}
+
+.dot { color: #d8d3cc; }
+
+.gameCardDiffRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.gameCardMissionCount {
+  font-size: 0.62rem;
+  color: var(--text-5);
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.diffBar {
+  flex: 1;
+  display: flex;
+  height: 4px;
+  border-radius: 3px;
+  overflow: hidden;
+  gap: 2px;
+  background: var(--bg);
+}
+
+.diffSeg { border-radius: 3px; min-width: 6px; }
+.diffE { background: #22c55e; }
+.diffM { background: #f59e0b; }
+.diffH { background: #ef4444; }
+
+/* ── Card footer ── */
+.gameCardFooter {
+  display: flex;
+  border-top: 1px solid var(--bg);
+  margin-top: 2px;
+}
+
+.footerBtn {
+  flex: 1;
+  padding: 9px 0;
+  background: transparent;
+  border: none;
+  color: var(--text-4);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.12s;
+  border-right: 1px solid var(--bg);
+}
+.footerBtn:last-of-type { border-right: none; }
+.footerBtn:hover { background: var(--surface-2); color: var(--text); }
+
+.footerBtnGhost {
+  padding: 9px 14px;
+  background: transparent;
+  border: none;
+  color: #c5bdb5;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.12s;
+}
+.footerBtnGhost:hover { color: #7c3aed; }
+
+/* ── Add game tile ── */
+.addGameCard {
+  background: var(--surface-2);
+  border: 2px dashed #ddd8d0;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 200px;
+  text-decoration: none;
+  transition: all 0.18s;
+  color: var(--text-5);
+}
+.addGameCard:hover {
+  background: #faf8ff;
+  border-color: var(--accent, #7c3aed);
+  color: var(--accent, #7c3aed);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+}
+
+.addGameIcon { font-size: 1.6rem; line-height: 1; }
+.addGameLabel { font-size: 0.74rem; font-weight: 700; }
+
+/* ── Empty state ── */
+.empty {
+  padding: 80px 24px;
+  text-align: center;
+  max-width: 360px;
+  margin: 0 auto;
+}
+.emptyIcon { font-size: 3rem; margin-bottom: 16px; }
+.emptyTitle { font-size: 1.1rem; font-weight: 700; color: var(--text-2); margin-bottom: 8px; }
+.emptySub { font-size: 0.8rem; color: var(--text-4); margin-bottom: 24px; line-height: 1.6; }
+.emptyActions { display: flex; gap: 10px; justify-content: center; }
+
+@media (max-width: 960px) {
+  .content { flex-direction: column; }
+  .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); flex-direction: row; flex-wrap: wrap; }
+  .kpiStrip { grid-template-columns: repeat(2, 1fr); }
+  .gameGrid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
 }

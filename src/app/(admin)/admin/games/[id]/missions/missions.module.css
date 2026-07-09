@@ -32,3 +32,25 @@
 .xpBadge { font-size: 0.7rem; color: #475569; font-weight: 600; }
 
 .addBtn { width: 100%; padding: 14px; border-radius: 10px; border: 1.5px dashed; background: transparent; font-weight: 700; font-size: 0.88rem; cursor: pointer; margin-top: 4px; }
+
+/* Engine pending banner */
+.engineBanner {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 10px 16px;
+  background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25);
+  border-radius: 8px; margin-bottom: 16px; flex-wrap: wrap;
+  font-size: 0.8rem; color: #92400e;
+}
+.engineBannerLink {
+  font-size: 0.78rem; font-weight: 700; color: #b45309; text-decoration: none; white-space: nowrap;
+}
+.engineBannerLink:hover { text-decoration: underline; }
+
+.btnEngine {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 8px;
+  background: rgba(245,158,11,0.12); border: 1.5px solid rgba(245,158,11,0.3);
+  color: #b45309; font-size: 0.82rem; font-weight: 700;
+  text-decoration: none; transition: all 0.14s;
+}
+.btnEngine:hover { background: rgba(245,158,11,0.2); border-color: #b45309; }

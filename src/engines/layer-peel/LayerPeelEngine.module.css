@@ -1,0 +1,478 @@
+/* ══════════════════════════════════════════════════
+   LayerPeel Engine — Vault Breach theme
+   Dark vault aesthetic with electric blue accents
+   ══════════════════════════════════════════════════ */
+
+.engineColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  max-width: 560px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ── Mission header ── */
+.missionStatement {
+  background: rgba(14, 22, 38, 0.9);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+
+.missionWorld {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #38bdf8;
+  margin-bottom: 6px;
+}
+
+.missionTask {
+  font-size: 0.8rem;
+  color: rgba(226, 232, 240, 0.65);
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.missionFormula {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #f0f9ff;
+  letter-spacing: 0.02em;
+  font-family: "Fira Code", "Courier New", monospace;
+}
+
+.missionVar {
+  color: #38bdf8;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
+}
+
+/* ── Formula display (current state) ── */
+.formulaDisplay {
+  background: rgba(14, 22, 38, 0.95);
+  border: 1.5px solid rgba(56, 189, 248, 0.35);
+  border-radius: 10px;
+  padding: 14px 18px;
+  text-align: center;
+}
+
+.formulaCurrent {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #f0f9ff;
+  font-family: "Fira Code", "Courier New", monospace;
+  letter-spacing: 0.04em;
+}
+
+/* ── Shell indicator (progress dots) ── */
+.progressRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.progressLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.6);
+}
+
+.progressShells {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shellDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #1e293b;
+  border: 1.5px solid rgba(56, 189, 248, 0.25);
+  transition: all 0.3s ease;
+}
+
+.shellDotActive {
+  background: #38bdf8;
+  border-color: #38bdf8;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.7);
+}
+
+.shellDotBreached {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.2);
+}
+
+/* ── Shell indicator (current shell label) ── */
+.shellIndicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(14, 22, 38, 0.8);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  border-radius: 8px;
+}
+
+.shellIcon { font-size: 1.1rem; flex-shrink: 0; }
+
+.shellLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.5);
+}
+
+.shellText {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.shellProtecting {
+  font-size: 0.72rem;
+  color: rgba(148, 163, 184, 0.4);
+}
+
+/* ── Guided section (practice stage) ── */
+.guidedSection {
+  background: rgba(14, 22, 38, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.guidedLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #38bdf8;
+  margin-bottom: 4px;
+}
+
+.guidedInstruction {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.guidedBtn {
+  padding: 9px 18px;
+  background: #38bdf8;
+  border: none;
+  border-radius: 7px;
+  color: #0f172a;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.12s;
+  font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.guidedBtn:hover { background: #7dd3fc; }
+
+/* ── Operation section (challenge/master) ── */
+.operationSection { display: flex; flex-direction: column; gap: 8px; }
+
+.sectionLabel {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.5);
+}
+
+.operationGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.operationBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 11px 14px;
+  background: rgba(14, 22, 38, 0.85);
+  border: 1.5px solid rgba(56, 189, 248, 0.15);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.12s;
+  font-family: inherit;
+  text-align: left;
+}
+.operationBtn:hover {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
+  transform: translateY(-1px);
+}
+.operationBtn.correct {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+}
+.operationBtn.wrong {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+  animation: shake 0.3s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25%  { transform: translateX(-4px); }
+  75%  { transform: translateX(4px); }
+}
+
+.hintHighlight {
+  border-color: #fbbf24 !important;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.25);
+}
+
+.operationBtnLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.operationBtnSublabel {
+  font-size: 0.65rem;
+  color: rgba(148, 163, 184, 0.5);
+}
+
+/* ── Step confirmed ── */
+.confirmedSection {
+  background: rgba(34, 197, 94, 0.06);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.formulaLog { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+
+.formulaLogOrigin {
+  font-size: 0.72rem;
+  color: rgba(148, 163, 184, 0.4);
+  text-decoration: line-through;
+  font-family: "Fira Code", monospace;
+}
+
+.formulaLogLatest {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #4ade80;
+  font-family: "Fira Code", monospace;
+}
+
+.formulaLogLine {
+  font-size: 0.82rem;
+  color: #86efac;
+  font-family: "Fira Code", monospace;
+}
+
+.nextStepBtn {
+  padding: 9px 20px;
+  background: #22c55e;
+  border: none;
+  border-radius: 7px;
+  color: #052e16;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.12s;
+  font-family: inherit;
+}
+.nextStepBtn:hover { background: #4ade80; }
+
+/* ── Feedback strip ── */
+.feedbackStrip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(14, 22, 38, 0.7);
+  border-radius: 7px;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-style: italic;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+/* ── Hint panel ── */
+.hintPanel {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 13px;
+  background: rgba(251, 191, 36, 0.06);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-radius: 8px;
+}
+
+.hintIcon { font-size: 0.9rem; flex-shrink: 0; margin-top: 1px; }
+.hintText { font-size: 0.78rem; color: #fde68a; line-height: 1.45; }
+
+.hintRequestBtn {
+  width: 100%;
+  padding: 9px;
+  background: transparent;
+  border: 1.5px dashed rgba(251, 191, 36, 0.25);
+  border-radius: 8px;
+  color: rgba(251, 191, 36, 0.6);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s;
+  font-family: inherit;
+}
+.hintRequestBtn:hover {
+  border-color: rgba(251, 191, 36, 0.5);
+  color: #fde68a;
+  background: rgba(251, 191, 36, 0.04);
+}
+
+/* ── Mascot row ── */
+.mascotRow {
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 8px;
+}
+
+/* ── Breach complete overlay ── */
+.breachOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 12, 27, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 24px;
+}
+
+.capsule {
+  max-width: 440px;
+  width: 100%;
+  background: rgba(14, 22, 38, 0.98);
+  border: 1.5px solid rgba(56, 189, 248, 0.35);
+  border-radius: 16px;
+  padding: 28px 24px;
+  text-align: center;
+}
+
+.breachBadge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 20px;
+  padding: 4px 14px;
+  margin-bottom: 14px;
+}
+
+.discoveryBadge {
+  font-size: 0.75rem;
+  color: rgba(148, 163, 184, 0.5);
+  margin-bottom: 20px;
+  font-style: italic;
+}
+
+.breachSuccessLine {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f0f9ff;
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+
+/* Breach log */
+.breachLog {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  padding: 14px;
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.breachLogTitle {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.4);
+  margin-bottom: 10px;
+}
+
+.breachLogStep {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+  align-items: flex-start;
+}
+
+.breachLogArrow {
+  font-size: 0.7rem;
+  color: #38bdf8;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.breachLogDesc {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  line-height: 1.35;
+}
+
+.breachLogFormula {
+  font-family: "Fira Code", monospace;
+  font-size: 0.7rem;
+  color: rgba(148, 163, 184, 0.4);
+  display: block;
+  margin-top: 2px;
+}
+
+.breachLogResult {
+  font-family: "Fira Code", monospace;
+  font-size: 0.75rem;
+  color: #4ade80;
+  display: block;
+}
+
+.breachLine {
+  font-size: 0.75rem;
+  color: rgba(148, 163, 184, 0.45);
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.continueBtn {
+  width: 100%;
+  padding: 12px;
+  background: #38bdf8;
+  border: none;
+  border-radius: 9px;
+  color: #0f172a;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.14s;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+}
+.continueBtn:hover { background: #7dd3fc; transform: translateY(-1px); }

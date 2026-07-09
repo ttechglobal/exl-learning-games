@@ -226,11 +226,14 @@ export const FormulaExcavationMissionPayloadSchema = z.object({
 
   /**
    * Pedagogical stage — controls scaffolding level:
-   * "guided"      Nova narrates the next step, player taps to confirm.
-   * "assisted"    Player chooses from operation cards. Hints auto-surface.
-   * "independent" Player chooses freely. Hints only on request.
+   * "practice"  Fully guided. Nova shows what to do. Student confirms each step.
+   *             Student can also attempt steps themselves before confirmation.
+   * "challenge" Student chooses operations independently. Hints and assist
+   *             available on request after a wrong attempt.
+   * "master"    Student works fully alone. No assist shown. Hints available
+   *             on request only — nothing surfaces automatically.
    */
-  stage: z.enum(["guided", "assisted", "independent"]).default("assisted")
+  stage: z.enum(["practice", "challenge", "master"]).default("practice")
 });
 
 // ─── runtime config ───────────────────────────────────────────────────────────

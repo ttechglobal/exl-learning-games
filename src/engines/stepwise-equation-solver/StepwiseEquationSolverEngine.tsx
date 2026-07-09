@@ -28,11 +28,9 @@ import styles from "./StepwiseEquationSolverEngine.module.css";
 // ─── types ───────────────────────────────────────────────────────────────────
 
 type PedagogicalStage =
-  | "guided"
-  | "assisted"
-  | "supported"
-  | "independent"
-  | "mastery";
+  | "practice"
+  | "challenge"
+  | "master";
 
 type UIStage =
   | "guided_action"
@@ -215,16 +213,16 @@ export function StepwiseEquationSolverEngine({
   const [selfPracticeMode, setSelfPracticeMode] = useState(false);
   const [stepConfirmed, setStepConfirmed] = useState(false);
 
-  const authoredStage: PedagogicalStage = missionPayload.stage ?? "supported";
-  const pedagogicalStage: PedagogicalStage = selfPracticeMode ? "independent" : authoredStage;
+  const authoredStage: PedagogicalStage = missionPayload.stage ?? "practice";
+  const pedagogicalStage: PedagogicalStage = selfPracticeMode ? "master" : authoredStage;
 
   const tierConfig: DifficultyTier =
     shared.tiers.find((t) => t.tier === (mission.difficulty ?? "").toLowerCase()) ??
     shared.tiers[0];
 
   const initialUIStage: UIStage = (() => {
-    if (pedagogicalStage === "guided") return "guided_action";
-    if (pedagogicalStage === "assisted") return "variable_choice";
+    if (pedagogicalStage === "practice") return "guided_action";
+    if (pedagogicalStage === "challenge") return "variable_choice";
     return "operation_choice";
   })();
 
@@ -253,12 +251,15 @@ export function StepwiseEquationSolverEngine({
 
   const currentStep: SolutionStep | undefined = missionPayload.solutionSteps[currentStepIndex];
 
-  const autoHints = pedagogicalStage === "guided" || pedagogicalStage === "assisted" || pedagogicalStage === "supported";
+  // practice = fully guided, hints auto-surface
+  // challenge = student-led, hints/assist available on request
+  // master = student alone, hints available on request only
+  const autoHints = pedagogicalStage === "practice";
   const hintLevel = resolveHintLevel(wrongAttemptsOnStep, tierConfig.hintAfterAttempts);
   const showHintHighlight = autoHints && hintLevel >= 2;
 
   const hintText = (() => {
-    if (pedagogicalStage === "independent" || pedagogicalStage === "mastery") {
+    if (pedagogicalStage === "challenge" || pedagogicalStage === "master") {
       return hintRequestedByPlayer
         ? resolveHintText(0, missionPayload.caseHints, shared.hints.levels)
         : null;
@@ -283,7 +284,7 @@ export function StepwiseEquationSolverEngine({
       timeSpentSec,
       config: shared
     });
-    if (pedagogicalStage === "mastery") {
+    if (pedagogicalStage === "master") {
       setEfficiencyComparison(missionPayload.solutionSteps.map((s) => s.description));
     }
     setPendingOutcome({
@@ -314,8 +315,8 @@ export function StepwiseEquationSolverEngine({
       setHintRequestedByPlayer(false);
       setMascotPose("idle");
       setMascotLine(null);
-      if (pedagogicalStage === "guided") setUIStage("guided_action");
-      else if (pedagogicalStage === "assisted") setUIStage("variable_choice");
+      if (pedagogicalStage === "practice") setUIStage("guided_action");
+      else if (pedagogicalStage === "challenge") setUIStage("variable_choice");
     }
   }, [pedagogicalStage, completeMission]);
 
@@ -520,7 +521,7 @@ export function StepwiseEquationSolverEngine({
 
         <div className={styles.caseClosedActions}>
           {!selfPracticeMode &&
-            (pedagogicalStage === "guided" || pedagogicalStage === "assisted") && (
+            (pedagogicalStage === "practice" || pedagogicalStage === "challenge") && (
             <button className={styles.tryYourselfBtn} onClick={handleTryYourself}>
               Try it yourself →
             </button>
@@ -704,7 +705,7 @@ export function StepwiseEquationSolverEngine({
           </div>
         )}
 
-        {(pedagogicalStage === "independent" || pedagogicalStage === "mastery") &&
+        {(pedagogicalStage === "challenge" || pedagogicalStage === "master") &&
           uiStage === "operation_choice" &&
           !hintRequestedByPlayer && (
           <button

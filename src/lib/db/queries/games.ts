@@ -35,6 +35,17 @@ export async function listGames(filters: { subject?: string; topicId?: string } 
   return (data ?? []) as GameRow[];
 }
 
+/** Admin-only: returns ALL games including drafts and engine-pending games */
+export async function listAllGames(filters: { subject?: string; topicId?: string } = {}): Promise<GameRow[]> {
+  let query = supabaseServer().from("game").select("*");
+  if (filters.subject) query = query.eq("subject", filters.subject);
+  if (filters.topicId) query = query.eq("topic_id", filters.topicId);
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []) as GameRow[];
+}
+
 export async function getMissionsForGame(gameId: string): Promise<MissionRow[]> {
   const { data, error } = await supabaseServer()
     .from("mission")

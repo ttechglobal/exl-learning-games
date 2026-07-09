@@ -92,6 +92,41 @@ export interface ConceptSnapshotProps {
  * ReflectionScreen's "View Concept Summary" — passes it either way, so
  * the backdrop shows in both cases in practice.
  */
+/**
+ * Detects lines that look like mathematical expressions and renders them
+ * with monospace + accent styling — like a teacher writing on a board.
+ *
+ * A line is treated as a math step if it:
+ * - contains = or → or ÷ or × or ²  (equation/operation symbols)
+ * - starts with a letter/digit followed by a space and then = or operator
+ * - is not a sentence (doesn't end with a period followed by more words)
+ *
+ * Annotation lines (starting with ← or •) get a dimmer italic style.
+ */
+function isMathLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  // Contains equation-like symbols
+  if (/[=÷×²³√→]/.test(trimmed)) return true;
+  // Looks like a formula: starts with short token then operator
+  if (/^[A-Za-z0-9_]{1,6}\s*[+\-*/^]/.test(trimmed)) return true;
+  return false;
+}
+
+function isAnnotationLine(line: string): boolean {
+  return /^[←•–—]/.test(line.trim());
+}
+
+function renderCardBody(body: string, styles: Record<string, string>): React.ReactNode {
+  const lines = body.split("\n");
+  return lines.map((line, i) => {
+    if (!line.trim()) return <span key={i} style={{ display: "block", height: "0.5em" }} />;
+    if (isMathLine(line))       return <span key={i} className={styles.mathStep}>{line.trim()}</span>;
+    if (isAnnotationLine(line)) return <span key={i} className={styles.mathStepAnnotation}>{line.trim()}</span>;
+    return <span key={i} style={{ display: "block" }}>{line}</span>;
+  });
+}
+
 export function ConceptSnapshot({
   cards,
   onContinue,
@@ -160,7 +195,9 @@ export function ConceptSnapshot({
             <ConceptVisual visualKey={card.visual} />
           </div>
         )}
-        <div className={styles.body}>{card.body}</div>
+        <div className={styles.body}>
+          {renderCardBody(card.body, styles)}
+        </div>
 
         <div className={styles.actions}>
           {index > 0 && (

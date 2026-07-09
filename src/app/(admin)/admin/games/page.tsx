@@ -1,4 +1,4 @@
-import { listGames } from "@/lib/db/queries/games";
+import { listAllGames as listGames } from "@/lib/db/queries/games";
 import { getMissionsForGames } from "@/lib/db/queries/games";
 import Link from "next/link";
 import styles from "./games.module.css";

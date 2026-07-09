@@ -151,11 +151,37 @@
   border-color: rgba(255, 255, 255, 0.08);
 }
 .body {
-  font-size: 1rem;
+  font-size: 0.95rem;
   line-height: 1.65;
   color: var(--eg-text-bright);
   margin-bottom: 24px;
   min-height: 64px;
+  white-space: pre-wrap;   /* preserves \n line breaks from card body */
+}
+
+/* Mathematical step lines within body — detected by ConceptSnapshot
+   and wrapped in <span class="mathStep"> */
+.mathStep {
+  display: block;
+  font-family: "Fira Code", "Courier New", monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--accent-color, var(--eg-subject-chemistry));
+  background: rgba(0,0,0,0.25);
+  border-left: 2.5px solid var(--accent-color, var(--eg-subject-chemistry));
+  padding: 4px 10px;
+  margin: 3px 0;
+  border-radius: 0 5px 5px 0;
+  letter-spacing: 0.02em;
+}
+
+.mathStepAnnotation {
+  display: block;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.4);
+  font-style: italic;
+  padding: 1px 10px 4px;
+  margin-bottom: 4px;
 }
 
 .actions {

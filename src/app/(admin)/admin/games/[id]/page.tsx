@@ -1,36 +1,32 @@
-import { getGameById, getMissionsForGame } from "@/lib/db/queries/games";
+import { getGameById } from "@/lib/db/queries/games";
+import { notFound, redirect } from "next/navigation";
 
-// Needs a live DB connection; not statically prerenderable.
 export const dynamic = "force-dynamic";
 
 /**
- * Raw JSON view/edit for now — per the architecture, a real form-based editor
- * is future scope. The important part already in place: any edit submitted
- * here would go through PUT /api/games/[id], which is schema-validated
- * before writing (lib/validation/gameConfig.schema.ts).
+ * /admin/games/[id]
+ *
+ * Guard: if id is "new", redirect to /admin/games/new.
+ * Next.js prefers static routes over dynamic ones, but only when the
+ * static route folder exists. During development before the /new folder
+ * is created, [id] catches "new" and getGameById("new") crashes with
+ * Postgres error 22P02 (invalid uuid syntax). This guard makes it safe.
  */
-export default async function AdminGameDetailPage({ params }: { params: { id: string } }) {
+export default async function AdminGameDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  if (params.id === "new") redirect("/admin/games/new");
+
+  // Validate it looks like a UUID before hitting the DB
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidPattern.test(params.id)) notFound();
+
   const game = await getGameById(params.id);
-  if (!game) {
-    return <div style={{ padding: 40 }}>Game not found.</div>;
-  }
-  const missions = await getMissionsForGame(params.id);
+  if (!game) notFound();
 
-  return (
-    <div style={{ minHeight: "100vh", padding: "40px 24px", maxWidth: 920, margin: "0 auto" }}>
-      <h1 style={{ fontFamily: "var(--eg-font-display)", fontSize: "1.6rem", marginBottom: 24 }}>{game.title}</h1>
-
-      <h2 style={{ fontSize: "1rem", marginBottom: 8 }}>Game config</h2>
-      <pre style={{ background: "var(--eg-glass)", padding: 16, borderRadius: 10, overflow: "auto", fontSize: "0.8rem" }}>
-        {JSON.stringify(game, null, 2)}
-      </pre>
-
-      <h2 style={{ fontSize: "1rem", marginTop: 24, marginBottom: 8 }}>
-        Missions ({missions.length})
-      </h2>
-      <pre style={{ background: "var(--eg-glass)", padding: 16, borderRadius: 10, overflow: "auto", fontSize: "0.8rem" }}>
-        {JSON.stringify(missions, null, 2)}
-      </pre>
-    </div>
-  );
+  // Redirect to edit page — the [id] root is just a detail view,
+  // no UI lives directly here anymore
+  redirect(`/admin/games/${params.id}/edit`);
 }

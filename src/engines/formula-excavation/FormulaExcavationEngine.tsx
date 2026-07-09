@@ -26,7 +26,10 @@ import { playSound } from "@/motion/sound/playSound";
 import { GAME_ENVIRONMENT_IMAGES } from "@/lib/content/gameEnvironments";
 import styles from "./FormulaExcavationEngine.module.css";
 
-// ─── types ────────────────────────────────────────────────────────────────────
+/** Safe accessor — returns a fallback if Claude generates an unknown operation string */
+function getOperationMeta(op: string): { label: string; sublabel: string } {
+  return OPERATION_META[op as keyof typeof OPERATION_META] ?? { label: op, sublabel: "unknown operation" };
+}
 
 type UIStage = "guided_action" | "operation_choice" | "step_confirmed" | "discovery_complete";
 
@@ -46,11 +49,11 @@ export function FormulaExcavationEngine({
     shared.tiers.find((t) => t.tier === (mission.difficulty ?? "").toLowerCase()) ??
     shared.tiers[0];
 
-  const stage = payload.stage ?? "assisted";
+  const stage = payload.stage ?? "practice";
 
   // ── state ─────────────────────────────────────────────────────────────────
   const [uiStage, setUIStage] = useState<UIStage>(
-    stage === "guided" ? "guided_action" : "operation_choice"
+    stage === "practice" ? "guided_action" : "operation_choice"
   );
   const [stepIndex, setStepIndex] = useState(0);
   const [wrongAttemptsOnStep, setWrongAttemptsOnStep] = useState(0);
@@ -77,7 +80,7 @@ export function FormulaExcavationEngine({
   const totalSteps = payload.excavationSteps.length;
 
   const hintLevel = resolveHintLevel(wrongAttemptsOnStep, tier.hintAfterAttempts);
-  const showHints = stage !== "independent" || hintRequestedByPlayer;
+  const showHints = stage !== "master" || hintRequestedByPlayer;
   const hintText =
     showHints && hintsRevealedForStep && hintLevel >= 0
       ? resolveHintText(hintLevel, stepIndex, payload, shared.hints.levels)
@@ -130,7 +133,7 @@ export function FormulaExcavationEngine({
       setFlashedButton(null);
       setMascotPose("idle");
       setMascotLine(null);
-      setUIStage(stage === "guided" ? "guided_action" : "operation_choice");
+      setUIStage(stage === "practice" ? "guided_action" : "operation_choice");
     }
   }, [stepIndex, stage]);
 
@@ -194,7 +197,7 @@ export function FormulaExcavationEngine({
       setTotalWrong(nextWrong);
       setWrongAttemptsOnStep(nextWrongOnStep);
 
-      if (stage !== "independent") {
+      if (stage !== "master") {
         const newLevel = resolveHintLevel(nextWrongOnStep, tier.hintAfterAttempts);
         if (newLevel >= 0 && !hintsRevealedForStep) {
           setHintsRevealedForStep(true);
@@ -360,7 +363,7 @@ export function FormulaExcavationEngine({
               {getGuidedDescription(currentStep.operation, currentStep.obstacleLabel)}
             </div>
             <button className={styles.guidedBtn} onClick={handleGuidedTap}>
-              {OPERATION_META[currentStep.operation].label} →
+              {getOperationMeta(currentStep.operation).label} →
             </button>
           </div>
         )}
@@ -422,7 +425,7 @@ export function FormulaExcavationEngine({
               </div>
             )}
 
-            {stage === "independent" && !hintRequestedByPlayer && (
+            {stage === "master" && !hintRequestedByPlayer && (
               <button
                 className={styles.hintRequestBtn}
                 onClick={() => {

@@ -34,7 +34,7 @@ import type {
   CosStep,
 } from "./changeOfSubject.config";
 import { ChangeOfSubjectMissionPayloadSchema } from "./changeOfSubject.config";
-import { BUILTIN_QUESTIONS } from "./changeOfSubjectQuestions";
+import { MISSIONS, MISSIONS_BY_TIER, randomMissionForTier, BUILTIN_QUESTIONS } from "./changeOfSubjectQuestions";
 import { renderTokens, tokenHTML, answerHTML } from "./mathRender";
 import styles from "./ChangeOfSubjectEngine.module.css";
 
@@ -134,9 +134,12 @@ export function ChangeOfSubjectEngine({
   const payloadParse = ChangeOfSubjectMissionPayloadSchema.safeParse(
     config.mission.payload
   );
-  const questions: CosQuestion[] = payloadParse.success
-    ? payloadParse.data.questions
-    : BUILTIN_QUESTIONS;
+  // questions resolved per-tier when enterTier() is called
+  const getQuestionsForTier = (t: string): CosQuestion[] => {
+    if (payloadParse.success) return payloadParse.data.questions;
+    return randomMissionForTier(t);
+  };
+  const [questions, setQuestions] = useState<CosQuestion[]>(() => getQuestionsForTier("learn"));
 
   // ── State ──────────────────────────────────────────────────────────────
   const [screen, setScreen] = useState<Screen>("hub");
@@ -259,6 +262,8 @@ export function ChangeOfSubjectEngine({
 
   // ── Question intro ─────────────────────────────────────────────────────
   function enterTier(t: Tier) {
+    const newQs = getQuestionsForTier(t);
+    setQuestions(newQs);
     setTier(t);
     setQIdx(0);
     setSIdx(0);
@@ -273,7 +278,7 @@ export function ChangeOfSubjectEngine({
     setHintVisible(false);
     setHintUsedThisQ(false);
     setMcqChosen(null);
-    setTileChoices(shuffle([questions[0].steps[0].tileOk, ...questions[0].steps[0].tilesNo]));
+    setTileChoices(shuffle([newQs[0].steps[0].tileOk, ...newQs[0].steps[0].tilesNo]));
     startTimeRef.current = Date.now();
     setScreen("question_intro");
   }
@@ -309,80 +314,80 @@ export function ChangeOfSubjectEngine({
   // ── Tile drag ──────────────────────────────────────────────────────────
   // Uses pointer capture on the button so events track correctly on mobile.
   // The ghost is an absolutely-positioned clone that follows the pointer.
-  function onTilePointerDown(e: React.PointerEvent<HTMLButtonElement>, op: string) {
+  function nativeTilePointerDown(e: PointerEvent, btn: HTMLButtonElement, op: string) {
     if (stepPhase !== "drag") return;
+
+    const pointerId = e.pointerId;
+    const clientX = e.clientX;
+    const clientY = e.clientY;
     e.preventDefault();
 
     // Wrong tile — shake + explain, no drag
     if (op !== step.tileOk) {
-      const btn = e.currentTarget;
       btn.style.animation = "none";
       void btn.offsetWidth;
       btn.style.animation = "shake 0.3s ease";
-      setTimeout(() => (btn.style.animation = ""), 360);
+      setTimeout(() => { btn.style.animation = ""; }, 360);
       showWrong(
         tier !== "challenge"
-          ? step.whyNot[op] ?? "That doesn't isolate the variable here."
+          ? (step.whyNot[op] ?? "That doesn't isolate the variable here.")
           : "Not quite — try another."
       );
       return;
     }
 
     setWrongVisible(false);
-    const btn = e.currentTarget;
-
-    // Capture pointer so move/up fire on the button even if pointer leaves it
-    btn.setPointerCapture(e.pointerId);
 
     const rect = btn.getBoundingClientRect();
-    const ox = e.clientX - rect.left;
-    const oy = e.clientY - rect.top;
+    const ox = clientX - rect.left;
+    const oy = clientY - rect.top;
 
-    // Ghost follows the pointer
+    // Ghost clone that follows the pointer
     const ghost = document.createElement("div");
     ghost.className = "cos-tile-ghost";
     ghost.textContent = op;
-    ghost.style.left = (e.clientX - ox) + "px";
-    ghost.style.top  = (e.clientY - oy) + "px";
+    ghost.style.left  = (clientX - ox) + "px";
+    ghost.style.top   = (clientY - oy) + "px";
     ghost.style.width = rect.width + "px";
     document.body.appendChild(ghost);
     dragStateRef.current = { ghost, ox, oy, op };
     btn.style.opacity = "0.3";
 
-    // All move/up events come to the captured button
+    // Capture so all subsequent pointer events route to btn
+    btn.setPointerCapture(pointerId);
+
     const onMove = (ev: PointerEvent) => {
-      if (!dragStateRef.current) return;
       ghost.style.left = (ev.clientX - ox) + "px";
       ghost.style.top  = (ev.clientY - oy) + "px";
       updateHover(ghost);
     };
 
-    const onUp = (ev: PointerEvent) => {
+    const cleanup = () => {
+      btn.removeEventListener("pointermove", onMove);
+      btn.removeEventListener("pointerup",   cleanup);
+      btn.removeEventListener("pointercancel", cleanup);
       if (!dragStateRef.current) return;
       clearHover();
       const landed = getZone(ghost);
       ghost.remove();
       btn.style.opacity = "";
+      const capturedOp = dragStateRef.current.op;
       dragStateRef.current = null;
-      btn.removeEventListener("pointermove", onMove);
-      btn.removeEventListener("pointerup", onUp);
-      btn.removeEventListener("pointercancel", onUp);
 
       if (landed === "left" && !lApplied) {
         setLApplied(true);
-        markSide("left", op);
-        checkBothApplied("left", op);
+        markSide("left", capturedOp);
+        checkBothApplied("left", capturedOp);
       } else if (landed === "right" && !rApplied) {
         setRApplied(true);
-        markSide("right", op);
-        checkBothApplied("right", op);
+        markSide("right", capturedOp);
+        checkBothApplied("right", capturedOp);
       }
     };
 
-    // Listen on the button (pointer capture ensures delivery)
-    btn.addEventListener("pointermove", onMove);
-    btn.addEventListener("pointerup", onUp);
-    btn.addEventListener("pointercancel", onUp);
+    btn.addEventListener("pointermove",  onMove);
+    btn.addEventListener("pointerup",    cleanup);
+    btn.addEventListener("pointercancel", cleanup);
   }
 
   function updateHover(ghost: HTMLElement) {
@@ -636,17 +641,29 @@ export function ChangeOfSubjectEngine({
     );
   }
 
-  // Tile bank
+  // Tile bank — uses a callback ref to wire native pointer events
+  // (avoids React synthetic event pooling issues with setPointerCapture)
+  const tileBankRef = useCallback((container: HTMLDivElement | null) => {
+    if (!container) return;
+    const buttons = container.querySelectorAll<HTMLButtonElement>("button[data-cos-tile]");
+    buttons.forEach((btn) => {
+      const op = btn.dataset.cosOp ?? "";
+      btn.addEventListener("pointerdown", (e: PointerEvent) => {
+        nativeTilePointerDown(e, btn, op);
+      }, { passive: false });
+    });
+  }, [tileChoices]); // re-run when choices change
+
   function renderTiles() {
     const tiles = tileChoices.length ? tileChoices : [step.tileOk, ...step.tilesNo];
     return (
-      <div className={styles.tileBank}>
+      <div className={styles.tileBank} ref={tileBankRef}>
         {tiles.map((op) => (
           <button
             key={op}
             data-cos-tile
+            data-cos-op={op}
             className={styles.tile}
-            onPointerDown={(e) => onTilePointerDown(e, op)}
           >
             {op}
           </button>
@@ -748,6 +765,19 @@ export function ChangeOfSubjectEngine({
     );
   }
 
+
+  // Wrap single-letter variable names in instruction text with styled spans
+  function highlightVars(text: string): string {
+    // Match bold tags first (keep them), then wrap standalone variable letters
+    return text.replace(
+      /<strong>([^<]+)<\/strong>/g,
+      (_, inner) => `<strong><span class="${styles.varHighlight}">${inner}</span></strong>`
+    ).replace(
+      /\b([a-zA-Z])\b(?![^<]*>)/g,
+      (match, letter) => `<span class="${styles.varHighlight}">${letter}</span>`
+    );
+  }
+
   // Mascot / instruction slot
   function renderInstruction() {
     if (stepPhase === "mcq_left" || stepPhase === "mcq_right") {
@@ -791,7 +821,7 @@ export function ChangeOfSubjectEngine({
           <div className={styles.mascotAv}>🦉</div>
           <div
             className={styles.mascotTxt}
-            dangerouslySetInnerHTML={{ __html: step.mascot }}
+            dangerouslySetInnerHTML={{ __html: highlightVars(step.mascot) }}
           />
         </div>
       );
@@ -800,7 +830,7 @@ export function ChangeOfSubjectEngine({
       return (
         <div className={styles.mascotRow}>
           <div className={styles.mascotAv}>✏️</div>
-          <div className={styles.mascotTxt}>{step.instPrac}</div>
+          <div className={styles.mascotTxt} dangerouslySetInnerHTML={{ __html: highlightVars(step.instPrac) }} />
         </div>
       );
     }
@@ -808,9 +838,7 @@ export function ChangeOfSubjectEngine({
     return (
       <div className={styles.mascotRow}>
         <div className={styles.mascotAv}>⚡</div>
-        <div className={styles.mascotTxt} style={{ fontSize: 12, color: "var(--cos-ink-soft)" }}>
-          {step.instChall}
-        </div>
+        <div className={styles.mascotTxt} style={{ fontSize: 12, color: "var(--cos-ink-soft)" }} dangerouslySetInnerHTML={{ __html: highlightVars(step.instChall) }} />
       </div>
     );
   }
@@ -896,8 +924,8 @@ export function ChangeOfSubjectEngine({
               <div className={styles.questionLabel}>
                 Question {qIdx + 1} of {questions.length}
               </div>
-              <div className={styles.questionGoal}>{q.qLabel}</div>
-              <div className={styles.questionFormula}>{q.formula}</div>
+              <div className={styles.questionGoalLarge}>{q.qLabel}</div>
+              <div className={styles.questionFormulaLarge}>{q.formula}</div>
             </div>
 
             <div

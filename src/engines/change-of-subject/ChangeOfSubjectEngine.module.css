@@ -758,3 +758,31 @@
   .tile { font-size: 13px; padding: 12px 12px; }
   .mcqBtn { font-size: 14px; padding: 12px 10px; }
 }
+
+/* ── VARIABLE HIGHLIGHT in instructions ── */
+.varHighlight {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: var(--cos-teal-dark);
+  background: var(--cos-teal-light);
+  border-radius: 3px;
+  padding: 0 3px;
+  font-size: 1em;
+}
+
+/* ── LARGER question on intro screen ── */
+.questionGoalLarge {
+  font-family: 'Kalam', cursive;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--cos-ink);
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+.questionFormulaLarge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px;
+  color: var(--cos-ink-soft);
+  font-weight: 600;
+  margin-top: 2px;
+}

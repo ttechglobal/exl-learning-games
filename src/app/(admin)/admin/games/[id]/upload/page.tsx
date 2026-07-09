@@ -1,5 +1,5 @@
 import { listAllGames as listGames } from "@/lib/db/queries/games";
-import UploadClient from "../[id]/upload/UploadClient";
+import UploadClient from "../../upload/UploadClient";
 
 export const dynamic = "force-dynamic";
 

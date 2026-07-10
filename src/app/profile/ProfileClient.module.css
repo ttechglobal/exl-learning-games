@@ -481,79 +481,124 @@
 }
 .xpBarCaption strong { color: var(--eg-surface-text); font-weight: 700; }
 
-/* ============ RANK LADDER ============ */
+/* ============ RANK TRACK (horizontal scroll) ============ */
+/*
+ * The rank system is shown as a horizontal journey map — like a game's
+ * level select screen. Earned nodes glow in their faction colour, the
+ * current node pulses, locked ones are dim. A thin connector line runs
+ * through all nodes to reinforce the "path" metaphor.
+ */
 .rankLadder {
+  overflow-x: auto;
+  padding: 16px 4px 20px;
+  margin: 0 -4px 8px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.rankLadder::-webkit-scrollbar { display: none; }
+
+/* Inner track — the horizontal row of nodes + connectors */
+.rankTrack {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 0;
-  border-radius: 18px;
-  overflow: hidden;
-  border: 1px solid var(--eg-surface-border);
-  background: var(--eg-surface-card);
-  margin-bottom: 6px;
+  min-width: max-content;
+  padding: 0 8px;
   position: relative;
 }
 
+/* Connector line between nodes */
+.rankConnector {
+  height: 3px;
+  width: 28px;
+  flex-shrink: 0;
+  border-radius: 2px;
+  transition: background .3s;
+}
+.rankConnectorEarned { background: var(--rank-color, var(--eg-surface-border)); }
+.rankConnectorPending { background: var(--eg-surface-border); opacity: 0.4; }
+
+/* Each rank node */
 .rankTier {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 13px 16px;
+  gap: 6px;
+  flex-shrink: 0;
+  cursor: default;
   position: relative;
-  transition: background .15s;
-  border-bottom: 1px solid var(--eg-surface-border);
-}
-.rankTier:last-child { border-bottom: none; }
-
-/* Earned: subtle left accent */
-.rankTierEarned {
-  background: color-mix(in srgb, var(--rank-color, var(--eg-brand)) 5%, var(--eg-surface-card));
-}
-/* Current: brighter glow */
-.rankTierCurrent {
-  background: color-mix(in srgb, var(--rank-color, var(--eg-brand)) 12%, var(--eg-surface-card));
-  box-shadow: inset 3px 0 0 var(--rank-color, var(--eg-brand));
-}
-/* Next: gentle nudge */
-.rankTierNext {
-  background: color-mix(in srgb, var(--eg-surface-card-2) 60%, var(--eg-surface-card));
 }
 
-/* Left group: icon + text */
-.rankTierLeft {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-  min-width: 0;
-}
-
+/* The circular badge */
 .rankTierIcon {
-  width: 40px; height: 40px;
-  border-radius: 12px;
+  width: 48px; height: 48px;
+  border-radius: 50%;
   background: var(--eg-surface-card-2);
+  border: 2.5px solid var(--eg-surface-border);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  flex-shrink: 0;
-  transition: box-shadow .2s;
+  font-size: 22px;
+  transition: box-shadow .25s, border-color .25s, transform .2s;
+  position: relative;
 }
-.rankTierLock { font-size: 16px; opacity: .4; }
 
-.rankTierInfo { min-width: 0; }
+.rankTierEarned .rankTierIcon {
+  background: var(--rank-bg, var(--eg-surface-card-2));
+  border-color: var(--rank-color, var(--eg-surface-border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rank-color, var(--eg-brand)) 25%, transparent),
+              0 4px 12px rgba(0,0,0,.2);
+}
+
+/* Current rank pulses */
+.rankTierCurrent .rankTierIcon {
+  background: var(--rank-bg, var(--eg-surface-card-2));
+  border-color: var(--rank-color, var(--eg-brand));
+  border-width: 3px;
+  box-shadow:
+    0 0 0 5px color-mix(in srgb, var(--rank-color, var(--eg-brand)) 20%, transparent),
+    0 0 0 10px color-mix(in srgb, var(--rank-color, var(--eg-brand)) 8%, transparent),
+    0 6px 16px rgba(0,0,0,.25);
+  transform: scale(1.12);
+  animation: rankPulse 2.5s ease-in-out infinite;
+}
+@keyframes rankPulse {
+  0%, 100% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--rank-color, var(--eg-brand)) 20%, transparent), 0 0 0 10px color-mix(in srgb, var(--rank-color, var(--eg-brand)) 8%, transparent), 0 6px 16px rgba(0,0,0,.25); }
+  50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--rank-color, var(--eg-brand)) 28%, transparent), 0 0 0 14px color-mix(in srgb, var(--rank-color, var(--eg-brand)) 10%, transparent), 0 8px 20px rgba(0,0,0,.3); }
+}
+
+/* Lock on unearned tiers */
+.rankTierLock { font-size: 16px; opacity: .35; filter: grayscale(1); }
+
+/* Node label below */
+.rankTierInfo { text-align: center; }
 .rankTierLabel {
   font-family: var(--eg-font-display);
-  font-size: 0.9rem;
+  font-size: 0.68rem;
   font-weight: 800;
   color: var(--eg-surface-text-dim);
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  white-space: nowrap;
+  line-height: 1.2;
 }
+.rankTierEarned .rankTierLabel,
+.rankTierCurrent .rankTierLabel {
+  color: var(--rank-color, var(--eg-brand));
+}
+.rankTierXp {
+  font-size: 0.58rem;
+  color: var(--eg-surface-text-dim);
+  opacity: .65;
+  margin-top: 1px;
+  white-space: nowrap;
+}
+
+/* "YOU" tag above current node */
 .rankCurrentTag {
-  font-family: var(--eg-font-body, "Inter", sans-serif);
-  font-size: 0.62rem;
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.55rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: .08em;
@@ -562,22 +607,22 @@
   border-radius: 999px;
   padding: 2px 7px;
   white-space: nowrap;
-}
-.rankTierXp {
-  font-size: 0.74rem;
-  color: var(--eg-surface-text-dim);
-  margin-top: 1px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
 }
 
-/* Progress pip on current rank row */
+/* Progress pip between current and next node (mini bar below track) */
 .rankTierPip {
+  position: absolute;
+  bottom: -14px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
+  gap: 4px;
+  white-space: nowrap;
 }
 .rankTierPipTrack {
-  width: 80px; height: 5px;
+  width: 60px; height: 4px;
   border-radius: 999px;
   background: var(--eg-surface-card-2);
   overflow: hidden;
@@ -585,22 +630,16 @@
 .rankTierPipFill {
   height: 100%;
   border-radius: 999px;
-  transition: width 0.8s ease;
+  transition: width 0.9s cubic-bezier(.34,1.56,.64,1);
 }
 .rankTierPipLabel {
-  font-size: 0.68rem;
+  font-size: 0.6rem;
   font-weight: 700;
   color: var(--eg-surface-text-dim);
-  white-space: nowrap;
-}
-
-/* Vertical connector line between tiers */
-.rankConnector {
-  display: none; /* handled by border-bottom on tiers */
 }
 
 @media (max-width: 420px) {
-  .rankTierPipTrack { width: 56px; }
-  .rankTierIcon { width: 34px; height: 34px; font-size: 17px; border-radius: 9px; }
+  .rankTierIcon { width: 42px; height: 42px; font-size: 19px; }
+  .rankConnector { width: 18px; }
   .rankBadgePill { padding: 3px 9px 3px 6px; }
 }

@@ -242,6 +242,7 @@ export function ChangeOfSubjectEngine({
 
   // Scoring
   const [score, setScore] = useState(0);
+  const [xpEarnedThisMission, setXpEarnedThisMission] = useState(0);
   const [retries, setRetries] = useState(0); // retries on current question
   const [totalHints, setTotalHints] = useState(0);
   const [totalRetries, setTotalRetries] = useState(0);
@@ -731,6 +732,7 @@ export function ChangeOfSubjectEngine({
       const missionId = dbM?.id ?? config.mission.id;
       const xpForThisMission = Math.round((dbM?.xpReward ?? config.mission.xpReward ?? 20) * Math.max(0.1, pct));
       postMissionAttempt(missionId, xpForThisMission, pct);
+      setXpEarnedThisMission(xpForThisMission);
       setScreen("mission_complete");
       return;
     }
@@ -959,7 +961,7 @@ export function ChangeOfSubjectEngine({
             )}
             <div className={styles.actRow}>
               <button className={styles.btnTeal} onClick={goNextQuestion}>
-                {isFinalQ ? "Finish →" : "Next question →"}
+                {isFinalQ ? "Complete Mission →" : "Next question →"}
               </button>
             </div>
           </div>
@@ -1262,34 +1264,74 @@ export function ChangeOfSubjectEngine({
 
     return (
       <div className={styles.root} style={{"--cos-paper":"#fbf6ea","--cos-line":"#c9d9ea","--cos-margin":"#e3a7a0","--cos-ink":"#2b2a28","--cos-ink-soft":"#6b6a66","--cos-gold":"#d98e3b","--cos-gold-dark":"#8f5a1e","--cos-gold-light":"#fef3dc","--cos-teal":"#2f6f62","--cos-teal-dark":"#1c443b","--cos-teal-light":"#e1f0ea","--cos-coral":"#c24c3f","--cos-coral-bg":"#fbe4e0","--cos-card":"#ffffff","touchAction":"pan-y"} as React.CSSProperties}>
-      <style dangerouslySetInnerHTML={{__html:MATH_STYLES}} />
+        <style dangerouslySetInnerHTML={{__html:MATH_STYLES}} />
         <div className={styles.game}>
           <div className={styles.card}>
             <div className={styles.levelComplete}>
-              <div className={styles.lcIcon}>✓</div>
-              <div className={styles.lcTitle}>Mission complete!</div>
+
+              {/* Hero icon */}
+              <div className={styles.lcIcon} style={{ fontSize: 56 }}>🎉</div>
+              <div className={styles.lcTitle}>Mission Complete!</div>
 
               {/* Stars */}
-              <div style={{ fontSize: 28, color: "var(--cos-gold)", letterSpacing: 4, margin: "8px 0" }}>
+              <div style={{ fontSize: 30, color: "var(--cos-gold)", letterSpacing: 6, margin: "10px 0 6px" }}>
                 {[1,2,3].map(n => (
-                  <span key={n} style={{ opacity: n <= starCount ? 1 : 0.2 }}>★</span>
+                  <span key={n} style={{ opacity: n <= starCount ? 1 : 0.18 }}>★</span>
                 ))}
               </div>
-              <div className={styles.lcScore}>{pctScore}%</div>
-              <div className={styles.lcScoreLbl}>score</div>
 
-              <div className={styles.actRow} style={{ marginTop: 20 }}>
-                {nextMeta ? (
-                  <button className={styles.btnTeal} onClick={goNextMission}>
-                    Next: {nextMeta.name} →
-                  </button>
-                ) : (
-                  <button className={styles.btnTeal} onClick={goNextMission}>
-                    {tier === "master" ? "All done 🏆" : "Finish →"}
-                  </button>
-                )}
-                <button className={styles.btnGold} onClick={goToMissionSelect}>
-                  Back to menu
+              {/* XP earned chip — the dopamine hit */}
+              {xpEarnedThisMission > 0 && (
+                <div style={{
+                  display: "inline-flex", alignItems: "center", gap: 7,
+                  background: "linear-gradient(135deg,#fef3c7,#fde68a)",
+                  border: "2px solid #d97706",
+                  borderRadius: 999, padding: "8px 20px", margin: "6px 0 10px",
+                  animation: "rise 0.4s ease"
+                }}>
+                  <span style={{ fontSize: 20 }}>⭐</span>
+                  <span style={{ fontFamily: "var(--eg-font-display,'Baloo 2',sans-serif)", fontSize: 22, fontWeight: 900, color: "#92400e", letterSpacing: "-0.01em" }}>
+                    +{xpEarnedThisMission} XP
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#b45309" }}>earned!</span>
+                </div>
+              )}
+
+              {/* Score percentage */}
+              <div className={styles.lcScore} style={{ marginTop: 4 }}>{Math.round((record?.score ?? 0) * 100)}%</div>
+              <div className={styles.lcScoreLbl}>accuracy</div>
+
+              {/* Next mission name preview */}
+              {nextMeta && (
+                <div style={{
+                  margin: "14px 0 6px",
+                  padding: "10px 16px",
+                  background: "var(--cos-teal-light)",
+                  border: "1.5px solid var(--cos-teal)",
+                  borderRadius: 10,
+                  fontSize: 13, color: "var(--cos-teal-dark)", fontWeight: 600,
+                  textAlign: "center"
+                }}>
+                  Up next: <strong>{nextMeta.name}</strong>
+                </div>
+              )}
+
+              <div className={styles.actRow} style={{ marginTop: 16, flexDirection: "column", gap: 10 }}>
+                {/* PRIMARY — continue the momentum */}
+                <button
+                  className={styles.btnTeal}
+                  onClick={goNextMission}
+                  style={{ width: "100%", fontSize: 16, padding: "14px 20px", borderRadius: 12,
+                           boxShadow: "0 5px 0 #1c443b", transition: "transform .1s, box-shadow .1s",
+                           display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+                >
+                  {nextMeta ? <><span>🚀</span> Next Mission</> : <><span>🏆</span> {tier === "master" ? "All Complete!" : "Finish"}</>}
+                </button>
+
+                {/* SECONDARY — back to pick */}
+                <button className={styles.btnGold} onClick={goToMissionSelect}
+                  style={{ width: "100%", padding: "12px 20px", borderRadius: 12, fontSize: 14 }}>
+                  📋 Mission Select
                 </button>
               </div>
             </div>

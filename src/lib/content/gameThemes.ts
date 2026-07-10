@@ -55,21 +55,29 @@ export const GAME_THEMES: Record<string, GameTheme> = {
   // ── Mathematics ─────────────────────────────────────────────────────────
 
   /**
-   * Nova the Explorer: The Lost Formula Worlds
-   * World: jungle temple ruins at night, ancient stone tablets,
-   * glowing formula runes carved in stone, torchlight, explorer with scanner.
-   * Palette: forest green → ancient gold → emerald glow
+   * Change of Subject Formula
+   * World: a glowing maths notebook — drag and drop operations across
+   * the equals sign to isolate the target variable. Notebook paper
+   * aesthetic with gold operation tiles, teal drop zones, warm cream paper.
+   * Palette: warm cream → teal → gold
+   */
+  "change-of-subject-formula": {
+    cardArt: "/mascot/card-change-of-subject.svg",
+    description: "Drag operation tiles across the equals sign to isolate any variable — master the one skill that unlocks every formula in maths and science.",
+    preGameGradient: "linear-gradient(160deg, #fffdf5 0%, #fef9e7 50%, #fdf3cd 100%)",
+    gameGradient:    "linear-gradient(160deg, #fffdf5 0%, #fef9e7 100%)",
+    accent: "#c9a227",
+  },
+
+  /**
+   * Nova the Explorer (legacy slug — kept for any existing DB rows)
    */
   "nova-explorer": {
-    cardArt: "/mascot/card-nova-explorer.svg",
-    description: "Explore lost mathematical worlds and excavate hidden variables by removing their obstacles one inverse operation at a time.",
-    preGameGradient: "linear-gradient(160deg, #071a09 0%, #0e2a10 40%, #0a1e0c 70%, #040c05 100%)",
-    gameGradient:    "linear-gradient(160deg, #0e1a0a 0%, #0a1a0e 50%, #061410 100%)",
+    cardArt: "/mascot/card-change-of-subject.svg",
+    description: "Drag operation tiles across the equals sign to isolate any variable — master the one skill that unlocks every formula in maths and science.",
+    preGameGradient: "linear-gradient(160deg, #fffdf5 0%, #fef9e7 50%, #fdf3cd 100%)",
+    gameGradient:    "linear-gradient(160deg, #fffdf5 0%, #fef9e7 100%)",
     accent: "#c9a227",
-    environment: {
-      desktop: "/illustrations/nova-explorer-desktop.png",
-      mobile:  "/illustrations/nova-explorer-mobile.png",
-    },
   },
 
   /**

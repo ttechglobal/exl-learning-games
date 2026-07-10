@@ -5,6 +5,7 @@ import { useTheme } from "@/components/ui/ThemeProvider";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { ShareInvite } from "@/components/ui/ShareInvite";
 import { DepthBackdrop } from "@/motion/DepthBackdrop";
+import { getRank } from "@/lib/content/ranks";
 import type { LeaderboardEntry, LeaderboardPeriod } from "@/lib/db/queries/leaderboard";
 import styles from "@/app/leaderboard/LeaderboardClient.module.css";
 
@@ -147,7 +148,9 @@ export function LeaderboardClient({ initialPeriod, initialEntries, initialMyRank
 
           {!loading && !failed && entries.length > 0 && (
             <div className={styles.list}>
-              {entries.map((entry) => (
+              {entries.map((entry) => {
+                const r = getRank(entry.xpTotal);
+                return (
                 <div
                   key={entry.studentId}
                   className={`${styles.row} ${entry.studentId === currentStudentId ? styles.rowYou : ""}`}
@@ -156,6 +159,15 @@ export function LeaderboardClient({ initialPeriod, initialEntries, initialMyRank
                   <div className={styles.info}>
                     <div className={styles.nameRow}>
                       <div className={styles.name}>{entry.displayName}</div>
+                      {/* Rank badge */}
+                      <div
+                        className={styles.rankBadge}
+                        style={{ background: r.bgGradient, boxShadow: `0 1px 6px ${r.color}44` }}
+                        title={`${r.label} rank`}
+                      >
+                        <span className={styles.rankBadgeIcon}>{r.icon}</span>
+                        <span className={styles.rankBadgeLabel}>{r.label}</span>
+                      </div>
                       {entry.school && <div className={styles.schoolTag}>{entry.school}</div>}
                     </div>
                   </div>
@@ -163,11 +175,14 @@ export function LeaderboardClient({ initialPeriod, initialEntries, initialMyRank
                     {entry.xpTotal.toLocaleString()} <span>XP</span>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
-          {showPinnedRank && myRank && (
+          {showPinnedRank && myRank && (() => {
+            const r = getRank(myRank.xpTotal);
+            return (
             <>
               <div className={styles.pinnedDivider}>Your rank</div>
               <div className={`${styles.row} ${styles.rowYou} ${styles.rowPinned}`}>
@@ -175,6 +190,13 @@ export function LeaderboardClient({ initialPeriod, initialEntries, initialMyRank
                 <div className={styles.info}>
                   <div className={styles.nameRow}>
                     <div className={styles.name}>You</div>
+                    <div
+                      className={styles.rankBadge}
+                      style={{ background: r.bgGradient, boxShadow: `0 1px 6px ${r.color}44` }}
+                    >
+                      <span className={styles.rankBadgeIcon}>{r.icon}</span>
+                      <span className={styles.rankBadgeLabel}>{r.label}</span>
+                    </div>
                     <div className={styles.schoolTag}>out of {myRank.totalRanked.toLocaleString()} ranked</div>
                   </div>
                 </div>
@@ -183,7 +205,8 @@ export function LeaderboardClient({ initialPeriod, initialEntries, initialMyRank
                 </div>
               </div>
             </>
-          )}
+          );
+          })()}
 
           {currentStudentId && !loading && !failed && !myRank && (
             <div className={styles.notRankedNote}>Play a game this period to appear on the board.</div>

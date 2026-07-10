@@ -179,58 +179,67 @@ export function ProfileClient({
       {student && (
         <div className={`${styles.container} ${styles.mainSection}`}>
 
-          {/* ── RANK LADDER ── */}
-          <div className={styles.sectionLabel}>Rank Ladder</div>
+          {/* ── RANK TRACK ── */}
+          <div className={styles.sectionLabel}>Rank Journey</div>
           <div className={styles.rankLadder}>
-            {RANKS.map((r, i) => {
-              const isEarned  = xp >= r.min;
-              const isCurrent = r.label === rank.label;
-              const isNext    = nextRank?.label === r.label;
-              return (
-                <div
-                  key={r.label}
-                  className={[
-                    styles.rankTier,
-                    isEarned  ? styles.rankTierEarned  : "",
-                    isCurrent ? styles.rankTierCurrent : "",
-                    isNext    ? styles.rankTierNext    : "",
-                  ].join(" ")}
-                  style={isCurrent || isEarned
-                    ? { "--rank-color": r.color, "--rank-bg": r.bgGradient } as React.CSSProperties
-                    : undefined
-                  }
-                >
-                  <div className={styles.rankTierLeft}>
+            <div className={styles.rankTrack}>
+              {RANKS.map((r, i) => {
+                const isEarned  = xp >= r.min;
+                const isCurrent = r.label === rank.label;
+                const isNext    = nextRank?.label === r.label;
+                const showConnector = i < RANKS.length - 1;
+                const nextR = RANKS[i + 1];
+                const connectorEarned = nextR ? xp >= nextR.min : false;
+                return (
+                  <div key={r.label} style={{ display: "flex", alignItems: "center" }}>
                     <div
-                      className={styles.rankTierIcon}
-                      style={isEarned ? { background: r.bgGradient, boxShadow: `0 0 12px ${r.color}66` } : undefined}
+                      className={[
+                        styles.rankTier,
+                        isEarned  ? styles.rankTierEarned  : "",
+                        isCurrent ? styles.rankTierCurrent : "",
+                      ].join(" ")}
+                      style={(isEarned || isCurrent)
+                        ? { "--rank-color": r.color, "--rank-bg": r.bgGradient } as React.CSSProperties
+                        : undefined
+                      }
                     >
-                      {isEarned ? r.icon : <span className={styles.rankTierLock}>🔒</span>}
-                    </div>
-                    <div className={styles.rankTierInfo}>
-                      <div className={styles.rankTierLabel} style={isEarned ? { color: r.color } : undefined}>
-                        {r.label}
-                        {isCurrent && <span className={styles.rankCurrentTag}>YOU ARE HERE</span>}
+                      {/* "YOU" tag */}
+                      {isCurrent && <span className={styles.rankCurrentTag}>YOU</span>}
+
+                      <div className={styles.rankTierIcon}>
+                        {isEarned ? r.icon : <span className={styles.rankTierLock}>🔒</span>}
                       </div>
-                      <div className={styles.rankTierXp}>{r.min === 0 ? "Starting rank" : `${r.min.toLocaleString()} XP`}</div>
+
+                      <div className={styles.rankTierInfo}>
+                        <div className={styles.rankTierLabel}>{r.label}</div>
+                        <div className={styles.rankTierXp}>{r.min === 0 ? "Start" : `${r.min.toLocaleString()} XP`}</div>
+                      </div>
+
+                      {/* Progress pip on current node */}
+                      {isCurrent && nextRank && (
+                        <div className={styles.rankTierPip}>
+                          <div className={styles.rankTierPipTrack}>
+                            <div className={styles.rankTierPipFill} style={{ width: `${xpPct}%`, background: r.color }} />
+                          </div>
+                          <span className={styles.rankTierPipLabel}>{Math.round(xpPct)}%</span>
+                        </div>
+                      )}
                     </div>
+
+                    {/* Connector line */}
+                    {showConnector && (
+                      <div
+                        className={[
+                          styles.rankConnector,
+                          connectorEarned ? styles.rankConnectorEarned : styles.rankConnectorPending,
+                        ].join(" ")}
+                        style={connectorEarned ? { "--rank-color": r.color } as React.CSSProperties : undefined}
+                      />
+                    )}
                   </div>
-                  {/* Progress pip for current rank */}
-                  {isCurrent && nextRank && (
-                    <div className={styles.rankTierPip}>
-                      <div className={styles.rankTierPipTrack}>
-                        <div className={styles.rankTierPipFill} style={{ width: `${xpPct}%`, background: r.color }} />
-                      </div>
-                      <span className={styles.rankTierPipLabel}>{Math.round(xpPct)}%</span>
-                    </div>
-                  )}
-                  {/* Connector line between tiers */}
-                  {i < RANKS.length - 1 && (
-                    <div className={[styles.rankConnector, isEarned ? styles.rankConnectorEarned : ""].join(" ")} />
-                  )}
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
 
           {/* ── XP SNAPSHOT ── */}
@@ -300,5 +309,6 @@ export function ProfileClient({
         </div>
       )}
     </div>
+  
   );
 }

@@ -227,7 +227,7 @@ export function WorldsClient({ bySubject, currentStudentXp = 0, studentName }: W
 
         {/* Subject toggles — full width below XP bar */}
         <div className={styles.subjectRow}>
-          <span className={styles.controlLabel}>Subjects</span>
+          <span className={styles.controlLabel}>Choose your subjects</span>
           <div className={styles.subjectToggles}>
             {SUBJECT_ORDER.map(sub => {
               const m = subjectMeta(sub);
@@ -394,8 +394,14 @@ export function WorldsClient({ bySubject, currentStudentXp = 0, studentName }: W
         {!isSearching && visibleSubjects.length === 0 && (
           <div className={styles.emptyState}>
             <div className={styles.emptyStateIcon}>📡</div>
-            <div className={styles.emptyStateTitle}>No missions for your current filters</div>
-            <div className={styles.emptyStateSub}>Select a subject above, or choose a different class.</div>
+            <div className={styles.emptyStateTitle}>No games for {selectedClass} yet</div>
+            <div className={styles.emptyStateSub}>
+              Try a different class above, or select more subjects — new games are added regularly!
+            </div>
+            <button className={styles.emptyStateCta} onClick={() => {
+              safeLSSet(LS_SUBJECTS, SUBJECT_ORDER.join(","));
+              setActiveSubjects(SUBJECT_ORDER);
+            }}>Show all subjects</button>
           </div>
         )}
 

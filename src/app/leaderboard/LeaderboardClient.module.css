@@ -232,3 +232,22 @@
   color: var(--eg-surface-text-dim);
   text-align: center;
 }
+
+/* ── Rank badge next to player name ── */
+.rankBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 2px 9px 2px 6px;
+  flex-shrink: 0;
+}
+.rankBadgeIcon  { font-size: 12px; line-height: 1; }
+.rankBadgeLabel {
+  font-family: var(--eg-font-display, "Baloo 2", sans-serif);
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  letter-spacing: .02em;
+}

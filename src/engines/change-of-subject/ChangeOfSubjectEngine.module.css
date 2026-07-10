@@ -18,6 +18,11 @@
   overflow-x: hidden;
   width: 100%;
   box-sizing: border-box;
+  /* Vertical centering for the .game card on tall screens */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 .root::before {
   content: "";
@@ -119,7 +124,8 @@
 .game {
   max-width: 520px;
   margin: 0 auto;
-  padding: 24px 16px 60px 16px;
+  /* Vertical breathing room: enough to feel native, not flush to top */
+  padding: 20px 16px 60px 16px;
   width: 100%;
   box-sizing: border-box;
   overflow-x: hidden;

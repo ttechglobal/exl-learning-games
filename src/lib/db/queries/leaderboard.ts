@@ -288,3 +288,51 @@ function getStartOfMonthIso(): string {
 export async function getWeeklyLeaderboard(limit = 10): Promise<LeaderboardEntry[]> {
   return getLeaderboard("weekly", limit);
 }
+
+/**
+ * Returns the #1 student from the PREVIOUS complete week (Mon–Sun).
+ * Used on the homepage to show "Last Week's Champion" alongside the
+ * current week's live leaderboard — two distinct cards, honest data.
+ * Returns null if no attempts were recorded that week (fresh install,
+ * or genuinely quiet week).
+ */
+export async function getPreviousWeekChampion(): Promise<LeaderboardEntry | null> {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun, 1=Mon...
+  const diffToMonday = day === 0 ? 6 : day - 1;
+
+  // This Monday 00:00
+  const thisMon = new Date(now);
+  thisMon.setDate(now.getDate() - diffToMonday);
+  thisMon.setHours(0, 0, 0, 0);
+
+  // Last Monday 00:00
+  const lastMon = new Date(thisMon);
+  lastMon.setDate(thisMon.getDate() - 7);
+
+  const { data, error } = await supabaseServer()
+    .from("attempt")
+    .select("student_id, xp_awarded, student:student_id(display_name, school)")
+    .gte("completed_at", lastMon.toISOString())
+    .lt("completed_at", thisMon.toISOString());
+
+  if (error || !data || data.length === 0) return null;
+
+  const totals = new Map<string, { displayName: string; xpTotal: number; gamesPlayed: number; school: string | null }>();
+  for (const row of data as Array<{
+    student_id: string;
+    xp_awarded: number | null;
+    student: { display_name: string; school: string | null } | { display_name: string; school: string | null }[] | null;
+  }>) {
+    const studentRecord = Array.isArray(row.student) ? row.student[0] : row.student;
+    const displayName = studentRecord?.display_name ?? "Anonymous";
+    const school = studentRecord?.school ?? null;
+    const xp = row.xp_awarded ?? 0;
+    const existing = totals.get(row.student_id);
+    if (existing) { existing.xpTotal += xp; existing.gamesPlayed += 1; }
+    else { totals.set(row.student_id, { displayName, xpTotal: xp, gamesPlayed: 1, school }); }
+  }
+
+  const ranked = rankAndSlice(totals, 1);
+  return ranked[0] ?? null;
+}

@@ -150,10 +150,21 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
     new Set(sortedMissions.map((m) => m.difficulty)).size > 1;
   const supportsDifficultyChoice = engineSupportsDifficultyChoice(game.engine_type);
 
+  /**
+   * Per direct request: for the change-of-subject engine, skip the
+   * Mission Briefing (EntryScreen) and Mission Objectives screens
+   * entirely — the engine has its own internal hub, mission select, and
+   * question intro that serve the same purpose in a more game-native way.
+   * This is scoped to engine_type === "change-of-subject" only; every
+   * other engine still goes through the full pre-game flow.
+   */
+  const skipPreGameScreens = game.engine_type === "change-of-subject";
+
   const [screen, setScreen] = useState<Screen>(
     isLevelBased ? "levelSelect"
     : trackMapHasDifficultyTiers ? "difficultyTrack"
     : isTrackMap ? "trackMap"
+    : skipPreGameScreens ? "runtime"   // ← CoS goes straight in
     : "entry"
   );
   const [activeMissionId, setActiveMissionId] = useState(initialMissionId);
@@ -247,7 +258,9 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
   function handleRestart() {
     setPlayerDifficulty(null);
     setRuntimeResetKey((k) => k + 1);
-    setScreen("entry");
+    // CoS engine has its own internal hub — restart goes straight back to
+    // runtime, not the (skipped) entry screen.
+    setScreen(skipPreGameScreens ? "runtime" : "entry");
   }
 
   /**

@@ -1,5 +1,5 @@
 import { listGames } from "@/lib/db/queries/games";
-import { getLeaderboard } from "@/lib/db/queries/leaderboard";
+import { getLeaderboard, getPreviousWeekChampion } from "@/lib/db/queries/leaderboard";
 import { resolveCurrentStudent } from "@/lib/identity/deviceId";
 import { HomePage } from "@/app/HomePage";
 import type { GameRow } from "@/types/db";
@@ -43,9 +43,10 @@ const HOMEPAGE_LEADERBOARD_SIZE = 5;
  */
 export default async function RootPage() {
   const games = await listGames();
-  const [leaderboard, student] = await Promise.all([
-    getLeaderboard("weekly", HOMEPAGE_LEADERBOARD_SIZE).catch(() => undefined), // honest empty state on failure, not a crashed homepage
-    resolveCurrentStudent()
+  const [leaderboard, student, previousChampion] = await Promise.all([
+    getLeaderboard("weekly", HOMEPAGE_LEADERBOARD_SIZE).catch(() => undefined),
+    resolveCurrentStudent(),
+    getPreviousWeekChampion().catch(() => null),
   ]);
 
   const gamesBySubject = games.reduce<Record<string, GameRow[]>>((acc, game) => {
@@ -62,6 +63,7 @@ export default async function RootPage() {
       gamesBySubject={gamesBySubject}
       featuredGames={featuredGames}
       leaderboard={leaderboard}
+      previousChampion={previousChampion}
       currentStudentXp={student?.xp_total}
     />
   );

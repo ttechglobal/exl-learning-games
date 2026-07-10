@@ -181,6 +181,9 @@ export function WorldsClient({ bySubject, currentStudentXp = 0, studentName }: W
     <div className={styles.page} data-theme={theme}>
       <SiteHeader theme={theme} onToggleTheme={toggleTheme} active="games" currentStudentXp={currentStudentXp} />
 
+      {/* pageBody: flex row on desktop — sidebar + main column */}
+      <div className={styles.pageBody}>
+
       {/* ══════════════════════════════════════════
           MISSION CONTROL HEADER
           Top row: rank badge (left) + class dropdown (right)
@@ -253,6 +256,9 @@ export function WorldsClient({ bySubject, currentStudentXp = 0, studentName }: W
           </div>
         </div>
       </div>
+
+      {/* desktopMain: flex-1 column containing search + game content */}
+      <div className={styles.desktopMain}>
 
       {/* ══════════════════════════════════════════
           SEARCH
@@ -405,7 +411,9 @@ export function WorldsClient({ bySubject, currentStudentXp = 0, studentName }: W
           </div>
         )}
 
-      </div>
+      </div> {/* /mainContent */}
+      </div> {/* /desktopMain */}
+      </div> {/* /pageBody */}
     </div>
   );
 }

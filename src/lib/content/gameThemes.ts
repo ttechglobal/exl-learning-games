@@ -81,6 +81,17 @@ export const GAME_THEMES: Record<string, GameTheme> = {
   },
 
   /**
+   * Alias: plain slug variant (covers any DB row seeded with this slug)
+   */
+  "change-of-subject": {
+    cardArt: "/mascot/card-change-of-subject.svg",
+    description: "Drag operation tiles across the equals sign to isolate any variable — master the one skill that unlocks every formula in maths and science.",
+    preGameGradient: "linear-gradient(160deg, #fffdf5 0%, #fef9e7 50%, #fdf3cd 100%)",
+    gameGradient:    "linear-gradient(160deg, #fffdf5 0%, #fef9e7 100%)",
+    accent: "#c9a227",
+  },
+
+  /**
    * Simultaneous Equations Detective
    * World: noir detective office, pinboard case files, chalkboard equations,
    * lamp casting warm light on a dark desk.

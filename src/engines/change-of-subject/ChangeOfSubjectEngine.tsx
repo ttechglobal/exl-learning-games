@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+
 /**
  * ChangeOfSubjectEngine.tsx
  *
@@ -37,6 +39,7 @@ import { ChangeOfSubjectMissionPayloadSchema } from "./changeOfSubject.config";
 import { MISSIONS, MISSIONS_BY_TIER, randomMissionForTier, BUILTIN_QUESTIONS } from "./changeOfSubjectQuestions";
 import { renderTokens, tokenHTML, answerHTML } from "./mathRender";
 import styles from "./ChangeOfSubjectEngine.module.css";
+import cosAudio from "./cosAudio";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -258,9 +261,18 @@ export function ChangeOfSubjectEngine({
   const [showGameOver, setShowGameOver] = useState(false);
   const [showExitWarning, setShowExitWarning] = useState(false);
 
+  // Start ambient music on first interaction (Web Audio requires a gesture)
+  const musicStartedRef = React.useRef(false);
+  function ensureMusic() {
+    if (musicStartedRef.current) return;
+    musicStartedRef.current = true;
+    cosAudio.startMusic();
+  }
+
   // MCQ choices (shuffled once per MCQ render)
   const [mcqChoices, setMcqChoices] = useState<string[]>([]);
   const [mcqChosen, setMcqChosen] = useState<string | null>(null);
+  const [musicMuted, setMusicMuted] = useState(false);
   // Tile choices (shuffled once per step, stored so re-renders don't reshuffle)
   const [tileChoices, setTileChoices] = useState<string[]>([]);
 
@@ -341,6 +353,9 @@ export function ChangeOfSubjectEngine({
           handleTimeUp();
           return 0;
         }
+        // Audio cues: warn under 8s, gentle tick otherwise
+        if (prev <= 8) cosAudio.timerWarn();
+        else if (prev % 10 === 0) cosAudio.tick(); // every 10s
         return prev - 1;
       });
     }, 1000);
@@ -357,8 +372,11 @@ export function ChangeOfSubjectEngine({
     setShowGameOver(true);
   }
 
-  // Cleanup on unmount
-  useEffect(() => () => stopTimer(), []);
+  // Cleanup on unmount — stop timer AND music
+  useEffect(() => () => {
+    stopTimer();
+    cosAudio.stopMusic();
+  }, []);
 
   // Persist mission records to localStorage on every change
   useEffect(() => {
@@ -414,6 +432,7 @@ export function ChangeOfSubjectEngine({
 
   // ── Question intro ─────────────────────────────────────────────────────
   function enterTier(t: Tier) {
+    ensureMusic();
     setTier(t);
     startTimeRef.current = Date.now();
     if (t === "learn") {
@@ -512,6 +531,8 @@ export function ChangeOfSubjectEngine({
     }
 
     setWrongVisible(false);
+    ensureMusic();
+    cosAudio.place();
 
     const pointerId = e.pointerId;
     const clientX = e.clientX;
@@ -564,10 +585,12 @@ export function ChangeOfSubjectEngine({
 
       // Read from refs for current applied state
       if (landed === "left" && !lAppliedRef2.current) {
+        cosAudio.drop();
         setLApplied(true);
         markSide("left", capturedOp);
         checkBothApplied("left", capturedOp);
       } else if (landed === "right" && !rAppliedRef2.current) {
+        cosAudio.drop();
         setRApplied(true);
         markSide("right", capturedOp);
         checkBothApplied("right", capturedOp);
@@ -733,6 +756,7 @@ export function ChangeOfSubjectEngine({
       const xpForThisMission = Math.round((dbM?.xpReward ?? config.mission.xpReward ?? 20) * Math.max(0.1, pct));
       postMissionAttempt(missionId, xpForThisMission, pct);
       setXpEarnedThisMission(xpForThisMission);
+      cosAudio.missionDone();
       setScreen("mission_complete");
       return;
     }
@@ -826,6 +850,10 @@ export function ChangeOfSubjectEngine({
 
   // The equation sides — these are the drop targets
   function renderEquation(leftToks = step.leftToks, rightToks = step.rightToks) {
+    // Show "drop here" hint on sides that haven't had the tile placed yet
+    const showLeftHint  = stepPhase === "drag" && !lApplied;
+    const showRightHint = stepPhase === "drag" && !rApplied;
+
     return (
       <div className={styles.eqWrap}>
         <div
@@ -840,6 +868,9 @@ export function ChangeOfSubjectEngine({
           dangerouslySetInnerHTML={{
             __html:
               '<div data-side-expr>' + renderTokens(leftToks, 27) + '</div>' +
+              (showLeftHint
+                ? '<div style="font-size:10px;color:var(--cos-gold-dark);font-weight:700;margin-top:4px;letter-spacing:.04em">▼ DROP TILE HERE</div>'
+                : '') +
               '<div data-applied-badge class="' +
               styles.appliedBadge +
               '" style="display:none"></div>',
@@ -858,6 +889,9 @@ export function ChangeOfSubjectEngine({
           dangerouslySetInnerHTML={{
             __html:
               '<div data-side-expr>' + renderTokens(rightToks, 27) + '</div>' +
+              (showRightHint
+                ? '<div style="font-size:10px;color:var(--cos-gold-dark);font-weight:700;margin-top:4px;letter-spacing:.04em">▼ DROP TILE HERE</div>'
+                : '') +
               '<div data-applied-badge class="' +
               styles.appliedBadge +
               '" style="display:none"></div>',
@@ -989,56 +1023,99 @@ export function ChangeOfSubjectEngine({
     );
   }
 
-  // Mascot / instruction slot
+  // ── Context-aware instruction panel ────────────────────────────────────
+  //
+  // Shows on EVERY tier — the content adapts by tier and phase:
+  //   drag phase  → tells the student exactly which tile to drag and where
+  //   mcq_left    → tells them to pick what the left side simplifies to
+  //   mcq_right   → confirms left side answer, prompts for right side
+  //   result      → brief encouragement before they advance
+  //
+  // Learn: full owl explanation with step.mascot text + explicit action.
+  // Challenge / Master: compact one-liner — still tells them what to do,
+  //   but assumes they know the mechanic. No step.mascot verbose text.
+  //
+  // The key insight from user feedback: students were confused because
+  // they didn't know (a) that they needed to drag to BOTH sides, and
+  // (b) what the MCQ was asking after the drag. The instruction panel
+  // must answer the "what do I do RIGHT NOW?" question at every moment.
+  //
   function renderInstruction() {
-    if (stepPhase === "mcq_left" || stepPhase === "mcq_right") {
-      const isLeft = stepPhase === "mcq_left";
-      const prompt = isLeft
-        ? "What does the <strong>left side</strong> simplify to?"
-        : `Left = <strong>${step.lAns}</strong> ✓ &nbsp; Now simplify the <strong>right side</strong>.`;
-      if (tier !== "learn") return null;
+    const isLearn = tier === "learn";
+
+    // ── DRAG phase ──────────────────────────────────────────────────────
+    if (stepPhase === "drag") {
+      const dragMsg = isLearn
+        ? step.mascot  // the per-step owl explanation (already great for learn)
+        : `Drag the correct tile to <strong>both sides</strong> of the equation to keep it balanced.`;
+
       return (
-        <div className={styles.mascotRow}>
-          <div className={styles.mascotAv}>🦉</div>
+        <div className={styles.mascotRow} style={isLearn ? {} : {
+          background: "var(--cos-gold-light)",
+          borderLeft: "3px solid var(--cos-gold)",
+          borderRadius: "0 8px 8px 0",
+        }}>
+          {isLearn && <div className={styles.mascotAv}>🦉</div>}
+          {!isLearn && <div className={styles.mascotAv} style={{ background: "var(--cos-gold-light)", fontSize: 14 }}>💡</div>}
           <div
             className={styles.mascotTxt}
-            dangerouslySetInnerHTML={{ __html: prompt }}
-          />
-        </div>
-      );
-    }
-    if (stepPhase === "result") {
-      const isFinalStep = sIdx === totalSteps - 1;
-      const msg = tier === "learn"
-        ? isFinalStep
-          ? "<strong>Done!</strong> Variable is the subject. ✓"
-          : "Nice. Equation is simpler now — ready for the next step?"
-        : isFinalStep
-        ? "Variable isolated! ✓"
-        : "Good — next step.";
-      return (
-        <div className={styles.mascotRow}>
-          <div className={styles.mascotAv}>🦉</div>
-          <div
-            className={styles.mascotTxt}
-            dangerouslySetInnerHTML={{ __html: msg }}
+            dangerouslySetInnerHTML={{ __html: highlightVars(dragMsg) }}
           />
         </div>
       );
     }
 
-    if (tier === "learn") {
+    // ── MCQ left side ────────────────────────────────────────────────────
+    if (stepPhase === "mcq_left") {
+      const prompt = isLearn
+        ? `You applied the operation to both sides. Now — <strong>what does the left side simplify to?</strong> Pick the answer below.`
+        : `<strong>What does the left side simplify to?</strong> Tap the correct answer.`;
       return (
-        <div className={styles.mascotRow}>
-          <div className={styles.mascotAv}>🦉</div>
-          <div
-            className={styles.mascotTxt}
-            dangerouslySetInnerHTML={{ __html: highlightVars(step.mascot) }}
-          />
+        <div className={styles.mascotRow} style={isLearn ? {} : {
+          background: "var(--cos-teal-light)", borderLeft: "3px solid var(--cos-teal)", borderRadius: "0 8px 8px 0",
+        }}>
+          {isLearn && <div className={styles.mascotAv}>🦉</div>}
+          {!isLearn && <div className={styles.mascotAv} style={{ background: "var(--cos-teal-light)", fontSize: 14 }}>👈</div>}
+          <div className={styles.mascotTxt} dangerouslySetInnerHTML={{ __html: prompt }} />
         </div>
       );
     }
-    // challenge/master — no instruction text, keep it clean
+
+    // ── MCQ right side ───────────────────────────────────────────────────
+    if (stepPhase === "mcq_right") {
+      const prompt = isLearn
+        ? `Left side = <strong>${step.lAns}</strong> ✓ &nbsp; Now what does the <strong>right side</strong> simplify to? Pick below.`
+        : `Left = <strong>${step.lAns}</strong> ✓ &nbsp; <strong>What does the right side simplify to?</strong>`;
+      return (
+        <div className={styles.mascotRow} style={isLearn ? {} : {
+          background: "var(--cos-teal-light)", borderLeft: "3px solid var(--cos-teal)", borderRadius: "0 8px 8px 0",
+        }}>
+          {isLearn && <div className={styles.mascotAv}>🦉</div>}
+          {!isLearn && <div className={styles.mascotAv} style={{ background: "var(--cos-teal-light)", fontSize: 14 }}>👉</div>}
+          <div className={styles.mascotTxt} dangerouslySetInnerHTML={{ __html: prompt }} />
+        </div>
+      );
+    }
+
+    // ── Result phase ─────────────────────────────────────────────────────
+    if (stepPhase === "result") {
+      const isFinalStep = sIdx === totalSteps - 1;
+      const msg = isLearn
+        ? isFinalStep
+          ? "<strong>Done!</strong> The variable is now the subject. ✓"
+          : "Step complete — the equation is simpler. Ready for the next step?"
+        : isFinalStep
+          ? "Variable isolated! ✓"
+          : "Step done. Keep going →";
+      return (
+        <div className={styles.mascotRow} style={{ background: "var(--cos-teal-light)", borderLeft: "3px solid var(--cos-teal)", borderRadius: "0 8px 8px 0" }}>
+          {isLearn && <div className={styles.mascotAv}>🦉</div>}
+          {!isLearn && <div className={styles.mascotAv} style={{ background: "var(--cos-teal-light)", fontSize: 14 }}>✓</div>}
+          <div className={styles.mascotTxt} dangerouslySetInnerHTML={{ __html: msg }} />
+        </div>
+      );
+    }
+
     return null;
   }
 
@@ -1229,13 +1306,15 @@ export function ChangeOfSubjectEngine({
                 padding: "16px 0 8px",
                 color: "var(--cos-ink-soft)",
                 fontSize: 13,
+                lineHeight: 1.6,
               }}
             >
               {tier === "learn"
-                ? "The owl will guide you step by step."
+                ? <>🦉 The owl will guide you through <strong>each step</strong>.<br/>Drag a tile to <strong>both sides</strong> of the equation to keep it balanced.</>
                 : tier === "challenge"
-                ? "Work through the steps on your own — timed."
-                : "No hints — timer is running. Go!"}
+                ? <>⚖️ Drag a tile to <strong>both sides</strong> to keep the equation balanced.<br/>Then simplify each side. Timer starts now.</>
+                : <>⚡ No hints. Drag tiles to both sides, simplify, and beat the clock.</>
+              }
             </div>
 
             <div className={styles.actRow} style={{ marginTop: 20 }}>
@@ -1466,6 +1545,34 @@ export function ChangeOfSubjectEngine({
 
           {/* Instruction / mascot */}
           {renderInstruction()}
+
+          {/* After-first-drop nudge: left done, right still needs tile */}
+          {stepPhase === "drag" && lApplied && !rApplied && (
+            <div style={{
+              textAlign: "center",
+              fontSize: 12,
+              fontWeight: 700,
+              color: "var(--cos-gold-dark)",
+              padding: "4px 0 6px",
+              animation: "fadeUp .25s ease",
+            }}>
+              ✓ Left side done — now drag the same tile to the <strong>right side</strong> too ▶
+            </div>
+          )}
+          {stepPhase === "drag" && qIdx === 0 && sIdx === 0 && (
+            <div style={{
+              background: "#f0f9ff",
+              border: "1.5px solid #bae6fd",
+              borderRadius: 8,
+              padding: "8px 12px",
+              marginBottom: 8,
+              fontSize: 12,
+              color: "#0369a1",
+              lineHeight: 1.5,
+            }}>
+              <strong>How to play:</strong> Pick a tile from below and <strong>drag it onto BOTH sides</strong> of the equation — left side first, then right. This keeps the equation balanced. ⚖️
+            </div>
+          )}
 
           {/* Equation — the interactive surface */}
           {stepPhase === "result"

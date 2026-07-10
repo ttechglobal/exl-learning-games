@@ -8,6 +8,7 @@ import { useTheme } from "@/components/ui/ThemeProvider";
 import { SUBJECT_META } from "@/lib/content/subjects";
 import { GAME_CARD_DESC } from "@/lib/content/gameCardMeta";
 import { GameCardArt } from "@/components/ui/GameCardArt";
+import { getRank } from "@/lib/content/ranks";
 import styles from "@/app/HomePage.module.css";
 
 /**
@@ -115,11 +116,14 @@ export interface HomePageProps {
    *  week) or fail — see getLeaderboard("weekly", ...) in
    *  lib/db/queries/leaderboard.ts, wired up in page.tsx. */
   leaderboard?: LeaderboardEntry[];
+  /** Champion from the PREVIOUS complete week — shown in the "Last
+   *  Week's Champion" dark card alongside the current week's list. */
+  previousChampion?: LeaderboardEntry | null;
   /** Current student's XP total for the header pill; omit while logged out. */
   currentStudentXp?: number;
 }
 
-export function HomePage({ gamesBySubject, featuredGames, leaderboard, currentStudentXp }: HomePageProps) {
+export function HomePage({ gamesBySubject, featuredGames, leaderboard, previousChampion, currentStudentXp }: HomePageProps) {
   const { theme, toggleTheme } = useTheme();
 
   const displayedGames = rotateFeaturedGames(featuredGames);
@@ -263,70 +267,108 @@ export function HomePage({ gamesBySubject, featuredGames, leaderboard, currentSt
       <section className={styles.lbZone} id="leaderboard">
         <div className={styles.container}>
           <div className={styles.railHead}>
-            <span className={`${styles.railTag} ${styles.fd}`}>🏆 Top players</span>
+            <span className={`${styles.railTag} ${styles.fd}`}>🏆 Weekly Leaderboard</span>
           </div>
 
-          {leaderboard && leaderboard.length > 0 ? (
-            <div className={styles.lbPanel}>
-              {champion && (
-                <div className={styles.championCard}>
-                  <div className={styles.championGlow} aria-hidden="true" />
-                  <div className={styles.championCrown}>👑</div>
-                  <div className={styles.championAvatar}>{champion.avatarEmoji ?? "🧑‍🚀"}</div>
-                  <div className={`${styles.championName} ${styles.fd}`}>{champion.displayName}</div>
+          <div className={styles.lbPanel}>
+            {/* ── LAST WEEK'S CHAMPION ─────────────────────────────── */}
+            <div className={styles.prevChampCard}>
+              <div className={styles.prevChampGlow} aria-hidden="true" />
+              <div className={styles.prevChampBadge}>Last Week</div>
+              {previousChampion ? (
+                <>
+                  <div className={styles.championCrown}>🏆</div>
+                  <div className={styles.championAvatar}>{previousChampion.avatarEmoji ?? "👑"}</div>
+                  <div className={`${styles.championName} ${styles.fd}`}>{previousChampion.displayName}</div>
+                  {/* Rank badge */}
+                  {(() => {
+                    const r = getRank(previousChampion.xpTotal);
+                    return (
+                      <div className={styles.champRankBadge} style={{ background: r.bgGradient }}>
+                        {r.icon} {r.label}
+                      </div>
+                    );
+                  })()}
                   <div className={styles.championLabel}>Weekly Champion</div>
                   <div className={styles.championStats}>
                     <div>
-                      <b className={styles.fd}>{formatXp(champion.xpTotal)}</b>
-                      <span>XP</span>
+                      <b className={styles.fd}>{formatXp(previousChampion.xpTotal)}</b>
+                      <span>XP earned</span>
                     </div>
-                    {champion.school && (
+                    {previousChampion.school && (
                       <div>
-                        <b className={`${styles.fd} ${styles.championSchool}`}>{champion.school}</b>
+                        <b className={`${styles.fd} ${styles.championSchool}`}>{previousChampion.school}</b>
                         <span>School</span>
                       </div>
                     )}
                   </div>
+                </>
+              ) : (
+                <div className={styles.noChampState}>
+                  <div style={{ fontSize: 36, marginBottom: 10 }}>🌟</div>
+                  <div className={styles.fd} style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>No champion yet</div>
+                  <div style={{ fontSize: 12, opacity: 0.7, lineHeight: 1.5 }}>Play games this week to become the first weekly champion!</div>
+                </div>
+              )}
+            </div>
+
+            {/* ── THIS WEEK'S LIVE BOARD ───────────────────────────── */}
+            <div className={styles.thisWeekCard}>
+              <div className={styles.thisWeekHeader}>
+                <span className={styles.thisWeekTitle}>This Week</span>
+                <span className={styles.thisWeekLive}>● Live</span>
+              </div>
+
+              {leaderboard && leaderboard.length > 0 ? (
+                <div className={styles.lbList}>
+                  {leaderboard.map((entry) => {
+                    const r = getRank(entry.xpTotal);
+                    const isFirst = entry.rank === 1;
+                    return (
+                      <div key={entry.studentId} className={`${styles.lbRow} ${isFirst ? styles.lbRowFirst : ""}`}>
+                        <div className={styles.lbRank}>
+                          {entry.rank === 1 ? "🥇" : entry.rank === 2 ? "🥈" : entry.rank === 3 ? "🥉" : entry.rank}
+                        </div>
+                        <div className={styles.lbAvatar}>{entry.avatarEmoji ?? r.icon}</div>
+                        <div className={styles.lbInfo}>
+                          <div className={styles.lbNameRow}>
+                            <div className={styles.lbName}>{entry.displayName}</div>
+                            {/* Rank badge inline */}
+                            <div
+                              className={styles.lbRankBadge}
+                              style={{ background: r.bgGradient, boxShadow: `0 1px 4px ${r.color}44` }}
+                            >
+                              {r.icon} {r.label}
+                            </div>
+                          </div>
+                          {entry.school && <div className={styles.lbSchoolTag}>{entry.school}</div>}
+                        </div>
+                        <div className={styles.lbXp}>
+                          {formatXp(entry.xpTotal)} <span>XP</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className={styles.lbEmpty}>
+                  No plays this week yet — be the first on the board!
                 </div>
               )}
 
-              <div className={styles.lbList}>
-                {rest.map((entry) => (
-                  <div key={entry.studentId} className={styles.lbRow}>
-                    <div className={styles.lbRank}>{entry.rank}</div>
-                    <div className={styles.lbAvatar}>{entry.avatarEmoji ?? "⭐"}</div>
-                    <div className={styles.lbInfo}>
-                      <div className={styles.lbNameRow}>
-                        <div className={styles.lbName}>{entry.displayName}</div>
-                        {entry.school && <div className={styles.lbSchoolTag}>{entry.school}</div>}
-                      </div>
-                    </div>
-                    <div className={styles.lbXp}>
-                      {formatXp(entry.xpTotal)} <span>XP</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
               <div className={styles.lbFooterRow}>
                 <Link href="/leaderboard" className={styles.lbSeeFullLink}>
-                  See full leaderboard
+                  Full leaderboard →
                 </Link>
                 <ShareInvite
                   title="EXL Learning Games — Beat my score!"
                   text="I've been studying Chemistry, Physics and more with these games — come challenge me on the leaderboard!"
-                  label="Invite Friends to Play"
+                  label="Invite Friends"
                   variant="pill"
                 />
               </div>
             </div>
-          ) : (
-            <div className={styles.lbList}>
-              <div className={styles.lbEmpty}>
-                Leaderboard rankings are coming soon — play a game to be one of the first on the board.
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       </section>
 

@@ -5,6 +5,10 @@
 ═══════════════════════════════════════════════════════════════════ */
 
 /* ── PAGE SHELL ─────────────────────────────────────────────────────── */
+/* Mobile: these are transparent wrappers — all layout comes from desktop MQ */
+.pageBody { display: block; }
+.desktopMain { display: block; }
+
 .page {
   min-height: 100vh;
   background: var(--eg-surface-bg);
@@ -672,84 +676,106 @@
   .missionCard       { flex: 0 0 175px; width: 175px; }
 }
 
-/* ═══════════════════════════════════════════════
-   DESKTOP & TABLET LAYOUT POLISH (≥ 1024px)
-   Two-column layout: slim sidebar header (300px) + scrollable game grid
-═══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   DESKTOP LAYOUT (≥ 1024px)
+   The page body (below SiteHeader) is a flex row:
+     - .missionControl: sticky dark sidebar, 280px wide
+     - .desktopMain: flex-1, scrollable, contains search + content
+   SiteHeader is NOT part of this flex — it sits above in normal flow.
+   This avoids the CSS grid areas approach which breaks when SiteHeader
+   is not assigned a named grid area.
+═══════════════════════════════════════════════════════════ */
 @media (min-width: 1024px) {
-  .page {
-    display: grid;
-    grid-template-columns: 300px 1fr;
-    grid-template-rows: auto 1fr;
-    grid-template-areas:
-      "header header"
-      "sidebar main";
-    min-height: 100vh;
+  /* The page body below SiteHeader becomes a flex row */
+  .pageBody {
+    display: flex;
+    align-items: flex-start;
+    min-height: calc(100vh - 56px); /* below header */
   }
 
-  /* SiteHeader spans full top */
-  /* .page > :first-child { grid-area: header; } */
-
+  /* Sidebar */
   .missionControl {
-    grid-area: sidebar;
-    /* Sidebar: fixed left column, full height */
+    width: 280px;
+    flex-shrink: 0;
     position: sticky;
-    top: 0;
-    height: calc(100vh - 56px); /* subtract site header height */
+    top: 56px; /* below site header */
+    height: calc(100vh - 56px);
     overflow-y: auto;
-    padding: 24px 20px 40px;
+    padding: 28px 20px 40px;
     border-bottom: none;
     border-right: 1px solid rgba(255,255,255,.06);
     display: flex;
     flex-direction: column;
     gap: 0;
+    /* Hide scrollbar but keep scrollable */
+    scrollbar-width: none;
   }
+  .missionControl::-webkit-scrollbar { display: none; }
 
-  .mcTopRow { flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 16px; }
-  .classPill { align-items: flex-start; }
+  .mcTopRow    { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
+  .classPill   { align-items: flex-start; width: 100%; }
   .classDropdown { width: 100%; }
 
-  .xpBar { margin-bottom: 20px; }
-  .xpBarTrack { max-width: 100%; }
+  .xpBar       { margin-bottom: 24px; }
+  .xpBarTrack  { max-width: 100%; }
 
-  .subjectRow { flex: 1; }
-  .subjectToggles { flex-direction: column; gap: 6px; }
+  .subjectRow  { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .subjectToggles { flex-direction: column; gap: 8px; flex-wrap: nowrap; }
   .subjectToggle {
-    flex: unset;
-    width: 100%;
-    height: 42px;
-    border-radius: 10px;
+    flex: unset !important;
+    width: 100% !important;
+    height: 46px;
+    border-radius: 12px;
     justify-content: flex-start;
-    padding: 0 14px;
+    padding: 0 16px;
   }
-  .subjectToggleName { font-size: 13px; }
+  .subjectToggleName { font-size: 13.5px; }
+  .subjectToggleEmoji { font-size: 18px; }
 
+  /* Main column */
+  .desktopMain {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Sticky search bar at top of main column */
   .searchZone {
-    grid-area: main;
-    align-self: start;
-    padding: 24px 32px 0;
     position: sticky;
-    top: 0;
+    top: 56px;
     z-index: 40;
     background: var(--eg-surface-bg);
     border-bottom: 1px solid var(--eg-surface-border);
+    padding: 20px 32px 16px;
   }
+  .searchInner { max-width: 640px; }
 
+  /* Game content area */
   .mainContent {
-    grid-area: main;
-    padding: 24px 32px 60px;
-    /* offset for sticky search */
-    /* Handled by natural flow */
+    padding: 28px 36px 80px;
+    flex: 1;
   }
 
-  .missionRow { gap: 16px; }
-  .missionCard { flex: 0 0 220px; width: 220px; }
-  .missionGrid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+  /* Wider mission cards on desktop */
+  .missionCard { flex: 0 0 224px; width: 224px; }
+  .missionCardArt { height: 110px; }
+  .missionRow  { gap: 18px; padding-bottom: 12px; }
+  .missionGrid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
+
+  /* Active mission banner gets more room */
+  .amTitle  { font-size: clamp(18px, 1.8vw, 24px); }
+  .amArt    { width: 140px; }
+  .amCta    { padding: 0 36px; }
+
+  /* Section headings bigger */
+  .sectionTitle { font-size: 20px; }
 }
 
-/* Ultra-wide: let cards breathe more */
+/* Ultra-wide */
 @media (min-width: 1440px) {
-  .page { grid-template-columns: 320px 1fr; }
-  .missionControl { padding: 28px 24px 48px; }
-  .missionCard { flex: 0 0 240px; width: 240px; }
+  .missionControl { width: 300px; padding: 32px 24px 48px; }
+  .mainContent    { padding: 32px 48px 80px; }
+  .missionCard    { flex: 0 0 250px; width: 250px; }
+  .missionCardArt { height: 120px; }
 }

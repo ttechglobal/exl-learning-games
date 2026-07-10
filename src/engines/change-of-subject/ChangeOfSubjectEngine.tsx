@@ -183,12 +183,16 @@ export function ChangeOfSubjectEngine({
   // ── Config resolution ──────────────────────────────────────────────────
   const shared = config.shared;
 
-  // All DB missions injected via sharedConfig._allMissions by PlayClient
-  const dbMissions = (shared as Record<string,unknown>)._allMissions as Array<{
+  // All DB missions + context injected via sharedConfig by PlayClient
+  const sharedRaw = shared as Record<string,unknown>;
+  const dbMissions = sharedRaw._allMissions as Array<{
     id: string; missionKey: string; title: string;
     difficulty: string; sequenceIndex: number; xpReward: number;
     payload: Record<string,unknown>;
   }> | undefined;
+  const _studentId = sharedRaw._studentId as string | undefined;
+  const _gameId    = sharedRaw._gameId    as string | undefined;
+  const _topicId   = sharedRaw._topicId   as string | undefined;
 
   const payloadParse = ChangeOfSubjectMissionPayloadSchema.safeParse(
     config.mission.payload
@@ -291,6 +295,27 @@ export function ChangeOfSubjectEngine({
   // Keep stepRef current — used by native drag handler to avoid stale closure
   stepRef.current = step;
   const totalSteps = q.steps.length;
+
+  // ── Direct attempt post (awards XP per mission without triggering GameRuntime reflection) ──
+  async function postMissionAttempt(missionId: string, xpEarned: number, pct: number) {
+    if (!_studentId || !_gameId) return; // not in a full game context
+    try {
+      await fetch("/api/attempts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentId: _studentId,
+          gameId: _gameId,
+          missionId,
+          topicId: _topicId ?? "change-of-subject-formula",
+          success: true,
+          score: pct,
+          rawOutcome: { xpEarned, success: true, score: pct },
+          completedAt: new Date().toISOString(),
+        }),
+      });
+    } catch { /* offline — silent fail */ }
+  }
 
   // ── Timer logic ────────────────────────────────────────────────────────
   function needsTimer(): boolean {
@@ -699,8 +724,13 @@ export function ChangeOfSubjectEngine({
     if (isLast) {
       stopTimer();
       saveMissionRecord(score);
-      // Always show in-engine mission complete screen — never call onComplete mid-session
-      // XP is awarded once at the very end when all missions are done
+      // Post attempt directly to award XP now (without triggering GameRuntime reflection)
+      const maxPossible = questions.length * (shared.pointsPerQuestion ?? 20);
+      const pct = maxPossible > 0 ? score / maxPossible : 0;
+      const dbM = dbMissions?.find(m => m.missionKey === activeMissionKey);
+      const missionId = dbM?.id ?? config.mission.id;
+      const xpForThisMission = Math.round((dbM?.xpReward ?? config.mission.xpReward ?? 20) * Math.max(0.1, pct));
+      postMissionAttempt(missionId, xpForThisMission, pct);
       setScreen("mission_complete");
       return;
     }
@@ -740,10 +770,10 @@ export function ChangeOfSubjectEngine({
       // Enter next mission directly
       enterMission(nextKey);
     } else {
-      // All missions in this tier done — fire onComplete with XP
+      // All missions done — trigger final reflection screen
+      // XP was already awarded per-mission via postMissionAttempt, so xpEarned:0 here
       const maxPossible = questions.length * (shared.pointsPerQuestion ?? 20);
       const pct = maxPossible > 0 ? score / maxPossible : 0;
-      const xpEarned = Math.round((config.mission.xpReward ?? 100) * Math.max(0.1, pct));
       onComplete({
         success: true,
         score: pct,
@@ -751,7 +781,7 @@ export function ChangeOfSubjectEngine({
         timeSpentSec: Math.round((Date.now() - startTimeRef.current) / 1000),
         hintsUsed: totalHints,
         attemptsBeforeSuccess: totalRetries,
-        xpEarned,
+        xpEarned: 0, // already awarded per-mission above
       });
     }
   }
@@ -1251,15 +1281,15 @@ export function ChangeOfSubjectEngine({
               <div className={styles.actRow} style={{ marginTop: 20 }}>
                 {nextMeta ? (
                   <button className={styles.btnTeal} onClick={goNextMission}>
-                    Next mission: {nextMeta.name} →
+                    Next: {nextMeta.name} →
                   </button>
                 ) : (
                   <button className={styles.btnTeal} onClick={goNextMission}>
-                    {tier === "master" ? "All done — claim XP 🏆" : "Next level →"}
+                    {tier === "master" ? "All done 🏆" : "Finish →"}
                   </button>
                 )}
                 <button className={styles.btnGold} onClick={goToMissionSelect}>
-                  {tier === "learn" ? "Back to menu" : "Mission select"}
+                  Back to menu
                 </button>
               </div>
             </div>
@@ -1386,11 +1416,10 @@ export function ChangeOfSubjectEngine({
         )}
 
         <div className={styles.card}>
-          {/* Sticky question reference — always visible while solving */}
+          {/* Sticky question reference — centered, Kalam, always visible */}
           <div className={styles.questionRef}>
-            <span className={styles.questionRefLabel}>{q.qLabel}</span>
-            <span className={styles.questionRefSep}> · </span>
-            <span className={styles.questionRefFormula}>{q.formula}</span>
+            <div className={styles.questionRefLabel}>{q.qLabel}</div>
+            <div className={styles.questionRefFormula}>{q.formula}</div>
           </div>
 
           {/* Instruction / mascot */}

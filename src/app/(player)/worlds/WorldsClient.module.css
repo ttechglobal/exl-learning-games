@@ -562,3 +562,191 @@
   background: rgba(245,158,11,0.12);
   color: rgba(245,158,11,0.8);
 }
+
+/* ════════════════════════════════════════════
+   DASHBOARD REDESIGN
+════════════════════════════════════════════ */
+
+.dashHeader {
+  background: linear-gradient(135deg, var(--eg-bg-deep) 0%, var(--eg-glass) 100%);
+  border-bottom: 1px solid var(--eg-border);
+  padding: 28px 0 20px;
+}
+.dashHeaderInner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.dashGreeting {}
+.dashTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--eg-text-primary);
+  margin: 0 0 4px;
+}
+.dashSub {
+  font-size: 14px;
+  color: var(--eg-text-secondary);
+  margin: 0;
+}
+
+/* Class selector */
+.classSelectorWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.classSelectorLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--eg-text-secondary);
+}
+.classSelector {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.classBtn {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 20px;
+  border: 1.5px solid var(--eg-border);
+  background: transparent;
+  color: var(--eg-text-secondary);
+  cursor: pointer;
+  transition: all .15s;
+}
+.classBtn:hover { border-color: var(--eg-brand); color: var(--eg-brand); }
+.classBtnActive {
+  background: var(--eg-brand);
+  border-color: var(--eg-brand);
+  color: #fff;
+}
+
+/* Subject preference pills */
+.prefRow {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 14px 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.prefLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--eg-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
+.prefPills { display: flex; gap: 8px; flex-wrap: wrap; }
+.prefPill {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--eg-border);
+  background: transparent;
+  color: var(--eg-text-secondary);
+  cursor: pointer;
+  transition: all .15s;
+}
+.prefPill:hover { border-color: var(--eg-brand); }
+.prefPillActive { font-weight: 700; }
+
+/* Dashboard container */
+.dashContainer {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px 20px 0;
+}
+
+/* Continue card */
+.continueCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--eg-glass);
+  border: 1.5px solid var(--eg-border);
+  border-radius: 14px;
+  padding: 16px 20px;
+  text-decoration: none;
+  transition: border-color .15s, box-shadow .15s;
+  margin-bottom: 8px;
+}
+.continueCard:hover {
+  border-color: var(--eg-brand);
+  box-shadow: 0 4px 20px rgba(0,0,0,.15);
+}
+.continueCardLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.continueCardArt {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.continueCardTag {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 3px;
+}
+.continueCardTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--eg-text-primary);
+  margin-bottom: 3px;
+}
+.continueCardDesc {
+  font-size: 12px;
+  color: var(--eg-text-secondary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 400px;
+}
+.continueBtn {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--eg-brand);
+  white-space: nowrap;
+}
+
+/* Section count badge */
+.sectionCount {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-left: 4px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .dashHeaderInner { flex-direction: column; gap: 16px; }
+  .classSelectorWrap { width: 100%; }
+  .classSelector { width: 100%; }
+  .continueCard { flex-direction: column; align-items: flex-start; }
+  .continueCardDesc { max-width: 100%; white-space: normal; }
+}

@@ -1,8 +1,18 @@
 "use client";
 
-import { useState, useMemo } from "react";
+/**
+ * WorldsClient — Game Discovery Dashboard
+ *
+ * Personalized dashboard with:
+ * - Class selector (JSS1–SS3) — persisted in localStorage
+ * - Subject preference pills — persisted in localStorage
+ * - Search with topic recommendation
+ * - Continue card (last played)
+ * - Subject rows with horizontal scroll
+ */
+
+import { useState, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { DepthBackdrop } from "@/motion/DepthBackdrop";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { subjectMeta } from "@/lib/content/subjects";
@@ -11,23 +21,7 @@ import { GameCardArt } from "@/components/ui/GameCardArt";
 import type { GameRow, Difficulty } from "@/types/db";
 import styles from "@/app/(player)/worlds/WorldsClient.module.css";
 
-const TOPIC_LABELS: Record<string, string> = {
-  "periodic-table": "Periodic Table",
-  "atomic-structure": "Atomic Structure",
-  "chemical-bonding": "Chemical Bonding",
-  "molecular-bonding": "Molecular Bonding",
-  "hydrocarbons": "Hydrocarbons",
-  "reflection-of-light": "Reflection of Light",
-  "forces": "Forces",
-  "waves": "Waves",
-  "electricity": "Electricity",
-  "algebra": "Algebra",
-  "geometry": "Geometry",
-};
-
-function topicLabel(id: string): string {
-  return TOPIC_LABELS[id] ?? id.replace(/-/g, " ");
-}
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface GameSummary {
   game: GameRow;
@@ -43,316 +37,340 @@ export interface WorldsClientProps {
   bySubject: Record<string, GameSummary[]>;
 }
 
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const CLASSES = ["JSS1","JSS2","JSS3","SS1","SS2","SS3","WAEC","JAMB"] as const;
+type YearClass = typeof CLASSES[number];
+
+const ALL_SUBJECTS = ["mathematics","physics","chemistry","biology"] as const;
+
+const TOPIC_LABELS: Record<string, string> = {
+  "periodic-table": "Periodic Table",
+  "atomic-structure": "Atomic Structure",
+  "chemical-bonding": "Chemical Bonding",
+  "change-of-subject-formula": "Change of Subject",
+  "algebra": "Algebra",
+  "geometry": "Geometry",
+  "forces": "Forces",
+  "waves": "Waves",
+  "electricity": "Electricity",
+};
+function topicLabel(id: string) {
+  return TOPIC_LABELS[id] ?? id.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
+
+const LS_CLASS   = "exl-pref-class";
+const LS_SUBJECTS = "exl-pref-subjects";
+const LS_LAST    = "exl-last-played";
+
+function safeLS(key: string, fallback: string): string {
+  try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; }
+}
+function safeLSSet(key: string, val: string) {
+  try { localStorage.setItem(key, val); } catch { /* noop */ }
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
 export function WorldsClient({ bySubject }: WorldsClientProps) {
   const { theme, toggleTheme } = useTheme();
-  const [expandedSubject, setExpandedSubject] = useState<string | null>(null);
-  const [activeTopicFilter, setActiveTopicFilter] = useState<string>("all");
-  const [activeSubjectFilter, setActiveSubjectFilter] = useState<string>("all");
+
+  // ── Persisted preferences ─────────────────────────────────────────────────
+  const [selectedClass,    setSelectedClass]    = useState<YearClass>("JSS3");
+  const [activeSubjects,   setActiveSubjects]   = useState<string[]>(["mathematics"]);
+  const [prefsLoaded,      setPrefsLoaded]      = useState(false);
+  const [lastPlayed,       setLastPlayed]       = useState<string | null>(null);
+
+  useEffect(() => {
+    setSelectedClass((safeLS(LS_CLASS, "JSS3") as YearClass));
+    const saved = safeLS(LS_SUBJECTS, "");
+    setActiveSubjects(saved ? saved.split(",") : ["mathematics"]);
+    setLastPlayed(safeLS(LS_LAST, ""));
+    setPrefsLoaded(true);
+  }, []);
+
+  const handleClassChange = useCallback((c: YearClass) => {
+    setSelectedClass(c);
+    safeLSSet(LS_CLASS, c);
+  }, []);
+
+  const toggleSubject = useCallback((sub: string) => {
+    setActiveSubjects(prev => {
+      const next = prev.includes(sub)
+        ? prev.length > 1 ? prev.filter(s => s !== sub) : prev // keep at least 1
+        : [...prev, sub];
+      safeLSSet(LS_SUBJECTS, next.join(","));
+      return next;
+    });
+  }, []);
+
+  // ── Search ────────────────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("");
-  const [yearGroupFilter, setYearGroupFilter] = useState("all");
-  const [examBoardFilter, setExamBoardFilter] = useState("all");
-  const [termFilter, setTermFilter] = useState("all");
-
-  const allSubjects = Object.entries(bySubject).filter(([, g]) => g.length > 0);
-
-  // Collect all year groups and exam boards for filter dropdowns
-  const allYearGroups = Array.from(new Set(
-    allSubjects.flatMap(([, games]) => games.flatMap(g => g.game.year_groups ?? []))
-  )).sort();
-  const allExamBoards = Array.from(new Set(
-    allSubjects.flatMap(([, games]) => games.flatMap(g => g.game.exam_boards ?? []))
-  )).sort();
-
   const q = searchQuery.toLowerCase().trim();
 
-  const subjects = allSubjects
-    .map(([key, games]) => {
-      const filtered = games.filter(g => {
-        const game = g.game;
-        if (activeSubjectFilter !== "all" && key !== activeSubjectFilter) return false;
-        if (yearGroupFilter !== "all" && !(game.year_groups ?? []).includes(yearGroupFilter)) return false;
-        if (examBoardFilter !== "all" && !(game.exam_boards ?? []).includes(examBoardFilter)) return false;
-        if (termFilter !== "all" && game.curriculum_term !== termFilter) return false;
-        if (q) {
-          const haystack = [
-            game.title,
-            game.topic_id,
-            game.card_description ?? "",
-            key,
-            ...(game.year_groups ?? []),
-          ].join(" ").toLowerCase();
-          if (!haystack.includes(q)) return false;
-        }
+  // ── All games flat list ───────────────────────────────────────────────────
+  const allGames = useMemo(
+    () => Object.values(bySubject).flat(),
+    [bySubject]
+  );
+
+  // ── Last played game ──────────────────────────────────────────────────────
+  const lastPlayedGame = useMemo(() => {
+    if (!lastPlayed) return null;
+    return allGames.find(g => g.game.slug === lastPlayed) ?? null;
+  }, [allGames, lastPlayed]);
+
+  // ── Filtered subjects + games ─────────────────────────────────────────────
+  const visibleSubjects = useMemo(() => {
+    return Object.entries(bySubject)
+      .filter(([sub, games]) => {
+        if (!activeSubjects.includes(sub)) return false;
+        if (games.length === 0) return false;
         return true;
-      });
-      return [key, filtered] as [string, GameSummary[]];
-    })
-    .filter(([, games]) => games.length > 0);
-  const totalGames = allSubjects.reduce((s, [, g]) => s + g.length, 0);
-  const primaryAccent = allSubjects.length > 0
-    ? subjectMeta(allSubjects[0][0]).color
-    : "var(--eg-brand)";
+      })
+      .map(([sub, games]) => {
+        const filtered = games.filter(g => {
+          const game = g.game;
+          // Class filter
+          if (selectedClass !== "WAEC" && selectedClass !== "JAMB") {
+            const yg = game.year_groups ?? [];
+            if (yg.length > 0 && !yg.includes(selectedClass)) return false;
+          }
+          // Search
+          if (q) {
+            const hay = [game.title, game.topic_id, game.card_description ?? "", sub].join(" ").toLowerCase();
+            if (!hay.includes(q)) return false;
+          }
+          return true;
+        });
+        return [sub, filtered] as [string, GameSummary[]];
+      })
+      .filter(([, games]) => games.length > 0);
+  }, [bySubject, activeSubjects, selectedClass, q]);
 
-  // ALL hooks at the top — never inside a conditional branch
-  const expandedGames = useMemo(
-    () => (expandedSubject ? (bySubject[expandedSubject] ?? []) : []),
-    [expandedSubject, bySubject]
-  );
+  // ── Search results flat (for search mode) ────────────────────────────────
+  const searchResults = useMemo(() => {
+    if (!q) return [];
+    return allGames.filter(g => {
+      const game = g.game;
+      const hay = [game.title, game.topic_id, game.card_description ?? "", game.subject].join(" ").toLowerCase();
+      return hay.includes(q);
+    });
+  }, [allGames, q]);
 
-  const expandedTopics = useMemo(() => {
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const { game } of expandedGames) {
-      if (!seen.has(game.topic_id)) {
-        seen.add(game.topic_id);
-        out.push(game.topic_id);
-      }
-    }
-    return out;
-  }, [expandedGames]);
+  // ── Record last played on game click ─────────────────────────────────────
+  const handleGameClick = useCallback((slug: string) => {
+    safeLSSet(LS_LAST, slug);
+    setLastPlayed(slug);
+  }, []);
 
-  const filteredGames = useMemo(
-    () =>
-      activeTopicFilter === "all"
-        ? expandedGames
-        : expandedGames.filter(({ game }) => game.topic_id === activeTopicFilter),
-    [expandedGames, activeTopicFilter]
-  );
+  if (!prefsLoaded) return null;
 
-  // ── Expanded view ─────────────────────────────────────────────────────────
-  if (expandedSubject) {
-    const meta = subjectMeta(expandedSubject);
-    const showTabs = expandedTopics.length > 1;
+  const isSearching = q.length > 0;
 
-    return (
-      <div className={styles.page} data-theme={theme}>
-        <SiteHeader theme={theme} onToggleTheme={toggleTheme} active="games" />
+  return (
+    <div className={styles.page} data-theme={theme}>
+      <SiteHeader theme={theme} onToggleTheme={toggleTheme} active="games" />
 
-        <div className={styles.titleRow}>
-          <DepthBackdrop accentColor={meta.color} />
-          <div className={styles.container}>
-            <button
-              className={styles.backBtn}
-              onClick={() => { setExpandedSubject(null); setActiveTopicFilter("all"); }}
-            >
-              ← All Worlds
-            </button>
-            <h1 className={styles.pageTitle}>{meta.emoji} {meta.name}</h1>
-            <p className={styles.pageSubtitle}>
-              {expandedGames.length} game{expandedGames.length !== 1 ? "s" : ""}
-            </p>
+      {/* ── DASHBOARD HEADER ── */}
+      <div className={styles.dashHeader}>
+        <div className={styles.dashHeaderInner}>
+          <div className={styles.dashGreeting}>
+            <h1 className={styles.dashTitle}>My Learning Dashboard</h1>
+            <p className={styles.dashSub}>Find a game, pick up where you left off, or explore something new.</p>
           </div>
-        </div>
 
-        {showTabs && (
-          <div className={styles.tabsWrap}>
-            <div className={styles.tabsScroll}>
-              <button
-                className={`${styles.tab} ${activeTopicFilter === "all" ? styles.tabActive : ""}`}
-                style={activeTopicFilter === "all" ? { borderColor: meta.color, color: meta.color } : {}}
-                onClick={() => setActiveTopicFilter("all")}
-              >
-                All
-              </button>
-              {expandedTopics.map((t) => (
+          {/* Class selector */}
+          <div className={styles.classSelectorWrap}>
+            <span className={styles.classSelectorLabel}>Your class</span>
+            <div className={styles.classSelector}>
+              {CLASSES.map(c => (
                 <button
-                  key={t}
-                  className={`${styles.tab} ${activeTopicFilter === t ? styles.tabActive : ""}`}
-                  style={activeTopicFilter === t ? { borderColor: meta.color, color: meta.color } : {}}
-                  onClick={() => setActiveTopicFilter(t)}
+                  key={c}
+                  className={[styles.classBtn, selectedClass === c ? styles.classBtnActive : ""].join(" ")}
+                  onClick={() => handleClassChange(c)}
                 >
-                  {topicLabel(t)}
+                  {c}
                 </button>
               ))}
             </div>
           </div>
-        )}
-
-        <div className={styles.container}>
-          <div className={styles.gameGrid}>
-            {filteredGames.length === 0 && (
-              <p className={styles.emptyText}>No games for this topic yet.</p>
-            )}
-            {filteredGames.map(({ game }) => (
-              <Link key={game.id} href={`/play/${game.slug}`} className={styles.gameCard}>
-                <div className={styles.gameCardArt}>
-                  <GameCardArt gameSlug={game.slug} emoji={meta.emoji} color={meta.color} tint={meta.tint} />
-                </div>
-                <div className={styles.gameCardBody}>
-                  <div className={styles.gameCardTag} style={{ color: meta.color, background: meta.tint }}>
-                    {topicLabel(game.topic_id)}
-                  </div>
-                  <div className={styles.gameCardTitle}>{game.title}</div>
-                  {GAME_CARD_DESC[game.slug] && (
-                    <p className={styles.gameCardDesc}>{GAME_CARD_DESC[game.slug]}</p>
-                  )}
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Overview rows ─────────────────────────────────────────────────────────
-  return (
-    <div className={styles.page} data-theme={theme}>
-      <SiteHeader theme={theme} onToggleTheme={toggleTheme} active="games" />
-      <div className={styles.titleRow}>
-        <DepthBackdrop accentColor={primaryAccent} />
-        <div className={styles.container}>
-          <h1 className={styles.pageTitle}>All Worlds</h1>
-          <p className={styles.pageSubtitle}>
-            {totalGames} game{totalGames === 1 ? "" : "s"} across {subjects.length} subject{subjects.length === 1 ? "" : "s"}
-          </p>
         </div>
       </div>
 
-      {/* Search bar */}
-      <div className={styles.searchRow}>
-        <div className={styles.searchWrap}>
-          <span className={styles.searchIcon}>🔍</span>
-          <input
-            className={styles.searchInput}
-            type="text"
-            placeholder="Search by topic, subject, year group…"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <button className={styles.searchClear} onClick={() => setSearchQuery("")}>✕</button>
-          )}
-        </div>
-        {searchQuery && (
-          <div className={styles.searchCount}>
-            {filteredGames.length} game{filteredGames.length !== 1 ? "s" : ""} found
-          </div>
-        )}
-      </div>
-
-      {/* Filters row */}
-      <div className={styles.filtersRow}>
-        {/* Year group filter */}
-        {allYearGroups.length > 0 && (
-          <select
-            className={styles.filterSelect}
-            value={yearGroupFilter}
-            onChange={e => setYearGroupFilter(e.target.value)}
-          >
-            <option value="all">All Year Groups</option>
-            {allYearGroups.map(y => <option key={y} value={y}>{y}</option>)}
-          </select>
-        )}
-        {/* Exam board filter */}
-        {allExamBoards.length > 0 && (
-          <select
-            className={styles.filterSelect}
-            value={examBoardFilter}
-            onChange={e => setExamBoardFilter(e.target.value)}
-          >
-            <option value="all">All Exam Boards</option>
-            {allExamBoards.map(b => <option key={b} value={b}>{b}</option>)}
-          </select>
-        )}
-        {/* Term filter */}
-        <select
-          className={styles.filterSelect}
-          value={termFilter}
-          onChange={e => setTermFilter(e.target.value)}
-        >
-          <option value="all">All Terms</option>
-          <option value="First Term">First Term</option>
-          <option value="Second Term">Second Term</option>
-          <option value="Third Term">Third Term</option>
-        </select>
-        {/* Clear all filters */}
-        {(yearGroupFilter !== "all" || examBoardFilter !== "all" || termFilter !== "all" || searchQuery) && (
-          <button
-            className={styles.clearFilters}
-            onClick={() => { setYearGroupFilter("all"); setExamBoardFilter("all"); setTermFilter("all"); setSearchQuery(""); }}
-          >
-            Clear filters
-          </button>
-        )}
-      </div>
-
-      {/* Subject filter pills */}
-      {allSubjects.length > 1 && (
-        <div className={styles.subjectFilterRow}>
-          <button
-            className={`${styles.subjectPill} ${activeSubjectFilter === "all" ? styles.subjectPillActive : ""}`}
-            onClick={() => setActiveSubjectFilter("all")}
-          >
-            🌍 All
-          </button>
-          {allSubjects.map(([key]) => {
-            const m = subjectMeta(key);
+      {/* ── SUBJECT PREFERENCES ── */}
+      <div className={styles.prefRow}>
+        <span className={styles.prefLabel}>Subjects</span>
+        <div className={styles.prefPills}>
+          {ALL_SUBJECTS.map(sub => {
+            const m = subjectMeta(sub);
+            const active = activeSubjects.includes(sub);
             return (
               <button
-                key={key}
-                className={`${styles.subjectPill} ${activeSubjectFilter === key ? styles.subjectPillActive : ""}`}
-                style={activeSubjectFilter === key ? { borderColor: m.color, color: m.color, background: m.tint } as React.CSSProperties : {}}
-                onClick={() => setActiveSubjectFilter(activeSubjectFilter === key ? "all" : key)}
+                key={sub}
+                className={[styles.prefPill, active ? styles.prefPillActive : ""].join(" ")}
+                style={active ? { borderColor: m.color, color: m.color, background: m.tint } as React.CSSProperties : {}}
+                onClick={() => toggleSubject(sub)}
               >
                 {m.emoji} {m.name}
               </button>
             );
           })}
         </div>
-      )}
+      </div>
 
-      <div className={styles.overviewWrap}>
-        {subjects.length === 0 && searchQuery && (
-        <div className={styles.noResults}>
-          <div className={styles.noResultsIcon}>🔍</div>
-          <div className={styles.noResultsTitle}>No games found for "{searchQuery}"</div>
-          <div className={styles.noResultsSub}>Try a different search — topic name, subject, or year group</div>
-          <button className={styles.noResultsClear} onClick={() => setSearchQuery("")}>Clear search</button>
+      {/* ── SEARCH ── */}
+      <div className={styles.searchRow}>
+        <div className={styles.searchWrap}>
+          <span className={styles.searchIcon}>🔍</span>
+          <input
+            className={styles.searchInput}
+            type="text"
+            placeholder="Search by topic, subject, keyword…"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            autoComplete="off"
+          />
+          {searchQuery && (
+            <button className={styles.searchClear} onClick={() => setSearchQuery("")}>✕</button>
+          )}
+        </div>
+      </div>
+
+      {/* ── SEARCH RESULTS ── */}
+      {isSearching && (
+        <div className={styles.dashContainer}>
+          {searchResults.length === 0 ? (
+            <div className={styles.noResults}>
+              <div className={styles.noResultsIcon}>🔍</div>
+              <div className={styles.noResultsTitle}>No games found for &ldquo;{searchQuery}&rdquo;</div>
+              <div className={styles.noResultsSub}>Try a different topic name, subject, or year group.</div>
+              <button className={styles.noResultsClear} onClick={() => setSearchQuery("")}>Clear search</button>
+            </div>
+          ) : (
+            <>
+              <div className={styles.sectionHead}>
+                <h2 className={styles.sectionName}>
+                  {searchResults.length} result{searchResults.length !== 1 ? "s" : ""} for &ldquo;{searchQuery}&rdquo;
+                </h2>
+              </div>
+              <div className={styles.gameGrid}>
+                {searchResults.map(({ game }) => {
+                  const m = subjectMeta(game.subject);
+                  return (
+                    <Link
+                      key={game.id}
+                      href={`/play/${game.slug}`}
+                      className={styles.gameCard}
+                      onClick={() => handleGameClick(game.slug)}
+                    >
+                      <div className={styles.gameCardArt}>
+                        <GameCardArt gameSlug={game.slug} emoji={m.emoji} color={m.color} tint={m.tint} />
+                      </div>
+                      <div className={styles.gameCardBody}>
+                        <div className={styles.gameCardTag} style={{ color: m.color, background: m.tint }}>
+                          {topicLabel(game.topic_id)}
+                        </div>
+                        <div className={styles.gameCardTitle}>{game.title}</div>
+                        {GAME_CARD_DESC[game.slug] && (
+                          <p className={styles.gameCardDesc}>{GAME_CARD_DESC[game.slug]}</p>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
       )}
-      {subjects.length === 0 && !searchQuery && (
-          <p className={styles.emptyText}>No games yet — check back soon.</p>
-        )}
-        {subjects.map(([subject, games]) => {
-          const meta = subjectMeta(subject);
-          return (
-            <section key={subject} className={styles.subjectSection}>
-              <div className={styles.sectionHead}>
-                <span className={styles.sectionEmoji}>{meta.emoji}</span>
-                <h2 className={styles.sectionName}>{meta.name}</h2>
-                <span className={styles.sectionCount}>{games.length}</span>
-                <button className={styles.viewAllBtn} onClick={() => setExpandedSubject(subject)}>
-                  View All →
-                </button>
-              </div>
-              <div className={styles.scrollRow}>
-                {games.map(({ game }) => (
-                  <Link key={game.id} href={`/play/${game.slug}`} className={styles.miniCard}>
-                    <div className={styles.miniCardArt} style={{ background: meta.tint }}>
-                      <GameCardArt gameSlug={game.slug} emoji={meta.emoji} color={meta.color} tint={meta.tint} />
+
+      {/* ── CONTINUE CARD ── */}
+      {!isSearching && lastPlayedGame && (
+        <div className={styles.dashContainer}>
+          <div className={styles.sectionHead}>
+            <h2 className={styles.sectionName}>Continue learning</h2>
+          </div>
+          <Link
+            href={`/play/${lastPlayedGame.game.slug}`}
+            className={styles.continueCard}
+            onClick={() => handleGameClick(lastPlayedGame.game.slug)}
+          >
+            <div className={styles.continueCardLeft}>
+              {(() => {
+                const m = subjectMeta(lastPlayedGame.game.subject);
+                return (
+                  <>
+                    <div className={styles.continueCardArt}>
+                      <GameCardArt gameSlug={lastPlayedGame.game.slug} emoji={m.emoji} color={m.color} tint={m.tint} />
                     </div>
-                    <div className={styles.miniCardBody}>
-                      <div className={styles.miniCardTag} style={{ color: meta.color, background: meta.tint }}>
-                        {topicLabel(game.topic_id)}
+                    <div>
+                      <div className={styles.continueCardTag} style={{ color: m.color }}>
+                        {m.emoji} {topicLabel(lastPlayedGame.game.topic_id)}
                       </div>
-                      <div className={styles.miniCardTitle}>{game.title}</div>
-                      {GAME_CARD_DESC[game.slug] && (
-                        <p className={styles.miniCardDesc}>{GAME_CARD_DESC[game.slug]}</p>
+                      <div className={styles.continueCardTitle}>{lastPlayedGame.game.title}</div>
+                      {GAME_CARD_DESC[lastPlayedGame.game.slug] && (
+                        <p className={styles.continueCardDesc}>{GAME_CARD_DESC[lastPlayedGame.game.slug]}</p>
                       )}
                     </div>
-                  </Link>
-                ))}
-                <button className={styles.seeAllTile} onClick={() => setExpandedSubject(subject)}>
-                  <span>{meta.emoji}</span>
-                  <span className={styles.seeAllText}>See all</span>
-                  <span>→</span>
-                </button>
-              </div>
-            </section>
-          );
-        })}
-      </div>
+                  </>
+                );
+              })()}
+            </div>
+            <div className={styles.continueBtn}>Continue →</div>
+          </Link>
+        </div>
+      )}
+
+      {/* ── SUBJECT ROWS ── */}
+      {!isSearching && (
+        <div className={styles.dashContainer}>
+          {visibleSubjects.length === 0 && (
+            <div className={styles.noResults}>
+              <div className={styles.noResultsIcon}>📚</div>
+              <div className={styles.noResultsTitle}>No games for your current filters</div>
+              <div className={styles.noResultsSub}>Try selecting a different class or enabling more subjects above.</div>
+            </div>
+          )}
+          {visibleSubjects.map(([sub, games]) => {
+            const m = subjectMeta(sub);
+            return (
+              <section key={sub} className={styles.subjectSection}>
+                <div className={styles.sectionHead}>
+                  <span className={styles.sectionEmoji}>{m.emoji}</span>
+                  <h2 className={styles.sectionName}>{m.name}</h2>
+                  <span className={styles.sectionCount} style={{ background: m.tint, color: m.color }}>
+                    {games.length}
+                  </span>
+                </div>
+                <div className={styles.scrollRow}>
+                  {games.map(({ game }) => (
+                    <Link
+                      key={game.id}
+                      href={`/play/${game.slug}`}
+                      className={styles.miniCard}
+                      onClick={() => handleGameClick(game.slug)}
+                    >
+                      <div className={styles.miniCardArt} style={{ background: m.tint }}>
+                        <GameCardArt gameSlug={game.slug} emoji={m.emoji} color={m.color} tint={m.tint} />
+                      </div>
+                      <div className={styles.miniCardBody}>
+                        <div className={styles.miniCardTag} style={{ color: m.color, background: m.tint }}>
+                          {topicLabel(game.topic_id)}
+                        </div>
+                        <div className={styles.miniCardTitle}>{game.title}</div>
+                        {GAME_CARD_DESC[game.slug] && (
+                          <p className={styles.miniCardDesc}>{GAME_CARD_DESC[game.slug]}</p>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

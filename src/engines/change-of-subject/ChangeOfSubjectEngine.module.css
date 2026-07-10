@@ -970,32 +970,22 @@
 
 /* ── Sticky question reference at top of playing card ── */
 .questionRef {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 5px 10px;
-  background: transparent;
-  border-radius: 6px;
-  margin-bottom: 10px;
-  border-left: 2px solid var(--cos-line);
-  opacity: 0.7;
+  text-align: center;
+  padding: 6px 10px 10px;
+  margin-bottom: 6px;
 }
 .questionRefLabel {
-  font-family: 'Inter', sans-serif;
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--cos-ink-soft);
-  text-transform: uppercase;
-  letter-spacing: .06em;
-}
-.questionRefSep {
-  color: var(--cos-line);
-  font-size: 10px;
+  font-family: 'Kalam', cursive;
+  font-size: 17px;
+  font-weight: 700;
+  color: #7B4A1E;
+  line-height: 1.2;
+  margin-bottom: 2px;
 }
 .questionRefFormula {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--cos-ink-soft);
+  opacity: 0.8;
 }

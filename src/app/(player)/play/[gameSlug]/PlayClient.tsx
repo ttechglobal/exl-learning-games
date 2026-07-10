@@ -524,7 +524,9 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
             xpReward: m.xp_reward,
             payload: m.payload,
           })),
-          _onSelectMission: undefined, // can't pass functions via config; use activeMissionId
+          _studentId: studentId,
+          _gameId: game.id,
+          _topicId: activeMission.topic_id,
         } : {}),
       }}
       snapshot={game.snapshot}

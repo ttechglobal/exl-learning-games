@@ -1,0 +1,310 @@
+<svg viewBox="0 0 280 200" xmlns="http://www.w3.org/2000/svg" width="280" height="200">
+  <defs>
+    <!-- Deep noir office night -->
+    <linearGradient id="se-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#050916"/>
+      <stop offset="50%"  stop-color="#080d1e"/>
+      <stop offset="100%" stop-color="#060a18"/>
+    </linearGradient>
+
+    <!-- Window light beam (amber streetlamp) -->
+    <linearGradient id="se-beam" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#f59e0b" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Case board / cork board -->
+    <linearGradient id="se-board" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#3d2a1a"/>
+      <stop offset="100%" stop-color="#2a1c10"/>
+    </linearGradient>
+
+    <!-- Desk surface -->
+    <linearGradient id="se-desk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#1e160d"/>
+      <stop offset="100%" stop-color="#0e0b06"/>
+    </linearGradient>
+
+    <!-- Lamp cone light -->
+    <radialGradient id="se-lamp" cx="50%" cy="0%" r="100%">
+      <stop offset="0%"   stop-color="#fef3c7" stop-opacity="0.9"/>
+      <stop offset="40%"  stop-color="#fbbf24" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Red string glow -->
+    <filter id="se-red-glow">
+      <feGaussianBlur stdDeviation="1" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- Magnifier lens -->
+    <radialGradient id="se-lens" cx="40%" cy="30%" r="60%">
+      <stop offset="0%"   stop-color="#c7d8f8" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#4488ff" stop-opacity="0.1"/>
+    </radialGradient>
+
+    <!-- Text glow for equations -->
+    <filter id="se-text-glow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- Amber glow for solved -->
+    <filter id="se-amber-glow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- Vignette -->
+    <radialGradient id="se-vignette" cx="50%" cy="50%" r="70%">
+      <stop offset="35%"  stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.75"/>
+    </radialGradient>
+
+    <clipPath id="se-clip">
+      <rect width="280" height="200" rx="0"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#se-clip)">
+    <!-- Background -->
+    <rect width="280" height="200" fill="url(#se-bg)"/>
+
+    <!-- Window — back wall, top right -->
+    <rect x="195" y="8" width="65" height="75" rx="3" fill="#090f1f"/>
+    <!-- Window frame -->
+    <rect x="195" y="8"  width="65" height="75" rx="3" fill="none" stroke="#1e2a3a" stroke-width="2.5"/>
+    <line x1="227" y1="8"  x2="227" y2="83" stroke="#1e2a3a" stroke-width="1.5"/>
+    <line x1="195" y1="45" x2="260" y2="45" stroke="#1e2a3a" stroke-width="1.5"/>
+    <!-- Rain streaks on window -->
+    <line x1="208" y1="12" x2="205" y2="32" stroke="#3a5070" stroke-width="0.6" opacity="0.5"/>
+    <line x1="218" y1="15" x2="215" y2="38" stroke="#3a5070" stroke-width="0.5" opacity="0.4"/>
+    <line x1="236" y1="10" x2="233" y2="30" stroke="#3a5070" stroke-width="0.6" opacity="0.45"/>
+    <line x1="246" y1="14" x2="243" y2="36" stroke="#3a5070" stroke-width="0.5" opacity="0.4"/>
+    <line x1="208" y1="48" x2="205" y2="68" stroke="#3a5070" stroke-width="0.6" opacity="0.4"/>
+    <line x1="220" y1="50" x2="217" y2="72" stroke="#3a5070" stroke-width="0.5" opacity="0.35"/>
+    <line x1="240" y1="47" x2="237" y2="68" stroke="#3a5070" stroke-width="0.6" opacity="0.45"/>
+    <!-- City glow through window -->
+    <rect x="196" y="9"  width="30" height="35" fill="#0d1428" opacity="0.8"/>
+    <rect x="226" y="9"  width="33" height="35" fill="#0a1020" opacity="0.9"/>
+    <!-- City building silhouettes -->
+    <rect x="200" y="22" width="6"  height="22" fill="#050810" opacity="0.8"/>
+    <rect x="208" y="18" width="4"  height="26" fill="#040710" opacity="0.9"/>
+    <rect x="213" y="25" width="8"  height="19" fill="#050810" opacity="0.8"/>
+    <rect x="229" y="20" width="5"  height="24" fill="#040710" opacity="0.9"/>
+    <rect x="236" y="26" width="7"  height="18" fill="#050810" opacity="0.8"/>
+    <rect x="245" y="16" width="5"  height="28" fill="#040710" opacity="0.9"/>
+    <rect x="252" y="22" width="6"  height="22" fill="#050810" opacity="0.8"/>
+    <!-- Window lights on buildings -->
+    <rect x="202" y="24" width="2" height="1.5" fill="#f59e0b" opacity="0.6"/>
+    <rect x="210" y="22" width="2" height="1.5" fill="#fbbf24" opacity="0.5"/>
+    <rect x="232" y="24" width="2" height="1.5" fill="#f59e0b" opacity="0.55"/>
+    <rect x="247" y="20" width="1.5" height="1.5" fill="#fbbf24" opacity="0.5"/>
+
+    <!-- Street lamp light beam through window -->
+    <polygon points="225,9 260,9 280,80 200,80" fill="url(#se-beam)" opacity="0.6"/>
+
+    <!-- Left wall darker -->
+    <rect x="0" y="0" width="180" height="135" fill="#060a16" opacity="0.5"/>
+
+    <!-- CASE BOARD / CORK BOARD — main feature, back wall centre-left -->
+    <rect x="15" y="10" width="168" height="110" rx="4" fill="url(#se-board)"/>
+    <!-- Cork texture (subtle lines) -->
+    <line x1="15"  y1="20"  x2="183" y2="20"  stroke="#4a3020" stroke-width="0.4" opacity="0.3"/>
+    <line x1="15"  y1="35"  x2="183" y2="35"  stroke="#4a3020" stroke-width="0.4" opacity="0.25"/>
+    <line x1="15"  y1="55"  x2="183" y2="55"  stroke="#4a3020" stroke-width="0.3" opacity="0.2"/>
+    <line x1="15"  y1="75"  x2="183" y2="75"  stroke="#4a3020" stroke-width="0.3" opacity="0.2"/>
+    <line x1="15"  y1="95"  x2="183" y2="95"  stroke="#4a3020" stroke-width="0.3" opacity="0.2"/>
+    <!-- Board frame/border -->
+    <rect x="15" y="10" width="168" height="110" rx="4" fill="none" stroke="#5a3a22" stroke-width="2"/>
+
+    <!-- ── EQUATION CARDS / PAPERS ON BOARD ── -->
+
+    <!-- Card 1 — top left: first equation -->
+    <rect x="24" y="18" width="60" height="35" rx="2" fill="#f5f0e4" opacity="0.92"/>
+    <rect x="24" y="18" width="60" height="4"  rx="2" fill="#dc2626" opacity="0.85"/>
+    <!-- Equation text on card -->
+    <text x="54" y="32" text-anchor="middle" font-family="'Courier New', monospace" font-size="8"
+          font-weight="700" fill="#1a1a2e">2x + 3y = 12</text>
+    <line x1="27" y1="37" x2="81" y2="37" stroke="#9a9080" stroke-width="0.5" opacity="0.4"/>
+    <text x="54" y="45" text-anchor="middle" font-family="'Courier New', monospace" font-size="6.5"
+          fill="#4a4030">Equation I</text>
+    <!-- Pushpin on card -->
+    <circle cx="54" cy="20" r="2.5" fill="#dc2626"/>
+    <circle cx="54" cy="20" r="1"   fill="#f87171"/>
+
+    <!-- Card 2 — top right: second equation -->
+    <rect x="98" y="18" width="60" height="35" rx="2" fill="#f5f0e4" opacity="0.92"/>
+    <rect x="98" y="18" width="60" height="4"  rx="2" fill="#2563eb" opacity="0.85"/>
+    <text x="128" y="32" text-anchor="middle" font-family="'Courier New', monospace" font-size="8"
+          font-weight="700" fill="#1a1a2e">x − y = 1</text>
+    <line x1="101" y1="37" x2="155" y2="37" stroke="#9a9080" stroke-width="0.5" opacity="0.4"/>
+    <text x="128" y="45" text-anchor="middle" font-family="'Courier New', monospace" font-size="6.5"
+          fill="#4a4030">Equation II</text>
+    <circle cx="128" cy="20" r="2.5" fill="#2563eb"/>
+    <circle cx="128" cy="20" r="1"   fill="#93c5fd"/>
+
+    <!-- Red string connecting the two equation cards -->
+    <path d="M84,30 Q91,38 98,30" stroke="#ef4444" stroke-width="1.2" fill="none"
+          filter="url(#se-red-glow)" opacity="0.85"/>
+
+    <!-- Card 3 — middle left: working step (Elimination) -->
+    <rect x="24" y="60" width="68" height="42" rx="2" fill="#fffbeb" opacity="0.88"/>
+    <!-- "ELIMINATION" label strip -->
+    <rect x="24" y="60" width="68" height="4" rx="2" fill="#f59e0b" opacity="0.9"/>
+    <text x="58" y="72" text-anchor="middle" font-family="'Courier New', monospace" font-size="7.5"
+          font-weight="600" fill="#2a1a00">2x + 3y = 12</text>
+    <text x="58" y="82" text-anchor="middle" font-family="'Courier New', monospace" font-size="7.5"
+          font-weight="600" fill="#2a1a00">2x − 2y = 2</text>
+    <!-- Subtraction bracket -->
+    <line x1="30" y1="84" x2="86" y2="84" stroke="#5a4010" stroke-width="0.7"/>
+    <text x="30" y="84" font-size="10" fill="#dc2626" opacity="0.7">−</text>
+    <text x="58" y="95" text-anchor="middle" font-family="'Courier New', monospace" font-size="8"
+          font-weight="700" fill="#dc2626" filter="url(#se-text-glow)">5y = 10</text>
+    <circle cx="34" cy="62" r="2.5" fill="#f59e0b"/>
+    <circle cx="34" cy="62" r="1"   fill="#fef3c7"/>
+
+    <!-- Red string from eq card 1 down to working card -->
+    <path d="M54,53 Q54,56 54,60" stroke="#ef4444" stroke-width="1" fill="none"
+          filter="url(#se-red-glow)" opacity="0.7"/>
+    <!-- String from eq card 2 down and across -->
+    <path d="M128,53 Q110,57 92,66" stroke="#ef4444" stroke-width="1" fill="none"
+          filter="url(#se-red-glow)" opacity="0.6"/>
+
+    <!-- Card 4 — middle right: SOLUTION (amber, highlighted) -->
+    <rect x="103" y="60" width="70" height="42" rx="3" fill="#fef3c7" opacity="0.95"/>
+    <rect x="103" y="60" width="70" height="5" rx="2" fill="#d97706" opacity="0.95"/>
+    <!-- "SOLVED" stamp effect -->
+    <rect x="119" y="63" width="38" height="12" rx="2" fill="none" stroke="#dc2626" stroke-width="1.5" opacity="0.6" transform="rotate(-8,138,69)"/>
+    <text x="138" y="72" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="6.5"
+          font-weight="800" fill="#dc2626" opacity="0.7" transform="rotate(-8,138,69)" letter-spacing="1">SOLVED</text>
+    <!-- Solution values -->
+    <text x="138" y="84" text-anchor="middle" font-family="'Courier New', monospace" font-size="9"
+          font-weight="800" fill="#92400e" filter="url(#se-amber-glow)">x = 3</text>
+    <text x="138" y="96" text-anchor="middle" font-family="'Courier New', monospace" font-size="9"
+          font-weight="800" fill="#92400e" filter="url(#se-amber-glow)">y = 2</text>
+    <circle cx="114" cy="63" r="2.5" fill="#d97706"/>
+    <circle cx="114" cy="63" r="1"   fill="#fef3c7"/>
+
+    <!-- String from working card to solution -->
+    <path d="M92,82 Q98,82 103,82" stroke="#ef4444" stroke-width="1.2" fill="none"
+          filter="url(#se-red-glow)" opacity="0.8"/>
+
+    <!-- Small sticky note — detective's note in corner of board -->
+    <rect x="152" y="78" width="26" height="24" rx="1" fill="#fef08a" opacity="0.85" transform="rotate(5,165,90)"/>
+    <text x="165" y="88" text-anchor="middle" font-family="'Courier New', monospace" font-size="6"
+          fill="#3a3000" transform="rotate(5,165,90)">Check:</text>
+    <text x="165" y="96" text-anchor="middle" font-family="'Courier New', monospace" font-size="5.5"
+          fill="#3a3000" transform="rotate(5,165,90)">2(3)+3(2)</text>
+    <text x="165" y="103" text-anchor="middle" font-family="'Courier New', monospace" font-size="5.5"
+          fill="#16a34a" font-weight="700" transform="rotate(5,165,90)">= 12 ✓</text>
+
+    <!-- DESK SURFACE -->
+    <rect x="0" y="130" width="280" height="70" fill="url(#se-desk)"/>
+    <line x1="0" y1="130" x2="280" y2="130" stroke="#2a1c10" stroke-width="1.5"/>
+    <!-- Desk edge highlight -->
+    <line x1="0" y1="131" x2="280" y2="131" stroke="#3a2818" stroke-width="0.5" opacity="0.4"/>
+
+    <!-- DESK LAMP -->
+    <!-- Lamp arm -->
+    <line x1="238" y1="200" x2="210" y2="130" stroke="#4a4040" stroke-width="4" stroke-linecap="round"/>
+    <line x1="210" y1="130" x2="185" y2="118" stroke="#4a4040" stroke-width="3" stroke-linecap="round"/>
+    <!-- Lamp shade -->
+    <ellipse cx="175" cy="114" rx="18" ry="6" fill="#5a4a10"/>
+    <path d="M157,114 Q175,140 193,114Z" fill="#7a6418"/>
+    <!-- Lamp bulb glow -->
+    <circle cx="175" cy="114" r="4" fill="#fef3c7" opacity="0.9"/>
+    <circle cx="175" cy="114" r="2" fill="#fff" opacity="0.95"/>
+    <!-- Lamp light cone on desk -->
+    <ellipse cx="155" cy="148" rx="45" ry="22" fill="url(#se-lamp)" opacity="0.8"/>
+
+    <!-- MAGNIFYING GLASS on desk -->
+    <!-- Handle -->
+    <rect x="226" y="165" width="5" height="22" rx="2.5" fill="#6b4226" transform="rotate(-30,228,176)"/>
+    <!-- Glass circle -->
+    <circle cx="215" cy="151" r="15" fill="url(#se-lens)" stroke="#c9a227" stroke-width="2"/>
+    <circle cx="215" cy="151" r="15" fill="none" stroke="#a07820" stroke-width="0.8" opacity="0.6"/>
+    <!-- Lens glint -->
+    <circle cx="210" cy="146" r="3" fill="#fff" opacity="0.15"/>
+    <circle cx="210" cy="146" r="1.5" fill="#fff" opacity="0.2"/>
+    <!-- Equation fragment visible through lens (enlarged/highlighted) -->
+    <text x="215" y="150" text-anchor="middle" font-family="'Courier New', monospace" font-size="10"
+          font-weight="800" fill="#fbbf24" filter="url(#se-amber-glow)" clip-path="url(#se-clip)">y=2</text>
+
+    <!-- PAPERS / NOTES on desk -->
+    <!-- Paper 1 -->
+    <rect x="20" y="134" width="80" height="52" rx="2" fill="#f5f0e4" opacity="0.88" transform="rotate(-4,60,160)"/>
+    <text x="44" y="147" font-family="'Courier New', monospace" font-size="6.5" fill="#2a2010" transform="rotate(-4,60,160)">Method: Elimination</text>
+    <line x1="28" y1="152" x2="92" y2="151" stroke="#ccc" stroke-width="0.5" transform="rotate(-4,60,160)"/>
+    <text x="30" y="161" font-family="'Courier New', monospace" font-size="6" fill="#4a4030" transform="rotate(-4,60,160)">Step 1: Multiply eq.II</text>
+    <text x="30" y="170" font-family="'Courier New', monospace" font-size="6" fill="#4a4030" transform="rotate(-4,60,160)">Step 2: Subtract</text>
+    <text x="30" y="179" font-family="'Courier New', monospace" font-size="6" fill="#16a34a" font-weight="700" transform="rotate(-4,60,160)">Step 3: Solve ✓</text>
+
+    <!-- Paper 2 (smaller, overlapping) -->
+    <rect x="55" y="140" width="60" height="38" rx="2" fill="#fffbeb" opacity="0.82" transform="rotate(6,85,159)"/>
+    <text x="70" y="152" font-family="'Courier New', monospace" font-size="6.5" fill="#92400e" font-weight="700" transform="rotate(6,85,159)">Substitution:</text>
+    <text x="62" y="162" font-family="'Courier New', monospace" font-size="6" fill="#2a1a00" transform="rotate(6,85,159)">x = 1 + y</text>
+    <text x="62" y="171" font-family="'Courier New', monospace" font-size="6" fill="#2a1a00" transform="rotate(6,85,159)">x = 1 + 2 = 3</text>
+
+    <!-- Coffee mug on desk -->
+    <rect x="260" y="146" width="18" height="20" rx="3" fill="#2a1a0a"/>
+    <rect x="260" y="144" width="18" height="5"  rx="2" fill="#1a1008"/>
+    <path d="M278,152 Q284,152 284,160 Q284,168 278,168" stroke="#2a1a0a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <!-- Steam -->
+    <path d="M265,142 Q267,137 265,132" stroke="#8a6040" stroke-width="1" fill="none" opacity="0.4"/>
+    <path d="M270,141 Q272,135 270,130" stroke="#8a6040" stroke-width="1" fill="none" opacity="0.35"/>
+    <path d="M275,142 Q277,137 275,132" stroke="#8a6040" stroke-width="1" fill="none" opacity="0.3"/>
+
+    <!-- DETECTIVE silhouette — right side, looking at the board -->
+    <!-- Shadow on floor -->
+    <ellipse cx="170" cy="196" rx="22" ry="5" fill="#000" opacity="0.4"/>
+    <!-- Legs/shoes -->
+    <rect x="157" y="175" width="8"  height="18" rx="3" fill="#1a1a2a"/>
+    <rect x="168" y="175" width="8"  height="18" rx="3" fill="#1a1a2a"/>
+    <!-- Shoes -->
+    <ellipse cx="161" cy="194" rx="7" ry="3" fill="#0d0d18"/>
+    <ellipse cx="172" cy="194" rx="7" ry="3" fill="#0d0d18"/>
+    <!-- Trousers -->
+    <rect x="154" y="160" width="22" height="18" rx="3" fill="#262636"/>
+    <!-- Coat body -->
+    <rect x="150" y="134" width="30" height="30" rx="4" fill="#1a1a28"/>
+    <!-- Coat collar / lapels -->
+    <path d="M156,134 L165,148 L165,134Z" fill="#222232"/>
+    <path d="M174,134 L165,148 L165,134Z" fill="#222232"/>
+    <!-- Tie -->
+    <rect x="163" y="140" width="4" height="16" rx="1" fill="#dc2626" opacity="0.8"/>
+    <!-- Left arm — stretched toward board, holding pen -->
+    <rect x="120" y="140" width="32" height="8" rx="4" fill="#1a1a28" transform="rotate(-15,136,144)"/>
+    <!-- Pen/pointer -->
+    <line x1="115" y1="135" x2="107" y2="128" stroke="#c9a227" stroke-width="1.5" stroke-linecap="round"/>
+    <circle cx="107" cy="128" r="1.5" fill="#c9a227"/>
+    <!-- Right arm — resting on desk / under chin (thinking pose) -->
+    <rect x="178" y="150" width="24" height="8" rx="4" fill="#1a1a28" transform="rotate(25,190,154)"/>
+    <!-- Head -->
+    <circle cx="165" cy="126" r="13" fill="#8a6444"/>
+    <!-- Hat — fedora -->
+    <ellipse cx="165" cy="116" rx="17" ry="5" fill="#1a1828"/>
+    <rect x="148" y="111" width="34" height="8" rx="2" fill="#222232"/>
+    <rect x="153" y="105" width="24" height="10" rx="3" fill="#1a1828"/>
+    <!-- Hat band -->
+    <rect x="149" y="116" width="32" height="2" rx="1" fill="#dc2626" opacity="0.7"/>
+    <!-- Face (profile — looking left at board) -->
+    <circle cx="160" cy="126" r="1.5" fill="#3a2010"/>  <!-- eye -->
+    <!-- Nose -->
+    <path d="M157,128 Q154,131 156,133" stroke="#5a3018" stroke-width="1" fill="none"/>
+
+    <!-- Title banner -->
+    <rect x="0" y="174" width="280" height="26" fill="#050916" opacity="0.8"/>
+    <text x="140" y="186" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="9"
+          font-weight="700" fill="#f59e0b" letter-spacing="0.5" filter="url(#se-amber-glow)">SIMULTANEOUS EQUATIONS</text>
+    <text x="140" y="196" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="6.5"
+          fill="#93c5fd" opacity="0.9" letter-spacing="0.3">Crack the Case — Find the Unknown</text>
+
+    <!-- Vignette -->
+    <rect width="280" height="200" fill="url(#se-vignette)"/>
+
+    <!-- Subtle ambient blue from window -->
+    <rect x="195" y="8" width="65" height="75" fill="#4488ff" opacity="0.03"/>
+  </g>
+</svg>

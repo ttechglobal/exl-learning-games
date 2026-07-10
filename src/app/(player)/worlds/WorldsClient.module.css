@@ -1,752 +1,667 @@
-/* WorldsClient.module.css */
+/* ═══════════════════════════════════════════════════════════════════
+   WorldsClient — Mission Control Dashboard
+   Tokens: --eg-font-display, --eg-gold, --eg-subject-*
+   Custom tokens: --faction-color, --faction-tint (set inline per card/section)
+═══════════════════════════════════════════════════════════════════ */
 
+/* ── PAGE SHELL ─────────────────────────────────────────────────────── */
 .page {
-  position: relative;
   min-height: 100vh;
   background: var(--eg-surface-bg);
   color: var(--eg-surface-text);
+  font-family: var(--eg-font-body, "Inter", sans-serif);
+  position: relative;
 }
 
-.container {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 0 40px;
-  box-sizing: border-box;
-}
-
-@media (max-width: 600px) {
-  .container {
-    padding: 0 16px;
-  }
-}
-
-.titleRow {
+/* ══════════════════════════════════════════════════════════════════════
+   MISSION CONTROL HEADER
+   Game-like command centre: dark gradient, subtle star-field texture,
+   rank badge + XP bar on the left, class pill + subject toggles right.
+   On mobile: rank+class share a row, subjects wrap underneath full-width.
+══════════════════════════════════════════════════════════════════════ */
+.missionControl {
   position: relative;
   overflow: hidden;
-  padding: 28px 0 22px;
-}
-
-.pageTitle {
-  font-family: var(--eg-font-display);
-  font-weight: 800;
-  font-size: clamp(22px, 4vw, 36px);
-  color: var(--eg-surface-text);
-  margin: 0;
-  position: relative;
-  z-index: 1;
-}
-
-.pageSubtitle {
-  font-size: 0.88rem;
-  color: var(--eg-surface-text-dim);
-  margin: 5px 0 0;
-  position: relative;
-  z-index: 1;
-}
-
-.backBtn {
-  background: none;
-  border: none;
-  color: var(--eg-surface-text-dim);
-  font-family: var(--eg-font-display);
-  font-weight: 700;
-  font-size: 0.82rem;
-  cursor: pointer;
-  padding: 0;
-  margin-bottom: 10px;
-  position: relative;
-  z-index: 1;
-  display: block;
-}
-.backBtn:hover { color: var(--eg-surface-text); }
-
-/* ── Overview ──────────────────────────────────────────────────────────────── */
-.overviewWrap {
-  padding: 8px 0 60px;
-}
-
-.emptyText {
-  text-align: center;
-  padding: 60px 24px;
-  color: var(--eg-surface-text-dim);
-  grid-column: 1 / -1;
-}
-
-.subjectSection {
-  padding: 20px 0 4px;
+  padding: 20px 32px 18px;
+  background: linear-gradient(160deg,
+    color-mix(in srgb, var(--eg-surface-card) 95%, #5b21b6 5%) 0%,
+    var(--eg-surface-card) 55%,
+    var(--eg-surface-bg) 100%
+  );
   border-bottom: 1px solid var(--eg-surface-border);
-}
-.subjectSection:last-child { border-bottom: none; }
-
-.sectionHead {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 0 10px;
-}
-
-.sectionEmoji {
-  font-size: 22px;
-  flex-shrink: 0;
+  /* subtle grid-dot texture */
+  background-image:
+    radial-gradient(circle, color-mix(in srgb, var(--eg-surface-border) 60%, transparent) 1px, transparent 1px),
+    linear-gradient(160deg,
+      color-mix(in srgb, var(--eg-surface-card) 95%, #5b21b6 5%) 0%,
+      var(--eg-surface-card) 55%,
+      var(--eg-surface-bg) 100%
+    );
+  background-size: 24px 24px, 100% 100%;
 }
 
-.sectionName {
-  font-family: var(--eg-font-display);
-  font-weight: 800;
-  font-size: 1.05rem;
-  color: var(--eg-surface-text);
-  margin: 0;
-}
-
-.sectionCount {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--eg-surface-text-faint);
-  background: var(--eg-surface-card-2);
-  border-radius: 999px;
-  padding: 2px 8px;
-}
-
-.viewAllBtn {
-  margin-left: auto;
-  background: none;
-  border: none;
-  font-family: var(--eg-font-display);
-  font-weight: 700;
-  font-size: 0.82rem;
-  color: var(--eg-brand);
-  cursor: pointer;
-  padding: 0;
-  flex-shrink: 0;
-}
-.viewAllBtn:hover { opacity: 0.8; }
-
-/* Horizontal scroll */
-.scrollRow {
-  display: flex;
-  gap: 12px;
-  padding: 0 0 20px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  /* Extend scroll to edges on mobile with padding trick */
-  padding-left: 0;
-}
-.scrollRow::-webkit-scrollbar { display: none; }
-
-/* Mini card — wider on mobile so description fits */
-.miniCard {
-  flex-shrink: 0;
-  width: 170px;
-  background: var(--eg-surface-card);
-  border-radius: 14px;
-  overflow: hidden;
-  text-decoration: none;
-  border: 1px solid var(--eg-surface-border);
-  display: flex;
-  flex-direction: column;
-}
-.miniCard:hover { opacity: 0.9; }
-
-.miniCardArt {
-  height: 90px;
-  overflow: hidden;
-  position: relative;
-  flex-shrink: 0;
-}
-
-.miniCardBody {
-  padding: 8px 10px 12px;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.miniCardTag {
-  display: inline-block;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  border-radius: 999px;
-  padding: 2px 7px;
-  margin-bottom: 4px;
-  align-self: flex-start;
-}
-
-.miniCardTitle {
-  font-family: var(--eg-font-display);
-  font-weight: 700;
-  font-size: 0.82rem;
-  color: var(--eg-surface-text);
-  line-height: 1.3;
-  margin-bottom: 4px;
-}
-
-/* Description now visible on mini cards */
-.miniCardDesc {
-  font-size: 11px;
-  color: var(--eg-surface-text-dim);
-  line-height: 1.45;
-  margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.seeAllTile {
-  flex-shrink: 0;
-  width: 100px;
-  background: var(--eg-surface-card-2);
-  border: 1.5px dashed var(--eg-surface-border);
-  border-radius: 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 12px 8px;
-  cursor: pointer;
-  color: var(--eg-surface-text-dim);
-  font-size: 0.75rem;
-  font-family: var(--eg-font-display);
-  font-weight: 700;
-}
-.seeAllTile:hover { background: var(--eg-surface-card); }
-.seeAllText { font-size: 0.75rem; }
-
-/* ── Topic filter tabs ─────────────────────────────────────────────────────── */
-.tabsWrap {
-  background: var(--eg-surface-bg);
-  border-bottom: 1px solid var(--eg-surface-border);
-  position: sticky;
-  top: 0;
-  z-index: 5;
-}
-
-.tabsScroll {
-  display: flex;
-  gap: 0;
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 0 40px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  box-sizing: border-box;
-}
-@media (max-width: 600px) {
-  .tabsScroll {
-    padding: 0 16px;
-  }
-}
-.tabsScroll::-webkit-scrollbar { display: none; }
-
-.tab {
-  flex-shrink: 0;
-  padding: 12px 16px;
-  background: none;
-  border: none;
-  border-bottom: 2.5px solid transparent;
-  font-family: var(--eg-font-display);
-  font-weight: 700;
-  font-size: 0.83rem;
-  color: var(--eg-surface-text-dim);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: color 0.12s ease, border-color 0.12s ease;
-}
-.tab:hover { color: var(--eg-surface-text); }
-
-.tabActive {
-  color: var(--eg-brand);
-  border-bottom-color: var(--eg-brand);
-}
-
-/* ── Expanded game grid ───────────────────────────────────────────────────── */
-.gameGrid {
-  display: grid;
-  /* On mobile: single column so cards have full width and descriptions read clearly */
-  grid-template-columns: 1fr;
-  gap: 16px;
-  padding: 16px 0 60px;
-}
-
-.gameCard {
-  display: flex;
-  flex-direction: row;
-  background: var(--eg-surface-card);
-  border-radius: 16px;
-  overflow: hidden;
-  text-decoration: none;
-  border: 1px solid var(--eg-surface-border);
-  align-items: stretch;
-}
-.gameCard:hover { opacity: 0.9; }
-
-/* Art is a square on the left for list-style layout */
-.gameCardArt {
-  width: 110px;
-  flex-shrink: 0;
-  overflow: hidden;
-  position: relative;
-}
-
-.gameCardBody {
-  padding: 16px 18px;
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.gameCardTag {
-  display: inline-block;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  border-radius: 999px;
-  padding: 2px 8px;
-  margin-bottom: 6px;
-  align-self: flex-start;
-}
-
-.gameCardTitle {
-  font-family: var(--eg-font-display);
-  font-weight: 700;
-  font-size: 0.98rem;
-  color: var(--eg-surface-text);
-  margin-bottom: 5px;
-  line-height: 1.25;
-}
-
-/* Description fully visible — no clamp on expanded view */
-.gameCardDesc {
-  font-size: 12.5px;
-  color: var(--eg-surface-text-dim);
-  line-height: 1.55;
-  margin: 0;
-}
-
-/* ── Responsive tweaks ─────────────────────────────────────────────────────── */
-@media (min-width: 520px) {
-  /* On tablets/desktop, switch back to a real grid */
-  .gameGrid {
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 18px;
-  }
-
-  /* Cards go back to column-direction in grid */
-  .gameCard {
-    flex-direction: column;
-  }
-
-  .gameCardArt {
-    width: 100%;
-    height: 155px;
-  }
-
-  /* Clamp description to 3 lines on grid cards */
-  .gameCardDesc {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-}
-
-@media (max-width: 519px) {
-  .miniCard {
-    width: calc(75vw);
-    max-width: 260px;
-  }
-}
-/* ── Subject filter pills (overview) ─────────────────────────────────────── */
-
-.subjectFilterRow {
-  display: flex;
-  gap: 8px;
-  padding: 14px 40px 0;
-  max-width: 1180px;
-  margin: 0 auto;
-  box-sizing: border-box;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  flex-wrap: wrap;
-}
-.subjectFilterRow::-webkit-scrollbar { display: none; }
-
-@media (max-width: 600px) {
-  .subjectFilterRow {
-    padding: 12px 16px 0;
-    flex-wrap: nowrap;
-  }
-}
-
-.subjectPill {
-  flex-shrink: 0;
-  font-family: var(--eg-font-display);
-  font-weight: 700;
-  font-size: 0.78rem;
-  padding: 7px 16px;
-  border-radius: 999px;
-  border: 1.5px solid var(--eg-surface-border);
-  background: var(--eg-surface-card);
-  color: var(--eg-surface-text-dim);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-.subjectPill:hover {
-  color: var(--eg-surface-text);
-  border-color: var(--eg-surface-text-dim);
-}
-
-.subjectPillActive {
-  border-color: var(--eg-brand);
-  color: var(--eg-brand);
-  background: color-mix(in srgb, var(--eg-brand) 10%, transparent);
-}
-
-/* Also fix the overviewWrap to use container-aware padding */
-.overviewWrap {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 8px 40px 60px;
-  box-sizing: border-box;
-  width: 100%;
-}
-
-@media (max-width: 600px) {
-  .overviewWrap {
-    padding: 8px 16px 60px;
-  }
-}
-/* ── Search ── */
-.searchRow {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 14px;
-}
-
-.searchWrap {
-  position: relative;
-  flex: 1;
-  max-width: 520px;
-}
-
-.searchIcon {
+/* decorative corner glow */
+.missionControl::before {
+  content: "";
   position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.9rem;
+  top: -60px;
+  right: -80px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--eg-brand, #5b21b6) 12%, transparent), transparent 70%);
   pointer-events: none;
 }
 
-.searchInput {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 11px 40px 11px 40px;
-  border-radius: 12px;
-  border: 1.5px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.07);
-  color: var(--eg-text-bright);
-  font-size: 0.9rem;
-  font-family: inherit;
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-.searchInput::placeholder { color: rgba(255,255,255,0.35); }
-.searchInput:focus { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); }
-
-.searchClear {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: rgba(255,255,255,0.4);
-  font-size: 0.8rem;
-  cursor: pointer;
-  padding: 4px;
-}
-
-.searchCount {
-  font-size: 0.78rem;
-  color: rgba(255,255,255,0.45);
-  white-space: nowrap;
-}
-
-/* ── Filters row ── */
-.filtersRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
-}
-
-.filterSelect {
-  padding: 7px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.06);
-  color: var(--eg-text-bright);
-  font-size: 0.78rem;
-  font-family: inherit;
-  cursor: pointer;
-  outline: none;
-  transition: border-color 0.12s;
-}
-
-.filterSelect:focus { border-color: rgba(255,255,255,0.25); }
-
-.clearFilters {
-  padding: 6px 14px;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: none;
-  color: rgba(255,255,255,0.5);
-  font-size: 0.75rem;
-  cursor: pointer;
-  font-family: inherit;
-  transition: color 0.12s, border-color 0.12s;
-}
-.clearFilters:hover { color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.25); }
-
-/* ── No results ── */
-.noResults {
-  text-align: center;
-  padding: 64px 24px;
-}
-.noResultsIcon { font-size: 2.5rem; margin-bottom: 14px; }
-.noResultsTitle { font-size: 1.05rem; font-weight: 700; color: var(--eg-text-bright); margin-bottom: 6px; }
-.noResultsSub { font-size: 0.82rem; color: var(--eg-text-dim); margin-bottom: 20px; }
-.noResultsClear {
-  padding: 9px 22px; border-radius: 9px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.15);
-  color: var(--eg-text-bright);
-  font-size: 0.85rem; font-weight: 600;
-  cursor: pointer; font-family: inherit;
-}
-.noResultsClear:hover { background: rgba(255,255,255,0.14); }
-
-/* ── Year group / exam board badges on game cards ── */
-.gameTags {
-  display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-  margin-top: 4px;
-}
-
-.gameTag {
-  padding: 2px 7px;
-  border-radius: 4px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  background: rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.5);
-}
-
-.gameTagExam {
-  background: rgba(245,158,11,0.12);
-  color: rgba(245,158,11,0.8);
-}
-
-/* ════════════════════════════════════════════
-   DASHBOARD REDESIGN
-════════════════════════════════════════════ */
-
-.dashHeader {
-  background: linear-gradient(135deg, var(--eg-bg-deep) 0%, var(--eg-glass) 100%);
-  border-bottom: 1px solid var(--eg-border);
-  padding: 28px 0 20px;
-}
-.dashHeaderInner {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 0 20px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-.dashGreeting {}
-.dashTitle {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--eg-text-primary);
-  margin: 0 0 4px;
-}
-.dashSub {
-  font-size: 14px;
-  color: var(--eg-text-secondary);
-  margin: 0;
-}
-
-/* Class selector */
-.classSelectorWrap {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex-shrink: 0;
-}
-.classSelectorLabel {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .07em;
-  color: var(--eg-text-secondary);
-}
-.classSelector {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-.classBtn {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 5px 10px;
-  border-radius: 20px;
-  border: 1.5px solid var(--eg-border);
-  background: transparent;
-  color: var(--eg-text-secondary);
-  cursor: pointer;
-  transition: all .15s;
-}
-.classBtn:hover { border-color: var(--eg-brand); color: var(--eg-brand); }
-.classBtnActive {
-  background: var(--eg-brand);
-  border-color: var(--eg-brand);
-  color: #fff;
-}
-
-/* Subject preference pills */
-.prefRow {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 14px 20px 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.prefLabel {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--eg-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  white-space: nowrap;
-}
-.prefPills { display: flex; gap: 8px; flex-wrap: wrap; }
-.prefPill {
-  font-size: 13px;
-  font-weight: 600;
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1.5px solid var(--eg-border);
-  background: transparent;
-  color: var(--eg-text-secondary);
-  cursor: pointer;
-  transition: all .15s;
-}
-.prefPill:hover { border-color: var(--eg-brand); }
-.prefPillActive { font-weight: 700; }
-
-/* Dashboard container */
-.dashContainer {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 20px 20px 0;
-}
-
-/* Continue card */
-.continueCard {
+/* ── TOP ROW: rank (left) + class pill (right) ──────────────────────── */
+.mcTopRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  background: var(--eg-glass);
-  border: 1.5px solid var(--eg-border);
-  border-radius: 14px;
-  padding: 16px 20px;
-  text-decoration: none;
-  transition: border-color .15s, box-shadow .15s;
-  margin-bottom: 8px;
+  margin-bottom: 14px;
 }
-.continueCard:hover {
-  border-color: var(--eg-brand);
-  box-shadow: 0 4px 20px rgba(0,0,0,.15);
-}
-.continueCardLeft {
+
+/* Rank badge */
+.rankBadge {
   display: flex;
   align-items: center;
-  gap: 14px;
-  min-width: 0;
+  gap: 10px;
 }
-.continueCardArt {
-  width: 56px;
-  height: 56px;
-  border-radius: 10px;
-  overflow: hidden;
+.rankIconWrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+  border: 1px solid rgba(255,255,255,.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.06);
+}
+.rankMeta {}
+.rankLabel {
+  font-family: var(--eg-font-display, "Baloo 2", sans-serif);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--eg-surface-text);
+  line-height: 1.1;
+}
+.playerName {
+  font-size: 11px;
+  color: var(--eg-surface-text-dim);
+  margin-top: 1px;
+}
+
+/* Class pill — lives on the right of the top row */
+.classPill {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
   flex-shrink: 0;
 }
-.continueCardTag {
-  font-size: 11px;
+.controlLabel {
+  font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: .06em;
-  margin-bottom: 3px;
+  letter-spacing: .1em;
+  color: var(--eg-surface-text-dim);
 }
-.continueCardTitle {
-  font-size: 16px;
+.classDropdown {
+  background: color-mix(in srgb, var(--eg-surface-card-2, #1c2333) 80%, var(--eg-brand, #5b21b6) 20%);
+  border: 1.5px solid color-mix(in srgb, var(--eg-surface-border) 60%, var(--eg-brand, #5b21b6) 40%);
+  border-radius: 8px;
+  color: var(--eg-surface-text);
+  font-family: var(--eg-font-display, "Baloo 2", sans-serif);
+  font-size: 13px;
   font-weight: 700;
-  color: var(--eg-text-primary);
-  margin-bottom: 3px;
+  padding: 6px 28px 6px 12px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6' fill='none' stroke='%238B949E' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  transition: border-color .15s, box-shadow .15s;
+  min-width: 80px;
 }
-.continueCardDesc {
-  font-size: 12px;
-  color: var(--eg-text-secondary);
-  margin: 0;
-  white-space: nowrap;
+.classDropdown:hover  { border-color: var(--eg-brand); }
+.classDropdown:focus  { outline: none; border-color: var(--eg-brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--eg-brand, #5b21b6) 20%, transparent); }
+
+/* ── XP BAR ─────────────────────────────────────────────────────────── */
+.xpBar {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+.xpBarTrack {
+  height: 7px;
+  background: color-mix(in srgb, var(--eg-surface-card-2, #1c2333) 70%, transparent);
+  border-radius: 4px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 400px;
+  max-width: 320px;
+  position: relative;
 }
-.continueBtn {
-  flex-shrink: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--eg-brand);
-  white-space: nowrap;
+/* subtle shimmer line on track */
+.xpBarTrack::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.06) 50%, transparent 100%);
+  pointer-events: none;
+}
+.xpBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--eg-gold, #FFB23C), #FF8C00, #FFD700);
+  border-radius: 4px;
+  transition: width 0.9s cubic-bezier(.34,1.56,.64,1);
+  position: relative;
+}
+/* glint on fill */
+.xpBarFill::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 50%;
+  background: rgba(255,255,255,.25);
+  border-radius: 4px 4px 0 0;
+}
+.xpBarLabel {
+  font-size: 11px;
+  color: var(--eg-surface-text-dim);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
 }
 
-/* Section count badge */
-.sectionCount {
+/* ── SUBJECT TOGGLES ─────────────────────────────────────────────────── */
+.subjectRow {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.subjectToggles {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.subjectToggle {
+  height: 34px;
+  border-radius: 8px;
+  border: 1.5px solid var(--eg-surface-border);
+  background: color-mix(in srgb, var(--eg-surface-card) 80%, transparent);
+  cursor: pointer;
+  transition: border-color .15s, background .15s, transform .1s, color .15s, box-shadow .15s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 11px;
+  color: var(--eg-surface-text-dim);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+}
+.subjectToggle:hover {
+  border-color: var(--eg-surface-text-dim);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,.2);
+}
+.subjectToggleActive {
+  transform: translateY(-1px);
+  font-weight: 700;
+  box-shadow: 0 2px 10px rgba(0,0,0,.25), 0 0 0 1px var(--faction-color, transparent) inset;
+}
+.subjectToggleEmoji { font-size: 15px; line-height: 1; }
+.subjectToggleName  { font-size: 11.5px; }
+
+/* ── SEARCH ZONE ────────────────────────────────────────────────────── */
+.searchZone {
+  padding: 20px 32px 0;
+  position: relative;
+  z-index: 50;
+}
+.searchInner { position: relative; max-width: 560px; }
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--eg-surface-card);
+  border: 1.5px solid var(--eg-surface-border);
+  border-radius: 10px;
+  padding: 0 14px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.searchBox:focus-within {
+  border-color: var(--eg-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--eg-brand, #5b21b6) 15%, transparent);
+}
+.searchIconGlyph {
+  font-size: 18px;
+  color: var(--eg-surface-text-dim);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.searchField {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--eg-surface-text);
+  font-family: var(--eg-font-body, "Inter", sans-serif);
+  font-size: 14px;
+  padding: 12px 0;
+}
+.searchField::placeholder { color: var(--eg-surface-text-dim); }
+.searchClearBtn {
+  background: none;
+  border: none;
+  color: var(--eg-surface-text-dim);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  flex-shrink: 0;
+}
+.searchClearBtn:hover { color: var(--eg-surface-text); }
+
+.suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: var(--eg-surface-card);
+  border: 1.5px solid var(--eg-surface-border);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  z-index: 100;
+}
+.suggestion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--eg-surface-text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .12s;
+}
+.suggestion:hover { background: var(--eg-surface-card-2); }
+.suggestionIcon { color: var(--eg-surface-text-dim); font-size: 11px; }
+
+/* ── MAIN CONTENT ───────────────────────────────────────────────────── */
+.mainContent {
+  padding: 24px 32px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.contentSection {
+  padding: 28px 0;
+  border-bottom: 1px solid var(--eg-surface-border);
+}
+.contentSection:last-child { border-bottom: none; }
+
+/* Section header */
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.sectionEyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--eg-surface-text-dim);
+  white-space: nowrap;
+}
+.sectionTitle {
+  font-family: var(--eg-font-display, "Baloo 2", sans-serif);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--eg-surface-text);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sectionTitleAccent { font-size: 20px; }
+.sectionTitleMissions {
+  font-weight: 500;
+  opacity: 0.7;
+  margin-left: 2px;
+}
+.missionCount {
   font-size: 11px;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 2px 10px;
   border-radius: 20px;
-  margin-left: 4px;
+  margin-left: auto;
+  white-space: nowrap;
 }
 
-/* Responsive */
-@media (max-width: 600px) {
-  .dashHeaderInner { flex-direction: column; gap: 16px; }
-  .classSelectorWrap { width: 100%; }
-  .classSelector { width: 100%; }
-  .continueCard { flex-direction: column; align-items: flex-start; }
-  .continueCardDesc { max-width: 100%; white-space: normal; }
+/* ══════════════════════════════════════════════════════════════════════
+   ACTIVE MISSION BANNER
+   The "Keep Playing!" hero card — kid-friendly, unmissable CTA.
+══════════════════════════════════════════════════════════════════════ */
+.activeMissionSection {
+  padding: 28px 0;
+  border-bottom: 1px solid var(--eg-surface-border);
+}
+.activeMissionLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--eg-surface-text-dim);
+  margin-bottom: 12px;
+}
+.activePulse {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: pulseRing 1.8s ease-out infinite;
+}
+@keyframes pulseRing {
+  0%   { box-shadow: 0 0 0 0 rgba(34,197,94,.7); }
+  70%  { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+  100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+}
+
+.activeMissionBanner {
+  display: flex;
+  align-items: stretch;
+  background: var(--eg-surface-card);
+  border: 2px solid var(--faction-color, var(--eg-brand));
+  border-radius: 18px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  transition: transform .15s, box-shadow .15s;
+  box-shadow: 0 4px 24px -4px color-mix(in srgb, var(--faction-color, var(--eg-brand)) 30%, transparent);
+}
+.activeMissionBanner:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 40px -6px color-mix(in srgb, var(--faction-color, var(--eg-brand)) 45%, transparent);
+}
+.amBgGlow {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 55% 90% at 0% 50%,
+    color-mix(in srgb, var(--faction-tint, var(--eg-surface-card-2)) 70%, transparent),
+    transparent 70%);
+  pointer-events: none;
+}
+.amArt {
+  width: 120px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+.amSubjectBadge {
+  position: absolute;
+  bottom: 6px; right: 6px;
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.4);
+}
+.amBody {
+  flex: 1;
+  padding: 18px 20px;
+  min-width: 0;
+}
+.amSubject {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 5px;
+}
+.amTitle {
+  font-family: var(--eg-font-display, "Baloo 2", sans-serif);
+  font-size: clamp(16px, 2.5vw, 22px);
+  font-weight: 800;
+  color: var(--eg-surface-text);
+  line-height: 1.2;
+  margin-bottom: 7px;
+}
+.amDesc {
+  font-size: 13px;
+  color: var(--eg-surface-text-dim);
+  margin: 0;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.amCta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 30px;
+  flex-shrink: 0;
+  color: #fff;
+  transition: filter .15s;
+}
+.activeMissionBanner:hover .amCta { filter: brightness(1.1); }
+.amCtaIcon  { font-size: 28px; line-height: 1; }
+.amCtaText  {
+  font-family: var(--eg-font-display, "Baloo 2", sans-serif);
+  font-size: 13px; font-weight: 800;
+  white-space: nowrap; text-align: center;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   MISSION ROW  (horizontal scroll per-subject)
+   MISSION CARD  (dossier style — art + tag + title + desc + CTA)
+   Cards now use the same visual language as the active mission banner:
+   faction-coloured top border, glowing hover, description always visible.
+══════════════════════════════════════════════════════════════════════ */
+.missionRow {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  /* let cards stretch the row height */
+  align-items: stretch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--eg-surface-border) transparent;
+}
+.missionRow::-webkit-scrollbar { height: 4px; }
+.missionRow::-webkit-scrollbar-track { background: transparent; }
+.missionRow::-webkit-scrollbar-thumb { background: var(--eg-surface-border); border-radius: 2px; }
+
+/* Search-results grid */
+.missionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 14px;
+}
+
+/* ── The card itself ──────────────────────────────────────────────── */
+.missionCard {
+  flex: 0 0 230px;
+  width: 230px;
+  background: var(--eg-surface-card);
+  border: 1.5px solid var(--eg-surface-border);
+  border-top: 3px solid var(--faction-color, var(--eg-surface-border));
+  border-radius: 14px;
+  overflow: hidden;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  transition: border-color .15s, box-shadow .15s, transform .12s;
+  position: relative;
+}
+/* grid mode: full width */
+.missionGrid .missionCard {
+  flex: unset;
+  width: unset;
+}
+.missionCard:hover {
+  border-color: var(--faction-color, var(--eg-surface-text-dim));
+  border-top-color: var(--faction-color, var(--eg-surface-border));
+  box-shadow:
+    0 0 0 1px var(--faction-color, transparent),
+    0 8px 24px rgba(0,0,0,.35),
+    0 0 20px -4px color-mix(in srgb, var(--faction-color, transparent) 40%, transparent);
+  transform: translateY(-3px);
+}
+
+/* Art area — gradient background from game theme */
+.missionCardArt {
+  width: 100%;
+  height: 100px;
+  overflow: hidden;
+  background: var(--faction-tint, var(--eg-surface-card-2));
+  flex-shrink: 0;
+  position: relative;
+}
+
+/* Content */
+.missionCardBody {
+  padding: 12px 14px 8px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.missionCardTag {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 5px;
+}
+.missionCardTitle {
+  font-family: var(--eg-font-display, "Baloo 2", sans-serif);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--eg-surface-text);
+  line-height: 1.25;
+  margin-bottom: 6px;
+}
+.missionCardDesc {
+  font-size: 11.5px;
+  color: var(--eg-surface-text-dim);
+  margin: 0;
+  line-height: 1.55;
+  flex: 1;
+  /* allow full text — no clamp; card grows naturally */
+}
+
+/* Footer CTA */
+.missionCardFooter {
+  padding: 8px 14px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+.missionCardPlayBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+  background: var(--faction-color, var(--eg-brand));
+  border-radius: 6px;
+  padding: 5px 12px;
+  transition: filter .12s, transform .1s;
+  white-space: nowrap;
+}
+.missionCard:hover .missionCardPlayBtn {
+  filter: brightness(1.1);
+  transform: translateX(2px);
+}
+
+/* ── EMPTY STATE ────────────────────────────────────────────────────── */
+.emptyState {
+  text-align: center;
+  padding: 60px 24px;
+}
+.emptyStateIcon  { font-size: 40px; margin-bottom: 12px; }
+.emptyStateTitle {
+  font-family: var(--eg-font-display, "Baloo 2", sans-serif);
+  font-size: 18px; font-weight: 700;
+  color: var(--eg-surface-text);
+  margin-bottom: 6px;
+}
+.emptyStateSub  { font-size: 13px; color: var(--eg-surface-text-dim); margin-bottom: 16px; }
+.emptyStateCta  {
+  font-size: 13px; font-weight: 600;
+  color: var(--eg-brand);
+  background: none;
+  border: 1.5px solid var(--eg-surface-border);
+  border-radius: 8px;
+  padding: 8px 18px;
+  cursor: pointer;
+}
+.emptyStateCta:hover { border-color: var(--eg-brand); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════════════════════════ */
+
+/* ── Tablet (≤ 700px) ─────────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .missionControl  { padding: 16px 16px 14px; }
+  .mcTopRow        { gap: 12px; }
+  .xpBarTrack      { max-width: 100%; }
+  .searchZone      { padding: 14px 16px 0; }
+  .mainContent     { padding: 16px 16px 60px; }
+  .sectionTitle    { font-size: 16px; }
+
+  /* subject toggles wrap freely */
+  .subjectToggles  { gap: 6px; flex-wrap: wrap; }
+  .subjectToggle   { flex: 1 1 calc(50% - 6px); justify-content: center; padding: 0 10px; }
+
+  /* mission cards slightly narrower */
+  .missionCard     { flex: 0 0 200px; width: 200px; }
+  .missionCardArt  { height: 85px; }
+
+  /* active mission: stack on mobile */
+  .activeMissionBanner { flex-direction: column; border-radius: 14px; }
+  .amArt   { width: 100%; height: 100px; }
+  .amBody  { padding: 12px 14px 10px; }
+  .amCta   {
+    flex-direction: row; gap: 10px;
+    padding: 14px 20px;
+    justify-content: center;
+  }
+  .amCtaIcon { font-size: 20px; }
+  .amCtaText { font-size: 15px; }
+  .missionGrid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── Phone (≤ 430px) ─────────────────────────────────────────────── */
+@media (max-width: 430px) {
+  /* On very narrow screens, collapse subject pills to emoji-only */
+  .subjectToggleName { display: none; }
+  .subjectToggle     { flex: 0 0 44px; width: 44px; height: 38px; padding: 0; justify-content: center; border-radius: 10px; }
+
+  .missionGrid       { grid-template-columns: 1fr; }
+  .missionCard       { flex: 0 0 175px; width: 175px; }
 }

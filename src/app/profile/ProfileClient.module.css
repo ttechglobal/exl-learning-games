@@ -440,3 +440,167 @@
     padding: 12px 6px;
   }
 }
+
+/* ============ RANK BADGE PILL (identity card) ============ */
+.rankBadgePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  padding: 4px 12px 4px 8px;
+  flex-shrink: 0;
+}
+.rankBadgeIcon  { font-size: 15px; line-height: 1; }
+.rankBadgeLabel {
+  font-family: var(--eg-font-display);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  letter-spacing: .03em;
+}
+
+/* ============ XP PROGRESS BAR (identity card) ============ */
+.xpProgress { margin-top: 10px; }
+.xpBarTrack {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--eg-surface-card-2);
+  overflow: hidden;
+}
+.xpBarFill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.9s cubic-bezier(.34,1.56,.64,1);
+}
+.xpBarCaption {
+  margin-top: 5px;
+  font-size: 0.71rem;
+  color: var(--eg-surface-text-dim);
+  font-weight: 500;
+}
+.xpBarCaption strong { color: var(--eg-surface-text); font-weight: 700; }
+
+/* ============ RANK LADDER ============ */
+.rankLadder {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--eg-surface-border);
+  background: var(--eg-surface-card);
+  margin-bottom: 6px;
+  position: relative;
+}
+
+.rankTier {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  position: relative;
+  transition: background .15s;
+  border-bottom: 1px solid var(--eg-surface-border);
+}
+.rankTier:last-child { border-bottom: none; }
+
+/* Earned: subtle left accent */
+.rankTierEarned {
+  background: color-mix(in srgb, var(--rank-color, var(--eg-brand)) 5%, var(--eg-surface-card));
+}
+/* Current: brighter glow */
+.rankTierCurrent {
+  background: color-mix(in srgb, var(--rank-color, var(--eg-brand)) 12%, var(--eg-surface-card));
+  box-shadow: inset 3px 0 0 var(--rank-color, var(--eg-brand));
+}
+/* Next: gentle nudge */
+.rankTierNext {
+  background: color-mix(in srgb, var(--eg-surface-card-2) 60%, var(--eg-surface-card));
+}
+
+/* Left group: icon + text */
+.rankTierLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.rankTierIcon {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  background: var(--eg-surface-card-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  transition: box-shadow .2s;
+}
+.rankTierLock { font-size: 16px; opacity: .4; }
+
+.rankTierInfo { min-width: 0; }
+.rankTierLabel {
+  font-family: var(--eg-font-display);
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--eg-surface-text-dim);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rankCurrentTag {
+  font-family: var(--eg-font-body, "Inter", sans-serif);
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #fff;
+  background: var(--rank-color, var(--eg-brand));
+  border-radius: 999px;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+.rankTierXp {
+  font-size: 0.74rem;
+  color: var(--eg-surface-text-dim);
+  margin-top: 1px;
+}
+
+/* Progress pip on current rank row */
+.rankTierPip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.rankTierPipTrack {
+  width: 80px; height: 5px;
+  border-radius: 999px;
+  background: var(--eg-surface-card-2);
+  overflow: hidden;
+}
+.rankTierPipFill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.8s ease;
+}
+.rankTierPipLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--eg-surface-text-dim);
+  white-space: nowrap;
+}
+
+/* Vertical connector line between tiers */
+.rankConnector {
+  display: none; /* handled by border-bottom on tiers */
+}
+
+@media (max-width: 420px) {
+  .rankTierPipTrack { width: 56px; }
+  .rankTierIcon { width: 34px; height: 34px; font-size: 17px; border-radius: 9px; }
+  .rankBadgePill { padding: 3px 9px 3px 6px; }
+}

@@ -511,7 +511,22 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
       subject={game.subject}
       studentId={studentId}
       engineType={game.engine_type}
-      sharedConfig={game.shared_config}
+      sharedConfig={{
+        ...game.shared_config,
+        // Inject all mission rows so change-of-subject engine can show its own mission select
+        ...(game.engine_type === "change-of-subject" ? {
+          _allMissions: sortedMissions.map(m => ({
+            id: m.id,
+            missionKey: m.mission_key,
+            title: m.title,
+            difficulty: m.difficulty,
+            sequenceIndex: m.sequence_index,
+            xpReward: m.xp_reward,
+            payload: m.payload,
+          })),
+          _onSelectMission: undefined, // can't pass functions via config; use activeMissionId
+        } : {}),
+      }}
       snapshot={game.snapshot}
       mission={{
         id: activeMission.id,

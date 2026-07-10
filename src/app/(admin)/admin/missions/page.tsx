@@ -49,6 +49,7 @@ export default async function MissionsIndexPage() {
 
       {/* Per-game mission lists */}
       {Array.from(byGame.entries()).map(([gameId, gameMissions]) => {
+        if (!gameMissions) return null;
         const game = gameMap.get(gameId);
         if (!game) return null;
         const accent = game.accent_colour ?? "#64748b";

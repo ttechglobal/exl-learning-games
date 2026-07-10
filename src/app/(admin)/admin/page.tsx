@@ -29,11 +29,11 @@ export default async function DashboardPage() {
     listGames().catch(() => []),
   ]);
 
-  const missionsByGame = games.length > 0
+  const missionsByGame: Record<string, import("@/types/db").MissionRow[]> = games.length > 0
     ? await getMissionsForGames(games.map(g => g.id)).catch(() => ({}))
     : {};
 
-  const bySubject: Record<string, typeof games> = {};
+  const bySubject: Record<string, typeof games[number][]> = {};
   for (const g of games) (bySubject[g.subject] ??= []).push(g);
 
   const statsMap = new Map(gameStats.map(gs => [gs.gameId, gs]));

@@ -718,78 +718,108 @@ This content will be reviewed before upload.`;
 
 function buildMissionJSONPrompt(f: MissionForm, game?: { id: string; slug: string; title: string }): string {
   const gameSlug = game?.slug || f.gameSlug || "[GAME_SLUG]";
+  const isCoS = gameSlug.includes("change-of-subject") || gameSlug.includes("cos-");
+
   return `You are a senior game engineer for EXL Games.
-
 Convert the mission content below into a patch JSON to add missions to game "${gameSlug}".
-The game and engine already exist. Output ONLY the patch JSON — nothing else.
+Output ONLY the patch JSON — nothing else.
 
---- MISSION CONTENT FROM CHATGPT ---
-[PASTE CHATGPT MISSION OUTPUT HERE]
+--- MISSION CONTENT ---
+[PASTE MISSION CONTENT HERE]
 --- END ---
 
-STAGE REFERENCE (payload.stage values):
-  "practice"  → Practice tier (EASY) — guided, system narrates
-  "challenge" → Challenge tier (MEDIUM) — student-led, hints on request
-  "master"    → Master tier (HARD) — student alone, nothing auto-surfaces
-
-Output this exact structure:
-
+${isCoS ? `
+CHANGE-OF-SUBJECT ENGINE — output this exact structure:
 {
   "slug": "${gameSlug}",
   "missions": [
     {
-      "missionKey":    "w1-001",
-      "title":         "World 1 · Mission 1 — ...",
+      "missionKey":    "cos-001",
+      "title":         "Mission 1 — Simple Linear",
       "difficulty":    "EASY",
-      "sequenceIndex": [LAST_SEQUENCE_INDEX + 1],
+      "sequenceIndex": 1,
       "xpReward":      20,
-      "topicId":       "...",
-      "learningGoal":  "...",
+      "topicId":       "change-of-subject-formula",
+      "learningGoal":  "Student can isolate a variable from a simple one-step formula.",
       "payload": {
-        /* For formula-excavation — use EXACTLY these field names:
-           {
-             "formula": "...",
-             "targetVariable": "...",
-             "stage": "practice",
-             "excavationSteps": [
-               { "operation": "divide_both", "obstacleLabel": "...", "description": "...", "resultDisplay": ["..."], "isFinal": false }
-             ],
-             "stepHints": [["vague hint", "guiding hint", "near-answer hint"]],
-             "stepDistractors": [[
-               { "operation": "multiply_both", "label": "Multiply both sides" },
-               { "operation": "add_both",      "label": "Add to both sides"   },
-               { "operation": "subtract_both", "label": "Subtract from both sides" }
-             ]]
-           }
-
-           VALID operation values — use ONLY these exact strings, nothing else:
-             "divide_both"   — removes multiplication (e.g. 2x → divide both by 2)
-             "multiply_both" — removes division       (e.g. x/3 → multiply both by 3)
-             "subtract_both" — removes addition       (e.g. x+5 → subtract 5 from both)
-             "add_both"      — removes subtraction    (e.g. x-4 → add 4 to both)
-             "square_root"   — removes a square       (e.g. x²  → square root both sides)
-             "square_both"   — removes a square root  (e.g. √x  → square both sides)
-             "cube_root"     — removes a cube         (e.g. x³  → cube root both sides)
-             "cube_both"     — removes a cube root    (e.g. ∛x  → cube both sides)
-
-           For layer-peel engine: use "excavationSteps" (not "steps" or "peelSteps")
-           For other engines: match the existing game's payload structure exactly.
-        */
+        "questions": [
+          {
+            "qLabel": "Make t the subject",
+            "formula": "v = u + at",
+            "finalAnswer": "t = (v - u) / a",
+            "steps": [
+              {
+                "leftToks": [
+                  {"type":"term","t":"u"},
+                  {"type":"op","t":"+"},
+                  {"type":"term","t":"at","b":true}
+                ],
+                "rightToks": [{"type":"term","t":"v"}],
+                "mascot": "We want <strong>t</strong> alone. <strong>u</strong> is in the way.",
+                "instPrac": "u is blocking at — subtract u from both sides.",
+                "instChall": "Make t the subject · v = u + at",
+                "hint": "The opposite of + u is - u.",
+                "tileOk": "- u",
+                "tilesNo": ["+ u", "÷ u"],
+                "whyNot": {
+                  "+ u": "Adding u makes it larger.",
+                  "÷ u": "Dividing by u does not remove u."
+                },
+                "lqT": [{"type":"term","t":"u + at - u"}],
+                "lAns": "at",
+                "lWrong": ["a+t", "u·t"],
+                "rqT": [{"type":"term","t":"v - u"}],
+                "rAns": "v - u",
+                "rWrong": ["v+u", "v/u"],
+                "newLeft": [{"type":"term","t":"at"}],
+                "newRight": [{"type":"term","t":"v - u"}]
+              }
+            ]
+          }
+        ]
       }
     }
   ]
 }
 
-RULES — violations will cause upload to fail:
-1. sequenceIndex: integers only, no gaps, continuing from last existing mission
-2. missionKey: no duplicates, continuing from last existing key format
-3. stage: "practice" | "challenge" | "master" — nothing else
-4. isFinal: true ONLY on the last excavationStep of each mission
-5. stepHints: exactly 3 strings per step [vague, guiding, near-answer]
-6. stepDistractors: exactly 3 per step, each a real named student misconception
-7. Field names: exact engine contract — no renaming, no invented fields
-8. pre_game_gradient / game_gradient: single CSS string — NEVER an array
-9. Output valid JSON only — no prose, no markdown fences`;
+TOKEN REFERENCE:
+  {"type":"term","t":"2x"}           plain term
+  {"type":"term","t":"at","b":true}  blocker (coral highlight — the thing blocking the variable)
+  {"type":"frac","n":"A","d":"pi"}   fraction A/pi
+  {"type":"frac","n":"x","d":"3","b":true}  fraction blocker
+  {"type":"sqrt","inner":[...]}      square root — inner is array of tokens
+  {"type":"op","t":"+"}             operator (=, +, -, etc.)
+
+RULES:
+1. lWrong and rWrong: exactly 2 wrong answers each
+2. tilesNo: exactly 2 wrong tile labels
+3. newLeft / newRight: equation state AFTER this step
+4. b:true only on the current blocker token
+5. difficulty: "EASY" | "MEDIUM" | "HARD"
+6. sequenceIndex: integers, no gaps, continuing from last mission
+` : `
+OTHER ENGINE — output this exact structure:
+{
+  "slug": "${gameSlug}",
+  "missions": [
+    {
+      "missionKey": "w1-001",
+      "title": "World 1 - Mission 1 — ...",
+      "difficulty": "EASY",
+      "sequenceIndex": 1,
+      "xpReward": 20,
+      "topicId": "...",
+      "learningGoal": "...",
+      "payload": { /* match existing game payload structure exactly */ }
+    }
+  ]
+}
+`}
+
+UNIVERSAL RULES:
+- Output valid JSON only — no prose, no markdown fences
+- pre_game_gradient / game_gradient: single CSS string, NEVER an array
+- missionKey: no duplicates`;
 }
 
 // ── upload handler ─────────────────────────────────────────────────────────────

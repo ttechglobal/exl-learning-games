@@ -226,7 +226,7 @@ export function WorldsClient({ bySubject }: WorldsClientProps) {
         </div>
         {searchQuery && (
           <div className={styles.searchCount}>
-            {searchResultCount} game{searchResultCount !== 1 ? "s" : ""} found
+            {filteredGames.length} game{filteredGames.length !== 1 ? "s" : ""} found
           </div>
         )}
       </div>

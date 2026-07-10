@@ -127,7 +127,7 @@ export function LayerPeelEngine({
 
   // Normalise each step — map whatever field names Claude used to canonical shape.
   // Confirmed live field names from DB: shellIndex, expectedInverse, resultingEquation
-  const normalisedSteps: LayerPeelMissionPayload["excavationSteps"] = (steps as Record<string, unknown>[]).map((s, i, arr) => {
+  const normalisedSteps = (steps as Record<string, unknown>[]).map((s, i, arr) => {
     const op = normaliseOperation((
       s.operation        ??
       s.expectedInverse  ??
@@ -178,7 +178,7 @@ export function LayerPeelEngine({
 
   const payload: LayerPeelMissionPayload = {
     ...(rawPayload as unknown as LayerPeelMissionPayload),
-    excavationSteps: normalisedSteps,
+    excavationSteps: normalisedSteps as unknown as LayerPeelMissionPayload["excavationSteps"],
   };
 
   const tier =
@@ -213,8 +213,9 @@ export function LayerPeelEngine({
   const outcomeRef    = useRef<LayerPeelOutcome | null>(null);
   const stepLogRef    = useRef<Array<{ operation: string; outcome: "correct" | "invalid" }>>([]);
 
-  const currentStep: PeelStep | undefined = payload.excavationSteps[stepIndex];
-  const totalSteps = payload.excavationSteps.length;
+  const excavationSteps = payload.excavationSteps ?? [];
+  const currentStep: PeelStep | undefined = excavationSteps[stepIndex];
+  const totalSteps = excavationSteps.length;
 
   const hintLevel  = resolveHintLevel(wrongAttemptsOnStep, tier.hintAfterAttempts);
   const showHints  = stage !== "master" || hintRequestedByPlayer;
@@ -357,7 +358,7 @@ export function LayerPeelEngine({
         <div className={styles.breachLog}>
           <div className={styles.breachLogTitle}>{shared.review?.title ?? "BREACH LOG"}</div>
           <div className={styles.breachLogFormula}>{payload.formula}</div>
-          {payload.excavationSteps.map((step, i) => (
+          {(payload.excavationSteps ?? []).map((step, i) => (
             <div key={i} className={styles.breachLogStep}>
               <div className={styles.breachLogArrow}>↓</div>
               <div className={styles.breachLogDesc}>{step.description}</div>
@@ -413,7 +414,7 @@ export function LayerPeelEngine({
               {totalSteps - stepIndex} shell{totalSteps - stepIndex !== 1 ? "s" : ""} protecting {payload.targetVariable}
             </div>
             <div className={styles.progressShells}>
-              {payload.excavationSteps.map((_, i) => (
+              {(payload.excavationSteps ?? []).map((_, i) => (
                 <div
                   key={i}
                   className={[

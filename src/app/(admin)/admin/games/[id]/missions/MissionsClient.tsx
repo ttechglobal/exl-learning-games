@@ -395,12 +395,12 @@ export default function MissionsClient({
           <p className={styles.sub}>{missions.length} missions · <a href={`/play/${game.slug}`} target="_blank" style={{ color: "#64748b" }}>Preview ↗</a></p>
         </div>
         <div className={styles.headerActions}>
-          {(game as Record<string,unknown>).engine_pending && (
+          {!!(game as GameRow).engine_pending && (
             <Link href={`/admin/games/${game.id}/engine`} className={styles.btnEngine}>
               ⚙ Build Engine
             </Link>
           )}
-          {!(game as Record<string,unknown>).engine_pending && (
+          {!(game as GameRow).engine_pending && (
             <Link href={`/admin/games/${game.id}/engine`} className={styles.btnSecondary}>
               ⚙ Engine
             </Link>
@@ -409,7 +409,7 @@ export default function MissionsClient({
         </div>
       </div>
 
-      {(game as Record<string,unknown>).engine_pending && (
+      {!!(game as GameRow).engine_pending && (
         <div className={styles.engineBanner}>
           <span>⚠ Engine <strong>{game.engine_type}</strong> is not yet registered — this game cannot be played until the engine is built.</span>
           <Link href={`/admin/games/${game.id}/engine`} className={styles.engineBannerLink}>

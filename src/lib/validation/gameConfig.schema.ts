@@ -43,7 +43,8 @@ export const GameInputSchema = z.object({
   mission_objectives: z.object({
     brief: z.string(),
     items: z.array(z.string()),
-  }).nullish(),
+  }).optional(),
+  missions: z.array(MissionInputSchema).optional().default([]),
 });
 
 // Patch schema — for adding missions to an existing game
@@ -59,7 +60,7 @@ export const GamePatchSchema = z.object({
   env_desktop_url:    z.string().nullish(),
   env_mobile_url:     z.string().nullish(),
   mission_briefing:   z.string().nullish(),
-  mission_objectives: z.object({ brief: z.string(), items: z.array(z.string()) }).nullish(),
+  mission_objectives: z.object({ brief: z.string(), items: z.array(z.string()) }).optional(),
   shared_config:      z.record(z.string(), z.unknown()).optional(),
   snapshot:           z.object({ cards: z.array(z.object({ title: z.string(), body: z.string() })) }).optional(),
 });

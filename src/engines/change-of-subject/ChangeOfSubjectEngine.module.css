@@ -119,7 +119,7 @@
 .game {
   max-width: 520px;
   margin: 0 auto;
-  padding: 20px 16px 60px 16px;
+  padding: 24px 16px 60px 16px;
   width: 100%;
   box-sizing: border-box;
   overflow-x: hidden;
@@ -130,7 +130,9 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 18px;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1.5px dashed var(--cos-line);
 }
 .backBtn {
   font-size: 13px;
@@ -441,9 +443,10 @@
 }
 .mcqOpts {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   justify-content: center;
   flex-wrap: wrap;
+  padding: 4px 0 8px;
 }
 .mcqBtn {
   font-family: "JetBrains Mono", monospace;
@@ -803,4 +806,196 @@
   color: var(--cos-ink-soft);
   font-weight: 600;
   margin-top: 2px;
+}
+
+/* ════════════════════════════════
+   MISSION SELECT SCREEN
+════════════════════════════════ */
+.missionGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 420px) {
+  .missionGrid { grid-template-columns: 1fr; }
+}
+
+.missionCard {
+  background: var(--cos-card);
+  border: 2px solid var(--cos-line);
+  border-radius: 14px;
+  padding: 16px 14px 14px;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s, transform .1s;
+  box-shadow: 0 2px 0 rgba(0,0,0,.04), 0 4px 16px rgba(80,60,30,.07);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 140px;
+  position: relative;
+}
+.missionCard:hover:not(.missionLocked) {
+  border-color: var(--cos-gold);
+  box-shadow: 0 4px 20px rgba(80,60,30,.14);
+  transform: translateY(-2px);
+}
+.missionCard:active:not(.missionLocked) {
+  transform: translateY(0);
+}
+.missionLocked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.missionDone {
+  border-color: var(--cos-teal);
+  background: linear-gradient(135deg, #fff 80%, var(--cos-teal-light));
+}
+
+.missionCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+.missionNum {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cos-ink-soft);
+  background: var(--cos-paper);
+  border: 1.5px solid var(--cos-line);
+  border-radius: 20px;
+  padding: 2px 9px;
+  letter-spacing: .05em;
+}
+.missionDone .missionNum {
+  background: var(--cos-teal-light);
+  border-color: var(--cos-teal);
+  color: var(--cos-teal-dark);
+}
+.missionDiff {
+  font-size: 11px;
+}
+
+.missionName {
+  font-family: 'Kalam', cursive;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--cos-ink);
+  line-height: 1.2;
+}
+.missionSubtitle {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--cos-ink-soft);
+  line-height: 1.4;
+  flex: 1;
+}
+
+.missionResult {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1.5px solid var(--cos-teal-light);
+}
+.missionStars {
+  font-size: 16px;
+  color: var(--cos-gold);
+  letter-spacing: 2px;
+}
+.missionScore {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cos-teal-dark);
+}
+
+.missionCta {
+  margin-top: auto;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cos-gold-dark);
+  padding-top: 8px;
+  border-top: 1.5px solid var(--cos-gold-light);
+}
+.missionLockMsg {
+  font-size: 11px;
+  color: var(--cos-ink-soft);
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+/* Mission result right side (score + time) */
+.missionResultRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+.missionTime {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--cos-ink-soft);
+  font-weight: 600;
+}
+
+/* Remove subtitle space now subtitle is gone */
+.missionCard {
+  min-height: 120px;
+}
+
+/* Hub back button */
+.hubBack {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cos-ink-soft);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 16px;
+}
+.hubBack:hover { color: var(--cos-ink); }
+
+/* Mission status indicator (replaces numbered badge) */
+.missionStatus {
+  font-size: 14px;
+  min-width: 18px;
+}
+
+/* ── Sticky question reference at top of playing card ── */
+.questionRef {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 5px 10px;
+  background: transparent;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  border-left: 2px solid var(--cos-line);
+  opacity: 0.7;
+}
+.questionRefLabel {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--cos-ink-soft);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.questionRefSep {
+  color: var(--cos-line);
+  font-size: 10px;
+}
+.questionRefFormula {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--cos-ink-soft);
 }

@@ -39,7 +39,7 @@ import { ChangeOfSubjectMissionPayloadSchema } from "./changeOfSubject.config";
 import { MISSIONS, MISSIONS_BY_TIER, randomMissionForTier, BUILTIN_QUESTIONS } from "./changeOfSubjectQuestions";
 import { renderTokens, tokenHTML, answerHTML } from "./mathRender";
 import styles from "./ChangeOfSubjectEngine.module.css";
-import cosAudio from "./cosAudio";
+import cosAudio from "./cosaudio";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

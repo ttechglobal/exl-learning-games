@@ -4,7 +4,6 @@ import { DEFAULT_DISPLAY_NAME } from "@/lib/db/queries/students";
 export type LeaderboardPeriod = "weekly" | "monthly" | "allTime";
 
 export interface LeaderboardEntry {
-  avatarEmoji: string;
   studentId: string;
   displayName: string;
   xpTotal: number;
@@ -150,16 +149,17 @@ async function getAllTimeLeaderboard(limit: number): Promise<LeaderboardEntry[]>
     countByStudent.set(row.student_id, (countByStudent.get(row.student_id) ?? 0) + 1);
   }
 
-  return rows
+  return (rows
     .map((r) => ({
       studentId: r.id,
       displayName: r.display_name,
       xpTotal: r.xp_total,
       gamesPlayed: countByStudent.get(r.id) ?? 0,
-      school: r.school
+      school: r.school,
+      rank: 0,
     }))
     .filter(isRealLeaderboardEntry)
-    .map((entry, i) => ({ ...entry, rank: i + 1 }));
+    .map((entry, i) => ({ ...entry, rank: i + 1 })) as LeaderboardEntry[]);
 }
 
 /**

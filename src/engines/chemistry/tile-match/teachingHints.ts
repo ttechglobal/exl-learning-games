@@ -21,9 +21,9 @@
  * doesn't need to repeat it).
  */
 
-import type { ClueType } from "@/engines/tile-match/tileMatch.config";
-import type { ElementGroup } from "@/engines/tile-match/elementData";
-import type { Clue } from "@/engines/tile-match/tileMatch.logic";
+import type { ClueType } from "@/engines/chemistry/tile-match/tileMatch.config";
+import type { ElementGroup } from "@/engines/chemistry/tile-match/elementData";
+import type { Clue } from "@/engines/chemistry/tile-match/tileMatch.logic";
 import type { HintContent } from "@/components/gameplay/HintModal";
 
 const HINT_BY_CLUE_TYPE: Record<ClueType, HintContent> = {

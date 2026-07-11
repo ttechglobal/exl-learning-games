@@ -15,7 +15,7 @@
  * engine, when a future mission needs another atom).
  */
 
-import type { AtomDef } from "@/engines/molecule-builder/moleculeBuilder.config";
+import type { AtomDef } from "@/engines/chemistry/molecule-builder/moleculeBuilder.config";
 
 export const CARBON_BUILDER_ATOMS: AtomDef[] = [
   { symbol: "C", name: "Carbon", maxBonds: 4, hex: "#2f9bd6" },

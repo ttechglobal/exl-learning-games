@@ -1,4 +1,4 @@
-import type { ParticleAssemblySharedConfig } from "@/engines/particle-assembly/particleAssembly.config";
+import type { ParticleAssemblySharedConfig } from "@/engines/chemistry/particle-assembly/particleAssembly.config";
 
 export function checkComposition(target: Record<string, number>, actual: Record<string, number>): boolean {
   return Object.keys(target).every((key) => target[key] === (actual[key] ?? 0));

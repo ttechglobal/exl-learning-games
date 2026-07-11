@@ -136,7 +136,7 @@ function mergeFactoryOverrideIfPresent(config: Record<string, unknown>, sessionD
  *  tile-match's correction. These are the actual content-difficulty
  *  segregation; everything else for tile-match (pacing fields below) is
  *  just plumbing to keep the Tier shape valid. */
-const TILE_MATCH_CLUES: Record<PlayerDifficulty, import("@/engines/tile-match/tileMatch.config").ClueType[]> = {
+const TILE_MATCH_CLUES: Record<PlayerDifficulty, import("@/engines/chemistry/tile-match/tileMatch.config").ClueType[]> = {
   EASY: ["atomic_number", "electron_number"],
   // Per direct feedback: Medium should NOT include "period" (location on
   // the table is a Hard-tier, real periodic-table-knowledge clue, not a
@@ -156,7 +156,7 @@ const TILE_MATCH_CLUES: Record<PlayerDifficulty, import("@/engines/tile-match/ti
  *  purpose, not tuned per difficulty, since pacing isn't what
  *  distinguishes these tiers anymore; clueTypes is.
  */
-function buildSingleTier(clueTypes: import("@/engines/tile-match/tileMatch.config").ClueType[]): Record<string, unknown> {
+function buildSingleTier(clueTypes: import("@/engines/chemistry/tile-match/tileMatch.config").ClueType[]): Record<string, unknown> {
   return {
     tiers: [
       {

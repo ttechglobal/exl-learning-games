@@ -207,34 +207,34 @@ export function MathQuestEngine({ onExit }:{ onExit?:()=>void }) {
     grass: Array<{x:number;y:number;r:number;c:string}>;
   }>({ clouds:[], trees:[], bflies:[], grass:[] });
 
-  // ── Resize: measure the actual frame div ───────────────────────────────────
-  useEffect(() => {
-    const measure = () => {
-      const el = frameRef.current;
-      if (!el) return;
-      const r = el.getBoundingClientRect();
-      const w = Math.floor(r.width)  || 800;
-      const h = Math.floor(r.height) || 520;
-      if (w === cwRef.current && h === chRef.current) return; // no change
-      cwRef.current = w;
-      chRef.current = h;
-      const cv = canvasRef.current;
-      if (cv) { cv.width = w; cv.height = h; }
-      if (phaseRef.current !== "topic_pick" && phaseRef.current !== "session_done") {
-        const course = buildCourse(holeIdxRef.current, w, h);
-        courseRef.current = course;
-        if (!deadRef.current && phaseRef.current === "aiming") {
-          ballRef.current.x = course.start.x;
-          ballRef.current.y = course.start.y;
-        }
-      }
-    };
-    // Use requestAnimationFrame to ensure the DOM has laid out
-    requestAnimationFrame(measure);
-    const ro = new ResizeObserver(measure);
-    if (frameRef.current) ro.observe(frameRef.current);
-    return () => ro.disconnect();
+  // ── Resize: window.innerWidth/Height is always correct for a fixed:inset:0 frame
+  const applySize = useCallback((w: number, h: number) => {
+    if (w < 10 || h < 10) return;
+    cwRef.current = w;
+    chRef.current = h;
+    const cv = canvasRef.current;
+    if (cv) { cv.width = w; cv.height = h; }
+    if (phaseRef.current !== "topic_pick" && phaseRef.current !== "session_done") {
+      const course = buildCourse(holeIdxRef.current, w, h);
+      courseRef.current = course;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    // Measure immediately and on every resize
+    const measure = () => applySize(window.innerWidth, window.innerHeight);
+    measure(); // run now
+    // Also run after a short delay in case browser hasn't painted yet
+    const t1 = setTimeout(measure, 50);
+    const t2 = setTimeout(measure, 200);
+    window.addEventListener("resize", measure);
+    return () => {
+      window.removeEventListener("resize", measure);
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [applySize]);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   const spawnDust = (x:number,y:number) => {
@@ -463,9 +463,13 @@ export function MathQuestEngine({ onExit }:{ onExit?:()=>void }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[]);
 
-  // Start RAF once
+  // Start RAF once — also set initial canvas size here synchronously
   useEffect(()=>{
-    rafRef.current=requestAnimationFrame(draw);
+    // Set canvas size before first frame draws
+    const w = window.innerWidth, h = window.innerHeight;
+    cwRef.current = w; chRef.current = h;
+    if (canvasRef.current) { canvasRef.current.width = w; canvasRef.current.height = h; }
+    rafRef.current = requestAnimationFrame(draw);
     return ()=>cancelAnimationFrame(rafRef.current);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[]);
@@ -476,10 +480,14 @@ export function MathQuestEngine({ onExit }:{ onExit?:()=>void }) {
     else setCardVisible(false);
   },[phase]);
 
-  // Init hole
+  // Init hole — always use current window size
   const initHole = useCallback((idx:number)=>{
-    const W=cwRef.current||window.innerWidth;
-    const H=chRef.current||window.innerHeight;
+    const W=window.innerWidth;
+    const H=window.innerHeight;
+    // Ensure canvas and refs are in sync
+    cwRef.current=W; chRef.current=H;
+    const cv=canvasRef.current;
+    if(cv){cv.width=W;cv.height=H;}
     const course=buildCourse(idx,W,H);
     courseRef.current=course;
     ballRef.current={x:course.start.x,y:course.start.y,vx:0,vy:0,breathe:0,sinkT:0};
@@ -647,7 +655,7 @@ export function MathQuestEngine({ onExit }:{ onExit?:()=>void }) {
           onPointerDown={onPtrDown}
           onPointerMove={onPtrMove}
           onPointerUp={onPtrUp}
-          style={{touchAction:"none"}}
+          style={{touchAction:"none", display:"block", width:"100%", height:"100%"}}
         />
 
         {/* HUD */}

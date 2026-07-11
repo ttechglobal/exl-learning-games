@@ -6,7 +6,7 @@
  * SHAPE; this checks CHEMISTRY/GRAPH correctness):
  *   - every targetBond's slots actually exist and list each other in
  *     bondableTo (symmetric, so the engine's "what can I bond this slot
- *     to" lookup is never one-directional)
+ *     to" lookup is nevercls one-directional)
  *   - every atom's total bond weight in targetBonds matches its real
  *     maxBonds exactly (catches a typo'd extra/missing bond before it
  *     ships as an unsolvable or already-wrong mission)
@@ -18,8 +18,8 @@
  * role gameConfig.schema.ts's validateGameInput plays for DB writes.
  */
 
-import type { AtomDef, MoleculeBuilderMissionPayload } from "@/engines/molecule-builder/moleculeBuilder.config";
-import { BOND_ORDER_WEIGHT } from "@/engines/molecule-builder/moleculeBuilder.config";
+import type { AtomDef, MoleculeBuilderMissionPayload } from "@/engines/chemistry/molecule-builder/moleculeBuilder.config";
+import { BOND_ORDER_WEIGHT } from "@/engines/chemistry/molecule-builder/moleculeBuilder.config";
 
 export interface ContentValidationIssue {
   missionKey: string;

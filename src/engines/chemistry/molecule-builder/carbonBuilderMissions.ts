@@ -18,7 +18,7 @@
  * define its own slot layout, not change how this file lays out chains.
  */
 
-import type { MoleculeBuilderMissionPayload } from "@/engines/molecule-builder/moleculeBuilder.config";
+import type { MoleculeBuilderMissionPayload } from "@/engines/chemistry/molecule-builder/moleculeBuilder.config";
 
 /**
  * MISSION 0a — Hydrogen gas (H2) — Easy (warm-up)

@@ -5,15 +5,15 @@ import type {
   ParticleAssemblyConfig,
   ParticleAssemblyOutcome,
   Generator
-} from "@/engines/particle-assembly/particleAssembly.config";
-import { checkComposition, buildFeedback } from "@/engines/particle-assembly/particleAssembly.logic";
+} from "@/engines/chemistry/particle-assembly/particleAssembly.config";
+import { checkComposition, buildFeedback } from "@/engines/chemistry/particle-assembly/particleAssembly.logic";
 import { computeClusterJitterPlacement, computeOrbitShellPlacement, computeArrivalTrail, type TrailDot } from "@/motion/orbitalMotion";
 import { createPressHandlers } from "@/motion/touchTarget";
 import { runSuccessSequence, runFailureSequence } from "@/motion/payoffSequence";
 import { playSound, primeAudioOnUserGesture } from "@/motion/sound/playSound";
 import { Mascot } from "@/motion/Mascot";
 import type { EngineRuntimeProps } from "@/engines/engine-types";
-import styles from "@/engines/particle-assembly/ParticleAssemblyEngine.module.css";
+import styles from "@/engines/chemistry/particle-assembly/ParticleAssemblyEngine.module.css";
 
 type Composition = Record<string, number>;
 

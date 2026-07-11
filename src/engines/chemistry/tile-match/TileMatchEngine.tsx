@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import type { TileMatchConfig, TileMatchOutcome, Tier } from "@/engines/tile-match/tileMatch.config";
-import { generateClueForTier, buildTileGrid, poolFromSymbols, type Clue } from "@/engines/tile-match/tileMatch.logic";
-import { resolveTeachingHint } from "@/engines/tile-match/teachingHints";
-import type { HunterElement } from "@/engines/tile-match/elementData";
+import type { TileMatchConfig, TileMatchOutcome, Tier } from "@/engines/chemistry/tile-match/tileMatch.config";
+import { generateClueForTier, buildTileGrid, poolFromSymbols, type Clue } from "@/engines/chemistry/tile-match/tileMatch.logic";
+import { resolveTeachingHint } from "@/engines/chemistry/tile-match/teachingHints";
+import type { HunterElement } from "@/engines/chemistry/tile-match/elementData";
 import { Mascot } from "@/motion/Mascot";
 import { pickMascotLine } from "@/motion/mascotLines";
 import { playSound } from "@/motion/sound/playSound";
@@ -12,7 +12,7 @@ import type { EngineRuntimeProps } from "@/engines/engine-types";
 import { GameplayShell, type GameplayStat } from "@/components/gameplay/GameplayShell";
 import { HintModal, type HintContent } from "@/components/gameplay/HintModal";
 import { GAME_ENVIRONMENT_IMAGES } from "@/lib/content/gameEnvironments";
-import styles from "@/engines/tile-match/TileMatchEngine.module.css";
+import styles from "@/engines/chemistry/tile-match/TileMatchEngine.module.css";
 
 /**
  * tile-match engine runtime — Element Hunter.

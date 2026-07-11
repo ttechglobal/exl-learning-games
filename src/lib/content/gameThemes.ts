@@ -201,6 +201,37 @@ export const GAME_THEMES: Record<string, GameTheme> = {
       mobile:  "/illustrations/mirror-lab-mobile.png",
     },
   },
+
+
+  "whack-a-mole": {
+  cardArt: "/mascot/card-whack-a-mole.svg",
+  description: "Tap critters across 5 frantic waves. Avoid bombs, catch golden moles, build combos.",
+  preGameGradient: "linear-gradient(160deg, #1a2744 0%, #0f172a 60%, #0a1020 100%)",
+  gameGradient:    "linear-gradient(160deg, #1a2744 0%, #0f172a 100%)",
+  accent: "#f59e0b",
+},
+ 
+/**
+ * Element Crush (coming soon)
+ * Slug: "element-crush"
+ */
+"element-crush": {
+  description: "Match element tiles to clear the board — Candy Crush with a chemistry twist.",
+  preGameGradient: "linear-gradient(160deg, #041418 0%, #082028 50%, #041018 100%)",
+  gameGradient:    "linear-gradient(160deg, #031012 0%, #061820 100%)",
+  accent: "#00d4ff",
+},
+ 
+/**
+ * Symbol Drop (coming soon)
+ * Slug: "symbol-drop"
+ */
+"symbol-drop": {
+  description: "Catch falling chemical symbols before they hit the ground.",
+  preGameGradient: "linear-gradient(160deg, #080c28 0%, #0e1240 50%, #060820 100%)",
+  gameGradient:    "linear-gradient(160deg, #060820 0%, #0c1038 100%)",
+  accent: "#4488ff",
+},
 };
 
 // ── Fallback ───────────────────────────────────────────────────────────────
@@ -241,3 +272,4 @@ export function getGameAccent(slug: string): string {
 export function getGameEnvironment(slug: string): GameEnvironment | undefined {
   return GAME_THEMES[slug]?.environment;
 }
+

@@ -1,781 +1,1174 @@
-/* ═══════════════════════════════════════════════════════════════════
-   WorldsClient — Mission Control Dashboard
-   Tokens: --eg-font-display, --eg-gold, --eg-subject-*
-   Custom tokens: --faction-color, --faction-tint (set inline per card/section)
-═══════════════════════════════════════════════════════════════════ */
+/* WorldsClient.module.css — Dashboard Redesign
+ *
+ * Tokens: exclusively --eg-* from motion/tokens.css
+ * Light/dark: [data-theme="dark"] on .page
+ *
+ * Layout layers:
+ *   .hud        — sticky game HUD header
+ *   .main       — scrollable content below HUD
+ *   .modeBar    — Play / Focus toggle
+ *   .arcadeSection — horizontal arcade strip
+ *   .subjectSection — per-subject game rows (Play mode)
+ *   .subjectGrid — 4-up subject cards (Focus mode)
+ *   .gameGrid   — auto-fill game cards
+ */
 
-/* ── PAGE SHELL ─────────────────────────────────────────────────────── */
-/* Mobile: these are transparent wrappers — all layout comes from desktop MQ */
-.pageBody { display: block; }
-.desktopMain { display: block; }
+/* ── Page ─────────────────────────────────────────────────────────────────── */
 
 .page {
   min-height: 100vh;
   background: var(--eg-surface-bg);
   color: var(--eg-surface-text);
-  font-family: var(--eg-font-body, "Inter", sans-serif);
+  font-family: var(--eg-font-body, system-ui, sans-serif);
   position: relative;
+  overflow-x: hidden;
+  padding-bottom: 80px;
 }
 
-/* ══════════════════════════════════════════════════════════════════════
-   MISSION CONTROL HEADER
-   Game-like command centre: dark gradient, subtle star-field texture,
-   rank badge + XP bar on the left, class pill + subject toggles right.
-   On mobile: rank+class share a row, subjects wrap underneath full-width.
-══════════════════════════════════════════════════════════════════════ */
-.missionControl {
-  position: relative;
-  overflow: hidden;
-  padding: 20px 32px 20px;
-  /* Deep command-centre gradient — dark navy to forest, always dark regardless of theme */
-  background:
-    radial-gradient(circle, rgba(255,255,255,.035) 1px, transparent 1px),
-    linear-gradient(160deg, #0d1117 0%, #0f1923 45%, #0a1a14 100%);
-  background-size: 22px 22px, 100% 100%;
-  border-bottom: 1px solid rgba(255,255,255,.06);
-  /* Force dark text/icon colours inside */
-  color-scheme: dark;
-  color: #e6edf3;
+.page :global(a) {
+  text-decoration: none;
+  color: inherit;
 }
 
-/* decorative corner glow */
-.missionControl::before {
-  content: "";
+/* ── Ambient background ───────────────────────────────────────────────────── */
+
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--eg-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--eg-grid-line) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.ambientBlob {
   position: absolute;
-  top: -60px;
+  border-radius: 50%;
+  filter: blur(70px);
+  pointer-events: none;
+}
+
+.blobA {
+  width: 380px;
+  height: 380px;
+  top: -120px;
+  left: -100px;
+  background: var(--eg-subject-chemistry);
+  opacity: 0.05;
+}
+
+.blobB {
+  width: 280px;
+  height: 280px;
+  top: 80px;
   right: -80px;
-  width: 340px;
-  height: 340px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(91,33,182,.28), transparent 70%);
-  pointer-events: none;
-}
-/* Second accent glow bottom-left (teal/green) */
-.missionControl::after {
-  content: "";
-  position: absolute;
-  bottom: -40px;
-  left: -60px;
-  width: 260px;
-  height: 260px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(62,207,142,.1), transparent 70%);
-  pointer-events: none;
+  background: var(--eg-gold);
+  opacity: 0.06;
 }
 
-/* ── TOP ROW: rank (left) + class pill (right) ──────────────────────── */
-.mcTopRow {
+/* ── HUD Header ───────────────────────────────────────────────────────────── */
+
+.hud {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: color-mix(in srgb, var(--eg-surface-bg) 92%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--eg-surface-border);
+}
+
+.hudInner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 60px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
-  margin-bottom: 14px;
 }
 
-/* Rank badge */
-.rankBadge {
+/* Left */
+.hudLeft {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
 }
-.rankIconWrap {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
-  border: 1px solid rgba(255,255,255,.1);
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.logoMark {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--eg-brand);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
-  flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.06);
-}
-.rankMeta {}
-.rankLabel {
-  font-family: var(--eg-font-display, "Baloo 2", sans-serif);
-  font-size: 15px;
+  font-family: var(--eg-font-display);
   font-weight: 800;
-  color: #e6edf3;
-  line-height: 1.1;
-}
-.playerName {
-  font-size: 11px;
-  color: rgba(230,237,243,.6);
-  margin-top: 1px;
-}
-
-/* Class pill — lives on the right of the top row */
-.classPill {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 3px;
+  font-size: 15px;
   flex-shrink: 0;
 }
-.controlLabel {
-  font-size: 9px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .1em;
-  color: rgba(230,237,243,.55);
-}
-.classDropdown {
-  background: rgba(255,255,255,.07);
-  border: 1.5px solid rgba(255,255,255,.14);
-  border-radius: 8px;
-  color: #e6edf3;
-  font-family: var(--eg-font-display, "Baloo 2", sans-serif);
-  font-size: 13px;
-  font-weight: 700;
-  padding: 6px 28px 6px 12px;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6' fill='none' stroke='%238B949E' stroke-width='1.5'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 9px center;
-  transition: border-color .15s, box-shadow .15s;
-  min-width: 80px;
-}
-.classDropdown:hover  { border-color: var(--eg-brand); }
-.classDropdown:focus  { outline: none; border-color: var(--eg-brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--eg-brand, #5b21b6) 20%, transparent); }
 
-/* ── XP BAR ─────────────────────────────────────────────────────────── */
-.xpBar {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-bottom: 14px;
-}
-.xpBarTrack {
-  height: 7px;
-  background: color-mix(in srgb, var(--eg-surface-card-2, #1c2333) 70%, transparent);
-  border-radius: 4px;
-  overflow: hidden;
-  max-width: 320px;
-  position: relative;
-}
-/* subtle shimmer line on track */
-.xpBarTrack::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.06) 50%, transparent 100%);
-  pointer-events: none;
-}
-.xpBarFill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--eg-gold, #FFB23C), #FF8C00, #FFD700);
-  border-radius: 4px;
-  transition: width 0.9s cubic-bezier(.34,1.56,.64,1);
-  position: relative;
-}
-/* glint on fill */
-.xpBarFill::after {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 50%;
-  background: rgba(255,255,255,.25);
-  border-radius: 4px 4px 0 0;
-}
-.xpBarLabel {
-  font-size: 11px;
-  color: rgba(230,237,243,.6);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: .02em;
+.logoText {
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--eg-surface-text);
+  letter-spacing: -0.01em;
 }
 
-/* ── SUBJECT TOGGLES ─────────────────────────────────────────────────── */
-.subjectRow {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.subjectToggles {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.subjectToggle {
-  height: 36px;
-  border-radius: 10px;
-  border: 1.5px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.06);
-  cursor: pointer;
-  transition: border-color .15s, background .15s, transform .1s, color .15s, box-shadow .15s;
+.backBtn {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 12px;
-  color: rgba(230,237,243,.7);
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-  backdrop-filter: blur(8px);
-}
-.subjectToggle:hover {
-  border-color: var(--eg-surface-text-dim);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0,0,0,.2);
-}
-.subjectToggleActive {
-  transform: translateY(-1px);
+  background: none;
+  border: 1.5px solid var(--eg-surface-border);
+  color: var(--eg-surface-text);
+  font-size: 13px;
   font-weight: 700;
-  box-shadow: 0 2px 10px rgba(0,0,0,.25), 0 0 0 1px var(--faction-color, transparent) inset;
+  padding: 7px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
 }
-.subjectToggleEmoji { font-size: 15px; line-height: 1; }
-.subjectToggleName  { font-size: 11.5px; }
 
-/* ── SEARCH ZONE ────────────────────────────────────────────────────── */
-.searchZone {
-  padding: 20px 32px 0;
-  position: relative;
-  z-index: 50;
+.backBtn:hover {
+  background: var(--eg-surface-card-2);
+  border-color: var(--eg-surface-text-dim);
 }
-.searchInner { position: relative; max-width: 560px; }
 
+.backArrow { font-size: 15px; }
+.backLabel { }
+
+/* Centre */
+.hudCenter {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hudTitleGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.hudTitle {
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 17px;
+  color: var(--eg-surface-text);
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.hudXpBar {
+  width: 120px;
+  height: 4px;
+  background: var(--eg-surface-card-2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.hudXpFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--eg-subject-chemistry), var(--eg-gold));
+  border-radius: 3px;
+  transition: width 0.6s ease;
+  min-width: 4px;
+}
+
+.hudXpLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--eg-surface-text-faint);
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+.hudXpNext {
+  color: var(--eg-gold);
+}
+
+.hudSubjectTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--eg-font-display);
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--eg-surface-text);
+}
+
+/* Right */
+.hudRight {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Search */
 .searchBox {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: var(--eg-surface-card);
+  gap: 6px;
+  background: var(--eg-surface-card-2);
   border: 1.5px solid var(--eg-surface-border);
-  border-radius: 10px;
-  padding: 0 14px;
-  transition: border-color .15s, box-shadow .15s;
+  border-radius: 22px;
+  padding: 7px 12px;
+  transition: border-color 0.15s, background 0.15s, width 0.2s;
+  width: 140px;
 }
-.searchBox:focus-within {
+
+.searchBox:focus-within,
+.searchBoxActive {
+  background: var(--eg-surface-card);
   border-color: var(--eg-brand);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--eg-brand, #5b21b6) 15%, transparent);
+  width: 200px;
 }
-.searchIconGlyph {
-  font-size: 18px;
-  color: var(--eg-surface-text-dim);
+
+.searchIcon {
+  font-size: 13px;
+  opacity: 0.45;
   flex-shrink: 0;
-  margin-top: 1px;
+  line-height: 1;
 }
-.searchField {
+
+.searchInput {
   flex: 1;
   background: none;
   border: none;
   outline: none;
   color: var(--eg-surface-text);
-  font-family: var(--eg-font-body, "Inter", sans-serif);
-  font-size: 14px;
-  padding: 12px 0;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  min-width: 0;
 }
-.searchField::placeholder { color: var(--eg-surface-text-dim); }
-.searchClearBtn {
+
+.searchInput::placeholder {
+  color: var(--eg-surface-text-faint);
+}
+
+.searchClear {
   background: none;
   border: none;
-  color: var(--eg-surface-text-dim);
+  color: var(--eg-surface-text-faint);
+  font-size: 12px;
   cursor: pointer;
-  font-size: 14px;
   padding: 0;
+  line-height: 1;
+  font-family: inherit;
+}
+
+/* Class selector */
+.classSelector {
+  background: var(--eg-surface-card-2);
+  border: 1.5px solid var(--eg-surface-border);
+  color: var(--eg-surface-text);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 9px;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  font-family: inherit;
   flex-shrink: 0;
 }
-.searchClearBtn:hover { color: var(--eg-surface-text); }
 
-.suggestions {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0; right: 0;
-  background: var(--eg-surface-card);
-  border: 1.5px solid var(--eg-surface-border);
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0,0,0,.4);
-  z-index: 100;
-}
-.suggestion {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 10px 14px;
-  text-align: left;
+/* Theme toggle */
+.themeBtn {
   background: none;
   border: none;
-  color: var(--eg-surface-text);
-  font-size: 13px;
+  font-size: 17px;
   cursor: pointer;
-  transition: background .12s;
+  padding: 4px;
+  line-height: 1;
+  border-radius: 6px;
+  flex-shrink: 0;
 }
-.suggestion:hover { background: var(--eg-surface-card-2); }
-.suggestionIcon { color: var(--eg-surface-text-dim); font-size: 11px; }
 
-/* ── MAIN CONTENT ───────────────────────────────────────────────────── */
-.mainContent {
-  padding: 24px 32px 80px;
+/* Avatar */
+.avatarBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--eg-brand-tint);
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.avatarBtn:hover { opacity: 0.8; }
+
+.avatarInner {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--eg-brand);
+}
+
+/* ── Main content ─────────────────────────────────────────────────────────── */
+
+.main {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 24px 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Mode Bar ─────────────────────────────────────────────────────────────── */
+
+.modeBar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.modePills {
+  display: flex;
+  gap: 4px;
+  background: var(--eg-surface-card);
+  border: 1px solid var(--eg-surface-border);
+  border-radius: 13px;
+  padding: 4px;
+  flex-shrink: 0;
+}
+
+.modePill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  color: var(--eg-surface-text-dim);
+  background: transparent;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+
+.modePill:hover {
+  background: var(--eg-surface-card-2);
+  color: var(--eg-surface-text);
+}
+
+.modePillActive {
+  background: var(--eg-brand) !important;
+  color: #fff !important;
+  box-shadow: 0 3px 10px -2px rgba(11, 19, 48, 0.35);
+}
+
+[data-theme="dark"] .modePillActive {
+  background: var(--eg-brand) !important;
+  box-shadow: 0 3px 10px -2px rgba(74, 91, 168, 0.5);
+}
+
+.modeDesc {
+  font-size: 13px;
+  color: var(--eg-surface-text-dim);
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ── Focus Banner ─────────────────────────────────────────────────────────── */
+
+.focusBanner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--eg-surface-card);
+  border: 1.5px solid var(--eg-surface-border);
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin-bottom: 24px;
+  box-shadow: var(--eg-surface-shadow-soft);
+}
+
+.focusIco {
+  font-size: 28px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.focusText {
+  flex: 1;
+  min-width: 0;
+}
+
+.focusTitle {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--eg-surface-text);
+  margin-bottom: 2px;
+}
+
+.focusSub {
+  font-size: 12px;
+  color: var(--eg-surface-text-dim);
+  line-height: 1.45;
+}
+
+.focusCta {
+  flex-shrink: 0;
+  padding: 9px 16px;
+  border-radius: 10px;
+  background: var(--eg-brand);
+  color: #fff;
+  border: none;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--eg-brand) 70%, black);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.focusCta:hover { opacity: 0.9; }
+.focusCta:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--eg-brand) 70%, black);
+}
+
+/* ── Continue ─────────────────────────────────────────────────────────────── */
+
+/* Outer wrapper — positions the label above the card */
+.continueWrap {
+  margin-bottom: 24px;
   display: flex;
   flex-direction: column;
   gap: 0;
 }
 
-.contentSection {
-  padding: 28px 0;
-  border-bottom: 1px solid var(--eg-surface-border);
+/* The "Continue where you left off" label row — sits ABOVE the card */
+.continueLabelRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 4px 8px;
 }
-.contentSection:last-child { border-bottom: none; }
 
-/* Section header */
-.sectionHeader {
+.continuePulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: pulse 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(1.3); }
+}
+
+.continueBannerLabel {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #22c55e;
+  white-space: nowrap;
+}
+
+/* The actual card — no pulse or label inside */
+.continueBanner {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-.sectionEyebrow {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .1em;
-  color: var(--eg-surface-text-dim);
-  white-space: nowrap;
-}
-.sectionTitle {
-  font-family: var(--eg-font-display, "Baloo 2", sans-serif);
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--eg-surface-text);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.sectionTitleAccent { font-size: 20px; }
-.sectionTitleMissions {
-  font-weight: 500;
-  opacity: 0.7;
-  margin-left: 2px;
-}
-.missionCount {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 10px;
-  border-radius: 20px;
-  margin-left: auto;
-  white-space: nowrap;
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   ACTIVE MISSION BANNER
-   The "Keep Playing!" hero card — kid-friendly, unmissable CTA.
-══════════════════════════════════════════════════════════════════════ */
-.activeMissionSection {
-  padding: 28px 0;
-  border-bottom: 1px solid var(--eg-surface-border);
-}
-.activeMissionLabel {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .12em;
-  color: var(--eg-surface-text-dim);
-  margin-bottom: 12px;
-}
-.activePulse {
-  display: inline-block;
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: #22c55e;
-  animation: pulseRing 1.8s ease-out infinite;
-}
-@keyframes pulseRing {
-  0%   { box-shadow: 0 0 0 0 rgba(34,197,94,.7); }
-  70%  { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
-  100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
-}
-
-.activeMissionBanner {
-  display: flex;
-  align-items: stretch;
   background: var(--eg-surface-card);
-  border: 2px solid var(--faction-color, var(--eg-brand));
-  border-radius: 18px;
-  overflow: hidden;
-  text-decoration: none;
-  color: inherit;
+  border: 1px solid var(--eg-surface-border);
+  border-radius: 16px;
+  padding: 12px 16px;
+  box-shadow: var(--eg-surface-shadow-soft);
+  transition: box-shadow 0.15s;
+}
+
+.continueBanner:hover {
+  box-shadow: var(--eg-surface-shadow-card);
+}
+
+.continueBannerArt {
   position: relative;
-  transition: transform .15s, box-shadow .15s;
-  box-shadow: 0 4px 24px -4px color-mix(in srgb, var(--faction-color, var(--eg-brand)) 30%, transparent);
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--eg-surface-card-2);
 }
-.activeMissionBanner:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 40px -6px color-mix(in srgb, var(--faction-color, var(--eg-brand)) 45%, transparent);
+
+.continueBannerBody {
+  flex: 1;
+  min-width: 0;
 }
-.amBgGlow {
-  position: absolute; inset: 0;
-  background: radial-gradient(ellipse 55% 90% at 0% 50%,
-    color-mix(in srgb, var(--faction-tint, var(--eg-surface-card-2)) 70%, transparent),
-    transparent 70%);
+
+.continueBannerSubject {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.continueBannerTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--eg-surface-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.continueBannerBtn {
+  flex-shrink: 0;
+  color: #fff !important;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 8px 16px;
+  border-radius: 9px;
+  text-decoration: none;
+  transition: opacity 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+
+.continueBannerBtn:hover { opacity: 0.88; }
+.continueBannerBtn:active { transform: scale(0.97); }
+
+/* ── Section shared ───────────────────────────────────────────────────────── */
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.sectionLabel {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--eg-surface-text-faint);
+}
+
+.sectionTag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--eg-gold) 15%, transparent);
+  color: color-mix(in srgb, var(--eg-gold) 80%, #7a5000);
+}
+
+.sectionCount {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--eg-surface-text-faint);
+}
+
+/* ── Arcade Section ───────────────────────────────────────────────────────── */
+
+.arcadeSection {
+  margin-bottom: 36px;
+  transition: opacity 0.25s;
+}
+
+.arcadeDimmed {
+  opacity: 0.45;
   pointer-events: none;
 }
-.amArt {
-  width: 120px;
-  flex-shrink: 0;
-  position: relative;
-  overflow: hidden;
+
+.arcadeScroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-.amSubjectBadge {
-  position: absolute;
-  bottom: 6px; right: 6px;
-  width: 28px; height: 28px;
-  border-radius: 8px;
+
+.arcadeScroll::-webkit-scrollbar { display: none; }
+
+/* Arcade Card */
+.arcadeCard {
+  flex-shrink: 0;
+  width: 150px;
+  background: var(--eg-surface-card);
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1.5px solid var(--eg-surface-border);
+  box-shadow: var(--eg-surface-shadow-soft);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.3, 1), box-shadow 0.18s;
+  cursor: pointer;
+}
+
+.arcadeCard:hover {
+  transform: translateY(-6px) rotate(-1deg);
+  box-shadow: var(--eg-surface-shadow-card);
+}
+
+.arcadeCardInner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+}
+
+.arcadeCardArt {
+  height: 90px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
-  box-shadow: 0 2px 6px rgba(0,0,0,.4);
+  font-size: 36px;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
 }
-.amBody {
-  flex: 1;
-  padding: 18px 20px;
-  min-width: 0;
+
+.arcadeCardBody {
+  padding: 10px 12px 4px;
 }
-.amSubject {
-  font-size: 10px;
+
+.arcadeCardTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--eg-surface-text);
+  margin-bottom: 2px;
+  line-height: 1.3;
+}
+
+.arcadeCardMeta {
+  font-size: 11px;
+  color: var(--eg-surface-text-dim);
+  font-weight: 600;
+}
+
+.arcadePlayBtn {
+  margin: 8px 12px 10px;
+  padding: 7px 0;
+  border: none;
+  border-radius: 9px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 0.03em;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.arcadePlayBtn:hover  { opacity: 0.85; }
+.arcadePlayBtn:active { transform: scale(0.97); }
+
+/* Coming soon arcade card */
+/* Coming soon arcade card variant */
+.arcadeCardSoon {
+  opacity: 0.6;
+  border-style: dashed !important;
+  pointer-events: none;
+  cursor: default;
+}
+
+.arcadeSoonBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: .08em;
-  margin-bottom: 5px;
+  letter-spacing: 0.05em;
+  background: var(--eg-surface-card-2);
+  color: var(--eg-surface-text-faint);
+  padding: 2px 6px;
+  border-radius: 6px;
 }
-.amTitle {
-  font-family: var(--eg-font-display, "Baloo 2", sans-serif);
-  font-size: clamp(16px, 2.5vw, 22px);
+
+/* ── Subject sections (Play mode) ─────────────────────────────────────────── */
+
+.subjectSection {
+  margin-bottom: 36px;
+}
+
+.subjectSectionHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.subjectSectionIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.subjectSectionName {
+  font-family: var(--eg-font-display);
+  font-size: 16px;
   font-weight: 800;
-  color: var(--eg-surface-text);
-  line-height: 1.2;
-  margin-bottom: 7px;
+  letter-spacing: -0.01em;
 }
-.amDesc {
-  font-size: 13px;
+
+.subjectSectionAll {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 4px 0;
+  flex-shrink: 0;
+}
+
+.subjectSectionAll:hover { opacity: 0.7; }
+
+/* ── Subject grid (Focus mode) ────────────────────────────────────────────── */
+
+.subjectGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 36px;
+}
+
+@media (min-width: 560px) {
+  .subjectGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.subjectCard {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  padding: 24px 18px 20px;
+  border: none;
+  background: var(--eg-surface-card);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.3, 1), box-shadow 0.18s;
+  box-shadow: var(--eg-surface-shadow-soft);
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.subjectCard:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--eg-surface-shadow-card);
+}
+
+.subjectCard:active { transform: scale(0.98); }
+
+/* Colour stripe */
+.subjectCard::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--subject-color, var(--eg-brand));
+  border-radius: 18px 0 0 18px;
+}
+
+.subjectCardGlow {
+  position: absolute;
+  inset: 0;
+  opacity: 0.07;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.subjectCard:hover .subjectCardGlow { opacity: 0.16; }
+
+.subjectCardEmoji {
+  font-size: 34px;
+  line-height: 1;
+  margin-bottom: 4px;
+  position: relative;
+  z-index: 1;
+}
+
+.subjectCardName {
+  font-family: var(--eg-font-display);
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--eg-surface-text);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  position: relative;
+  z-index: 1;
+}
+
+.subjectCardDesc {
+  font-size: 11.5px;
   color: var(--eg-surface-text-dim);
-  margin: 0;
-  line-height: 1.55;
+  line-height: 1.4;
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.subjectCardCount {
+  font-size: 12px;
+  font-weight: 800;
+  margin-top: auto;
+  padding-top: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Subject drill-down view ──────────────────────────────────────────────── */
+
+.subjectView {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.subjectHero {
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.subjectHeroEmoji {
+  font-size: 40px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.subjectHeroText { flex: 1; }
+
+.subjectHeroName {
+  font-family: var(--eg-font-display);
+  font-size: 24px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: 3px;
+}
+
+.subjectHeroSub {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 500;
+}
+
+/* ── Game grid ────────────────────────────────────────────────────────────── */
+
+.gameGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+/* ── Game card ────────────────────────────────────────────────────────────── */
+
+.gameCard {
+  display: flex;
+  flex-direction: column;
+  background: var(--eg-surface-card);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--eg-surface-shadow-soft);
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.3, 1), box-shadow 0.15s;
+  border: 1px solid var(--eg-surface-border);
+}
+
+.gameCard:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--eg-surface-shadow-card);
+  border-color: transparent;
+}
+
+.gameCardInner {
+  flex: 1;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+}
+
+.gameCardArt {
+  position: relative;
+  width: 100%;
+  height: 110px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--eg-surface-card-2);
+}
+
+.gameCardBody {
+  padding: 12px 14px 8px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.gameCardTag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 20px;
+  width: fit-content;
+  line-height: 1.6;
+}
+
+.gameCardTitle {
+  font-family: var(--eg-font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--eg-surface-text);
+  line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.amCta {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 0 30px;
-  flex-shrink: 0;
-  color: #fff;
-  transition: filter .15s;
-}
-.activeMissionBanner:hover .amCta { filter: brightness(1.1); }
-.amCtaIcon  { font-size: 28px; line-height: 1; }
-.amCtaText  {
-  font-family: var(--eg-font-display, "Baloo 2", sans-serif);
-  font-size: 13px; font-weight: 800;
-  white-space: nowrap; text-align: center;
-}
 
-/* ══════════════════════════════════════════════════════════════════════
-   MISSION ROW  (horizontal scroll per-subject)
-   MISSION CARD  (dossier style — art + tag + title + desc + CTA)
-   Cards now use the same visual language as the active mission banner:
-   faction-coloured top border, glowing hover, description always visible.
-══════════════════════════════════════════════════════════════════════ */
-.missionRow {
-  display: flex;
-  gap: 14px;
-  overflow-x: auto;
-  padding-bottom: 8px;
-  /* let cards stretch the row height */
-  align-items: stretch;
-  scrollbar-width: thin;
-  scrollbar-color: var(--eg-surface-border) transparent;
-}
-.missionRow::-webkit-scrollbar { height: 4px; }
-.missionRow::-webkit-scrollbar-track { background: transparent; }
-.missionRow::-webkit-scrollbar-thumb { background: var(--eg-surface-border); border-radius: 2px; }
-
-/* Search-results grid */
-.missionGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 14px;
-}
-
-/* ── The card itself ──────────────────────────────────────────────── */
-.missionCard {
-  flex: 0 0 230px;
-  width: 230px;
-  background: var(--eg-surface-card);
-  border: 1.5px solid var(--eg-surface-border);
-  /* no top accent border — clean card face */
-  border-radius: 14px;
-  overflow: hidden;
-  text-decoration: none;
-  display: flex;
-  flex-direction: column;
-  transition: border-color .15s, box-shadow .15s, transform .12s;
-  position: relative;
-}
-/* grid mode: full width */
-.missionGrid .missionCard {
-  flex: unset;
-  width: unset;
-}
-.missionCard:hover {
-  border-color: var(--faction-color, var(--eg-surface-text-dim));
-
-  box-shadow:
-    0 0 0 1px var(--faction-color, transparent),
-    0 8px 24px rgba(0,0,0,.35),
-    0 0 20px -4px color-mix(in srgb, var(--faction-color, transparent) 40%, transparent);
-  transform: translateY(-3px);
-}
-
-/* Art area — gradient background from game theme */
-.missionCardArt {
-  width: 100%;
-  height: 100px;
-  overflow: hidden;
-  background: var(--faction-tint, var(--eg-surface-card-2));
-  flex-shrink: 0;
-  position: relative;
-}
-
-/* Content */
-.missionCardBody {
-  padding: 12px 14px 8px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-.missionCardTag {
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  margin-bottom: 5px;
-}
-.missionCardTitle {
-  font-family: var(--eg-font-display, "Baloo 2", sans-serif);
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--eg-surface-text);
-  line-height: 1.25;
-  margin-bottom: 6px;
-}
-.missionCardDesc {
-  font-size: 11.5px;
+.gameCardDesc {
+  font-size: 12px;
   color: var(--eg-surface-text-dim);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   margin: 0;
-  line-height: 1.55;
-  flex: 1;
-  /* allow full text — no clamp; card grows naturally */
 }
 
-/* Footer CTA */
-.missionCardFooter {
-  padding: 8px 14px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: auto;
-}
-.missionCardPlayBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  font-weight: 800;
+.gameCardPlayBtn {
+  margin: 8px 12px 12px;
+  padding: 9px 0;
+  border: none;
+  border-radius: 9px;
   color: #fff;
-  background: var(--faction-color, var(--eg-brand));
-  border-radius: 6px;
-  padding: 5px 12px;
-  transition: filter .12s, transform .1s;
-  white-space: nowrap;
-}
-.missionCard:hover .missionCardPlayBtn {
-  filter: brightness(1.1);
-  transform: translateX(2px);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  font-family: inherit;
+  transition: opacity 0.15s, transform 0.1s;
 }
 
-/* ── EMPTY STATE ────────────────────────────────────────────────────── */
+.gameCardPlayBtn:hover  { opacity: 0.85; }
+.gameCardPlayBtn:active { transform: scale(0.97); }
+
+/* ── Search results ───────────────────────────────────────────────────────── */
+
+.searchResults {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.searchResultsLabel {
+  font-size: 13px;
+  color: var(--eg-surface-text-dim);
+  font-weight: 600;
+  margin: 0;
+}
+
+/* ── Empty state ──────────────────────────────────────────────────────────── */
+
 .emptyState {
   text-align: center;
-  padding: 60px 24px;
+  padding: 60px 20px;
+  color: var(--eg-surface-text-dim);
+  font-size: 14px;
 }
-.emptyStateIcon  { font-size: 40px; margin-bottom: 12px; }
-.emptyStateTitle {
-  font-family: var(--eg-font-display, "Baloo 2", sans-serif);
-  font-size: 18px; font-weight: 700;
-  color: var(--eg-surface-text);
-  margin-bottom: 6px;
+
+.emptyIcon {
+  font-size: 40px;
+  margin-bottom: 12px;
+  opacity: 0.6;
 }
-.emptyStateSub  { font-size: 13px; color: var(--eg-surface-text-dim); margin-bottom: 16px; }
-.emptyStateCta  {
-  font-size: 13px; font-weight: 600;
-  color: var(--eg-brand);
-  background: none;
-  border: 1.5px solid var(--eg-surface-border);
-  border-radius: 8px;
-  padding: 8px 18px;
-  cursor: pointer;
-}
-.emptyStateCta:hover { border-color: var(--eg-brand); }
 
-/* ══════════════════════════════════════════════════════════════════════
-   RESPONSIVE
-══════════════════════════════════════════════════════════════════════ */
+/* ── TABLET (768px+) ──────────────────────────────────────────────────────── */
 
-/* ── Tablet (≤ 700px) ─────────────────────────────────────────────── */
-@media (max-width: 700px) {
-  .missionControl  { padding: 16px 16px 14px; }
-  .mcTopRow        { gap: 12px; }
-  .xpBarTrack      { max-width: 100%; }
-  .searchZone      { padding: 14px 16px 0; }
-  .mainContent     { padding: 16px 16px 60px; }
-  .sectionTitle    { font-size: 16px; }
+@media (min-width: 768px) {
+  .hudInner { padding: 0 32px; gap: 20px; }
+  .main     { padding: 32px 32px 0; }
 
-  /* subject toggles always wrap - names visible on all sizes */
-  .subjectToggles  { gap: 6px; flex-wrap: wrap; }
-  .subjectToggle   { flex: 1 1 calc(50% - 6px); justify-content: center; padding: 0 10px; min-width: 0; }
+  .arcadeCard { width: 168px; }
+  .arcadeCardComingSoon { width: 168px; }
+  .arcadeCardArt { height: 100px; }
 
-  /* mission cards slightly narrower */
-  .missionCard     { flex: 0 0 200px; width: 200px; }
-  .missionCardArt  { height: 85px; }
-
-  /* active mission: stack on mobile */
-  .activeMissionBanner { flex-direction: column; border-radius: 14px; }
-  .amArt   { width: 100%; height: 100px; }
-  .amBody  { padding: 12px 14px 10px; }
-  .amCta   {
-    flex-direction: row; gap: 10px;
-    padding: 14px 20px;
-    justify-content: center;
+  .gameGrid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   }
-  .amCtaIcon { font-size: 20px; }
-  .amCtaText { font-size: 15px; }
-  .missionGrid { grid-template-columns: 1fr 1fr; }
+
+  .subjectHeroName { font-size: 28px; }
+  .focusBanner { padding: 18px 22px; }
+
+  .subjectCard { min-height: 175px; }
 }
 
-/* ── Phone (≤ 430px) ─────────────────────────────────────────────── */
-@media (max-width: 430px) {
-  /* Very small screens: still show names, wrap to 2 cols, shrink font */
-  .subjectToggle     { flex: 1 1 calc(50% - 6px); min-width: 0; padding: 0 8px; }
-  .subjectToggleName { font-size: 10.5px; }
+/* ── DESKTOP (1024px+) ────────────────────────────────────────────────────── */
 
-  .missionGrid       { grid-template-columns: 1fr; }
-  .missionCard       { flex: 0 0 175px; width: 175px; }
-}
-
-/* ═══════════════════════════════════════════════════════════
-   DESKTOP LAYOUT (≥ 1024px)
-   The page body (below SiteHeader) is a flex row:
-     - .missionControl: sticky dark sidebar, 280px wide
-     - .desktopMain: flex-1, scrollable, contains search + content
-   SiteHeader is NOT part of this flex — it sits above in normal flow.
-   This avoids the CSS grid areas approach which breaks when SiteHeader
-   is not assigned a named grid area.
-═══════════════════════════════════════════════════════════ */
 @media (min-width: 1024px) {
-  /* The page body below SiteHeader becomes a flex row */
-  .pageBody {
-    display: flex;
-    align-items: flex-start;
-    min-height: calc(100vh - 56px); /* below header */
+  .hudInner { height: 64px; }
+  .main { padding: 36px 32px 0; }
+
+  .arcadeCard { width: 180px; }
+  .arcadeCardComingSoon { width: 180px; }
+  .arcadeCardArt { height: 110px; }
+
+  .gameGrid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
 
-  /* Sidebar */
-  .missionControl {
-    width: 280px;
-    flex-shrink: 0;
-    position: sticky;
-    top: 56px; /* below site header */
-    height: calc(100vh - 56px);
-    overflow-y: auto;
-    padding: 28px 20px 40px;
-    border-bottom: none;
-    border-right: 1px solid rgba(255,255,255,.06);
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    /* Hide scrollbar but keep scrollable */
-    scrollbar-width: none;
-  }
-  .missionControl::-webkit-scrollbar { display: none; }
-
-  .mcTopRow    { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
-  .classPill   { align-items: flex-start; width: 100%; }
-  .classDropdown { width: 100%; }
-
-  .xpBar       { margin-bottom: 24px; }
-  .xpBarTrack  { max-width: 100%; }
-
-  .subjectRow  { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-  .subjectToggles { flex-direction: column; gap: 8px; flex-wrap: nowrap; }
-  .subjectToggle {
-    flex: unset !important;
-    width: 100% !important;
-    height: 46px;
-    border-radius: 12px;
-    justify-content: flex-start;
-    padding: 0 16px;
-  }
-  .subjectToggleName { font-size: 13.5px; }
-  .subjectToggleEmoji { font-size: 18px; }
-
-  /* Main column */
-  .desktopMain {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
+  .subjectGrid {
+    grid-template-columns: repeat(4, 1fr);
   }
 
-  /* Sticky search bar at top of main column */
-  .searchZone {
-    position: sticky;
-    top: 56px;
-    z-index: 40;
-    background: var(--eg-surface-bg);
-    border-bottom: 1px solid var(--eg-surface-border);
-    padding: 20px 32px 16px;
-  }
-  .searchInner { max-width: 640px; }
-
-  /* Game content area */
-  .mainContent {
-    padding: 28px 36px 80px;
-    flex: 1;
-  }
-
-  /* Wider mission cards on desktop */
-  .missionCard { flex: 0 0 224px; width: 224px; }
-  .missionCardArt { height: 110px; }
-  .missionRow  { gap: 18px; padding-bottom: 12px; }
-  .missionGrid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
-
-  /* Active mission banner gets more room */
-  .amTitle  { font-size: clamp(18px, 1.8vw, 24px); }
-  .amArt    { width: 140px; }
-  .amCta    { padding: 0 36px; }
-
-  /* Section headings bigger */
-  .sectionTitle { font-size: 20px; }
+  /* Mode bar: keep inline with a spacer */
+  .modeBar { margin-bottom: 28px; }
 }
 
-/* Ultra-wide */
-@media (min-width: 1440px) {
-  .missionControl { width: 300px; padding: 32px 24px 48px; }
-  .mainContent    { padding: 32px 48px 80px; }
-  .missionCard    { flex: 0 0 250px; width: 250px; }
-  .missionCardArt { height: 120px; }
+/* ── MOBILE (<600px) ──────────────────────────────────────────────────────── */
+
+@media (max-width: 599px) {
+  .hudInner {
+    padding: 0 16px;
+    gap: 10px;
+    height: 54px;
+  }
+
+  /* Hide logo text on narrow screens */
+  .logoText { display: none; }
+
+  /* Collapse search to icon only unless active */
+  .searchBox {
+    width: 36px;
+    padding: 7px 10px;
+    overflow: hidden;
+  }
+
+  .searchBox:focus-within,
+  .searchBoxActive {
+    width: 140px;
+    padding: 7px 12px;
+  }
+
+  .searchInput { font-size: 13px; }
+
+  /* Class selector narrower */
+  .classSelector { padding: 6px 6px; font-size: 11px; }
+
+  /* Back label hidden on mobile */
+  .backLabel { display: none; }
+
+  .main { padding: 20px 16px 0; }
+
+  /* Mode bar stacks */
+  .modeBar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .modeDesc { font-size: 12px; }
+
+  /* Focus banner stacks */
+  .focusBanner {
+    flex-wrap: wrap;
+    padding: 14px 14px;
+    gap: 10px;
+  }
+
+  .focusCta { margin-left: 0; width: 100%; text-align: center; }
+
+  /* Continue banner */
+  .continueBanner { flex-wrap: wrap; padding: 12px 14px; }
+  .continueBannerTitle { font-size: 13px; }
+
+  /* Arcade scroll: smaller cards */
+  .arcadeCard { width: 130px; }
+  .arcadeCardComingSoon { width: 130px; }
+  .arcadeCardArt { height: 78px; font-size: 28px; }
+  .arcadeCardTitle { font-size: 12px; }
+  .arcadePlayBtn { font-size: 11px; }
+
+  /* Subject cards: 2-col */
+  .subjectGrid { grid-template-columns: repeat(2, 1fr); }
+  .subjectCard { min-height: 140px; padding: 18px 14px 16px; }
+  .subjectCardEmoji { font-size: 26px; }
+  .subjectCardName { font-size: 14px; }
+
+  /* Game grid: 2-col on small mobile */
+  .gameGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .gameCardArt { height: 80px; }
+  .gameCardBody { padding: 10px 11px 6px; }
+  .gameCardTitle { font-size: 12px; }
+  .gameCardDesc { display: none; }
+
+  .subjectHero { padding: 18px 16px; }
+  .subjectHeroName { font-size: 20px; }
+
+  /* HUD title compact */
+  .hudTitle { font-size: 15px; }
+  .hudXpBar { width: 80px; }
+  .hudXpNext { display: none; }
+}
+
+/* ── Very narrow phones (<400px) ──────────────────────────────────────────── */
+
+@media (max-width: 399px) {
+  .gameGrid { grid-template-columns: 1fr; }
+  .gameCardArt { height: 120px; }
+  .gameCardDesc { display: block; }
+
+  .subjectGrid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
 }

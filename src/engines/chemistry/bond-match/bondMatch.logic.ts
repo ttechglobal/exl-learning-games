@@ -1,4 +1,4 @@
-import { BOND_ELEMENTS } from "@/engines/bond-match/bondData";
+import { BOND_ELEMENTS } from "@/engines/chemistry/bond-match/bondData";
 
 export function isValidBondPair(elA: string, elB: string, targetPair: readonly [string, string]): boolean {
   const [a, b] = targetPair;

@@ -40,6 +40,7 @@ import { MISSIONS, MISSIONS_BY_TIER, randomMissionForTier, BUILTIN_QUESTIONS } f
 import { renderTokens, tokenHTML, answerHTML } from "./mathRender";
 import styles from "./ChangeOfSubjectEngine.module.css";
 import cosAudio from "./cosaudio";
+import { MicroGameWhackAMole } from "./MicroGameWhackAMole";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -59,7 +60,7 @@ type Screen =
   | "question_intro"    // "Make t the subject" callout before Q starts
   | "playing"           // active gameplay
   | "mission_complete"  // this mission is done — show score + next mission CTA
-  | "all_done";
+  | "micro_game";       // 30-second fun burst before next mission
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -850,9 +851,9 @@ export function ChangeOfSubjectEngine({
 
   // The equation sides — these are the drop targets
   function renderEquation(leftToks = step.leftToks, rightToks = step.rightToks) {
-    // Show "drop here" hint on sides that haven't had the tile placed yet
-    const showLeftHint  = stepPhase === "drag" && !lApplied;
-    const showRightHint = stepPhase === "drag" && !rApplied;
+    // Show "drop here" hint only on the first question so students learn the mechanic once
+    const showLeftHint  = stepPhase === "drag" && !lApplied  && qIdx === 0;
+    const showRightHint = stepPhase === "drag" && !rApplied  && qIdx === 0;
 
     return (
       <div className={styles.eqWrap}>
@@ -928,28 +929,28 @@ export function ChangeOfSubjectEngine({
     const correct = isLeft ? step.lAns : step.rAns;
     const qTokens = isLeft ? step.lqT : step.rqT;
 
-    const prompt = isLeft
-      ? "What does the <strong>left side</strong> simplify to?"
-      : `Left = <strong>${step.lAns}</strong> ✓ &nbsp; What does the <strong>right side</strong> simplify to?`;
-
     return (
       <div className={styles.mcqWrap}>
-        {/* MCQ prompt via mascot slot */}
-        <div
-          className={styles.mcqQ}
-          dangerouslySetInnerHTML={{
-            __html:
-              renderTokens(qTokens, 20) + " = ?",
-          }}
-        />
+        {/*
+          Math expression display — shows the side expression in a framed
+          box so the student clearly sees WHAT they are simplifying.
+          Rendered at a generous size so fractions/roots are readable.
+        */}
+        <div className={styles.mcqExprBox}>
+          <div
+            className={styles.mcqExprInner}
+            dangerouslySetInnerHTML={{ __html: renderTokens(qTokens, 22) }}
+          />
+          <span className={styles.mcqExprEquals}>=&nbsp;?</span>
+        </div>
+
+        {/* Answer option buttons */}
         <div className={styles.mcqOpts}>
           {mcqChoices.map((c) => {
             let cls = styles.mcqBtn;
             if (mcqChosen !== null) {
-              // Only mark correct when the student themselves chose correctly
               if (c === correct && c === mcqChosen) cls += " " + styles.mcqBtnCorrect;
               else if (c === mcqChosen && c !== correct) cls += " " + styles.mcqBtnWrong;
-              // Never reveal the correct answer on a wrong pick
             }
             return (
               <button
@@ -961,7 +962,6 @@ export function ChangeOfSubjectEngine({
             );
           })}
         </div>
-
       </div>
     );
   }
@@ -1376,8 +1376,8 @@ export function ChangeOfSubjectEngine({
                 </div>
               )}
 
-              {/* Score percentage */}
-              <div className={styles.lcScore} style={{ marginTop: 4 }}>{Math.round((record?.score ?? 0) * 100)}%</div>
+              {/* Score percentage — record.score is already 0-100, never multiply again */}
+              <div className={styles.lcScore} style={{ marginTop: 4 }}>{Math.round(record?.score ?? 0)}%</div>
               <div className={styles.lcScoreLbl}>accuracy</div>
 
               {/* Next mission name preview */}
@@ -1396,15 +1396,18 @@ export function ChangeOfSubjectEngine({
               )}
 
               <div className={styles.actRow} style={{ marginTop: 16, flexDirection: "column", gap: 10 }}>
-                {/* PRIMARY — continue the momentum */}
+                {/* PRIMARY — go to micro-game first, then next mission */}
                 <button
                   className={styles.btnTeal}
-                  onClick={goNextMission}
+                  onClick={() => setScreen("micro_game")}
                   style={{ width: "100%", fontSize: 16, padding: "14px 20px", borderRadius: 12,
                            boxShadow: "0 5px 0 #1c443b", transition: "transform .1s, box-shadow .1s",
                            display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
                 >
-                  {nextMeta ? <><span>🚀</span> Next Mission</> : <><span>🏆</span> {tier === "master" ? "All Complete!" : "Finish"}</>}
+                  {isLastMission
+                    ? <><span>🏆</span> You&apos;re Done!</>
+                    : <><span>🚀</span> Let&apos;s Continue</>
+                  }
                 </button>
 
                 {/* SECONDARY — back to pick */}
@@ -1417,6 +1420,22 @@ export function ChangeOfSubjectEngine({
           </div>
         </div>
       </div>
+    );
+  }
+
+  // ── Micro-game: Whack-a-Mole ────────────────────────────────────────────
+  // Pure fun, zero maths. Fires between mission_complete and the next mission.
+  // 20 seconds, moles pop from 9 holes, tap to whack. Bonus XP for score ≥ 5.
+  // Skip button always visible so no one feels trapped.
+  if (screen === "micro_game") {
+    return (
+      <MicroGameWhackAMole
+        onFinish={(_bonusXp: number) => {
+          // Bonus XP from micro-game noted — future: could award via separate lightweight call
+          // For now: proceed directly to next mission to keep the flow seamless
+          goNextMission();
+        }}
+      />
     );
   }
 
@@ -1559,21 +1578,6 @@ export function ChangeOfSubjectEngine({
               ✓ Left side done — now drag the same tile to the <strong>right side</strong> too ▶
             </div>
           )}
-          {stepPhase === "drag" && qIdx === 0 && sIdx === 0 && (
-            <div style={{
-              background: "#f0f9ff",
-              border: "1.5px solid #bae6fd",
-              borderRadius: 8,
-              padding: "8px 12px",
-              marginBottom: 8,
-              fontSize: 12,
-              color: "#0369a1",
-              lineHeight: 1.5,
-            }}>
-              <strong>How to play:</strong> Pick a tile from below and <strong>drag it onto BOTH sides</strong> of the equation — left side first, then right. This keeps the equation balanced. ⚖️
-            </div>
-          )}
-
           {/* Equation — the interactive surface */}
           {stepPhase === "result"
             ? null /* equation shown in result row */

@@ -20,7 +20,7 @@
  *      generic — this is a teaching game").
  */
 
-import { BOND_ORDER_WEIGHT, type AtomDef, type BondOrder, type Slot, type TargetBond } from "@/engines/molecule-builder/moleculeBuilder.config";
+import { BOND_ORDER_WEIGHT, type AtomDef, type BondOrder, type Slot, type TargetBond } from "@/engines/chemistry/molecule-builder/moleculeBuilder.config";
 
 export interface PlacedBond {
   slotA: string;

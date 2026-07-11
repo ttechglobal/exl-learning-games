@@ -7,18 +7,18 @@ import type {
   BondMatchFactoryOutcome,
   BondMission,
   FactoryOrder
-} from "@/engines/bond-match/bondMatch.config";
-import { isValidBondPair } from "@/engines/bond-match/bondMatch.logic";
-import { BOND_ELEMENTS, type BondElement } from "@/engines/bond-match/bondData";
+} from "@/engines/chemistry/bond-match/bondMatch.config";
+import { isValidBondPair } from "@/engines/chemistry/bond-match/bondMatch.logic";
+import { BOND_ELEMENTS, type BondElement } from "@/engines/chemistry/bond-match/bondData";
 import { Mascot } from "@/motion/Mascot";
 import { pickMascotLine } from "@/motion/mascotLines";
 import { fireIonicTransfer, fireCovalentSharing } from "@/motion/bondingMotion";
 import { playSound } from "@/motion/sound/playSound";
 import type { EngineRuntimeProps } from "@/engines/engine-types";
-import type { BondMatchSharedConfig } from "@/engines/bond-match/bondMatch.config";
+import type { BondMatchSharedConfig } from "@/engines/chemistry/bond-match/bondMatch.config";
 import { GameplayShell, type GameplayStat } from "@/components/gameplay/GameplayShell";
 import { GAME_ENVIRONMENT_IMAGES } from "@/lib/content/gameEnvironments";
-import styles from "@/engines/bond-match/BondMatchEngine.module.css";
+import styles from "@/engines/chemistry/bond-match/BondMatchEngine.module.css";
 
 interface PlacedAtom {
   id: string;
@@ -32,15 +32,6 @@ type Outcome = BondMatchMissionOutcome | BondMatchFactoryOutcome;
 
 /**
  * Resolves the REAL per-level config this engine should run against.
- *
- * Atom Forge needs "one game, several self-contained levels the player
- * picks from" — each level has its own element pool and missions-or-factory
- * config, which a single Game.shared_config can't hold for more than one
- * level. So: if the current mission's payload itself looks like a valid
- * shared config (has an elementPool and either missions or factory), use
- * THAT as the real config. Otherwise fall back to the top-level `shared`
- * (which covers any future bond-match game that genuinely is uniform
- * across its whole mission list, the way particle-assembly's games are).
  */
 function resolveSharedConfig(topLevelShared: BondMatchSharedConfig, missionPayload: Record<string, unknown> | undefined): BondMatchSharedConfig {
   if (
@@ -53,16 +44,6 @@ function resolveSharedConfig(topLevelShared: BondMatchSharedConfig, missionPaylo
   return topLevelShared;
 }
 
-/**
- * Picks the next compound to forge at random, rerolling once if it would
- * repeat the just-completed compound (when there's more than one option) —
- * per direct feedback ("the compounds should not be the same so the user
- * does not see the same thing every time and get bored"). A flat
- * round-robin (0,1,2,0,1,2,...) is deterministic and would still feel
- * repetitive session to session; true random with a no-immediate-repeat
- * guard reads as varied without ever showing the same compound twice in a
- * row.
- */
 function pickRandomMission(missions: BondMission[], excludeKey: string | null): BondMission {
   if (missions.length <= 1) return missions[0];
   let candidate = missions[Math.floor(Math.random() * missions.length)];
@@ -72,24 +53,6 @@ function pickRandomMission(missions: BondMission[], excludeKey: string | null): 
   return candidate;
 }
 
-/**
- * MIGRATED onto GameplayShell this round (previously rendered its own
- * raw <img> backdrop + absolute-positioned .hud directly — see
- * engine-types.ts's long comment on EngineRuntimeProps.menu, which
- * explicitly flagged that bond-match had NO working in-game menu during
- * actual gameplay as a result: Restart Mission / Exit to Worlds simply
- * didn't exist once a mission started, only before/after it). Now wired
- * the same way TileMatchEngine is: `menu` renders inside GameplayShell's
- * reserved row, `isPaused` actually halts the factory timer (see the
- * countdown effect below, which now checks it the same way
- * TileMatchEngine's does), and the environment backdrop goes through the
- * shared EnvironmentBackdrop/gameEnvironments.ts registry instead of a
- * hardcoded raw <img src="...">.
- *
- * Internal gameplay logic (drag physics, bond validation, factory
- * order cycling, the compound-reveal card, the hint toast) is UNCHANGED
- * by this migration — only the outer chrome moved.
- */
 export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRuntimeProps<BondMatchConfig, Outcome>) {
   const shared = resolveSharedConfig(config.shared, config.mission.payload);
   const isFactory = Boolean(shared.factory);
@@ -103,33 +66,6 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
   const [mascotPose, setMascotPose] = useState<"idle" | "celebrate" | "encourage" | null>(null);
   const [mascotLine, setMascotLine] = useState<string | null>(null);
 
-
-  /**
-   * Per direct feedback ("right now you do only one atom/compound, and
-   * then it ends — the user should be able to create different and more
-   * compounds in each level, not just one"): a single Atom Forge mission
-   * is now a real multi-compound SESSION, the same architectural shape
-   * tile-match already uses (loop internally, call onComplete exactly
-   * once at the end) rather than ending the moment the FIRST compound is
-   * forged. `activeMission` is the one compound on the platform right
-   * now; it's replaced with a random, no-immediate-repeat pick (see
-   * pickRandomMission above) each time one is completed, instead of a
-   * fixed round-robin through `shared.missions`.
-   *
-   * Two ways a session ends, matching bondMatch.config.ts's
-   * sessionLength/sessionDurationSec fields:
-   *   - untimed (Easy, no sessionDurationSec authored): ends after
-   *     `sessionLength` compounds (falls back to one full pass through
-   *     `shared.missions` if sessionLength isn't set, for any
-   *     mission authored before this field existed).
-   *   - timed (Medium/Hard, sessionDurationSec authored): ends when the
-   *     clock runs out, same shape as factory mode's countdown below —
-   *     the player forges as many compounds as they can in the time
-   *     given.
-   * Refs (sessionXpRef/sessionCompoundsRef/sessionWrongRef) are the
-   * source of truth read inside callbacks/timeouts to avoid stale
-   * closures; the paired state values exist only to drive the stats row.
-   */
   const [activeMission, setActiveMission] = useState<BondMission | null>(() =>
     !isFactory && shared.missions ? pickRandomMission(shared.missions, null) : null
   );
@@ -164,10 +100,6 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
   const activePair = currentMission?.pair ?? currentOrder?.pair ?? null;
   const activeBondType = currentMission?.bondType ?? currentOrder?.bondType ?? "ionic";
 
-  // Timed-session countdown (Medium/Hard, missions mode) — mirrors the
-  // factory countdown below exactly, just keyed off sessionDurationSec
-  // instead of factory.sessionDurationSec, and reading the session refs
-  // (not factory's own counters) for the final outcome.
   useEffect(() => {
     if (isFactory || typeof shared.sessionDurationSec !== "number" || sessionEndedRef.current) return;
     if (isPaused) return;
@@ -184,7 +116,7 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
       } as BondMatchMissionOutcome);
       return;
     }
-    const t = setTimeout(() => setSessionTimeLeft((s) => s - 1), 1000);
+    const t = setTimeout(() => setSessionTimeLeft((s: number) => s - 1), 1000);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFactory, shared.sessionDurationSec, sessionTimeLeft, isPaused]);
@@ -205,7 +137,7 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
       } as BondMatchFactoryOutcome);
       return;
     }
-    const t = setTimeout(() => setFactoryTimeLeft((s) => s - 1), 1000);
+    const t = setTimeout(() => setFactoryTimeLeft((s: number) => s - 1), 1000);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFactory, factoryTimeLeft, isPaused]);
@@ -269,12 +201,6 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
           }
         });
         const nearest: PlacedAtom | null = nearestFound;
-        // `nearest` is correctly PlacedAtom|null per the explicit annotation above,
-        // but TypeScript's control-flow narrowing collapses it to `never` inside
-        // this `if` block specifically (confirmed isolated compiler quirk, not a
-        // real type error — `dragged.symbol` right next to it in the same
-        // expression resolves fine). Re-asserting the already-correct type here
-        // rather than continuing to fight the narrower at the call site.
         if (nearest && activePair) {
           const nearestAtom = nearest as PlacedAtom;
           setConnector({ a: dragged, b: nearestAtom, valid: isValidBondPair(dragged.symbol, nearestAtom.symbol, activePair) });
@@ -344,11 +270,6 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
         sessionCompoundsRef.current += 1;
         setSessionXp(sessionXpRef.current);
         setSessionCompoundsCompleted(sessionCompoundsRef.current);
-        // Untimed sessions (Easy) end once compoundsTarget is reached;
-        // timed sessions (Medium/Hard) never end here — only the
-        // countdown effect above ends those, so this stays false for
-        // them and the advance-effect below just keeps picking new
-        // compounds until time runs out.
         sessionOverRef.current = !isTimedSession && sessionCompoundsRef.current >= compoundsTarget;
       }
     },
@@ -367,7 +288,7 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
         setMascotLine(null);
       }, 900);
 
-      const [needA, needB] = (activePair ?? ["", ""]).map((s) => BOND_ELEMENTS[s]?.name ?? s);
+      const [needA, needB] = (activePair ?? ["", ""]).map((s: string) => BOND_ELEMENTS[s]?.name ?? s);
       const aName = BOND_ELEMENTS[a.symbol]?.name ?? a.symbol;
       setHint(`${aName} won't bond there. This one needs ${needA} and ${needB} together.`);
       setTimeout(() => setHint(null), 2800);
@@ -414,8 +335,6 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
       });
       const nearest: PlacedAtom | null = nearestFound;
 
-      // Same confirmed TS narrowing quirk as onPointerMove above — re-asserting
-      // the already-correct type rather than fighting the compiler further.
       if (nearest) {
         const nearestAtom = nearest as PlacedAtom;
         attemptsRef.current += 1;
@@ -535,7 +454,7 @@ export function BondMatchEngine({ config, onComplete, isPaused, menu }: EngineRu
                     style={{ left: atom.x, top: atom.y, "--el-color": el.hex } as React.CSSProperties}
                     onPointerDown={(e) => startDragFromAtom(e, atom.id)}
                   >
-                    {el.shells.map((count, shellIdx) => {
+                    {el.shells.map((count: number, shellIdx: number) => {
                       const radius = 18 + shellIdx * 11;
                       const dotCount = Math.min(count, 8);
                       return (

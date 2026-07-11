@@ -1,5 +1,5 @@
-import { HUNTER_ELEMENTS, type HunterElement, type ElementGroup } from "@/engines/tile-match/elementData";
-import type { ClueType, Tier } from "@/engines/tile-match/tileMatch.config";
+import { HUNTER_ELEMENTS, type HunterElement, type ElementGroup } from "@/engines/chemistry/tile-match/elementData";
+import type { ClueType, Tier } from "@/engines/chemistry/tile-match/tileMatch.config";
 
 export interface Clue {
   type: ClueType;

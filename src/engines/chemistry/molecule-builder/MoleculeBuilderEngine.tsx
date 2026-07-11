@@ -8,7 +8,7 @@ import type {
   AtomDef,
   TargetBond,
   Slot
-} from "@/engines/molecule-builder/moleculeBuilder.config";
+} from "@/engines/chemistry/molecule-builder/moleculeBuilder.config";
 import {
   bondCountForSlot,
   wouldOverfill,
@@ -16,17 +16,17 @@ import {
   buildFeedback,
   atomDefBySymbol,
   type PlacedBond
-} from "@/engines/molecule-builder/moleculeBuilder.logic";
+} from "@/engines/chemistry/molecule-builder/moleculeBuilder.logic";
 import { runSuccessSequence, runFailureSequence } from "@/motion/payoffSequence";
 import { playSound, primeAudioOnUserGesture } from "@/motion/sound/playSound";
 import { Mascot } from "@/motion/Mascot";
 import type { EngineRuntimeProps } from "@/engines/engine-types";
 import { GameplayShell, type GameplayStat } from "@/components/gameplay/GameplayShell";
 import { GAME_ENVIRONMENT_IMAGES } from "@/lib/content/gameEnvironments";
-import styles from "@/engines/molecule-builder/MoleculeBuilderEngine.module.css";
+import styles from "@/engines/chemistry/molecule-builder/MoleculeBuilderEngine.module.css";
 
 /**
- * engines/molecule-builder/MoleculeBuilderEngine.tsx
+ * engines/chemistry/molecule-builder/MoleculeBuilderEngine.tsx
  *
  * REDESIGNED per direct feedback that the original tap-to-arm bonding
  * interaction wasn't clear or easy to understand — players were

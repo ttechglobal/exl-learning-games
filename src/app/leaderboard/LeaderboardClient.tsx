@@ -21,6 +21,8 @@ export interface LeaderboardClientProps {
   initialMyRank: StudentRankInfo | null;
   currentStudentId?: string;
   currentStudentXp?: number;
+  /** Previous week's champion — shown in a card at the top, same as homepage */
+  previousChampion?: LeaderboardEntry | null;
 }
 
 const TABS: { key: LeaderboardPeriod; label: string }[] = [
@@ -51,7 +53,7 @@ const RANK_MEDALS: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
  * see page.tsx's header for why only the default period is fetched
  * server-side.
  */
-export function LeaderboardClient({ initialPeriod, initialEntries, initialMyRank, currentStudentId, currentStudentXp }: LeaderboardClientProps) {
+export function LeaderboardClient({ initialPeriod, initialEntries, initialMyRank, currentStudentId, currentStudentXp, previousChampion }: LeaderboardClientProps) {
   const { theme, toggleTheme } = useTheme();
   const [period, setPeriod] = useState<LeaderboardPeriod>(initialPeriod);
   const [entries, setEntries] = useState<LeaderboardEntry[]>(initialEntries);
@@ -112,6 +114,9 @@ export function LeaderboardClient({ initialPeriod, initialEntries, initialMyRank
 
   return (
     <div className={styles.page} data-theme={theme}>
+      {/* Grid ambient background — matches Worlds and Profile pages */}
+      <div className={styles.gridBg} aria-hidden="true" />
+
       <SiteHeader theme={theme} onToggleTheme={toggleTheme} active="leaderboard" currentStudentXp={currentStudentXp} />
 
       <div className={styles.titleRow}>
@@ -121,6 +126,30 @@ export function LeaderboardClient({ initialPeriod, initialEntries, initialMyRank
             <h1 className={styles.title}>🏆 Leaderboard</h1>
             <p className={styles.subtitle}>Earn XP by completing missions across every game to climb the board.</p>
           </div>
+
+          {/* Weekly champion card — same data/component as homepage */}
+          {previousChampion && (() => {
+            const r = getRank(previousChampion.xpTotal);
+            return (
+              <div className={styles.championCard}>
+                <div className={styles.championCrown}>👑</div>
+                <div className={styles.championAvatar}>⭐</div>
+                <div className={styles.championBody}>
+                  <div className={styles.championWeekLabel}>Last Week's Champion</div>
+                  <div className={styles.championName}>{previousChampion.displayName}</div>
+                  <div className={styles.championMeta}>
+                    <span className={styles.championRank} style={{ color: r.color }}>
+                      {r.icon} {r.label}
+                    </span>
+                    {previousChampion.school && (
+                      <span className={styles.championSchool}>{previousChampion.school}</span>
+                    )}
+                  </div>
+                  <div className={styles.championXp}>{previousChampion.xpTotal.toLocaleString()} XP</div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
 

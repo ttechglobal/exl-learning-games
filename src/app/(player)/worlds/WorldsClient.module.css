@@ -1,16 +1,7 @@
-/* WorldsClient.module.css — Dashboard Redesign
+/* WorldsClient.module.css — v4
  *
  * Tokens: exclusively --eg-* from motion/tokens.css
- * Light/dark: [data-theme="dark"] on .page
- *
- * Layout layers:
- *   .hud        — sticky game HUD header
- *   .main       — scrollable content below HUD
- *   .modeBar    — Play / Focus toggle
- *   .arcadeSection — horizontal arcade strip
- *   .subjectSection — per-subject game rows (Play mode)
- *   .subjectGrid — 4-up subject cards (Focus mode)
- *   .gameGrid   — auto-fill game cards
+ * [data-theme="dark"] on .page handles dark mode
  */
 
 /* ── Page ─────────────────────────────────────────────────────────────────── */
@@ -22,15 +13,12 @@
   font-family: var(--eg-font-body, system-ui, sans-serif);
   position: relative;
   overflow-x: hidden;
-  padding-bottom: 80px;
+  padding-bottom: 100px;
 }
 
-.page :global(a) {
-  text-decoration: none;
-  color: inherit;
-}
+.page :global(a) { text-decoration: none; color: inherit; }
 
-/* ── Ambient background ───────────────────────────────────────────────────── */
+/* ── Ambient ──────────────────────────────────────────────────────────────── */
 
 .ambient {
   position: fixed;
@@ -38,45 +26,41 @@
   z-index: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(var(--eg-grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--eg-grid-line) 1px, transparent 1px);
+    linear-gradient(var(--eg-grid-line, rgba(0,0,0,0.04)) 1px, transparent 1px),
+    linear-gradient(90deg, var(--eg-grid-line, rgba(0,0,0,0.04)) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
 .ambientBlob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(70px);
+  filter: blur(80px);
   pointer-events: none;
 }
 
 .blobA {
-  width: 380px;
-  height: 380px;
-  top: -120px;
-  left: -100px;
-  background: var(--eg-subject-chemistry);
+  width: 340px; height: 340px;
+  top: -100px; left: -80px;
+  background: var(--eg-subject-chemistry, #7b4fcb);
   opacity: 0.05;
 }
 
 .blobB {
-  width: 280px;
-  height: 280px;
-  top: 80px;
-  right: -80px;
-  background: var(--eg-gold);
-  opacity: 0.06;
+  width: 260px; height: 260px;
+  top: 60px; right: -70px;
+  background: var(--eg-gold, #f59e0b);
+  opacity: 0.055;
 }
 
-/* ── HUD Header ───────────────────────────────────────────────────────────── */
+/* ── HUD ──────────────────────────────────────────────────────────────────── */
 
 .hud {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: color-mix(in srgb, var(--eg-surface-bg) 92%, transparent);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--eg-surface-bg) 90%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--eg-surface-border);
 }
 
@@ -84,125 +68,28 @@
   max-width: 1180px;
   margin: 0 auto;
   padding: 0 24px;
-  height: 60px;
+  height: 58px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
-/* Left */
-.hudLeft {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-}
+.hudLeft  { flex-shrink: 0; }
+.hudRight { flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
 
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
-}
-
-.logoMark {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  background: var(--eg-brand);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--eg-font-display);
-  font-weight: 800;
-  font-size: 15px;
-  flex-shrink: 0;
-}
-
-.logoText {
-  font-family: var(--eg-font-display);
-  font-weight: 800;
-  font-size: 16px;
-  color: var(--eg-surface-text);
-  letter-spacing: -0.01em;
-}
-
-.backBtn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: none;
-  border: 1.5px solid var(--eg-surface-border);
-  color: var(--eg-surface-text);
-  font-size: 13px;
-  font-weight: 700;
-  padding: 7px 14px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.backBtn:hover {
-  background: var(--eg-surface-card-2);
-  border-color: var(--eg-surface-text-dim);
-}
-
-.backArrow { font-size: 15px; }
-.backLabel { }
-
-/* Centre */
 .hudCenter {
   flex: 1;
-  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.hudTitleGroup {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  min-width: 0;
 }
 
 .hudTitle {
   font-family: var(--eg-font-display);
-  font-weight: 800;
   font-size: 17px;
+  font-weight: 800;
   color: var(--eg-surface-text);
   letter-spacing: -0.01em;
-  line-height: 1;
-}
-
-.hudXpBar {
-  width: 120px;
-  height: 4px;
-  background: var(--eg-surface-card-2);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.hudXpFill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--eg-subject-chemistry), var(--eg-gold));
-  border-radius: 3px;
-  transition: width 0.6s ease;
-  min-width: 4px;
-}
-
-.hudXpLabel {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--eg-surface-text-faint);
-  white-space: nowrap;
-  letter-spacing: 0.01em;
-}
-
-.hudXpNext {
-  color: var(--eg-gold);
 }
 
 .hudSubjectTitle {
@@ -215,134 +102,110 @@
   color: var(--eg-surface-text);
 }
 
-/* Right */
-.hudRight {
-  flex-shrink: 0;
+.logo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
 }
 
-/* Search */
+.logoMark {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  background: var(--eg-brand);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.logoText {
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--eg-surface-text);
+}
+
+.backBtn {
+  display: flex; align-items: center; gap: 6px;
+  background: none;
+  border: 1.5px solid var(--eg-surface-border);
+  color: var(--eg-surface-text);
+  font-size: 13px; font-weight: 700;
+  padding: 6px 13px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.14s;
+}
+.backBtn:hover { background: var(--eg-surface-card-2); }
+.backLabel { }
+
+/* Search box in HUD */
 .searchBox {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  display: flex; align-items: center; gap: 6px;
   background: var(--eg-surface-card-2);
   border: 1.5px solid var(--eg-surface-border);
   border-radius: 22px;
-  padding: 7px 12px;
-  transition: border-color 0.15s, background 0.15s, width 0.2s;
-  width: 140px;
+  padding: 6px 12px;
+  width: 130px;
+  transition: width 0.2s, border-color 0.15s;
 }
-
-.searchBox:focus-within,
-.searchBoxActive {
-  background: var(--eg-surface-card);
+.searchBox:focus-within, .searchBoxActive {
+  width: 190px;
   border-color: var(--eg-brand);
-  width: 200px;
+  background: var(--eg-surface-card);
 }
-
-.searchIcon {
-  font-size: 13px;
-  opacity: 0.45;
-  flex-shrink: 0;
-  line-height: 1;
-}
-
+.searchIcon  { font-size: 12px; opacity: 0.4; flex-shrink: 0; line-height: 1; }
 .searchInput {
-  flex: 1;
-  background: none;
-  border: none;
-  outline: none;
-  color: var(--eg-surface-text);
-  font-size: 13px;
-  font-weight: 500;
-  font-family: inherit;
-  min-width: 0;
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--eg-surface-text); font-size: 13px; font-weight: 500; font-family: inherit; min-width: 0;
 }
+.searchInput::placeholder { color: var(--eg-surface-text-faint); }
+.searchClear { background: none; border: none; color: var(--eg-surface-text-faint); font-size: 11px; cursor: pointer; padding: 0; font-family: inherit; }
 
-.searchInput::placeholder {
-  color: var(--eg-surface-text-faint);
-}
-
-.searchClear {
-  background: none;
-  border: none;
-  color: var(--eg-surface-text-faint);
-  font-size: 12px;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-  font-family: inherit;
-}
-
-/* Class selector */
 .classSelector {
   background: var(--eg-surface-card-2);
   border: 1.5px solid var(--eg-surface-border);
   color: var(--eg-surface-text);
-  font-size: 12px;
-  font-weight: 700;
-  padding: 7px 9px;
+  font-size: 12px; font-weight: 700;
+  padding: 6px 8px;
   border-radius: 8px;
-  cursor: pointer;
-  outline: none;
-  font-family: inherit;
-  flex-shrink: 0;
+  cursor: pointer; outline: none; font-family: inherit; flex-shrink: 0;
 }
 
-/* Theme toggle */
 .themeBtn {
-  background: none;
-  border: none;
-  font-size: 17px;
-  cursor: pointer;
-  padding: 4px;
-  line-height: 1;
-  border-radius: 6px;
-  flex-shrink: 0;
+  background: none; border: none;
+  font-size: 16px; cursor: pointer; padding: 3px; border-radius: 6px; flex-shrink: 0;
 }
 
-/* Avatar */
 .avatarBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--eg-brand-tint);
-  text-decoration: none;
-  flex-shrink: 0;
-  transition: opacity 0.15s;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--eg-brand-tint, rgba(123,79,203,0.12));
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: opacity 0.14s;
 }
-
 .avatarBtn:hover { opacity: 0.8; }
+.avatarInner { font-size: 11px; font-weight: 800; color: var(--eg-brand); }
 
-.avatarInner {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--eg-brand);
-}
-
-/* ── Main content ─────────────────────────────────────────────────────────── */
+/* ── Main ─────────────────────────────────────────────────────────────────── */
 
 .main {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 28px 24px 0;
+  padding: 24px 24px 0;
   position: relative;
   z-index: 1;
 }
 
-/* ── Mode Bar ─────────────────────────────────────────────────────────────── */
+/* ── Mode row: pills + rank badge ─────────────────────────────────────────── */
 
-.modeBar {
+.modeRow {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 22px;
 }
 
 .modePills {
@@ -352,214 +215,54 @@
   border: 1px solid var(--eg-surface-border);
   border-radius: 13px;
   padding: 4px;
-  flex-shrink: 0;
 }
 
 .modePill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 16px;
+  padding: 7px 18px;
   border-radius: 9px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  border: none;
-  font-family: inherit;
+  font-size: 13px; font-weight: 700;
+  cursor: pointer; border: none; font-family: inherit;
   color: var(--eg-surface-text-dim);
   background: transparent;
   transition: background 0.15s, color 0.15s, box-shadow 0.15s;
   white-space: nowrap;
 }
-
-.modePill:hover {
-  background: var(--eg-surface-card-2);
-  color: var(--eg-surface-text);
-}
-
+.modePill:hover { background: var(--eg-surface-card-2); color: var(--eg-surface-text); }
 .modePillActive {
   background: var(--eg-brand) !important;
   color: #fff !important;
-  box-shadow: 0 3px 10px -2px rgba(11, 19, 48, 0.35);
+  box-shadow: 0 3px 10px -2px color-mix(in srgb, var(--eg-brand) 55%, transparent);
 }
 
-[data-theme="dark"] .modePillActive {
-  background: var(--eg-brand) !important;
-  box-shadow: 0 3px 10px -2px rgba(74, 91, 168, 0.5);
-}
+/* ── HUD rank chip ────────────────────────────────────────────────────────── */
+/* Compact rank indicator that lives in the HUD right side.
+   Shows icon + label + thin progress bar. Tooltip shows full XP. */
 
-.modeDesc {
-  font-size: 13px;
-  color: var(--eg-surface-text-dim);
-  font-weight: 500;
-  margin: 0;
-  line-height: 1.4;
-}
-
-/* ── Focus Banner ─────────────────────────────────────────────────────────── */
-
-.focusBanner {
+.hudRankChip {
   display: flex;
   align-items: center;
-  gap: 14px;
-  background: var(--eg-surface-card);
-  border: 1.5px solid var(--eg-surface-border);
-  border-radius: 16px;
-  padding: 16px 18px;
-  margin-bottom: 24px;
-  box-shadow: var(--eg-surface-shadow-soft);
-}
-
-.focusIco {
-  font-size: 28px;
-  flex-shrink: 0;
-  line-height: 1;
-}
-
-.focusText {
-  flex: 1;
-  min-width: 0;
-}
-
-.focusTitle {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--eg-surface-text);
-  margin-bottom: 2px;
-}
-
-.focusSub {
-  font-size: 12px;
-  color: var(--eg-surface-text-dim);
-  line-height: 1.45;
-}
-
-.focusCta {
-  flex-shrink: 0;
-  padding: 9px 16px;
-  border-radius: 10px;
-  background: var(--eg-brand);
-  color: #fff;
-  border: none;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-  font-family: inherit;
-  letter-spacing: 0.02em;
-  box-shadow: 0 4px 0 color-mix(in srgb, var(--eg-brand) 70%, black);
-  transition: transform 0.1s, box-shadow 0.1s;
-}
-
-.focusCta:hover { opacity: 0.9; }
-.focusCta:active {
-  transform: translateY(2px);
-  box-shadow: 0 2px 0 color-mix(in srgb, var(--eg-brand) 70%, black);
-}
-
-/* ── Continue ─────────────────────────────────────────────────────────────── */
-
-/* Outer wrapper — positions the label above the card */
-.continueWrap {
-  margin-bottom: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-/* The "Continue where you left off" label row — sits ABOVE the card */
-.continueLabelRow {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 0 4px 8px;
-}
-
-.continuePulse {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #22c55e;
-  animation: pulse 2s ease-in-out infinite;
-  flex-shrink: 0;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.6; transform: scale(1.3); }
-}
-
-.continueBannerLabel {
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #22c55e;
-  white-space: nowrap;
-}
-
-/* The actual card — no pulse or label inside */
-.continueBanner {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: var(--eg-surface-card);
-  border: 1px solid var(--eg-surface-border);
-  border-radius: 16px;
-  padding: 12px 16px;
-  box-shadow: var(--eg-surface-shadow-soft);
-  transition: box-shadow 0.15s;
-}
-
-.continueBanner:hover {
-  box-shadow: var(--eg-surface-shadow-card);
-}
-
-.continueBannerArt {
-  position: relative;
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  overflow: hidden;
-  flex-shrink: 0;
+  gap: 6px;
   background: var(--eg-surface-card-2);
-}
-
-.continueBannerBody {
-  flex: 1;
-  min-width: 0;
-}
-
-.continueBannerSubject {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 2px;
-}
-
-.continueBannerTitle {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--eg-surface-text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.continueBannerBtn {
+  border: 1px solid var(--eg-surface-border);
+  border-radius: 20px;
+  padding: 5px 10px;
   flex-shrink: 0;
-  color: #fff !important;
-  font-size: 12px;
-  font-weight: 800;
-  padding: 8px 16px;
-  border-radius: 9px;
-  text-decoration: none;
-  transition: opacity 0.15s, transform 0.1s;
-  white-space: nowrap;
+  cursor: default;
 }
 
-.continueBannerBtn:hover { opacity: 0.88; }
-.continueBannerBtn:active { transform: scale(0.97); }
+.hudRankIcon  { font-size: 14px; line-height: 1; flex-shrink: 0; }
+.hudRankLabel { font-size: 11px; font-weight: 800; color: var(--eg-surface-text); white-space: nowrap; }
+
+.hudRankBar {
+  width: 36px; height: 3px;
+  background: var(--eg-surface-card);
+  border-radius: 2px; overflow: hidden;
+}
+
+.hudRankFill {
+  height: 100%; border-radius: 2px;
+  transition: width 0.6s ease; min-width: 2px;
+}
 
 /* ── Section shared ───────────────────────────────────────────────────────── */
 
@@ -571,604 +274,552 @@
 }
 
 .sectionLabel {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--eg-surface-text-faint);
+  letter-spacing: 0.06em;
+  color: var(--eg-surface-text);
 }
 
 .sectionTag {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--eg-gold) 15%, transparent);
-  color: color-mix(in srgb, var(--eg-gold) 80%, #7a5000);
+  font-size: 10px; font-weight: 700;
+  padding: 2px 8px; border-radius: 20px;
+  background: color-mix(in srgb, var(--eg-gold, #f59e0b) 14%, transparent);
+  color: color-mix(in srgb, var(--eg-gold, #f59e0b) 80%, #5a3800);
 }
 
-.sectionCount {
+.seeAllBtn {
   margin-left: auto;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--eg-surface-text-faint);
+  background: none; border: none;
+  font-size: 12px; font-weight: 700;
+  color: var(--eg-surface-text-dim);
+  cursor: pointer; font-family: inherit;
+  padding: 4px 0;
+  transition: color 0.14s;
+  flex-shrink: 0;
 }
+.seeAllBtn:hover { color: var(--eg-surface-text); }
 
-/* ── Arcade Section ───────────────────────────────────────────────────────── */
+/* ── Arcade section ───────────────────────────────────────────────────────── */
 
-.arcadeSection {
-  margin-bottom: 36px;
-  transition: opacity 0.25s;
-}
+.arcadeSection { margin-bottom: 36px; }
 
-.arcadeDimmed {
-  opacity: 0.45;
-  pointer-events: none;
-}
-
-.arcadeScroll {
+/* Strip: horizontal scroll (collapsed, shows 2) */
+.arcadeStrip {
   display: flex;
   gap: 12px;
   overflow-x: auto;
   padding-bottom: 6px;
   scrollbar-width: none;
-  -ms-overflow-style: none;
+}
+.arcadeStrip::-webkit-scrollbar { display: none; }
+
+/* Grid: 2-col+ (expanded) */
+.arcadeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
 }
 
-.arcadeScroll::-webkit-scrollbar { display: none; }
-
-/* Arcade Card */
+/* Arcade card */
 .arcadeCard {
   flex-shrink: 0;
-  width: 150px;
+  width: 160px;          /* strip width */
   background: var(--eg-surface-card);
   border-radius: 18px;
   overflow: hidden;
   border: 1.5px solid var(--eg-surface-border);
-  box-shadow: var(--eg-surface-shadow-soft);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   display: flex;
   flex-direction: column;
-  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.3, 1), box-shadow 0.18s;
-  cursor: pointer;
+  transition: transform 0.18s cubic-bezier(0.2,0.8,0.3,1), box-shadow 0.18s;
 }
 
-.arcadeCard:hover {
-  transform: translateY(-6px) rotate(-1deg);
-  box-shadow: var(--eg-surface-shadow-card);
-}
+/* In grid mode, let it fill the column */
+.arcadeGrid .arcadeCard { width: auto; }
 
-.arcadeCardInner {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  text-decoration: none;
-  color: inherit;
-}
+.arcadeCard:hover { transform: translateY(-5px) rotate(-0.8deg); box-shadow: 0 12px 28px rgba(0,0,0,0.12); }
+
+.arcadeCardSoon { opacity: 0.55; border-style: dashed; pointer-events: none; }
+
+.arcadeCardInner { flex: 1; display: flex; flex-direction: column; color: inherit; }
 
 .arcadeCardArt {
   height: 90px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 36px;
-  position: relative;
-  overflow: hidden;
-  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden; flex-shrink: 0;
 }
 
-.arcadeCardBody {
-  padding: 10px 12px 4px;
+.arcadeCardEmoji { font-size: 40px; line-height: 1; }
+
+.arcadeSoonBadge {
+  position: absolute; top: 8px; right: 8px;
+  font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;
+  background: var(--eg-surface-card-2); color: var(--eg-surface-text-faint);
+  padding: 2px 6px; border-radius: 6px;
 }
 
-.arcadeCardTitle {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--eg-surface-text);
-  margin-bottom: 2px;
-  line-height: 1.3;
-}
-
-.arcadeCardMeta {
-  font-size: 11px;
-  color: var(--eg-surface-text-dim);
-  font-weight: 600;
-}
+.arcadeCardBody { padding: 10px 12px 4px; }
+.arcadeCardTitle { font-size: 13px; font-weight: 700; color: var(--eg-surface-text); margin-bottom: 2px; line-height: 1.3; }
+.arcadeCardMeta  { font-size: 11px; color: var(--eg-surface-text-dim); font-weight: 500; }
 
 .arcadePlayBtn {
-  margin: 8px 12px 10px;
+  display: block;
+  margin: 8px 12px 12px;
   padding: 7px 0;
-  border: none;
-  border-radius: 9px;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-  font-family: inherit;
+  text-align: center;
+  border: none; border-radius: 9px;
+  color: #fff !important;
+  font-size: 12px; font-weight: 800;
+  cursor: pointer; font-family: inherit;
   letter-spacing: 0.03em;
-  transition: opacity 0.15s, transform 0.1s;
+  transition: opacity 0.14s, transform 0.1s;
 }
-
 .arcadePlayBtn:hover  { opacity: 0.85; }
 .arcadePlayBtn:active { transform: scale(0.97); }
 
-/* Coming soon arcade card */
-/* Coming soon arcade card variant */
-.arcadeCardSoon {
-  opacity: 0.6;
-  border-style: dashed !important;
-  pointer-events: none;
-  cursor: default;
-}
-
-.arcadeSoonBadge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  background: var(--eg-surface-card-2);
-  color: var(--eg-surface-text-faint);
-  padding: 2px 6px;
-  border-radius: 6px;
-}
-
 /* ── Subject sections (Play mode) ─────────────────────────────────────────── */
 
-.subjectSection {
-  margin-bottom: 36px;
-}
+.subjectSection { margin-bottom: 32px; }
 
 .subjectSectionHead {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
 }
 
 .subjectSectionIcon {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 17px;
-  flex-shrink: 0;
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
 }
 
 .subjectSectionName {
   font-family: var(--eg-font-display);
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-}
-
-.subjectSectionAll {
-  margin-left: auto;
-  background: none;
-  border: none;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: inherit;
-  padding: 4px 0;
-  flex-shrink: 0;
-}
-
-.subjectSectionAll:hover { opacity: 0.7; }
-
-/* ── Subject grid (Focus mode) ────────────────────────────────────────────── */
-
-.subjectGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
-  margin-bottom: 36px;
-}
-
-@media (min-width: 560px) {
-  .subjectGrid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-.subjectCard {
-  position: relative;
-  overflow: hidden;
-  border-radius: 18px;
-  padding: 24px 18px 20px;
-  border: none;
-  background: var(--eg-surface-card);
-  cursor: pointer;
-  text-align: left;
-  font-family: inherit;
-  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.3, 1), box-shadow 0.18s;
-  box-shadow: var(--eg-surface-shadow-soft);
-  min-height: 160px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.subjectCard:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--eg-surface-shadow-card);
-}
-
-.subjectCard:active { transform: scale(0.98); }
-
-/* Colour stripe */
-.subjectCard::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0;
-  width: 4px;
-  height: 100%;
-  background: var(--subject-color, var(--eg-brand));
-  border-radius: 18px 0 0 18px;
-}
-
-.subjectCardGlow {
-  position: absolute;
-  inset: 0;
-  opacity: 0.07;
-  pointer-events: none;
-  transition: opacity 0.2s;
-}
-
-.subjectCard:hover .subjectCardGlow { opacity: 0.16; }
-
-.subjectCardEmoji {
-  font-size: 34px;
-  line-height: 1;
-  margin-bottom: 4px;
-  position: relative;
-  z-index: 1;
-}
-
-.subjectCardName {
-  font-family: var(--eg-font-display);
-  font-size: 16px;
-  font-weight: 900;
-  color: var(--eg-surface-text);
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-  position: relative;
-  z-index: 1;
-}
-
-.subjectCardDesc {
-  font-size: 11.5px;
-  color: var(--eg-surface-text-dim);
-  line-height: 1.4;
-  flex: 1;
-  position: relative;
-  z-index: 1;
-}
-
-.subjectCardCount {
-  font-size: 12px;
-  font-weight: 800;
-  margin-top: auto;
-  padding-top: 8px;
-  position: relative;
-  z-index: 1;
-}
-
-/* ── Subject drill-down view ──────────────────────────────────────────────── */
-
-.subjectView {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.subjectHero {
-  border-radius: 16px;
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.subjectHeroEmoji {
-  font-size: 40px;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.subjectHeroText { flex: 1; }
-
-.subjectHeroName {
-  font-family: var(--eg-font-display);
-  font-size: 24px;
-  font-weight: 900;
-  color: #fff;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  margin-bottom: 3px;
-}
-
-.subjectHeroSub {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.75);
-  font-weight: 500;
+  font-size: 15px; font-weight: 800; letter-spacing: -0.01em;
 }
 
 /* ── Game grid ────────────────────────────────────────────────────────────── */
 
 .gameGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap: 14px;
 }
 
 /* ── Game card ────────────────────────────────────────────────────────────── */
 
 .gameCard {
-  display: flex;
-  flex-direction: column;
+  display: flex; flex-direction: column;
   background: var(--eg-surface-card);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: var(--eg-surface-shadow-soft);
-  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.3, 1), box-shadow 0.15s;
+  border-radius: 16px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   border: 1px solid var(--eg-surface-border);
+  transition: transform 0.15s cubic-bezier(0.2,0.8,0.3,1), box-shadow 0.15s;
 }
-
 .gameCard:hover {
   transform: translateY(-4px);
-  box-shadow: var(--eg-surface-shadow-card);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.1);
   border-color: transparent;
 }
 
-.gameCardInner {
-  flex: 1;
-  text-decoration: none;
-  color: inherit;
-  display: flex;
-  flex-direction: column;
-}
+.gameCardInner { flex: 1; display: flex; flex-direction: column; color: inherit; }
 
 .gameCardArt {
-  position: relative;
-  width: 100%;
-  height: 110px;
-  overflow: hidden;
-  flex-shrink: 0;
-  background: var(--eg-surface-card-2);
+  position: relative; width: 100%; height: 110px;
+  overflow: hidden; flex-shrink: 0; background: var(--eg-surface-card-2);
 }
 
 .gameCardBody {
   padding: 12px 14px 8px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+  flex: 1; display: flex; flex-direction: column; gap: 5px;
 }
 
 .gameCardTag {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 2px 8px;
-  border-radius: 20px;
-  width: fit-content;
-  line-height: 1.6;
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 2px 8px; border-radius: 20px; width: fit-content; line-height: 1.6;
 }
 
 .gameCardTitle {
   font-family: var(--eg-font-display);
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--eg-surface-text);
+  font-size: 14px; font-weight: 700; color: var(--eg-surface-text);
   line-height: 1.3;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 
 .gameCardDesc {
-  font-size: 12px;
-  color: var(--eg-surface-text-dim);
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  font-size: 12px; color: var(--eg-surface-text-dim); line-height: 1.4;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   margin: 0;
 }
 
 .gameCardPlayBtn {
-  margin: 8px 12px 12px;
-  padding: 9px 0;
-  border: none;
-  border-radius: 9px;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 800;
-  cursor: pointer;
+  margin: 8px 12px 12px; padding: 9px 0;
+  border: none; border-radius: 9px; color: #fff;
+  font-size: 13px; font-weight: 800; cursor: pointer; font-family: inherit;
   letter-spacing: 0.03em;
-  font-family: inherit;
-  transition: opacity 0.15s, transform 0.1s;
+  transition: opacity 0.14s, transform 0.1s;
 }
-
 .gameCardPlayBtn:hover  { opacity: 0.85; }
 .gameCardPlayBtn:active { transform: scale(0.97); }
 
+/* ── Focus mode ───────────────────────────────────────────────────────────── */
+
+/* Focus search bar */
+.focusSearchWrap {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--eg-surface-card);
+  border: 1.5px solid var(--eg-surface-border);
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.focusSearchWrap:focus-within {
+  border-color: var(--eg-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--eg-brand) 12%, transparent);
+}
+
+.focusSearchIcon { font-size: 16px; opacity: 0.45; flex-shrink: 0; }
+
+.focusSearchInput {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--eg-surface-text);
+  font-size: 15px; font-weight: 500; font-family: inherit;
+}
+.focusSearchInput::placeholder { color: var(--eg-surface-text-faint); }
+
+.focusSearchClear {
+  background: none; border: none;
+  color: var(--eg-surface-text-faint);
+  font-size: 13px; cursor: pointer; font-family: inherit;
+}
+
+/* Subject grid — Focus mode, clean cards no left-border */
+.focusSubjectGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+@media (min-width: 560px) {
+  .focusSubjectGrid { grid-template-columns: repeat(4, 1fr); }
+}
+
+.focusSubjectCard {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  padding: 22px 16px 18px;
+  border: none;
+  background: var(--eg-surface-card);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  display: flex; flex-direction: column; gap: 5px;
+  min-height: 160px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  transition: transform 0.17s cubic-bezier(0.2,0.8,0.3,1), box-shadow 0.17s;
+}
+.focusSubjectCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.1);
+}
+.focusSubjectCard:active { transform: scale(0.98); }
+
+/* Soft colour wash behind content — no harsh left stripe */
+.focusSubjectCardBg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.07;
+  pointer-events: none;
+  transition: opacity 0.18s;
+}
+.focusSubjectCard:hover .focusSubjectCardBg { opacity: 0.13; }
+
+.focusSubjectEmoji  { font-size: 32px; line-height: 1; margin-bottom: 4px; position: relative; z-index: 1; }
+.focusSubjectName   { font-family: var(--eg-font-display); font-size: 15px; font-weight: 900; color: var(--eg-surface-text); letter-spacing: -0.01em; position: relative; z-index: 1; }
+.focusSubjectDesc   { font-size: 11.5px; color: var(--eg-surface-text-dim); line-height: 1.4; flex: 1; position: relative; z-index: 1; }
+.focusSubjectCount  { font-size: 12px; font-weight: 800; margin-top: auto; padding-top: 6px; position: relative; z-index: 1; }
+
+/* ── Continue (Focus mode only) ───────────────────────────────────────────── */
+
+.continueWrap   { display: flex; flex-direction: column; gap: 0; margin-bottom: 18px; }
+
+.continueLabelRow {
+  display: flex; align-items: center; gap: 7px;
+  padding: 0 4px 8px;
+}
+
+.continuePulse {
+  width: 7px; height: 7px; border-radius: 50%; background: #22c55e;
+  animation: pulse 2s ease-in-out infinite; flex-shrink: 0;
+}
+
+@keyframes pulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.6; transform: scale(1.3); }
+}
+
+.continueBannerLabel {
+  font-size: 11px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.08em; color: #22c55e; white-space: nowrap;
+}
+
+.continueBanner {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--eg-surface-card);
+  border: 1px solid var(--eg-surface-border);
+  border-radius: 16px; padding: 12px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  transition: box-shadow 0.14s;
+}
+.continueBanner:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+
+.continueBannerArt {
+  position: relative; width: 44px; height: 44px;
+  border-radius: 10px; overflow: hidden; flex-shrink: 0;
+  background: var(--eg-surface-card-2);
+}
+
+.continueBannerBody { flex: 1; min-width: 0; }
+
+.continueBannerSubject {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;
+}
+
+.continueBannerTitle {
+  font-size: 14px; font-weight: 700; color: var(--eg-surface-text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.continueBannerBtn {
+  flex-shrink: 0; color: #fff !important;
+  font-size: 12px; font-weight: 800;
+  padding: 8px 16px; border-radius: 9px;
+  transition: opacity 0.14s, transform 0.1s; white-space: nowrap;
+}
+.continueBannerBtn:hover  { opacity: 0.88; }
+.continueBannerBtn:active { transform: scale(0.97); }
+
+/* ── Subject drill-down ───────────────────────────────────────────────────── */
+
+.subjectView { display: flex; flex-direction: column; gap: 20px; }
+
+.subjectHero {
+  border-radius: 16px; padding: 22px;
+  display: flex; align-items: center; gap: 14px;
+}
+
+.subjectHeroEmoji { font-size: 38px; line-height: 1; flex-shrink: 0; }
+.subjectHeroName  { font-family: var(--eg-font-display); font-size: 22px; font-weight: 900; color: #fff; letter-spacing: -0.02em; margin-bottom: 2px; }
+.subjectHeroSub   { font-size: 13px; color: rgba(255,255,255,0.7); font-weight: 500; }
+
 /* ── Search results ───────────────────────────────────────────────────────── */
 
-.searchResults {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.searchResults { display: flex; flex-direction: column; gap: 16px; }
+
+.searchResultsMeta {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 13px; color: var(--eg-surface-text-dim); font-weight: 600;
 }
 
-.searchResultsLabel {
-  font-size: 13px;
-  color: var(--eg-surface-text-dim);
-  font-weight: 600;
-  margin: 0;
+.searchResultsClear {
+  background: none; border: none; cursor: pointer; font-family: inherit;
+  font-size: 12px; font-weight: 700; color: var(--eg-brand); padding: 0;
 }
+
+/* ── Leaderboard CTA ──────────────────────────────────────────────────────── */
+
+.leaderboardCta {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--eg-surface-card);
+  border: 1px solid var(--eg-surface-border);
+  border-radius: 18px;
+  padding: 18px 22px;
+  margin-top: 40px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  color: inherit;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.leaderboardCta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.leaderboardCtaLeft { display: flex; align-items: center; gap: 14px; }
+
+.leaderboardCtaIcon { font-size: 32px; line-height: 1; flex-shrink: 0; }
+
+.leaderboardCtaTitle {
+  font-family: var(--eg-font-display);
+  font-size: 16px; font-weight: 800; color: var(--eg-surface-text);
+  margin-bottom: 2px;
+}
+
+.leaderboardCtaSub {
+  font-size: 12px; color: var(--eg-surface-text-dim); font-weight: 500;
+}
+
+.leaderboardCtaArrow {
+  font-size: 20px; color: var(--eg-surface-text-dim);
+  transition: transform 0.15s;
+}
+.leaderboardCta:hover .leaderboardCtaArrow { transform: translateX(3px); }
 
 /* ── Empty state ──────────────────────────────────────────────────────────── */
 
-.emptyState {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--eg-surface-text-dim);
-  font-size: 14px;
-}
+.emptyState { text-align: center; padding: 60px 20px; color: var(--eg-surface-text-dim); font-size: 14px; }
+.emptyIcon  { font-size: 38px; margin-bottom: 10px; opacity: 0.5; }
 
-.emptyIcon {
-  font-size: 40px;
-  margin-bottom: 12px;
-  opacity: 0.6;
-}
-
-/* ── TABLET (768px+) ──────────────────────────────────────────────────────── */
+/* ── TABLET 768px+ ────────────────────────────────────────────────────────── */
 
 @media (min-width: 768px) {
-  .hudInner { padding: 0 32px; gap: 20px; }
-  .main     { padding: 32px 32px 0; }
-
-  .arcadeCard { width: 168px; }
-  .arcadeCardComingSoon { width: 168px; }
-  .arcadeCardArt { height: 100px; }
-
-  .gameGrid {
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  }
-
-  .subjectHeroName { font-size: 28px; }
-  .focusBanner { padding: 18px 22px; }
-
-  .subjectCard { min-height: 175px; }
+  .hudInner  { padding: 0 32px; }
+  .main      { padding: 28px 32px 0; }
+  .arcadeCard { width: 180px; }
+  .arcadeGrid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .gameGrid   { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+  .rankBadge  { padding: 8px 16px; }
 }
 
-/* ── DESKTOP (1024px+) ────────────────────────────────────────────────────── */
+/* ── DESKTOP 1024px+ ──────────────────────────────────────────────────────── */
 
 @media (min-width: 1024px) {
-  .hudInner { height: 64px; }
-  .main { padding: 36px 32px 0; }
-
-  .arcadeCard { width: 180px; }
-  .arcadeCardComingSoon { width: 180px; }
-  .arcadeCardArt { height: 110px; }
-
-  .gameGrid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  }
-
-  .subjectGrid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  /* Mode bar: keep inline with a spacer */
-  .modeBar { margin-bottom: 28px; }
+  .hudInner { height: 62px; }
+  .main     { padding: 32px 32px 0; }
+  .gameGrid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  .arcadeGrid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .focusSubjectGrid { grid-template-columns: repeat(4, 1fr); }
+  .modeRow  { margin-bottom: 28px; }
 }
 
-/* ── MOBILE (<600px) ──────────────────────────────────────────────────────── */
+/* ── MOBILE < 600px ───────────────────────────────────────────────────────── */
 
 @media (max-width: 599px) {
-  .hudInner {
-    padding: 0 16px;
-    gap: 10px;
-    height: 54px;
-  }
-
-  /* Hide logo text on narrow screens */
+  .hudInner { padding: 0 16px; gap: 9px; height: 52px; }
   .logoText { display: none; }
 
-  /* Collapse search to icon only unless active */
-  .searchBox {
-    width: 36px;
-    padding: 7px 10px;
-    overflow: hidden;
-  }
+  /* Search collapses to icon */
+  .searchBox { width: 34px; padding: 6px 10px; overflow: hidden; }
+  .searchBox:focus-within, .searchBoxActive { width: 130px; padding: 6px 12px; }
 
-  .searchBox:focus-within,
-  .searchBoxActive {
-    width: 140px;
-    padding: 7px 12px;
-  }
-
-  .searchInput { font-size: 13px; }
-
-  /* Class selector narrower */
-  .classSelector { padding: 6px 6px; font-size: 11px; }
-
-  /* Back label hidden on mobile */
   .backLabel { display: none; }
+  .classSelector { padding: 5px 6px; font-size: 11px; }
 
-  .main { padding: 20px 16px 0; }
+  .main { padding: 16px 16px 0; }
 
-  /* Mode bar stacks */
-  .modeBar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    margin-bottom: 20px;
-  }
+  .modeRow { gap: 10px; margin-bottom: 18px; }
+  .rankBadge { margin-left: 0; width: 100%; order: 3; }
+  .rankInfo  { min-width: 60px; }
 
-  .modeDesc { font-size: 12px; }
+  /* Arcade strip: narrower cards */
+  .arcadeCard { width: 138px; }
+  .arcadeCardArt { height: 78px; }
+  .arcadeCardEmoji { font-size: 32px; }
+  .arcadeGrid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .arcadeGrid .arcadeCard { width: auto; }
 
-  /* Focus banner stacks */
-  .focusBanner {
-    flex-wrap: wrap;
-    padding: 14px 14px;
-    gap: 10px;
-  }
-
-  .focusCta { margin-left: 0; width: 100%; text-align: center; }
-
-  /* Continue banner */
-  .continueBanner { flex-wrap: wrap; padding: 12px 14px; }
-  .continueBannerTitle { font-size: 13px; }
-
-  /* Arcade scroll: smaller cards */
-  .arcadeCard { width: 130px; }
-  .arcadeCardComingSoon { width: 130px; }
-  .arcadeCardArt { height: 78px; font-size: 28px; }
-  .arcadeCardTitle { font-size: 12px; }
-  .arcadePlayBtn { font-size: 11px; }
-
-  /* Subject cards: 2-col */
-  .subjectGrid { grid-template-columns: repeat(2, 1fr); }
-  .subjectCard { min-height: 140px; padding: 18px 14px 16px; }
-  .subjectCardEmoji { font-size: 26px; }
-  .subjectCardName { font-size: 14px; }
-
-  /* Game grid: 2-col on small mobile */
-  .gameGrid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-
+  /* Game grid: 2-col */
+  .gameGrid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .gameCardArt { height: 80px; }
-  .gameCardBody { padding: 10px 11px 6px; }
+  .gameCardBody { padding: 9px 10px 6px; }
   .gameCardTitle { font-size: 12px; }
-  .gameCardDesc { display: none; }
+  .gameCardDesc  { display: none; }
 
-  .subjectHero { padding: 18px 16px; }
-  .subjectHeroName { font-size: 20px; }
+  /* Focus subject grid: 2-col */
+  .focusSubjectGrid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .focusSubjectCard { min-height: 130px; padding: 16px 12px 14px; }
+  .focusSubjectEmoji { font-size: 26px; }
+  .focusSubjectName  { font-size: 13px; }
 
-  /* HUD title compact */
-  .hudTitle { font-size: 15px; }
-  .hudXpBar { width: 80px; }
-  .hudXpNext { display: none; }
+  .subjectHero { padding: 16px; }
+  .subjectHeroName { font-size: 19px; }
+
+  .leaderboardCta { padding: 14px 16px; margin-top: 28px; }
+  .leaderboardCtaIcon { font-size: 26px; }
+  .leaderboardCtaTitle { font-size: 14px; }
+
+  .focusSearchWrap { padding: 10px 14px; }
+  .focusSearchInput { font-size: 14px; }
 }
 
-/* ── Very narrow phones (<400px) ──────────────────────────────────────────── */
+/* ── Very narrow < 380px ──────────────────────────────────────────────────── */
 
-@media (max-width: 399px) {
+@media (max-width: 379px) {
   .gameGrid { grid-template-columns: 1fr; }
   .gameCardArt { height: 120px; }
   .gameCardDesc { display: block; }
+  .focusSubjectGrid { grid-template-columns: repeat(2, 1fr); }
+}
 
-  .subjectGrid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+/* ── Mixed subject scroll (Play mode) ────────────────────────────────────── */
+/* One horizontal row mixing 2 games from each subject — preview of Focus.   */
+
+.mixedScroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+  align-items: stretch;
+}
+.mixedScroll::-webkit-scrollbar { display: none; }
+
+/* Each game card in the mixed scroll is a fixed-width wrapper */
+.mixedCard {
+  flex-shrink: 0;
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The game card inside fills the mixedCard wrapper */
+.mixedCard > div {
+  flex: 1;
+}
+
+/* End-of-row focus nudge */
+.mixedScrollCta {
+  flex-shrink: 0;
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 14px;
+  background: var(--eg-surface-card);
+  border: 1.5px dashed var(--eg-surface-border);
+  border-radius: 16px;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+.mixedScrollCta:hover {
+  background: var(--eg-surface-card-2);
+  border-color: var(--eg-brand);
+}
+
+.mixedScrollCtaIcon  { font-size: 28px; line-height: 1; }
+.mixedScrollCtaText  { font-size: 11.5px; font-weight: 600; color: var(--eg-surface-text-dim); line-height: 1.4; }
+.mixedScrollCtaArrow { font-size: 16px; color: var(--eg-brand); font-weight: 700; }
+
+/* Subject section label (used inside play mode) */
+.subjectSectionLabel {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--eg-surface-text);
+}
+
+/* ── Mobile: compact rank chip ───────────────────────────────────────────── */
+@media (max-width: 599px) {
+  .hudRankLabel { display: none; }
+  .hudRankBar   { display: none; }
+  .hudRankChip  { padding: 5px 8px; }
+  .hudRankIcon  { font-size: 16px; }
+
+  .mixedCard { width: 165px; }
+  .mixedScrollCta { width: 140px; }
 }

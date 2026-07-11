@@ -1,0 +1,249 @@
+/* MathQuestEngine.module.css — v5 */
+
+/* ── Root ─────────────────────────────────────────────────────────────────── */
+.root {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, #BFE8FF 0%, #EAF9FF 100%);
+  display: flex;
+  flex-direction: column;
+  font-family: 'Nunito', system-ui, sans-serif;
+  overflow: hidden;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Game frame — fills root entirely ────────────────────────────────────── */
+.gameFrame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Canvas: no CSS dimensions — JS sets width/height attributes via ResizeObserver */
+.canvas {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  touch-action: none;
+}
+
+/* ── HUD corner chips ─────────────────────────────────────────────────────── */
+.hudTL, .hudTR, .hudBL, .hudBR {
+  position: absolute;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.hudTL {
+  top: 14px; left: 14px;
+  background: rgba(255,255,255,0.88);
+  border-radius: 14px;
+  padding: 6px 14px;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 700;
+  color: #2E3A2E;
+  font-size: 14px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.10);
+}
+
+.hudTR {
+  top: 14px; right: 14px;
+  background: rgba(255,255,255,0.88);
+  border-radius: 14px;
+  padding: 6px 14px;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 700;
+  color: #2E3A2E;
+  font-size: 14px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.10);
+}
+
+.hudBL { bottom: 14px; left: 14px; }
+.hudBR { bottom: 14px; right: 14px; gap: 2px; }
+.heart { font-size: 18px; line-height: 1; }
+
+.exitBtn {
+  width: 38px; height: 38px;
+  border-radius: 50%; border: none;
+  background: rgba(255,255,255,0.85);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+  font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: #2E3A2E;
+}
+.exitBtn:hover { background: rgba(255,255,255,0.97); }
+
+/* ── Question card — slides DOWN from top ────────────────────────────────── */
+.qCard {
+  position: absolute;
+  top: -360px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(88%, 400px);
+  background: #FFFDF6;
+  border-radius: 22px;
+  padding: 18px 20px 18px;
+  box-shadow: 0 18px 36px rgba(0,0,0,0.24);
+  z-index: 25;
+  border: 4px solid #fff;
+  transition: top 0.55s cubic-bezier(0.2, 1, 0.3, 1);
+  text-align: center;
+}
+.qCardShow { top: 14px; }
+
+@keyframes cardShake {
+  0%,100%{transform:translateX(-50%)}
+  20%{transform:translateX(calc(-50% - 10px))}
+  40%{transform:translateX(calc(-50% + 10px))}
+  60%{transform:translateX(calc(-50% - 6px))}
+  80%{transform:translateX(calc(-50% + 6px))}
+}
+.qCardShake { animation: cardShake 0.4s ease; }
+
+.qLabel  { font-size: 10px; letter-spacing: 2px; color: #e05a44; font-weight: 800; margin-bottom: 6px; text-transform: uppercase; }
+.qGoal   { font-family: 'Baloo 2', sans-serif; font-size: 14px; font-weight: 700; color: #2E3A2E; margin-bottom: 5px; }
+.qEq     { font-family: 'Baloo 2', monospace; font-size: 24px; font-weight: 800; color: #2E3A2E; margin-bottom: 10px; }
+.qMascot { display:flex; align-items:flex-start; gap:8px; background:#f0f8ec; border-left:3px solid #6FCF63; border-radius:0 10px 10px 0; padding:8px 12px; text-align:left; margin-bottom:12px; }
+.qMascotIco { font-size: 18px; flex-shrink: 0; line-height: 1.4; }
+.qMascotTxt { font-size: 13px; color: #3a4a3a; font-weight: 700; line-height: 1.45; }
+
+.qTiles { display: flex; gap: 8px; justify-content: center; margin-bottom: 8px; }
+.qTile  {
+  flex: 1; max-width: 115px; padding: 11px 8px;
+  background: #f4f8f0; border: 2.5px solid #cce4c0; border-radius: 14px;
+  color: #2E3A2E; font-size: 15px; font-weight: 800;
+  font-family: 'Baloo 2', monospace; cursor: pointer;
+  transition: transform 0.1s, background 0.12s;
+}
+.qTile:hover:not(:disabled)  { background: #e6f4e0; transform: translateY(-2px); }
+.qTile:active:not(:disabled) { transform: scale(0.96); }
+.qTile:disabled { opacity: 0.55; cursor: default; }
+
+@keyframes tileOk  { 0%{transform:scale(1)} 50%{transform:scale(1.14)} 100%{transform:scale(1)} }
+.qTileOk  { background:#EEFBEA!important; border-color:#6FCF63!important; color:#3a8a32!important; animation:tileOk .4s ease; }
+@keyframes tileBad { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-7px)} 40%{transform:translateX(7px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+.qTileBad { background:#FFF0EE!important; border-color:#EE6A5F!important; color:#c0392b!important; animation:tileBad .4s ease; }
+
+.qHintBtn { display:block; width:100%; background:none; border:1.5px dashed #c8d8c0; color:#8a9a7a; font-size:12px; font-weight:700; padding:7px; border-radius:10px; cursor:pointer; font-family:inherit; margin-bottom:5px; }
+.qHintBtn:hover { border-color:#8ab880; color:#4a7040; }
+.qHint    { font-size:12px; color:#5a7050; background:#f0f8ec; border:1px solid #c0d8b0; border-radius:8px; padding:7px 12px; text-align:left; font-weight:700; margin-bottom:4px; }
+.qDots    { display:flex; justify-content:center; gap:6px; margin-top:6px; }
+.qDot     { width:8px; height:8px; border-radius:50%; background:#dde8d0; }
+.qDotOn   { background:#6FCF63; }
+.qCorrect { font-size:13px; font-weight:800; color:#3a8a32; background:#EEFBEA; border-radius:8px; padding:5px 10px; margin-top:4px; }
+
+/* ── Win banner ───────────────────────────────────────────────────────────── */
+.winBanner {
+  position: absolute; top: 40%; left: 50%;
+  transform: translate(-50%,-50%) scale(0.5);
+  font-family: 'Baloo 2', sans-serif;
+  font-size: clamp(32px, 7vw, 56px);
+  font-weight: 800; color: #fff;
+  -webkit-text-stroke: 2.5px #2E3A2E;
+  text-shadow: 0 6px 0 rgba(0,0,0,0.14);
+  opacity: 0; z-index: 40; pointer-events: none;
+  transition: all 0.4s cubic-bezier(0.2,1.4,0.4,1);
+}
+.winBannerShow { opacity:1; transform:translate(-50%,-50%) scale(1); }
+
+/* ── Hints ────────────────────────────────────────────────────────────────── */
+.aimHint, .heartsHint {
+  position: absolute;
+  left: 50%; transform: translateX(-50%);
+  background: rgba(255,255,255,0.82);
+  border-radius: 20px; padding: 7px 18px;
+  font-size: 12px; font-weight: 700; color: #2E3A2E;
+  white-space: nowrap; pointer-events: none; z-index: 15;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.10);
+}
+.aimHint { bottom: 62px; animation: aimFade 4s ease forwards; }
+.heartsHint { bottom: 34px; font-size: 11px; opacity: 0.7; }
+@keyframes aimFade { 0%,65%{opacity:1} 100%{opacity:0} }
+
+/* ── Overlays ─────────────────────────────────────────────────────────────── */
+.overlay {
+  position: absolute; inset: 0;
+  background: rgba(20,40,20,0.28);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 30; backdrop-filter: blur(3px);
+}
+.resultPanel {
+  background: #FFFDF6; border-radius: 24px; padding: 26px 24px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+  text-align: center; display:flex; flex-direction:column; gap:14px; align-items:center;
+  min-width: 240px; max-width: 360px; width: 90%;
+}
+.resultTitle { font-family:'Baloo 2',sans-serif; font-size:22px; font-weight:800; color:#2E3A2E; }
+.starsRow    { font-size: 30px; letter-spacing: 5px; }
+@keyframes starPop { from{transform:scale(0);opacity:0} 60%{transform:scale(1.3)} to{transform:scale(1);opacity:1} }
+.rStar  { display:inline-block; animation:starPop .4s cubic-bezier(.3,1.5,.5,1) both; }
+.statRow { display:flex; gap:20px; }
+.stat    { text-align:center; }
+.statNum { font-family:'Baloo 2',sans-serif; font-size:22px; font-weight:800; color:#2E3A2E; }
+.statLbl { font-size:11px; color:#8a9a8a; font-weight:700; letter-spacing:1px; }
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+.btnPlay {
+  font-family:'Baloo 2',sans-serif; font-size:18px; font-weight:700; color:#fff;
+  padding:13px 40px; border:none; border-radius:100px;
+  background:linear-gradient(180deg,#8DDD73,#5FB94A);
+  box-shadow:0 6px 0 #3E8B31; cursor:pointer; width:100%;
+  transition: transform 0.1s;
+}
+.btnPlay:hover  { transform:translateY(-2px); }
+.btnPlay:active { transform:translateY(3px); box-shadow:0 2px 0 #3E8B31; }
+
+.btnSecondary {
+  font-family:'Baloo 2',sans-serif; font-size:14px; font-weight:700; color:#fff;
+  padding:10px 28px; border:none; border-radius:100px;
+  background:linear-gradient(180deg,#FFE58A,#F2C744); box-shadow:0 5px 0 #C99A1F;
+  cursor:pointer; width:100%;
+}
+.btnSecondary:active { transform:translateY(2px); }
+
+.ghostBtn { background:none; border:none; color:rgba(46,58,46,.4); font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; }
+.ghostBtn:hover { color:rgba(46,58,46,.7); }
+
+/* ── Menu ─────────────────────────────────────────────────────────────────── */
+.menuScreen {
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding:24px;
+}
+.logoWrap  { text-align:center; animation:float 3.5s ease-in-out infinite; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+.logoTitle { font-family:'Baloo 2',sans-serif; font-size:clamp(28px,7vw,52px); font-weight:800; color:#fff; -webkit-text-stroke:3px #2E3A2E; text-shadow:0 6px 0 rgba(0,0,0,.14); letter-spacing:1px; margin:0; }
+.logoSub   { font-family:'Baloo 2',sans-serif; font-size:clamp(11px,2vw,15px); color:#2E3A2E; font-weight:700; letter-spacing:5px; margin-top:-4px; opacity:.6; }
+.menuPanel { background:#FFFDF6; border-radius:24px; padding:22px 26px; box-shadow:0 12px 30px rgba(0,0,0,.12); display:flex; flex-direction:column; gap:16px; align-items:center; min-width:280px; max-width:420px; width:100%; }
+.menuLabel { font-family:'Baloo 2',sans-serif; font-weight:700; color:#2E3A2E; margin:0; font-size:15px; }
+.modeRow   { display:flex; gap:12px; }
+.modeCard  { width:140px; padding:14px 10px; border-radius:18px; background:#FFFDF6; border:3px solid #fff; box-shadow:0 8px 0 rgba(0,0,0,.07); text-align:center; cursor:pointer; transition:transform .12s; }
+.modeCard:hover { transform:translateY(-4px); }
+.modeCardActive { outline:4px solid #F5C444; }
+.modeCardSoon   { opacity:.45; cursor:not-allowed; }
+.modeCardSoon:hover { transform:none; }
+.modeBig   { font-size:30px; }
+.modeLabel { font-family:'Baloo 2',sans-serif; font-weight:700; color:#2E3A2E; margin-top:4px; font-size:13px; }
+.modeSub   { font-size:11px; color:#7a8a7a; font-weight:700; }
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .qCard   { width: min(94%, 360px); padding: 13px 13px 14px; }
+  .qLabel  { font-size: 9px; }
+  .qGoal   { font-size: 12px; }
+  .qEq     { font-size: 18px; margin-bottom: 8px; }
+  .qMascot { padding: 6px 9px; margin-bottom: 9px; }
+  .qMascotTxt { font-size: 11px; }
+  .qTile   { font-size: 13px; padding: 10px 4px; }
+  .hudTL,.hudTR { font-size:12px; padding:5px 10px; border-radius:10px; }
+  .heart   { font-size:15px; }
+  .winBanner { font-size: 28px; }
+  .modeCard { width:128px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .winBanner, .rStar, .qTileOk, .qTileBad, .logoWrap { animation:none; }
+  .qCard { transition:none; }
+}

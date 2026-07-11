@@ -43,6 +43,10 @@ const ENGINE_MAP: Record<string, React.ComponentType<{ onComplete?: (r: { score:
     () => import("@/games/whack-a-mole/WhackAMoleEngine").then(m => ({ default: m.WhackAMoleEngine })),
     { ssr: false, loading: LoadingScreen }
   ),
+  "math-quest": dynamic(
+    () => import("@/games/math-quest/MathQuestEngine").then(m => ({ default: m.MathQuestEngine })),
+    { ssr: false, loading: LoadingScreen }
+  ),
   // "element-crush": dynamic(...) — add when ready
   // "symbol-drop":  dynamic(...) — add when ready
 };

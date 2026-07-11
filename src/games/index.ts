@@ -51,6 +51,15 @@ export const STANDALONE_GAMES: StandaloneGame[] = [
   // Add entries here as new arcade games are built. Set isReady: false
   // to show the "Coming Soon" placeholder in the arcade strip.
   {
+    slug: "math-quest",
+    title: "Math Quest",
+    description: "Mini-golf meets maths. Solve a formula rearrangement question before each shot — 5 holes, 3 hearts, increasing difficulty.",
+    emoji: "⛳",
+    subjects: ["mathematics"],
+    isReady: true,
+    componentPath: "@/games/math-quest/MathQuestEngine",
+  },
+  {
     slug: "element-crush",
     title: "Element Crush",
     description: "Match element tiles to clear the board — a Candy Crush-style game with a chemistry twist.",

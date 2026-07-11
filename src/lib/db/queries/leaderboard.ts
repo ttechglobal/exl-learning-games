@@ -4,6 +4,7 @@ import { DEFAULT_DISPLAY_NAME } from "@/lib/db/queries/students";
 export type LeaderboardPeriod = "weekly" | "monthly" | "allTime";
 
 export interface LeaderboardEntry {
+  avatarEmoji: string;
   studentId: string;
   displayName: string;
   xpTotal: number;

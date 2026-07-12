@@ -1,32 +1,40 @@
 "use client";
 /**
- * MathQuestEngine.tsx — Math Quest v6
+ * MathQuestEngine.tsx — Math Quest v9
  *
- * Changes from v5:
- *  1. TRUE POLYGON FAIRWAYS — courses are Path2D polygons clipped on canvas.
- *     Ball bounces off real polygon edges, not a bounding rectangle.
- *     This means L-shapes, S-bends, and doglegs actually look like those shapes.
+ * ARCHITECTURE CHANGE (per EXL_Architecture.md):
+ *   The game engine now knows nothing about education.
+ *   It knows: ball, walls, hole, lives, score. That is it.
  *
- *  2. BALL STAYS ON MISS — when the ball stops without sinking, it stays
- *     exactly where it is. The student continues from that position. No reset
- *     to the tee. Position is only reset when moving to a new hole.
+ *   When the player runs out of hearts, the engine calls:
+ *     props.onNeedHearts(resolve)
+ *   The host (page.tsx or a wrapper) shows whatever learning activity
+ *   it wants, then calls resolve({ heartsGranted: 3 }).
+ *   The game restores hearts and continues from the ball's current position.
  *
- *  3. GRADE SELECTOR — the topic pick screen now shows a class/grade row.
- *     Grade pre-fills from the `defaultGrade` prop (from student profile).
- *     Selected grade filters which topics are available.
+ *   Grade/topic selection is also the host's responsibility.
+ *   This engine has no questions, no grade state, no topic state.
  *
- *  4. ENVIRONMENT THEMING PER HOLE — sky gradient, grass palette, and accent
- *     decorations shift for each of the 5 holes.
+ * COURSE CHANGE:
+ *   5 holes → 10 holes following the design philosophy:
+ *   Difficulty comes from shape and obstacle placement, not size.
+ *   Every hole fits entirely on screen. No scrolling, no camera.
  *
- *  5. CONTINUE-FROM-POSITION AFTER QUESTION — answering the question correctly
- *     restores 3 hearts and returns to aiming from the ball's current position,
- *     not from the tee.
+ *   Level 1  — Straight shot (learn controls)
+ *   Level 2  — Single bend / L-shape (learn banking)
+ *   Level 3  — Double bend / Z-shape (plan two shots)
+ *   Level 4  — Narrow corridor with walls (precision)
+ *   Level 5  — Chamber with island obstacle (obstacle angles)
+ *   Level 6  — S-shaped path (think ahead)
+ *   Level 7  — Split path with island (route choice)
+ *   Level 8  — Zigzag corridor (controlled rebounds)
+ *   Level 9  — Spiral (shot sequencing)
+ *   Level 10 — Combination (everything)
  */
 
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import styles from "./MathQuestEngine.module.css";
 
-// Font injection — module-level to avoid React removeChild crash
 if (typeof window !== "undefined" && !document.getElementById("mq-fonts")) {
   const _l = document.createElement("link");
   _l.id = "mq-fonts"; _l.rel = "stylesheet";
@@ -36,263 +44,650 @@ if (typeof window !== "undefined" && !document.getElementById("mq-fonts")) {
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface Vec2 { x: number; y: number; }
+type Phase = "menu"|"aiming"|"rolling"|"sinking"|"hole_result"|"waiting_hearts"|"session_done";
 
-type Grade = "JSS1" | "JSS2" | "JSS3" | "SS1" | "SS2" | "SS3";
-type Phase = "topic_pick" | "aiming" | "rolling" | "sinking" | "hole_result" | "question" | "session_done";
-
-// ── Grade definitions ──────────────────────────────────────────────────────────
-const GRADES: Grade[] = ["JSS1", "JSS2", "JSS3", "SS1", "SS2", "SS3"];
-
-// ── Question bank ──────────────────────────────────────────────────────────────
-interface QStep { instruction: string; formula: string; tileOk: string; tilesNo: [string, string]; hint: string; resultFormula: string; }
-interface QuizQ  { id: string; label: string; formula: string; finalAnswer: string; steps: QStep[]; grades: Grade[]; topic: string; }
-
-const QUESTIONS: QuizQ[] = [
-  { id:"q1", label:"Make t the subject", formula:"v = t + 5", finalAnswer:"t = v − 5", topic:"change-of-subject",
-    grades:["JSS3","SS1","SS2","SS3"],
-    steps:[{ formula:"v = t + 5", instruction:"+ 5 is blocking t — subtract 5 from both sides.", tileOk:"− 5", tilesNo:["+ 5","× 5"], hint:"Opposite of + 5 is − 5.", resultFormula:"t = v − 5" }] },
-  { id:"q2", label:"Make m the subject", formula:"F = 3m", finalAnswer:"m = F ÷ 3", topic:"change-of-subject",
-    grades:["JSS3","SS1","SS2","SS3"],
-    steps:[{ formula:"F = 3m", instruction:"m is multiplied by 3 — divide both sides by 3.", tileOk:"÷ 3", tilesNo:["× 3","− 3"], hint:"÷ 3 undoes × 3.", resultFormula:"m = F ÷ 3" }] },
-  { id:"q3", label:"Make x the subject", formula:"y = mx + c", finalAnswer:"x = (y − c) ÷ m", topic:"change-of-subject",
-    grades:["SS1","SS2","SS3"],
-    steps:[
-      { formula:"y = mx + c", instruction:"c is blocking mx — subtract c from both sides.", tileOk:"− c", tilesNo:["+ c","÷ c"], hint:"Subtract c to leave mx alone.", resultFormula:"y − c = mx" },
-      { formula:"y − c = mx", instruction:"x is multiplied by m — divide both sides by m.", tileOk:"÷ m", tilesNo:["× m","− m"], hint:"÷ m leaves x alone.", resultFormula:"x = (y − c) ÷ m" },
-    ] },
-  { id:"q4", label:"Make t the subject", formula:"v = u + at", finalAnswer:"t = (v − u) ÷ a", topic:"change-of-subject",
-    grades:["SS1","SS2","SS3"],
-    steps:[
-      { formula:"v = u + at", instruction:"u is blocking at — subtract u from both sides.", tileOk:"− u", tilesNo:["+ u","÷ u"], hint:"Subtract u to leave at.", resultFormula:"v − u = at" },
-      { formula:"v − u = at", instruction:"t is multiplied by a — divide both sides by a.", tileOk:"÷ a", tilesNo:["× a","− a"], hint:"÷ a leaves t alone.", resultFormula:"t = (v − u) ÷ a" },
-    ] },
-  { id:"q5", label:"Make w the subject", formula:"P = 2(l + w)", finalAnswer:"w = P÷2 − l", topic:"change-of-subject",
-    grades:["SS1","SS2","SS3"],
-    steps:[
-      { formula:"P = 2(l + w)", instruction:"w is inside ×2 brackets — divide both sides by 2.", tileOk:"÷ 2", tilesNo:["× 2","− 2"], hint:"÷ 2 clears the bracket coefficient.", resultFormula:"P÷2 = l + w" },
-      { formula:"P÷2 = l + w", instruction:"l is next to w — subtract l from both sides.", tileOk:"− l", tilesNo:["+ l","× l"], hint:"− l removes the l.", resultFormula:"w = P÷2 − l" },
-    ] },
-  { id:"q6", label:"Make r the subject", formula:"C = r ÷ 2", finalAnswer:"r = 2C", topic:"change-of-subject",
-    grades:["JSS3","SS1","SS2","SS3"],
-    steps:[{ formula:"C = r ÷ 2", instruction:"r is divided by 2 — multiply both sides by 2.", tileOk:"× 2", tilesNo:["÷ 2","+ 2"], hint:"× 2 cancels ÷ 2.", resultFormula:"r = 2C" }] },
-  { id:"q7", label:"Make r the subject", formula:"A = πr²", finalAnswer:"r = √(A÷π)", topic:"change-of-subject",
-    grades:["SS1","SS2","SS3"],
-    steps:[
-      { formula:"A = πr²", instruction:"r² is multiplied by π — divide both sides by π.", tileOk:"÷ π", tilesNo:["× π","− π"], hint:"÷ π isolates r².", resultFormula:"A÷π = r²" },
-      { formula:"A÷π = r²", instruction:"r is squared — take the square root of both sides.", tileOk:"√( )", tilesNo:["( )²","÷ 2"], hint:"√(r²) = r", resultFormula:"r = √(A÷π)" },
-    ] },
-  { id:"q8", label:"Make b the subject", formula:"A = ½bh", finalAnswer:"b = 2A÷h", topic:"change-of-subject",
-    grades:["SS1","SS2","SS3"],
-    steps:[
-      { formula:"A = ½bh", instruction:"b has ½ coefficient — multiply both sides by 2.", tileOk:"× 2", tilesNo:["÷ 2","+ 2"], hint:"× 2 removes the ½.", resultFormula:"2A = bh" },
-      { formula:"2A = bh", instruction:"b is multiplied by h — divide both sides by h.", tileOk:"÷ h", tilesNo:["× h","− h"], hint:"÷ h leaves b alone.", resultFormula:"b = 2A÷h" },
-    ] },
-  // JSS-level simpler questions
-  { id:"q9", label:"Make y the subject", formula:"x = y + 4", finalAnswer:"y = x − 4", topic:"change-of-subject",
-    grades:["JSS2","JSS3","SS1","SS2","SS3"],
-    steps:[{ formula:"x = y + 4", instruction:"4 is added to y — subtract 4 from both sides.", tileOk:"− 4", tilesNo:["+ 4","× 4"], hint:"Opposite of + 4 is − 4.", resultFormula:"y = x − 4" }] },
-  { id:"q10", label:"Make n the subject", formula:"P = 5n", finalAnswer:"n = P ÷ 5", topic:"change-of-subject",
-    grades:["JSS2","JSS3","SS1","SS2","SS3"],
-    steps:[{ formula:"P = 5n", instruction:"n is multiplied by 5 — divide both sides by 5.", tileOk:"÷ 5", tilesNo:["× 5","− 5"], hint:"÷ 5 undoes × 5.", resultFormula:"n = P ÷ 5" }] },
-];
-
-// ── Polygon fairway system ─────────────────────────────────────────────────────
-//
-// Each hole is defined by a polygon in NORMALISED coordinates (0–1).
-// buildCourse() scales these to actual canvas pixels.
-// The polygon is used for:
-//   1. Drawing the fairway (canvas clip path)
-//   2. Ball boundary collision (point-in-polygon + edge reflection)
-//
-// Convention: polygon points go clockwise so the filled area is the playable surface.
-//
-// Additional inner walls (obstacles) use the same format as before: normalised rects.
-
-interface PolyPoint { xf: number; yf: number; }
-interface WallDef   { xf: number; yf: number; wf: number; hf: number; }
-
-interface HoleDef {
-  name:   string;
-  par:    number;
-  shape:  string;          // label only — no effect on rendering
-  poly:   PolyPoint[];     // fairway polygon in 0–1 coords
-  ballFx: number; ballFy: number;
-  holeFx: number; holeFy: number;
-  walls:  WallDef[];       // inner obstacles
+// ── Public API — the host (page.tsx) provides these ───────────────────────────
+export interface HeartRefillResult { heartsGranted: number; xpEarned?: number; }
+export interface RoundResult {
+  totalShots: number; holeStars: number[];
+  score: number; xpEarned: number; holesPlayed: number;
 }
 
-// All polygons have a bounding box from (polyMinX, polyMinY) to (polyMaxX, polyMaxY).
-// We derive cx/cy/cw/ch from min/max of poly points at build time.
+export interface MiniGolfEngineProps {
+  /** Called when player runs out of hearts. Host shows a learning activity,
+   *  then calls resolve() to give hearts back and resume the game. */
+  onNeedHearts: (resolve: (result: HeartRefillResult) => void) => void;
+  /** Called when all holes are complete. */
+  onRoundEnd: (result: RoundResult) => void;
+  /** Called when player taps the menu / exit button. */
+  onExit?: () => void;
+  /** Initial hearts per hole. Default 3. */
+  heartsPerHole?: number;
+}
 
-const HOLES: HoleDef[] = [
-  // ── Hole 1: Meadow Straight ── pure rectangle, one centre barrier with gap
-  { name:"Meadow Straight", par:2, shape:"rect",
-    poly:[
-      {xf:0,yf:0},{xf:1,yf:0},{xf:1,yf:1},{xf:0,yf:1}
-    ],
-    ballFx:.10, ballFy:.50, holeFx:.90, holeFy:.50,
-    walls:[
-      // barrier in the middle — gap at bottom third
-      {xf:.47, yf:.00, wf:.06, hf:.38},
-      {xf:.47, yf:.62, wf:.06, hf:.38},
-    ] },
-
-  // ── Hole 2: Timber L ── true L-shape
-  // Polygon: wide left section + narrow right section angled down
-  { name:"Timber L-Course", par:2, shape:"L",
-    poly:[
-      // left section (full height)
-      {xf:0,   yf:0},
-      {xf:.55, yf:0},
-      // step down to right arm
-      {xf:.55, yf:.40},
-      {xf:1,   yf:.40},
-      {xf:1,   yf:1},
-      {xf:.55, yf:1},
-      // back up left column bottom-left corner
-      {xf:.55, yf:1},
-      {xf:0,   yf:1},
-    ],
-    ballFx:.12, ballFy:.22, holeFx:.88, holeFy:.72,
-    walls:[] },
-
-  // ── Hole 3: Snake Pass ── S-bend (three chambers)
-  { name:"Snake Pass", par:3, shape:"S",
-    poly:[
-      // Top-right chamber
-      {xf:.35, yf:0},
-      {xf:1,   yf:0},
-      {xf:1,   yf:.52},
-      // connect to bottom-left chamber
-      {xf:.65, yf:.52},
-      {xf:.65, yf:1},
-      {xf:0,   yf:1},
-      {xf:0,   yf:.48},
-      {xf:.35, yf:.48},
-    ],
-    ballFx:.18, ballFy:.78, holeFx:.82, holeFy:.22,
-    walls:[] },
-
-  // ── Hole 4: Garden Room ── wide rectangle with island obstacle
-  { name:"Garden Room", par:2, shape:"wide-island",
-    poly:[
-      {xf:0,yf:0},{xf:1,yf:0},{xf:1,yf:1},{xf:0,yf:1}
-    ],
-    ballFx:.08, ballFy:.50, holeFx:.91, holeFy:.50,
-    walls:[
-      {xf:.38, yf:.18, wf:.24, hf:.26},  // top island
-      {xf:.38, yf:.56, wf:.24, hf:.26},  // bottom island
-    ] },
-
-  // ── Hole 5: Double Dogleg ── Z-shape
-  { name:"Double Dogleg", par:3, shape:"Z",
-    poly:[
-      // left arm (bottom)
-      {xf:0,   yf:.55},
-      {xf:.55, yf:.55},
-      {xf:.55, yf:1},
-      {xf:0,   yf:1},
-      // close and reopen at top-right arm
-    ],
-    // Z actually needs two separate rects connected by a diagonal strip.
-    // Easier: represent as three overlapping sections in the polygon.
-    // Simplified Z polygon:
-    ballFx:.12, ballFy:.78, holeFx:.88, holeFy:.22,
-    walls:[] },
-];
-
-// Override hole 5 polygon with proper Z
-HOLES[4].poly = [
-  // bottom-left arm
-  {xf:0,   yf:.56},
-  {xf:.56, yf:.56},
-  // connector strip going up-right
-  {xf:.56, yf:.44},
-  {xf:1,   yf:.44},
-  // top-right arm
-  {xf:1,   yf:0},
-  {xf:.44, yf:0},
-  // back down connector
-  {xf:.44, yf:.56},
-  // already at xf:.56, close left bottom
-  {xf:0,   yf:.56},
-  // bottom
-  {xf:0,   yf:1},
-  // this closes the bottom-left arm
-  // But we need the bottom edge too — rebuild properly:
-];
-// Rebuild hole 5 polygon as a proper closed Z:
-HOLES[4].poly = [
-  {xf:0,   yf:.55},  // bottom-left arm: top-left
-  {xf:.58, yf:.55},  // top-right of connector junction
-  {xf:.58, yf:.00},  // top of right arm
-  {xf:1.0, yf:.00},  // top-right
-  {xf:1.0, yf:.45},  // bottom of top-right arm
-  {xf:.42, yf:.45},  // connector junction bottom-left
-  {xf:.42, yf:1.0},  // bottom of left arm
-  {xf:0,   yf:1.0},  // bottom-left
-];
-
-// ── Colour constants ───────────────────────────────────────────────────────────
+// ── Palette ────────────────────────────────────────────────────────────────────
 const C = {
   wood:"#D9A15A", woodDark:"#B87F3B",
-  ink:"#2E3A2E",  gold:"#F5C444",
-  green:"#6FCF63", yellow:"#F2C744", orange:"#F2984A", red:"#EE6A5F",
-  coral:"#FF8B6B",
+  gold:"#F5C444", green:"#6FCF63", yellow:"#F2C744",
+  orange:"#F2984A", red:"#EE6A5F", coral:"#FF8B6B",
 };
+
+// ── Hole definitions ───────────────────────────────────────────────────────────
+// Coordinates are normalised 0–1 within the course area.
+// The course area itself is sized by buildCourse() to always fit on screen.
+// Rule: every hole must be completable in par shots on a straight, accurate shot.
+// Difficulty comes from shape, NOT from size.
+interface PolyPoint { xf: number; yf: number; }
+interface WallDef   { xf: number; yf: number; wf: number; hf: number; }
+interface HoleDef {
+  name: string; par: number;
+  poly: PolyPoint[];
+  ballFx: number; ballFy: number;
+  holeFx: number; holeFy: number;
+  walls: WallDef[];
+  bgImage?: string;
+  // Aspect ratio hint: "wide" (default), "tall", "square"
+  // Used by buildCourse to choose better canvas dimensions for that shape
+  aspect?: "wide"|"tall"|"square";
+}
+
+const HOLES: HoleDef[] = [
+  // ── 1: Straight shot ──────────────────────────────────────────────────────
+  // Pure rectangle. Ball left, hole right. One barrier with a gap.
+  // Lesson: learn to drag and aim.
+  {
+    name:"First Drive", par:2, aspect:"wide",
+    poly:[{xf:0,yf:0},{xf:1,yf:0},{xf:1,yf:1},{xf:0,yf:1}],
+    ballFx:.10, ballFy:.50, holeFx:.90, holeFy:.50,
+    walls:[
+      {xf:.48, yf:.00, wf:.07, hf:.30},
+      {xf:.48, yf:.70, wf:.07, hf:.30},
+    ],
+  },
+
+  // ── 2: Single bend / L-shape ──────────────────────────────────────────────
+  // Ball top-left of left arm, hole bottom-right of right arm.
+  // Lesson: ball cannot go straight — must bend.
+  {
+    name:"The Bend", par:2, aspect:"square",
+    poly:[
+      {xf:0,   yf:0},
+      {xf:.48, yf:0},
+      {xf:.48, yf:.52},
+      {xf:1,   yf:.52},
+      {xf:1,   yf:1},
+      {xf:0,   yf:1},
+    ],
+    ballFx:.18, ballFy:.22, holeFx:.82, holeFy:.80,
+    walls:[],
+  },
+
+  // ── 3: Double bend / Z-shape ──────────────────────────────────────────────
+  // Three rooms in a Z: top-right, connector strip, bottom-left.
+  // Lesson: plan two shots ahead.
+  {
+    name:"Double Turn", par:3, aspect:"square",
+    poly:[
+      {xf:.34, yf:0  },
+      {xf:1,   yf:0  },
+      {xf:1,   yf:.42},
+      {xf:.60, yf:.42},
+      {xf:.60, yf:1  },
+      {xf:0,   yf:1  },
+      {xf:0,   yf:.58},
+      {xf:.40, yf:.58},
+    ],
+    ballFx:.22, ballFy:.82, holeFx:.75, holeFy:.18,
+    walls:[],
+  },
+
+  // ── 4: Right-angle dog-leg — L bend with tight entrance ──────────────────
+  // Wide horizontal arm (ball enters left) bends 90° down to a narrow vertical arm.
+  // Lesson: aim for the corner, not the hole — angle matters.
+  {
+    name:"Dog-Leg Right", par:2, aspect:"square",
+    poly:[
+      {xf:0,   yf:0  },
+      {xf:1,   yf:0  },
+      {xf:1,   yf:.52},
+      {xf:.62, yf:.52},
+      {xf:.62, yf:1  },
+      {xf:.38, yf:1  },
+      {xf:.38, yf:.52},
+      {xf:0,   yf:.52},
+    ],
+    ballFx:.12, ballFy:.28, holeFx:.50, holeFy:.84,
+    walls:[],
+    // NOTE: The T-shape corner is the obstacle. No extra walls needed.
+  },
+
+  // ── 5: Chamber with island obstacle ───────────────────────────────────────
+  // Square room. Single rectangular obstacle forces player to go around it.
+  // Lesson: obstacle changes the shot angle.
+  {
+    name:"The Chamber", par:2, aspect:"square",
+    poly:[{xf:0,yf:0},{xf:1,yf:0},{xf:1,yf:1},{xf:0,yf:1}],
+    ballFx:.12, ballFy:.50, holeFx:.88, holeFy:.50,
+    walls:[
+      // Central island — player must go above or below
+      {xf:.35, yf:.30, wf:.30, hf:.40},
+    ],
+  },
+
+  // ── 6: S-shaped path ──────────────────────────────────────────────────────
+  // Classic S-bend. Ball bottom-left, hole top-right.
+  // Lesson: think two–three shots ahead.
+  {
+    name:"Snake Pass", par:3, aspect:"square",
+    poly:[
+      {xf:.36, yf:0  },
+      {xf:1,   yf:0  },
+      {xf:1,   yf:.50},
+      {xf:.62, yf:.50},
+      {xf:.62, yf:1  },
+      {xf:0,   yf:1  },
+      {xf:0,   yf:.50},
+      {xf:.38, yf:.50},
+    ],
+    ballFx:.20, ballFy:.82, holeFx:.80, holeFy:.18,
+    walls:[],
+  },
+
+  // ── 7: Split path ─────────────────────────────────────────────────────────
+  // Wide rectangle with a long central island creating two channels.
+  // Top channel: shorter, tighter. Bottom channel: wider, safer.
+  // Lesson: risk vs reward — choose your route.
+  {
+    name:"Fork Road", par:2, aspect:"wide",
+    poly:[{xf:0,yf:0},{xf:1,yf:0},{xf:1,yf:1},{xf:0,yf:1}],
+    ballFx:.10, ballFy:.50, holeFx:.90, holeFy:.50,
+    walls:[
+      // Long central divider — does NOT reach left or right edge
+      {xf:.20, yf:.36, wf:.60, hf:.28},
+    ],
+  },
+
+  // ── 8: Zigzag corridor ────────────────────────────────────────────────────
+  // Three-section staircase shape. Must rebound through two 90° bends.
+  // Lesson: controlled rebounds.
+  {
+    name:"Zigzag", par:3, aspect:"square",
+    poly:[
+      // Top-left room
+      {xf:0,   yf:0  },
+      {xf:.55, yf:0  },
+      {xf:.55, yf:.38},
+      // Step right into middle room
+      {xf:1,   yf:.38},
+      {xf:1,   yf:.68},
+      {xf:.45, yf:.68},
+      // Step left into bottom room
+      {xf:.45, yf:1  },
+      {xf:0,   yf:1  },
+      {xf:0,   yf:.62},
+      // Connector left side of middle
+      {xf:.45, yf:.62},
+      {xf:.45, yf:.32},
+      {xf:0,   yf:.32},
+    ],
+    ballFx:.22, ballFy:.16, holeFx:.22, holeFy:.84,
+    walls:[],
+  },
+
+  // ── 9: The Horseshoe ──────────────────────────────────────────────────────
+  // U-shaped fairway. Ball starts at one end, hole at the other end of the U.
+  // Player must shoot around the curved bottom — cannot go straight.
+  // Lesson: play the shape, not the straight line.
+  {
+    name:"Horseshoe", par:3, aspect:"square",
+    poly:[
+      // Left arm (top to bottom)
+      {xf:0,   yf:0  },
+      {xf:.38, yf:0  },
+      {xf:.38, yf:.72},
+      // Bottom bridge connecting the two arms
+      {xf:.62, yf:.72},
+      // Right arm (bottom to top)
+      {xf:.62, yf:0  },
+      {xf:1,   yf:0  },
+      {xf:1,   yf:1  },
+      {xf:0,   yf:1  },
+    ],
+    ballFx:.18, ballFy:.18, holeFx:.82, holeFy:.18,
+    walls:[
+      // Peg inside the bottom curve — forces a precise path through the bridge
+      {xf:.40, yf:.80, wf:.20, hf:.12},
+    ],
+  },
+
+  // ── 10: Combination ───────────────────────────────────────────────────────
+  // L-shape with a narrow corridor section and an island in the corner room.
+  // Uses everything learned: bend, precision, obstacle angle.
+  {
+    name:"The Final", par:3, aspect:"square",
+    poly:[
+      {xf:0,   yf:0  },
+      {xf:.52, yf:0  },
+      {xf:.52, yf:.48},
+      {xf:1,   yf:.48},
+      {xf:1,   yf:1  },
+      {xf:0,   yf:1  },
+    ],
+    ballFx:.20, ballFy:.80, holeFx:.42, holeFy:.22,
+    walls:[
+      // Narrow passage barrier in the left column
+      {xf:.10, yf:.55, wf:.32, hf:.14},
+      // Small obstacle in the top-left arm
+      {xf:.15, yf:.12, wf:.22, hf:.18},
+    ],
+  },
+
+  // ════════════════════════════════════════════════════════════════
+  //  ADVENTURE 3 — THE CANYON  (holes 11–15)
+  //  Theme: tight, angled, precision demanded
+  // ════════════════════════════════════════════════════════════════
+
+  // ── 11: Narrow Bridge ─────────────────────────────────────────────────────
+  // A long thin rectangle — tiny width, long length.
+  // Even a small mis-aim misses the entire fairway.
+  {
+    name:"Narrow Bridge", par:2, aspect:"tall",
+    poly:[{xf:0,yf:0},{xf:1,yf:0},{xf:1,yf:1},{xf:0,yf:1}],
+    ballFx:.50, ballFy:.92, holeFx:.50, holeFy:.06,
+    walls:[],
+  },
+
+  // ── 12: Staircase ──────────────────────────────────────────────────────────
+  // Three-step staircase — each step slightly offset, forcing a series of banks.
+  {
+    name:"Staircase", par:3, aspect:"square",
+    poly:[
+      {xf:0,   yf:0   },
+      {xf:.65, yf:0   },
+      {xf:.65, yf:.35 },
+      {xf:1,   yf:.35 },
+      {xf:1,   yf:1   },
+      {xf:.35, yf:1   },
+      {xf:.35, yf:.65 },
+      {xf:0,   yf:.65 },
+    ],
+    ballFx:.18, ballFy:.48, holeFx:.78, holeFy:.72,
+    walls:[],
+  },
+
+  // ── 13: The Cross ──────────────────────────────────────────────────────────
+  // Plus/cross shape — four arms meeting at the centre.
+  // Ball enters from bottom arm, hole is in the top arm.
+  {
+    name:"The Cross", par:2, aspect:"square",
+    poly:[
+      {xf:.35, yf:0   },
+      {xf:.65, yf:0   },
+      {xf:.65, yf:.35 },
+      {xf:1,   yf:.35 },
+      {xf:1,   yf:.65 },
+      {xf:.65, yf:.65 },
+      {xf:.65, yf:1   },
+      {xf:.35, yf:1   },
+      {xf:.35, yf:.65 },
+      {xf:0,   yf:.65 },
+      {xf:0,   yf:.35 },
+      {xf:.35, yf:.35 },
+    ],
+    ballFx:.50, ballFy:.88, holeFx:.50, holeFy:.12,
+    walls:[],
+  },
+
+  // ── 14: The Bottleneck ─────────────────────────────────────────────────────
+  // Wide room → pinched narrow channel → wide room.
+  // Must thread through the pinch precisely.
+  {
+    name:"Bottleneck", par:2, aspect:"wide",
+    poly:[{xf:0,yf:0},{xf:1,yf:0},{xf:1,yf:1},{xf:0,yf:1}],
+    ballFx:.08, ballFy:.50, holeFx:.92, holeFy:.50,
+    walls:[
+      {xf:.36, yf:.00, wf:.28, hf:.38},
+      {xf:.36, yf:.62, wf:.28, hf:.38},
+    ],
+  },
+
+  // ── 15: Diagonal Canyon ────────────────────────────────────────────────────
+  // A diagonal corridor — neither horizontal nor vertical.
+  // Forces an angled shot from the start.
+  {
+    name:"Diagonal Run", par:2, aspect:"square",
+    poly:[
+      {xf:0,   yf:.25 },
+      {xf:.25, yf:0   },
+      {xf:1,   yf:.50 },
+      {xf:.75, yf:1   },
+      {xf:0,   yf:.60 },
+    ],
+    ballFx:.12, ballFy:.44, holeFx:.82, holeFy:.55,
+    walls:[],
+  },
+
+  // ════════════════════════════════════════════════════════════════
+  //  ADVENTURE 4 — THE ARCHIPELAGO  (holes 16–20)
+  //  Theme: multiple obstacles, islands, routes
+  // ════════════════════════════════════════════════════════════════
+
+  // ── 16: Twin Islands ───────────────────────────────────────────────────────
+  // Wide rectangle with two large islands — three narrow channels.
+  {
+    name:"Twin Islands", par:2, aspect:"wide",
+    poly:[{xf:0,yf:0},{xf:1,yf:0},{xf:1,yf:1},{xf:0,yf:1}],
+    ballFx:.06, ballFy:.50, holeFx:.94, holeFy:.50,
+    walls:[
+      {xf:.22, yf:.08, wf:.22, hf:.42},
+      {xf:.22, yf:.58, wf:.22, hf:.34},
+      {xf:.56, yf:.08, wf:.22, hf:.34},
+      {xf:.56, yf:.50, wf:.22, hf:.42},
+    ],
+  },
+
+  // ── 17: The Maze ───────────────────────────────────────────────────────────
+  // Open rectangle with an H-barrier system — two exits, one leads to the hole.
+  {
+    name:"The Maze", par:3, aspect:"square",
+    poly:[{xf:0,yf:0},{xf:1,yf:0},{xf:1,yf:1},{xf:0,yf:1}],
+    ballFx:.10, ballFy:.50, holeFx:.90, holeFy:.50,
+    walls:[
+      {xf:.30, yf:.00, wf:.14, hf:.60},
+      {xf:.56, yf:.40, wf:.14, hf:.60},
+    ],
+  },
+
+  // ── 18: Boomerang ─────────────────────────────────────────────────────────
+  // Wide U with the opening on the right side — must curve around the top.
+  {
+    name:"Boomerang", par:3, aspect:"square",
+    poly:[
+      {xf:0,  yf:0  },
+      {xf:.60,yf:0  },
+      {xf:.60,yf:.38},
+      {xf:.40,yf:.38},
+      {xf:.40,yf:.62},
+      {xf:.60,yf:.62},
+      {xf:.60,yf:1  },
+      {xf:0,  yf:1  },
+    ],
+    ballFx:.20, ballFy:.82, holeFx:.20, holeFy:.18,
+    walls:[],
+  },
+
+  // ── 19: The Arena ─────────────────────────────────────────────────────────
+  // Large square with 4 corner pillars — 8 paths, hole dead centre.
+  {
+    name:"The Arena", par:2, aspect:"square",
+    poly:[{xf:0,yf:0},{xf:1,yf:0},{xf:1,yf:1},{xf:0,yf:1}],
+    ballFx:.50, ballFy:.10, holeFx:.50, holeFy:.50,
+    walls:[
+      {xf:.00, yf:.00, wf:.28, hf:.28},
+      {xf:.72, yf:.00, wf:.28, hf:.28},
+      {xf:.00, yf:.72, wf:.28, hf:.28},
+      {xf:.72, yf:.72, wf:.28, hf:.28},
+    ],
+  },
+
+  // ── 20: Switchback ────────────────────────────────────────────────────────
+  // Four-section zigzag — like stairs but tighter alternating.
+  {
+    name:"Switchback", par:4, aspect:"square",
+    poly:[
+      {xf:0,   yf:0  },
+      {xf:.50, yf:0  },
+      {xf:.50, yf:.28},
+      {xf:1,   yf:.28},
+      {xf:1,   yf:.58},
+      {xf:.50, yf:.58},
+      {xf:.50, yf:.82},
+      {xf:1,   yf:.82},
+      {xf:1,   yf:1  },
+      {xf:0,   yf:1  },
+      {xf:0,   yf:.72},
+      {xf:.50, yf:.72},
+      {xf:.50, yf:.42},
+      {xf:0,   yf:.42},
+    ],
+    ballFx:.22, ballFy:.14, holeFx:.78, holeFy:.92,
+    walls:[],
+  },
+
+  // ════════════════════════════════════════════════════════════════
+  //  ADVENTURE 5 — THE CHAMPIONSHIP  (holes 21–25)
+  //  Theme: expert-level, everything combined
+  // ════════════════════════════════════════════════════════════════
+
+  // ── 21: The Snake King ────────────────────────────────────────────────────
+  // Triple S-bend — three corridors chained.
+  {
+    name:"Snake King", par:4, aspect:"square",
+    poly:[
+      {xf:.36, yf:0  },
+      {xf:1,   yf:0  },
+      {xf:1,   yf:.36},
+      {xf:.64, yf:.36},
+      {xf:.64, yf:.64},
+      {xf:1,   yf:.64},
+      {xf:1,   yf:1  },
+      {xf:0,   yf:1  },
+      {xf:0,   yf:.64},
+      {xf:.36, yf:.64},
+      {xf:.36, yf:.36},
+      {xf:0,   yf:.36},
+    ],
+    ballFx:.18, ballFy:.18, holeFx:.82, holeFy:.82,
+    walls:[],
+  },
+
+  // ── 22: The Gauntlet ──────────────────────────────────────────────────────
+  // Long narrow with 4 staggered barriers — like a slalom.
+  {
+    name:"The Gauntlet", par:3, aspect:"tall",
+    poly:[{xf:0,yf:0},{xf:1,yf:0},{xf:1,yf:1},{xf:0,yf:1}],
+    ballFx:.50, ballFy:.94, holeFx:.50, holeFy:.06,
+    walls:[
+      {xf:.00, yf:.18, wf:.55, hf:.10},
+      {xf:.45, yf:.36, wf:.55, hf:.10},
+      {xf:.00, yf:.54, wf:.55, hf:.10},
+      {xf:.45, yf:.72, wf:.55, hf:.10},
+    ],
+  },
+
+  // ── 23: Pinball ───────────────────────────────────────────────────────────
+  // Wide square with a pinball-style grid of obstacles.
+  {
+    name:"Pinball", par:3, aspect:"square",
+    poly:[{xf:0,yf:0},{xf:1,yf:0},{xf:1,yf:1},{xf:0,yf:1}],
+    ballFx:.10, ballFy:.50, holeFx:.90, holeFy:.50,
+    walls:[
+      {xf:.28, yf:.15, wf:.12, hf:.25},
+      {xf:.60, yf:.15, wf:.12, hf:.25},
+      {xf:.28, yf:.60, wf:.12, hf:.25},
+      {xf:.60, yf:.60, wf:.12, hf:.25},
+      {xf:.42, yf:.38, wf:.16, hf:.24},
+    ],
+  },
+
+  // ── 24: The Spiral King ───────────────────────────────────────────────────
+  // Tighter inward spiral — three concentric rings, ball starts outside.
+  {
+    name:"Spiral King", par:4, aspect:"square",
+    poly:[{xf:0,yf:0},{xf:1,yf:0},{xf:1,yf:1},{xf:0,yf:1}],
+    ballFx:.10, ballFy:.50, holeFx:.50, holeFy:.50,
+    walls:[
+      // Outer ring: top wall (gap right)
+      {xf:.15, yf:.15, wf:.70, hf:.10},
+      // Outer ring: right wall (gap bottom)
+      {xf:.75, yf:.15, wf:.10, hf:.50},
+      // Outer ring: bottom wall (gap left)
+      {xf:.25, yf:.75, wf:.50, hf:.10},
+      // Inner ring: left wall (gap top)
+      {xf:.25, yf:.35, wf:.10, hf:.40},
+      // Inner ring: top wall (gap right)
+      {xf:.35, yf:.35, wf:.30, hf:.10},
+      // Inner ring: right wall (gap bottom — leads to centre)
+      {xf:.55, yf:.35, wf:.10, hf:.20},
+    ],
+  },
+
+  // ── 25: The Final Boss ────────────────────────────────────────────────────
+  // Everything: cross + diagonal strips + island. No forgiving shapes.
+  {
+    name:"Final Boss", par:4, aspect:"square",
+    poly:[
+      {xf:.30, yf:0   },
+      {xf:.70, yf:0   },
+      {xf:.70, yf:.30 },
+      {xf:1,   yf:.30 },
+      {xf:1,   yf:.70 },
+      {xf:.70, yf:.70 },
+      {xf:.70, yf:1   },
+      {xf:.30, yf:1   },
+      {xf:.30, yf:.70 },
+      {xf:0,   yf:.70 },
+      {xf:0,   yf:.30 },
+      {xf:.30, yf:.30 },
+    ],
+    ballFx:.50, ballFy:.88, holeFx:.50, holeFy:.12,
+    walls:[
+      {xf:.38, yf:.38, wf:.24, hf:.24},
+    ],
+  },
+];
+
+// ── Adventures: 5 adventures × 5 holes = 25 holes total ─────────────────────
+interface AdventureDef {
+  id: string;
+  name: string;
+  subtitle: string;
+  emoji: string;
+  accentColor: string;     // card accent colour
+  accentDark: string;      // darker shade for gradient
+  difficulty: "Beginner"|"Easy"|"Medium"|"Hard"|"Expert";
+  holeRange: [number, number]; // inclusive indices into HOLES[]
+}
+
+const ADVENTURES: AdventureDef[] = [
+  {
+    id:"meadow", name:"The Meadow", subtitle:"Learn the fundamentals",
+    emoji:"🌿", accentColor:"#5FB94A", accentDark:"#2E7A22",
+    difficulty:"Beginner", holeRange:[0, 4],
+  },
+  {
+    id:"forest", name:"The Forest", subtitle:"Find your rhythm",
+    emoji:"🌲", accentColor:"#3A8A6A", accentDark:"#1A5A40",
+    difficulty:"Easy", holeRange:[5, 9],
+  },
+  {
+    id:"canyon", name:"The Canyon", subtitle:"Precision under pressure",
+    emoji:"🏔️", accentColor:"#C87840", accentDark:"#8A4820",
+    difficulty:"Medium", holeRange:[10, 14],
+  },
+  {
+    id:"archipelago", name:"The Archipelago", subtitle:"Navigate the islands",
+    emoji:"🏝️", accentColor:"#2A90C8", accentDark:"#1A5A88",
+    difficulty:"Hard", holeRange:[15, 19],
+  },
+  {
+    id:"championship", name:"Championship", subtitle:"Only the best survive",
+    emoji:"🏆", accentColor:"#C89820", accentDark:"#8A6010",
+    difficulty:"Expert", holeRange:[20, 24],
+  },
+];
+
+function getAdventure(holeIdx: number): number {
+  return ADVENTURES.findIndex(a => holeIdx >= a.holeRange[0] && holeIdx <= a.holeRange[1]);
+}
+
+// Legacy getRound alias
+function getRound(holeIdx: number): number { return getAdventure(holeIdx); }
+const ROUNDS = ADVENTURES; // legacy alias
 
 // ── Per-hole environment themes ────────────────────────────────────────────────
 interface EnvTheme {
-  skyTop: string; skyBot: string;
-  grass1: string; grass2: string;
-  putt1:  string; putt2:  string;
-  accentTree: string;  // tree canopy colour
-  accentRock: string;  // rock/stone colour
+  skyTop:string; skyBot:string; grass1:string; grass2:string;
+  putt1:string;  putt2:string;  tree1:string;  tree2:string;
 }
-const ENV_THEMES: EnvTheme[] = [
-  // Hole 1 — Forest
-  { skyTop:"#BFE8FF", skyBot:"#EAF9FF", grass1:"#7FC76B", grass2:"#6FB85D",
-    putt1:"#6EC3EC", putt2:"#4EA0D0", accentTree:"#5AA84A", accentRock:"#9CA3A0" },
-  // Hole 2 — Savanna
-  { skyTop:"#FFF5CC", skyBot:"#FFEEA0", grass1:"#A8C86A", grass2:"#93B455",
-    putt1:"#7FCFAA", putt2:"#5AB890", accentTree:"#C8A840", accentRock:"#B09060" },
-  // Hole 3 — City Park
-  { skyTop:"#D4EEFF", skyBot:"#C0E0FF", grass1:"#68B85C", grass2:"#58A04E",
-    putt1:"#88D0F0", putt2:"#60B4DC", accentTree:"#408038", accentRock:"#808890" },
-  // Hole 4 — Zen Garden
-  { skyTop:"#E8F4FF", skyBot:"#D8ECFF", grass1:"#85C470", grass2:"#74B060",
-    putt1:"#A0D8C8", putt2:"#78C0B0", accentTree:"#507850", accentRock:"#C8A8B8" },
-  // Hole 5 — Highlands
-  { skyTop:"#DDEEFF", skyBot:"#C8E0F0", grass1:"#5A9E50", grass2:"#4A8A40",
-    putt1:"#5CB8D8", putt2:"#3890B8", accentTree:"#385830", accentRock:"#706858" },
+const ENV: EnvTheme[] = [
+  { skyTop:"#C8ECFF", skyBot:"#E4F8FF", grass1:"#7FC76B", grass2:"#6FB85D", putt1:"#6EC3EC", putt2:"#4EA0D0", tree1:"#5AA84A", tree2:"#E8A0C0" },
+  { skyTop:"#FFF0CC", skyBot:"#FFE8A0", grass1:"#A8C86A", grass2:"#93B455", putt1:"#7FCFAA", putt2:"#5AB890", tree1:"#C8A840", tree2:"#A8C870" },
+  { skyTop:"#D4EEFF", skyBot:"#C0DCFF", grass1:"#68B85C", grass2:"#58A04E", putt1:"#88D0F0", putt2:"#60B4DC", tree1:"#408038", tree2:"#D0A0D0" },
+  { skyTop:"#E8F4FF", skyBot:"#D0E8F8", grass1:"#85C470", grass2:"#74B060", putt1:"#A0D8C8", putt2:"#78C0B0", tree1:"#507850", tree2:"#C890C0" },
+  { skyTop:"#DDEEFF", skyBot:"#C8E0F0", grass1:"#5A9E50", grass2:"#4A8A40", putt1:"#5CB8D8", putt2:"#3890B8", tree1:"#385830", tree2:"#B07040" },
+  { skyTop:"#FFE8CC", skyBot:"#FFD0A0", grass1:"#C8A840", grass2:"#B09030", putt1:"#D0B060", putt2:"#B09040", tree1:"#A07820", tree2:"#E8C060" },
+  { skyTop:"#E0F0FF", skyBot:"#C8E0F8", grass1:"#70B060", grass2:"#60A050", putt1:"#78C0A8", putt2:"#58A890", tree1:"#406030", tree2:"#C8A0B0" },
+  { skyTop:"#F0E8FF", skyBot:"#E0D0F8", grass1:"#8A9E5A", grass2:"#7A8E4A", putt1:"#A090D0", putt2:"#8070B8", tree1:"#506840", tree2:"#D0A0C0" },
+  { skyTop:"#C8FFE8", skyBot:"#A0F0D0", grass1:"#5AB88A", grass2:"#48A078", putt1:"#60D0A8", putt2:"#40B888", tree1:"#306850", tree2:"#A0E8C0" },
+  { skyTop:"#FFD0D0", skyBot:"#FFB8B8", grass1:"#A8584A", grass2:"#984840", putt1:"#C07868", putt2:"#A05848", tree1:"#783828", tree2:"#E09080" },
 ];
 
-// ── Course geometry built from HoleDef ────────────────────────────────────────
+// ── Course geometry ────────────────────────────────────────────────────────────
 interface CourseGeom {
-  poly:   Vec2[];           // actual pixel polygon
-  bbox:   { x:number; y:number; w:number; h:number }; // tight bbox of poly
-  hole:   { x:number; y:number; r:number };
-  start:  { x:number; y:number };
-  walls:  Array<{ x:number; y:number; w:number; h:number }>;
-  shapeName: string;
+  poly:  Vec2[];
+  bbox:  { x:number; y:number; w:number; h:number };
+  hole:  { x:number; y:number; r:number };
+  start: { x:number; y:number };
+  walls: Array<{ x:number; y:number; w:number; h:number }>;
 }
 
-function buildCourse(idx: number, W: number, H: number): CourseGeom {
+function buildCourse(idx:number, W:number, H:number): CourseGeom {
   const def = HOLES[idx % HOLES.length];
 
-  // Leave 8% margin each side for the decorative world background
-  const MX = Math.round(W * 0.08);
-  const MY = Math.round(H * 0.12);
-  const areaW = W - MX * 2;
-  const areaH = H - MY * 2;
+  // ── SIZING PHILOSOPHY ─────────────────────────────────────────────────────
+  // Bars: top 80px (header) + bottom 72px (controls) = 152px reserved.
+  // The remaining "game zone" gets the course.
+  //
+  // KEY MOBILE INSIGHT:
+  // Portrait phones (W < H × 0.65) have a tall, narrow game zone.
+  // "wide" aspect holes (ball left → hole right) would be tiny on a 390px
+  // wide phone. So on portrait mobile we SWAP width and height for "wide"
+  // holes — the course runs top-to-bottom instead of left-to-right.
+  // Ball and hole positions are also swapped (ballFy↔holeFy for "portrait").
+  // "square" holes work fine as-is — the side is limited by width not height.
 
-  // Scale polygon to pixels
-  const poly: Vec2[] = def.poly.map(p => ({
-    x: MX + p.xf * areaW,
-    y: MY + p.yf * areaH,
-  }));
+  const TOP_BAR = 80;
+  const BOT_BAR = 72;
+  const zoneH   = H - TOP_BAR - BOT_BAR;
+  const zoneW   = W;
 
-  // Tight bounding box of polygon
+  // Portrait phone if the game zone is taller than it is wide
+  const isPortrait = zoneH > zoneW * 1.1;
+
+  const aspect = def.aspect ?? "wide";
+  let courseW: number, courseH: number;
+  // Whether this hole should be rotated 90° on portrait (wide→tall)
+  const rotateOnPortrait = isPortrait && aspect === "wide";
+
+  if (aspect === "square") {
+    // Square: constrained by whichever dimension is smaller
+    const side = Math.round(Math.min(zoneW * 0.84, zoneH * 0.78));
+    courseW = side; courseH = side;
+  } else if (aspect === "tall" || rotateOnPortrait) {
+    // Tall: use the height, constrain width
+    courseW = Math.round(Math.min(zoneW * 0.80, zoneH * 0.55));
+    courseH = Math.round(zoneH * 0.80);
+  } else {
+    // Wide (landscape/desktop): use the width, constrain height
+    courseW = Math.round(zoneW * 0.82);
+    courseH = Math.round(Math.min(zoneH * 0.62, courseW * 0.38));
+  }
+
+  // Centre the course in the game zone
+  const originX = Math.round((zoneW - courseW) / 2);
+  const originY = Math.round(TOP_BAR + (zoneH - courseH) / 2);
+
+  // For rotated "wide" holes on portrait: swap xf/yf and flip the axis
+  // so the hole runs top-to-bottom using the long axis of the phone.
+  const transformPt = (xf: number, yf: number) => {
+    if (!rotateOnPortrait) return { x: originX + xf * courseW, y: originY + yf * courseH };
+    // Rotate 90° clockwise: new_x = yf, new_y = 1 - xf
+    return { x: originX + yf * courseW, y: originY + (1 - xf) * courseH };
+  };
+
+  const poly: Vec2[] = def.poly.map(p => transformPt(p.xf, p.yf));
+
   const xs = poly.map(p => p.x), ys = poly.map(p => p.y);
   const bbox = {
     x: Math.min(...xs), y: Math.min(...ys),
@@ -300,847 +695,1120 @@ function buildCourse(idx: number, W: number, H: number): CourseGeom {
     h: Math.max(...ys) - Math.min(...ys),
   };
 
-  // Ball start and hole position are relative to the full area (not just bbox),
-  // so they're guaranteed to land inside the polygon
-  const start = {
-    x: MX + def.ballFx * areaW,
-    y: MY + def.ballFy * areaH,
-  };
-  const hole = {
-    x: MX + def.holeFx * areaW,
-    y: MY + def.holeFy * areaH,
-    r: 15,
-  };
+  const holePos  = transformPt(def.holeFx, def.holeFy);
+  const startPos = transformPt(def.ballFx, def.ballFy);
 
-  const walls = def.walls.map(w => ({
-    x: MX + w.xf * areaW,
-    y: MY + w.yf * areaH,
-    w: w.wf * areaW,
-    h: w.hf * areaH,
-  }));
+  // Walls don't rotate — they are always axis-aligned rectangles.
+  // On portrait rotation we approximate rotated walls by swapping axes.
+  const walls = def.walls.map(w => {
+    if (!rotateOnPortrait) {
+      return { x: originX + w.xf * courseW, y: originY + w.yf * courseH, w: w.wf * courseW, h: w.hf * courseH };
+    }
+    // Rotate wall rect: new origin is top-left after 90° CW rotation
+    const rx = originX + w.yf * courseW;
+    const ry = originY + (1 - w.xf - w.wf) * courseH;
+    return { x: rx, y: ry, w: w.hf * courseW, h: w.wf * courseH };
+  });
 
-  return { poly, bbox, hole, start, walls, shapeName: def.shape };
+  return { poly, bbox, hole: { ...holePos, r: 13 }, start: startPos, walls };
 }
 
-// ── Point-in-polygon (ray casting) ────────────────────────────────────────────
-function pointInPoly(x: number, y: number, poly: Vec2[]): boolean {
+// ── Physics ────────────────────────────────────────────────────────────────────
+const BALL_R = 10;
+
+function pointInPoly(x:number, y:number, poly:Vec2[]) {
   let inside = false;
-  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const xi = poly[i].x, yi = poly[i].y;
-    const xj = poly[j].x, yj = poly[j].y;
-    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
-      inside = !inside;
-    }
+  for (let i=0, j=poly.length-1; i<poly.length; j=i++) {
+    const xi=poly[i].x, yi=poly[i].y, xj=poly[j].x, yj=poly[j].y;
+    if (((yi>y)!==(yj>y)) && (x<(xj-xi)*(y-yi)/(yj-yi)+xi)) inside=!inside;
   }
   return inside;
 }
-
-// ── Closest point on segment + reflection ─────────────────────────────────────
-function closestPointOnSegment(px: number, py: number, ax: number, ay: number, bx: number, by: number): Vec2 {
-  const dx = bx - ax, dy = by - ay;
-  const len2 = dx * dx + dy * dy;
-  if (len2 === 0) return { x: ax, y: ay };
-  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2));
-  return { x: ax + t * dx, y: ay + t * dy };
+function closestPt(px:number, py:number, ax:number, ay:number, bx:number, by:number): Vec2 {
+  const dx=bx-ax, dy=by-ay, len2=dx*dx+dy*dy;
+  if (!len2) return {x:ax, y:ay};
+  const t=Math.max(0, Math.min(1, ((px-ax)*dx+(py-ay)*dy)/len2));
+  return {x:ax+t*dx, y:ay+t*dy};
 }
-
-// ── Wall collision (axis-aligned rect) ────────────────────────────────────────
-const BALL_R = 12;
-
-function collideWall(b: { x:number; y:number; vx:number; vy:number }, w: { x:number; y:number; w:number; h:number }): boolean {
-  const nx = Math.max(w.x, Math.min(b.x, w.x + w.w));
-  const ny = Math.max(w.y, Math.min(b.y, w.y + w.h));
-  const dx = b.x - nx, dy = b.y - ny;
-  const d = Math.hypot(dx, dy);
-  if (d < BALL_R && d > .001) {
-    const ex = dx / d, ey = dy / d;
-    b.x = nx + ex * (BALL_R + .5);
-    b.y = ny + ey * (BALL_R + .5);
-    const dot = b.vx * ex + b.vy * ey;
-    b.vx = (b.vx - 2 * dot * ex) * .65;
-    b.vy = (b.vy - 2 * dot * ey) * .65;
+function collidePoly(b:{x:number;y:number;vx:number;vy:number}, poly:Vec2[]) {
+  if (pointInPoly(b.x, b.y, poly)) return false;
+  let minD=Infinity, cp={x:poly[0].x, y:poly[0].y}, nx=0, ny=0;
+  for (let i=0, j=poly.length-1; i<poly.length; j=i++) {
+    const c=closestPt(b.x,b.y,poly[j].x,poly[j].y,poly[i].x,poly[i].y);
+    const d=Math.hypot(b.x-c.x, b.y-c.y);
+    if (d<minD) {
+      minD=d; cp=c;
+      const ex=poly[i].x-poly[j].x, ey=poly[i].y-poly[j].y, l=Math.hypot(ex,ey);
+      nx=-ey/l; ny=ex/l;
+    }
+  }
+  b.x=cp.x+nx*(BALL_R+1); b.y=cp.y+ny*(BALL_R+1);
+  const dot=b.vx*nx+b.vy*ny;
+  if (dot<0) { b.vx=(b.vx-2*dot*nx)*.62; b.vy=(b.vy-2*dot*ny)*.62; }
+  return true;
+}
+function collideWall(b:{x:number;y:number;vx:number;vy:number}, w:{x:number;y:number;w:number;h:number}) {
+  const nx=Math.max(w.x,Math.min(b.x,w.x+w.w)), ny=Math.max(w.y,Math.min(b.y,w.y+w.h));
+  const dx=b.x-nx, dy=b.y-ny, d=Math.hypot(dx,dy);
+  if (d<BALL_R && d>.001) {
+    const ex=dx/d, ey=dy/d;
+    b.x=nx+ex*(BALL_R+.5); b.y=ny+ey*(BALL_R+.5);
+    const dot=b.vx*ex+b.vy*ey;
+    b.vx=(b.vx-2*dot*ex)*.65; b.vy=(b.vy-2*dot*ey)*.65;
     return true;
   }
   return false;
 }
 
-// ── Polygon boundary collision ─────────────────────────────────────────────────
-// If ball center is outside polygon, find nearest edge and reflect
-function collidePoly(b: { x:number; y:number; vx:number; vy:number }, poly: Vec2[]): boolean {
-  if (pointInPoly(b.x, b.y, poly)) return false; // inside — no collision
-
-  // Find closest edge
-  let minDist = Infinity;
-  let bestCp: Vec2 = { x: poly[0].x, y: poly[0].y };
-  let bestNx = 0, bestNy = 0;
-
-  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const cp = closestPointOnSegment(b.x, b.y, poly[j].x, poly[j].y, poly[i].x, poly[i].y);
-    const d = Math.hypot(b.x - cp.x, b.y - cp.y);
-    if (d < minDist) {
-      minDist = d;
-      bestCp = cp;
-      // Edge normal pointing inward (toward polygon interior)
-      const ex = poly[i].x - poly[j].x, ey = poly[i].y - poly[j].y;
-      const len = Math.hypot(ex, ey);
-      // Perpendicular — pick direction that points toward centroid
-      bestNx = -ey / len;
-      bestNy = ex / len;
-    }
-  }
-
-  // Push ball back inside
-  const push = BALL_R - minDist + 1;
-  b.x = bestCp.x + bestNx * (BALL_R + 1);
-  b.y = bestCp.y + bestNy * (BALL_R + 1);
-
-  // Reflect velocity off edge normal
-  const dot = b.vx * bestNx + b.vy * bestNy;
-  if (dot < 0) {
-    b.vx = (b.vx - 2 * dot * bestNx) * .62;
-    b.vy = (b.vy - 2 * dot * bestNy) * .62;
-  }
-
-  void push; // used indirectly above
-  return true;
+// ── Drawing helpers ────────────────────────────────────────────────────────────
+function rrect(ctx:CanvasRenderingContext2D, x:number, y:number, w:number, h:number, r:number) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
 }
 
-// ── Win phrases ────────────────────────────────────────────────────────────────
+function drawIsoTree(ctx:CanvasRenderingContext2D, cx:number, cy:number, sz:number, c1:string, c2:string) {
+  ctx.fillStyle="rgba(0,0,0,.10)";
+  ctx.beginPath(); ctx.ellipse(cx+2, cy+sz*.55, sz*.38, sz*.14, 0, 0, 7); ctx.fill();
+  ctx.fillStyle="#7A4A28"; ctx.fillRect(cx-sz*.10, cy+sz*.22, sz*.20, sz*.34);
+  ctx.fillStyle="#5A3010"; ctx.fillRect(cx+sz*.04, cy+sz*.22, sz*.06, sz*.34);
+  const blk=(x:number, y:number, s:number, top:string) => {
+    ctx.fillStyle=top; rrect(ctx,x-s*.5,y-s*.5,s,s,s*.12); ctx.fill();
+    ctx.fillStyle="rgba(0,0,0,.12)"; ctx.fillRect(x+s*.28,y-s*.3,s*.22,s*.36);
+    ctx.fillStyle="rgba(255,255,255,.25)"; ctx.fillRect(x-s*.38,y-s*.38,s*.18,s*.18);
+  };
+  blk(cx-sz*.22, cy+sz*.02, sz*.52, c2);
+  blk(cx+sz*.22, cy+sz*.02, sz*.52, c2);
+  blk(cx,        cy-sz*.20, sz*.60, c1);
+}
+function drawRock(ctx:CanvasRenderingContext2D, x:number, y:number, sz:number) {
+  ctx.fillStyle="rgba(0,0,0,.10)";
+  ctx.beginPath(); ctx.ellipse(x+1,y+sz*.38,sz*.36,sz*.14,0,0,7); ctx.fill();
+  ctx.fillStyle="#90989A"; rrect(ctx,x-sz*.28,y-sz*.22,sz*.56,sz*.48,sz*.12); ctx.fill();
+  ctx.fillStyle="#A8B0B2"; rrect(ctx,x-sz*.22,y-sz*.18,sz*.30,sz*.24,sz*.08); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.20)"; ctx.fillRect(x-sz*.16,y-sz*.14,sz*.10,sz*.10);
+}
+function drawFlower(ctx:CanvasRenderingContext2D, x:number, y:number, sz:number, col:string) {
+  ctx.fillStyle="#6B9E4A";
+  for (let i=-1; i<=1; i++) {
+    ctx.beginPath(); ctx.moveTo(x+i*sz*.18,y); ctx.lineTo(x+i*sz*.18-sz*.04,y-sz*.28);
+    ctx.lineTo(x+i*sz*.18+sz*.04,y-sz*.28); ctx.closePath(); ctx.fill();
+  }
+  ctx.fillStyle=col; ctx.beginPath(); ctx.arc(x,y-sz*.28,sz*.10,0,7); ctx.fill();
+}
+function drawCloud(ctx:CanvasRenderingContext2D, x:number, y:number, s:number) {
+  ctx.save(); ctx.translate(x,y); ctx.scale(s,s);
+  ctx.fillStyle="rgba(255,255,255,.90)";
+  ctx.beginPath(); ctx.arc(0,0,14,0,7); ctx.arc(18,-7,11,0,7);
+  ctx.arc(32,0,13,0,7); ctx.arc(16,7,14,0,7); ctx.fill();
+  ctx.restore();
+}
+
 const WIN_PHRASES = ["Excellent!","Nice Shot!","Great Job!","Sunk It!","Awesome!","Perfect!"];
 
-// ── Drawing helpers ────────────────────────────────────────────────────────────
-function rrect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
+// ── Decoration ────────────────────────────────────────────────────────────────
+interface Decor {
+  clouds:  {x:number;y:number;s:number;spd:number}[];
+  trees:   {x:number;y:number;sz:number;c1:string;c2:string}[];
+  rocks:   {x:number;y:number;sz:number}[];
+  flowers: {x:number;y:number;sz:number;col:string}[];
 }
+const bgImageCache = new Map<string, HTMLImageElement>();
 
-function drawCloud(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
-  ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
-  ctx.fillStyle = "rgba(255,255,255,.88)";
-  ctx.beginPath(); ctx.arc(0, 0, 14, 0, 7); ctx.arc(16, -6, 11, 0, 7);
-  ctx.arc(30, 0, 13, 0, 7); ctx.arc(14, 6, 14, 0, 7); ctx.fill();
-  ctx.restore();
-}
+// ── Component ──────────────────────────────────────────────────────────────────
+export function MiniGolfEngine({
+  onNeedHearts, onRoundEnd, onExit, heartsPerHole = 3,
+}: MiniGolfEngineProps) {
 
-function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, canopy: string) {
-  ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
-  ctx.fillStyle = "rgba(0,0,0,.08)";
-  ctx.beginPath(); ctx.ellipse(2, 26, 20, 7, 0, 0, 7); ctx.fill();
-  ctx.fillStyle = "#B87F3B"; ctx.fillRect(-4, 0, 8, 22);
-  ctx.fillStyle = canopy;
-  ctx.beginPath(); ctx.arc(0, -14, 20, 0, 7); ctx.fill();
-  ctx.fillStyle = `color-mix(in srgb, ${canopy} 70%, #fff)`;
-  ctx.beginPath(); ctx.arc(-9, -4, 13, 0, 7); ctx.arc(9, -2, 13, 0, 7); ctx.fill();
-  ctx.restore();
-}
-
-function drawBfly(ctx: CanvasRenderingContext2D, x: number, y: number, t: number, col: string) {
-  const f = Math.sin(t * 10) * .5 + .5;
-  ctx.save(); ctx.translate(x, y); ctx.fillStyle = col;
-  ctx.beginPath(); ctx.ellipse(-4, 0, 4, 3 + f * 2, .4, 0, 7); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(4, 0, 4, 3 + f * 2, -.4, 0, 7); ctx.fill();
-  ctx.restore();
-}
-
-// ── Main component ─────────────────────────────────────────────────────────────
-export interface MathQuestEngineProps {
-  onExit?:       () => void;
-  defaultGrade?: Grade;
-}
-
-export function MathQuestEngine({ onExit, defaultGrade = "SS1" }: MathQuestEngineProps) {
-
-  // ── Session state ────────────────────────────────────────────────────────────
-  const [phase, setPhase]           = useState<Phase>("topic_pick");
-  const [holeIdx, setHoleIdx]       = useState(0);
-  const [shots, setShots]           = useState(0);
-  const [hearts, setHearts]         = useState(3);
-  const [totalXp, setTotalXp]       = useState(0);
-  const [holeStars, setHoleStars]   = useState<number[]>([]);
+  const [phase, setPhase]         = useState<Phase>("menu");
+  const [holeIdx, setHoleIdx]     = useState(0);
+  const [shots, setShots]         = useState(0);
+  const [hearts, setHearts]       = useState(heartsPerHole);
+  const [holeStars, setHoleStars] = useState<number[]>([]);
   const [sessionShots, setSessionShots] = useState(0);
-  const [score, setScore]           = useState(0);
-  const [winPhrase, setWinPhrase]   = useState("");
-  const [showWin, setShowWin]       = useState(false);
+  const [score, setScore]         = useState(0);
+  const [totalXp, setTotalXp]     = useState(0);
+  const [winPhrase, setWinPhrase] = useState("");
+  const [showWin, setShowWin]     = useState(false);
+  const [showMiss, setShowMiss]        = useState(false);
+  const [adventureStars, setAdventureStars] = useState<Record<string,number[]>>({}); // adventure id → hole stars
+  const [activeAdventure, setActiveAdventure] = useState<AdventureDef|null>(null);
+  const [menuOpen, setMenuOpen]   = useState(false);  // in-game pause menu
+  const [swinging, setSwinging]  = useState(false);   // golf club swing animation
 
-  // ── Grade / topic state ──────────────────────────────────────────────────────
-  const [selectedGrade, setSelectedGrade] = useState<Grade>(defaultGrade);
-  const [selectedTopic]                   = useState("change-of-subject");
-
-  // ── Question state ───────────────────────────────────────────────────────────
-  const [qIdx, setQIdx]             = useState(0);
-  const [stepIdx, setStepIdx]       = useState(0);
-  const [cardVisible, setCardVisible] = useState(false);
-  const [cardShake, setCardShake]   = useState(false);
-  const [picked, setPicked]         = useState<string | null>(null);
-  const [tileResult, setTileResult] = useState<"correct" | "wrong" | null>(null);
-  const [wrongCount, setWrongCount] = useState(0);
-  const [showHint, setShowHint]     = useState(false);
-  const [advancing, setAdvancing]   = useState(false);
-
-  // ── Miss feedback state ──────────────────────────────────────────────────────
-  const [showMissFeedback, setShowMissFeedback] = useState(false);
-
-  // ── Canvas & physics refs ────────────────────────────────────────────────────
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const frameRef  = useRef<HTMLDivElement>(null);
-  const phaseRef  = useRef<Phase>("topic_pick");
+  // Canvas & physics refs
+  const canvasRef  = useRef<HTMLCanvasElement>(null);
+  const phaseRef   = useRef<Phase>("menu");
   phaseRef.current = phase;
-
-  const cwRef    = useRef(800);
-  const chRef    = useRef(520);
-  const courseRef = useRef(buildCourse(0, 800, 520));
-  const ballRef   = useRef({ x: 200, y: 400, vx: 0, vy: 0, breathe: 0, sinkT: 0 });
-  const dragging  = useRef(false);
-  const dragCur   = useRef<Vec2>({ x: 0, y: 0 });
-  const shotsRef  = useRef(0);
-  const heartsRef = useRef(3);
+  const cwRef      = useRef(800);
+  const chRef      = useRef(520);
+  const courseRef  = useRef(buildCourse(0, 800, 520));
+  const ballRef    = useRef({x:200, y:300, vx:0, vy:0, breathe:0, sinkT:0});
+  const dragging   = useRef(false);
+  const swingRef      = useRef(false);   // tracks swing animation for draw loop
+  const swingTRef     = useRef(0);       // swing start timestamp
+  const swingOriginRef = useRef({x:0, y:0, angle:0}); // FROZEN club position at shot moment
+  const dragCur    = useRef<Vec2>({x:0, y:0});
+  const shotsRef   = useRef(0);
+  const heartsRef  = useRef(heartsPerHole);
   const holeIdxRef = useRef(0);
-  const rafRef    = useRef(0);
-  const lastT     = useRef(performance.now());
-  const deadRef   = useRef(false);
+  const rafRef     = useRef(0);
+  const lastT      = useRef(performance.now());
+  const deadRef    = useRef(false);
+  const bgImgRef   = useRef<HTMLImageElement|null>(null);
 
-  const pts  = useRef<Array<{ x:number; y:number; vx:number; vy:number; life:number; r:number }>>([]);
-  const conf = useRef<Array<{ x:number; y:number; vx:number; vy:number; g:number; rot:number; vr:number; c:string; life:number; s:number }>>([]);
-  const dec  = useRef<{
-    clouds: Array<{ x:number; y:number; s:number; spd:number }>;
-    trees:  Array<{ x:number; y:number; s:number }>;
-    bflies: Array<{ x:number; y:number; t:number; c:string }>;
-    grass:  Array<{ x:number; y:number; r:number; c:string }>;
-  }>({ clouds:[], trees:[], bflies:[], grass:[] });
+  const pts  = useRef<{x:number;y:number;vx:number;vy:number;life:number;r:number}[]>([]);
+  const conf = useRef<{x:number;y:number;vx:number;vy:number;g:number;rot:number;vr:number;c:string;life:number;s:number}[]>([]);
+  const decRef = useRef<Decor>({clouds:[],trees:[],rocks:[],flowers:[]});
 
-  // ── Filtered question bank for selected grade ────────────────────────────────
-  const gradeQuestions = useMemo(
-    () => QUESTIONS.filter(q => q.grades.includes(selectedGrade) && q.topic === selectedTopic),
-    [selectedGrade, selectedTopic]
-  );
-
-  // ── Resize ───────────────────────────────────────────────────────────────────
-  const applySize = useCallback((w: number, h: number) => {
-    if (w < 10 || h < 10) return;
-    cwRef.current = w; chRef.current = h;
-    const cv = canvasRef.current;
-    if (cv) { cv.width = w; cv.height = h; }
-    const p = phaseRef.current;
-    if (p !== "topic_pick" && p !== "session_done") {
-      courseRef.current = buildCourse(holeIdxRef.current, w, h);
+  // ── Canvas sizing via ResizeObserver ─────────────────────────────────────────
+  const sizeCanvas = useCallback((w:number, h:number) => {
+    if (w<10||h<10) return;
+    cwRef.current=w; chRef.current=h;
+    const cv=canvasRef.current; if (cv) { cv.width=w; cv.height=h; }
+    const p=phaseRef.current;
+    if (p!=="menu" && p!=="session_done") {
+      const course=buildCourse(holeIdxRef.current, w, h);
+      courseRef.current=course;
+      // Reposition ball to its last-known normalised position.
+      // This prevents the ball "disappearing" when the canvas is resized:
+      // the old pixel coordinates are no longer valid after resize.
+      // We snap back to the course start only if the ball is in aiming phase
+      // (mid-flight balls finish their trajectory first, then land somewhere
+      // that will be corrected by boundary collision on the next frame).
+      if (p==="aiming") {
+        const b=ballRef.current;
+        // If ball is way outside the new course bounds, snap to start
+        if (!pointInPoly(b.x, b.y, course.poly)) {
+          b.x=course.start.x; b.y=course.start.y; b.vx=0; b.vy=0;
+        }
+      }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    const measure = () => applySize(window.innerWidth, window.innerHeight);
-    measure();
-    const t1 = setTimeout(measure, 50);
-    const t2 = setTimeout(measure, 200);
-    window.addEventListener("resize", measure);
-    return () => { window.removeEventListener("resize", measure); clearTimeout(t1); clearTimeout(t2); };
-  }, [applySize]);
-
-  // ── Particle helpers ─────────────────────────────────────────────────────────
-  const spawnDust = (x: number, y: number) => {
-    for (let i = 0; i < 8; i++) pts.current.push({ x, y, vx:(Math.random()-.5)*2.5, vy:(Math.random()-.5)*2.5, life:1, r:2+Math.random()*2 });
-  };
-  const spawnConf = (x: number, y: number) => {
-    const cols = [C.coral, C.gold, C.green, "#5FB6E8", C.red];
-    for (let i = 0; i < 30; i++) conf.current.push({ x, y, vx:(Math.random()-.5)*8, vy:-Math.random()*8-3, g:.2+Math.random()*.1, rot:Math.random()*7, vr:(Math.random()-.5)*.3, c:cols[i%cols.length], life:1.5, s:4+Math.random()*4 });
-  };
-  const genDecor = (W: number, H: number) => {
-    const env = ENV_THEMES[holeIdxRef.current % ENV_THEMES.length];
-    const gc = [env.grass1, env.grass2, `color-mix(in srgb, ${env.grass1} 80%, #fff)`, `color-mix(in srgb, ${env.grass2} 80%, #fff)`];
-    // Use simple hex fallbacks since color-mix may not work in all canvas contexts
-    dec.current = {
-      grass:  Array.from({ length:60 }, () => ({ x:Math.random()*W, y:Math.random()*H, r:3+Math.random()*10, c:gc[Math.floor(Math.random()*4)] })),
-      clouds: Array.from({ length:3 },  () => ({ x:Math.random()*W, y:16+Math.random()*30, s:.7+Math.random()*.5, spd:1.5+Math.random()*2 })),
-      trees:  [
-        { x:.05*W, y:.12*H, s:.9 }, { x:.93*W, y:.18*H, s:.8 },
-        { x:.04*W, y:.82*H, s:1  }, { x:.94*W, y:.78*H, s:.85 },
-        { x:.50*W, y:.06*H, s:.7 },
-      ],
-      bflies: Array.from({ length:3 }, () => ({ x:Math.random()*W, y:H*.55+Math.random()*H*.3, t:Math.random()*100, c:Math.random()<.5?C.coral:C.yellow })),
+    const cv=canvasRef.current; if (!cv) return;
+    const measure=() => {
+      const r=cv.getBoundingClientRect();
+      sizeCanvas(Math.round(r.width)||window.innerWidth, Math.round(r.height)||window.innerHeight);
     };
+    measure();
+    const ro=new ResizeObserver(measure); ro.observe(cv);
+    window.addEventListener("resize", measure);
+    return () => { ro.disconnect(); window.removeEventListener("resize", measure); };
+  }, [phase, sizeCanvas]);
+
+  // ── Particles ────────────────────────────────────────────────────────────────
+  const spawnDust=(x:number, y:number)=>{
+    for(let i=0;i<8;i++) pts.current.push({x,y,vx:(Math.random()-.5)*2.5,vy:(Math.random()-.5)*2.5,life:1,r:2+Math.random()*2});
+  };
+  const spawnConf=(x:number, y:number)=>{
+    const cols=[C.coral,C.gold,C.green,"#5FB6E8",C.red];
+    for(let i=0;i<32;i++) conf.current.push({x,y,vx:(Math.random()-.5)*9,vy:-Math.random()*9-2,g:.2+Math.random()*.1,rot:Math.random()*7,vr:(Math.random()-.5)*.3,c:cols[i%cols.length],life:1.5,s:4+Math.random()*5});
+  };
+
+  const genDecor=(W:number, H:number)=>{
+    const env=ENV[holeIdxRef.current%ENV.length];
+    const course=courseRef.current;
+    const pad=50;
+    const outside=(x:number,y:number)=>!(x>course.bbox.x-pad&&x<course.bbox.x+course.bbox.w+pad&&y>course.bbox.y-pad&&y<course.bbox.y+course.bbox.h+pad);
+    const rand=():{ x:number;y:number }=>{
+      for(let i=0;i<30;i++){const x=30+Math.random()*(W-60),y=30+Math.random()*(H-60);if(outside(x,y))return{x,y};}
+      return{x:20,y:20};
+    };
+    const fc=["#FF9FE0","#FFD96A","#FF7B9C","#A8E6CF"];
+    decRef.current={
+      clouds:[{x:W*.15,y:30,s:.8,spd:1.8},{x:W*.55,y:22,s:1,spd:2.1},{x:W*.82,y:36,s:.7,spd:1.5}],
+      trees:  Array.from({length:8}, ()=>{const p=rand();return{...p,sz:26+Math.random()*18,c1:env.tree1,c2:env.tree2};}),
+      rocks:  Array.from({length:5}, ()=>{const p=rand();return{...p,sz:13+Math.random()*9};}),
+      flowers:Array.from({length:14},()=>{const p=rand();return{...p,sz:7+Math.random()*5,col:fc[Math.floor(Math.random()*4)]};}),
+    };
+  };
+
+  const loadBgImage=(idx:number)=>{
+    const url=HOLES[idx%HOLES.length].bgImage;
+    if(!url){bgImgRef.current=null;return;}
+    if(bgImageCache.has(url)){bgImgRef.current=bgImageCache.get(url)!;return;}
+    const img=new Image(); img.onload=()=>{bgImageCache.set(url,img);bgImgRef.current=img;}; img.src=url;
   };
 
   // ── Draw loop ─────────────────────────────────────────────────────────────────
   const draw = useCallback(() => {
-    rafRef.current = requestAnimationFrame(draw);
-
-    const canvas = canvasRef.current;
-    if (!canvas || canvas.width < 10 || canvas.height < 10) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const now = performance.now();
-    const dt  = Math.min((now - lastT.current) / 1000, .033);
-    lastT.current = now;
-
-    const W = cwRef.current, H = chRef.current;
-    const p = phaseRef.current;
-    const b = ballRef.current;
-    const course = courseRef.current;
-    const d = dec.current;
-    const env = ENV_THEMES[holeIdxRef.current % ENV_THEMES.length];
-
-    ctx.clearRect(0, 0, W, H);
-
-    // ── Sky / grass background ─────────────────────────────────────────────────
-    const sky = ctx.createLinearGradient(0, 0, 0, H);
-    sky.addColorStop(0, env.skyTop); sky.addColorStop(1, env.skyBot);
-    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
-
-    ctx.save(); ctx.globalAlpha = .35;
-    for (let i = -2; i < Math.ceil(W / 140) + 2; i++) {
-      ctx.fillStyle = i % 2 === 0 ? env.grass1 : env.grass2;
-      ctx.beginPath();
-      ctx.moveTo(i*140-80, 0); ctx.lineTo(i*140+60, 0);
-      ctx.lineTo(i*140-40, H); ctx.lineTo(i*140-180, H);
-      ctx.fill();
+    rafRef.current=requestAnimationFrame(draw);
+    const canvas=canvasRef.current; if (!canvas) return;
+    if (canvas.width<10) {
+      const r=canvas.getBoundingClientRect();
+      if (r.width>10){canvas.width=Math.round(r.width);canvas.height=Math.round(r.height);cwRef.current=canvas.width;chRef.current=canvas.height;}
+      else return;
     }
-    ctx.restore();
+    const ctx=canvas.getContext("2d"); if (!ctx) return;
+    const now=performance.now(), dt=Math.min((now-lastT.current)/1000, .033);
+    lastT.current=now;
 
-    d.grass.forEach(g => { ctx.fillStyle = g.c; ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, 7); ctx.fill(); });
-    d.clouds.forEach(cl => { cl.x -= cl.spd * dt; if (cl.x < -80) cl.x = W + 80; drawCloud(ctx, cl.x, cl.y, cl.s); });
-    d.trees.forEach(t => drawTree(ctx, t.x, t.y, t.s, env.accentTree));
-    d.bflies.forEach(bf => { bf.t += dt; bf.x += Math.sin(bf.t * 1.3) * .5; bf.y += Math.cos(bf.t * .9) * .28; drawBfly(ctx, bf.x, bf.y, bf.t, bf.c); });
+    const W=cwRef.current, H=chRef.current;
+    const p=phaseRef.current;
+    const b=ballRef.current;
+    const course=courseRef.current;
+    const d=decRef.current;
+    const env=ENV[holeIdxRef.current%ENV.length];
 
-    // ── Build polygon Path2D ───────────────────────────────────────────────────
-    const fairwayPath = new Path2D();
-    fairwayPath.moveTo(course.poly[0].x, course.poly[0].y);
-    for (let i = 1; i < course.poly.length; i++) fairwayPath.lineTo(course.poly[i].x, course.poly[i].y);
-    fairwayPath.closePath();
+    ctx.clearRect(0,0,W,H);
 
-    // ── Wood border (draw polygon with PAD offset outward via bbox) ────────────
-    // We draw a slightly enlarged rounded-rect shadow behind the fairway,
-    // then the fairway polygon itself.
-    const PAD = 14;
-    const { x: bx, y: by, w: bw, h: bh } = course.bbox;
-
-    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.22)"; ctx.shadowBlur = 20; ctx.shadowOffsetY = 8;
-    ctx.fillStyle = C.woodDark;
-    rrect(ctx, bx - PAD - 2, by - PAD - 2, bw + PAD*2 + 4, bh + PAD*2 + 4, 28); ctx.fill();
-    ctx.restore();
-
-    ctx.fillStyle = C.wood;
-    rrect(ctx, bx - PAD, by - PAD, bw + PAD*2, bh + PAD*2, 26); ctx.fill();
-
-    ctx.strokeStyle = "rgba(255,255,255,.3)"; ctx.lineWidth = 3;
-    rrect(ctx, bx - PAD + 3, by - PAD + 3, bw + PAD*2 - 6, bh + PAD*2 - 6, 22); ctx.stroke();
-
-    // ── Putting surface (clipped to polygon) ──────────────────────────────────
-    ctx.save();
-    ctx.clip(fairwayPath);
-    const pg = ctx.createLinearGradient(bx, by, bx, by + bh);
-    pg.addColorStop(0, env.putt1); pg.addColorStop(1, env.putt2);
-    ctx.fillStyle = pg; ctx.fillRect(bx - PAD, by - PAD, bw + PAD*2, bh + PAD*2);
-    // Diagonal shimmer stripes
-    ctx.globalAlpha = .05;
-    for (let i = 0; i < bw + bh; i += 28) {
-      ctx.strokeStyle = "#fff"; ctx.lineWidth = 14;
-      ctx.beginPath(); ctx.moveTo(bx + i, by); ctx.lineTo(bx + i - bh, by + bh); ctx.stroke();
-    }
-    ctx.restore();
-
-    // ── Polygon outline (crisp border on top of surface) ──────────────────────
-    ctx.save();
-    ctx.strokeStyle = C.woodDark; ctx.lineWidth = 4; ctx.lineJoin = "round";
-    ctx.stroke(fairwayPath);
-    ctx.restore();
-
-    // ── Inner walls ────────────────────────────────────────────────────────────
-    course.walls.forEach(w => {
-      ctx.save(); ctx.shadowColor = "rgba(0,0,0,.18)"; ctx.shadowBlur = 8; ctx.shadowOffsetY = 4;
-      ctx.fillStyle = C.wood; rrect(ctx, w.x, w.y, w.w, w.h, 8); ctx.fill();
-      ctx.restore();
-      ctx.strokeStyle = "rgba(255,255,255,.28)"; ctx.lineWidth = 2;
-      rrect(ctx, w.x+2, w.y+2, w.w-4, w.h-4, 6); ctx.stroke();
-    });
-
-    // ── Hole ──────────────────────────────────────────────────────────────────
-    const hole = course.hole;
-    ctx.fillStyle = "rgba(0,0,0,.15)";
-    ctx.beginPath(); ctx.ellipse(hole.x, hole.y+5, hole.r*1.15, hole.r*.55, 0, 0, 7); ctx.fill();
-    ctx.fillStyle = "#16241A";
-    ctx.beginPath(); ctx.arc(hole.x, hole.y, hole.r, 0, 7); ctx.fill();
-    ctx.strokeStyle = "rgba(255,255,255,.15)"; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(hole.x, hole.y, hole.r, 0, 7); ctx.stroke();
-    // Flag
-    ctx.strokeStyle = "#8a5a2a"; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(hole.x, hole.y-2); ctx.lineTo(hole.x, hole.y-44); ctx.stroke();
-    ctx.fillStyle = "#FF5A50";
-    ctx.beginPath(); ctx.moveTo(hole.x, hole.y-44); ctx.lineTo(hole.x+22, hole.y-36); ctx.lineTo(hole.x, hole.y-28); ctx.fill();
-
-    // ── Aim arrow ─────────────────────────────────────────────────────────────
-    if (p === "aiming" && dragging.current) {
-      const dx = dragCur.current.x - b.x, dy = dragCur.current.y - b.y;
-      const maxD = 100;
-      const dist = Math.min(Math.hypot(dx, dy), maxD);
-      const angle = Math.atan2(dy, dx);
-      const power = dist / maxD;
-      const sx = b.x - Math.cos(angle) * dist * 1.8;
-      const sy = b.y - Math.sin(angle) * dist * 1.8;
-      const col = power > .75 ? C.red : power > .5 ? C.orange : power > .25 ? C.yellow : C.green;
-      ctx.save();
-      ctx.strokeStyle = col; ctx.lineWidth = 5; ctx.lineCap = "round";
-      ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(sx, sy); ctx.stroke();
-      ctx.fillStyle = col;
-      ctx.save(); ctx.translate(sx, sy); ctx.rotate(Math.atan2(sy - b.y, sx - b.x));
-      ctx.beginPath(); ctx.moveTo(14, 0); ctx.lineTo(-8, -6); ctx.lineTo(-8, 6); ctx.fill();
-      ctx.restore();
-      for (let i = 1; i <= 7; i++) {
-        const t = i / 7;
-        ctx.globalAlpha = .4; ctx.fillStyle = col;
-        ctx.beginPath(); ctx.arc(b.x+(sx-b.x)*t, b.y+(sy-b.y)*t, 3, 0, 7); ctx.fill();
+    // ── Background ────────────────────────────────────────────────────────────
+    if (bgImgRef.current) {
+      const img=bgImgRef.current, scale=Math.max(W/img.width,H/img.height);
+      const iw=img.width*scale, ih=img.height*scale;
+      ctx.drawImage(img,(W-iw)/2,(H-ih)/2,iw,ih);
+    } else {
+      const sky=ctx.createLinearGradient(0,0,0,H);
+      sky.addColorStop(0,env.skyTop); sky.addColorStop(1,env.skyBot);
+      ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+      ctx.save(); ctx.globalAlpha=.20;
+      for(let i=-2;i<Math.ceil(W/110)+2;i++){
+        ctx.fillStyle=i%2===0?env.grass1:env.grass2;
+        ctx.beginPath();ctx.moveTo(i*110-50,0);ctx.lineTo(i*110+60,0);ctx.lineTo(i*110-20,H);ctx.lineTo(i*110-130,H);ctx.fill();
       }
       ctx.restore();
-      // Power bar
-      ctx.fillStyle = "rgba(255,255,255,.45)";
-      rrect(ctx, b.x-35, b.y+24, 70, 9, 5); ctx.fill();
-      ctx.fillStyle = col;
-      rrect(ctx, b.x-35, b.y+24, 70*power, 9, 5); ctx.fill();
+      d.clouds.forEach(cl=>{cl.x-=cl.spd*dt;if(cl.x<-80)cl.x=W+80;drawCloud(ctx,cl.x,cl.y,cl.s);});
+      d.flowers.forEach(f=>drawFlower(ctx,f.x,f.y,f.sz,f.col));
+      d.rocks.forEach(r=>drawRock(ctx,r.x,r.y,r.sz));
+      d.trees.forEach(t=>drawIsoTree(ctx,t.x,t.y,t.sz,t.c1,t.c2));
+    }
+
+    // ── Fairway ───────────────────────────────────────────────────────────────
+    // Build the polygon path (the actual playable shape)
+    const fp=new Path2D();
+    fp.moveTo(course.poly[0].x, course.poly[0].y);
+    for(let i=1;i<course.poly.length;i++) fp.lineTo(course.poly[i].x, course.poly[i].y);
+    fp.closePath();
+
+    // Build an EXPANDED polygon path for the wood border.
+    // We expand each vertex outward by PAD pixels along its normal.
+    // This means the wood border exactly traces the fairway shape —
+    // no dead brown corners for L/S/Z shaped holes.
+    const PAD=18;
+    const expandPoly=(pts:Vec2[],pad:number):Path2D=>{
+      const n=pts.length;
+      const path=new Path2D();
+      for(let i=0;i<n;i++){
+        const prev=pts[(i+n-1)%n], curr=pts[i], next=pts[(i+1)%n];
+        // Edge normals (outward) for the two edges meeting at this vertex
+        const e1x=curr.x-prev.x,e1y=curr.y-prev.y,l1=Math.hypot(e1x,e1y)||1;
+        const e2x=next.x-curr.x,e2y=next.y-curr.y,l2=Math.hypot(e2x,e2y)||1;
+        const n1x=e1y/l1,n1y=-e1x/l1;
+        const n2x=e2y/l2,n2y=-e2x/l2;
+        // Bisector normal
+        let bx=n1x+n2x,by=n1y+n2y;
+        const bl=Math.hypot(bx,by)||1;
+        bx/=bl;by/=bl;
+        // Scale by pad / cos(half-angle) to keep consistent border width
+        const dot=n1x*n2x+n1y*n2y;
+        const scale=pad/Math.max(Math.sqrt((1+dot)/2),.25);
+        const ex=curr.x+bx*scale,ey=curr.y+by*scale;
+        i===0?path.moveTo(ex,ey):path.lineTo(ex,ey);
+      }
+      path.closePath();
+      return path;
+    };
+
+    const woodPath=expandPoly(course.poly,PAD);
+
+    // Shadow under the wood frame
+    ctx.save();
+    ctx.shadowColor="rgba(0,0,0,.30)";ctx.shadowBlur=20;ctx.shadowOffsetY=10;
+    ctx.fillStyle=C.woodDark;ctx.fill(woodPath);
+    ctx.restore();
+
+    // Wood frame (slightly smaller than shadow path)
+    const woodPathInner=expandPoly(course.poly,PAD-1);
+    ctx.fillStyle=C.wood;ctx.fill(woodPathInner);
+
+    // Wood highlight
+    ctx.save();
+    ctx.strokeStyle="rgba(255,255,255,.28)";ctx.lineWidth=3;ctx.lineJoin="round";
+    ctx.stroke(expandPoly(course.poly,PAD-4));
+    ctx.restore();
+
+    // Putting surface — clipped to the polygon shape
+    const{x:bx,y:by,w:bw,h:bh}=course.bbox;
+    ctx.save();ctx.clip(fp);
+    const pg=ctx.createLinearGradient(bx,by,bx,by+bh);
+    pg.addColorStop(0,env.putt1);pg.addColorStop(1,env.putt2);
+    ctx.fillStyle=pg;ctx.fillRect(bx-PAD,by-PAD,bw+PAD*2,bh+PAD*2);
+    // Diagonal shimmer stripes
+    ctx.globalAlpha=.045;
+    for(let i=0;i<bw+bh;i+=28){ctx.strokeStyle="#fff";ctx.lineWidth=14;ctx.beginPath();ctx.moveTo(bx+i,by);ctx.lineTo(bx+i-bh,by+bh);ctx.stroke();}
+    ctx.restore();
+
+    // Crisp polygon outline on top
+    ctx.strokeStyle=C.woodDark;ctx.lineWidth=4;ctx.lineJoin="round";ctx.stroke(fp);
+
+    course.walls.forEach(w=>{
+      ctx.save();ctx.shadowColor="rgba(0,0,0,.18)";ctx.shadowBlur=8;ctx.shadowOffsetY=4;
+      ctx.fillStyle=C.wood;rrect(ctx,w.x,w.y,w.w,w.h,8);ctx.fill();ctx.restore();
+      ctx.strokeStyle="rgba(255,255,255,.28)";ctx.lineWidth=2;rrect(ctx,w.x+2,w.y+2,w.w-4,w.h-4,6);ctx.stroke();
+    });
+
+    // ── Hole & flag ───────────────────────────────────────────────────────────
+    const hole=course.hole;
+    ctx.fillStyle="rgba(0,0,0,.15)";
+    ctx.beginPath();ctx.ellipse(hole.x,hole.y+4,hole.r*1.1,hole.r*.5,0,0,7);ctx.fill();
+    ctx.fillStyle="#16241A";ctx.beginPath();ctx.arc(hole.x,hole.y,hole.r,0,7);ctx.fill();
+    ctx.strokeStyle="rgba(255,255,255,.15)";ctx.lineWidth=2;ctx.beginPath();ctx.arc(hole.x,hole.y,hole.r,0,7);ctx.stroke();
+    ctx.strokeStyle="#8a5a2a";ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.moveTo(hole.x,hole.y-2);ctx.lineTo(hole.x,hole.y-46);ctx.stroke();
+    ctx.fillStyle="#FF5A50";
+    ctx.beginPath();ctx.moveTo(hole.x,hole.y-46);ctx.lineTo(hole.x+22,hole.y-38);ctx.lineTo(hole.x,hole.y-30);ctx.fill();
+
+    // ── Aim arrow & power bar ────────────────────────────────────────────────
+    if (p==="aiming" && dragging.current) {
+      const dx=dragCur.current.x-b.x, dy=dragCur.current.y-b.y;
+      const maxD=100, dist=Math.min(Math.hypot(dx,dy),maxD);
+      const angle=Math.atan2(dy,dx), power=dist/maxD;
+      const sx=b.x-Math.cos(angle)*dist*1.8, sy=b.y-Math.sin(angle)*dist*1.8;
+      const col=power>.75?C.red:power>.5?C.orange:power>.25?C.yellow:C.green;
+      ctx.save();
+      ctx.strokeStyle=col;ctx.lineWidth=5;ctx.lineCap="round";
+      ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(sx,sy);ctx.stroke();
+      ctx.fillStyle=col;ctx.save();ctx.translate(sx,sy);ctx.rotate(Math.atan2(sy-b.y,sx-b.x));
+      ctx.beginPath();ctx.moveTo(14,0);ctx.lineTo(-8,-6);ctx.lineTo(-8,6);ctx.fill();ctx.restore();
+      for(let i=1;i<=7;i++){const t=i/7;ctx.globalAlpha=.38;ctx.fillStyle=col;ctx.beginPath();ctx.arc(b.x+(sx-b.x)*t,b.y+(sy-b.y)*t,3,0,7);ctx.fill();}
+      ctx.restore();
+      ctx.fillStyle="rgba(255,255,255,.45)";rrect(ctx,b.x-35,b.y+22,70,9,5);ctx.fill();
+      ctx.fillStyle=col;rrect(ctx,b.x-35,b.y+22,70*power,9,5);ctx.fill();
+    }
+
+    // ── Golf club ─────────────────────────────────────────────────────────────
+    // Real golf stance: club is ALWAYS angled toward the ball.
+    // The head rests AT the ball; the shaft angles back at ~55° to an imaginary
+    // golfer standing behind. In 2D top-down we represent this as:
+    //
+    //   Grip end (further back, perpendicular offset)
+    //       |
+    //    (shaft — long diagonal)
+    //       |
+    //   Club head (AT the ball position)
+    //
+    // The perpendicular offset makes the grip appear "above" the shot line,
+    // simulating the classic angled address stance.
+    //
+    // AIMING: head is at ball, grip trails behind at an angle.
+    // SWING:  head sweeps from ball forward; origin frozen; angled throughout.
+    {
+      const SHAFT = 96;        // long shaft — real golf club length
+      const TILT  = 0.55;     // shaft tilt angle from shot axis (radians ~31°)
+      const HEAD_W = 9, HEAD_H = 16;
+      const showClub = (p === "aiming" && dragging.current) || swingRef.current;
+
+      if (showClub) {
+        // Determine the shot direction angle
+        let shotAngle: number;
+        let clubSwing = 0; // extra rotation during swing
+
+        if (p === "aiming" && dragging.current) {
+          const dx2 = b.x - dragCur.current.x, dy2 = b.y - dragCur.current.y;
+          shotAngle = Math.atan2(dy2, dx2);
+        } else {
+          // Frozen at shot moment
+          shotAngle = swingOriginRef.current.angle;
+          // Swing arc: snap through from address to follow-through
+          const t = Math.min(1, (now - swingTRef.current) / 500);
+          clubSwing = t < 0.2
+            ? -(1 - t / 0.2) * 0.4           // slight backswing
+            : (t - 0.2) / 0.8 * 1.6;         // fast through to follow-through
+        }
+
+        // Club HEAD is always at (or near) the ball
+        // During aiming: exactly at ball
+        // During swing: at the frozen ball position (ball has left)
+        let headX: number, headY: number;
+        if (p === "aiming" && dragging.current) {
+          headX = b.x; headY = b.y;
+        } else {
+          // Head sweeps slightly past the ball during follow-through
+          const sweep = Math.max(0, clubSwing - 0.2) * 30;
+          headX = swingOriginRef.current.x + Math.cos(shotAngle) * SHAFT + Math.cos(shotAngle) * sweep;
+          headY = swingOriginRef.current.y + Math.sin(shotAngle) * SHAFT + Math.sin(shotAngle) * sweep;
+        }
+
+        // Shaft angle: shot axis + tilt + swing rotation
+        const clubAngle = shotAngle + Math.PI + TILT + clubSwing;
+        // (Math.PI flips direction so shaft goes from head back toward golfer)
+
+        // Grip position: shaft length from head in clubAngle direction
+        const gripX = headX + Math.cos(clubAngle) * SHAFT;
+        const gripY = headY + Math.sin(clubAngle) * SHAFT;
+
+        ctx.save();
+
+        // Drop shadow under entire club
+        ctx.strokeStyle = "rgba(0,0,0,.12)"; ctx.lineWidth = 4; ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(gripX + 2, gripY + 3);
+        ctx.lineTo(headX + 2, headY + 3);
+        ctx.stroke();
+
+        // Shaft — gradient from dark grip to steel near head
+        const shaftGrad = ctx.createLinearGradient(gripX, gripY, headX, headY);
+        shaftGrad.addColorStop(0, "#5A3010");   // grip — dark wood
+        shaftGrad.addColorStop(0.18, "#C8A860"); // taper transition
+        shaftGrad.addColorStop(1, "#D8D0C0");   // near head — steel
+        ctx.strokeStyle = shaftGrad; ctx.lineWidth = 3.5; ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(gripX, gripY); ctx.lineTo(headX, headY); ctx.stroke();
+
+        // Grip wrap — thicker, darker at the very top
+        ctx.strokeStyle = "#2A1808"; ctx.lineWidth = 8; ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(gripX, gripY);
+        ctx.lineTo(gripX + Math.cos(clubAngle + Math.PI) * 16, gripY + Math.sin(clubAngle + Math.PI) * 16);
+        ctx.stroke();
+        // Grip texture cross-hatching
+        for (let gi = 2; gi < 16; gi += 4) {
+          const gx = gripX + Math.cos(clubAngle + Math.PI) * gi;
+          const gy = gripY + Math.sin(clubAngle + Math.PI) * gi;
+          const perp2 = clubAngle + Math.PI / 2;
+          ctx.strokeStyle = "#7A4A22"; ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(gx + Math.cos(perp2) * 4, gy + Math.sin(perp2) * 4);
+          ctx.lineTo(gx - Math.cos(perp2) * 4, gy - Math.sin(perp2) * 4);
+          ctx.stroke();
+        }
+
+        // Club head — iron/putter face angled relative to shaft
+        // The face is perpendicular to the shot direction (not the shaft)
+        const facePerp = shotAngle + Math.PI / 2;
+        const fpx = Math.cos(facePerp), fpy = Math.sin(facePerp);
+        const fwd = Math.cos(shotAngle), fwdy = Math.sin(shotAngle);
+
+        ctx.fillStyle = "#A8B4C4";
+        ctx.beginPath();
+        // Face of club: flat bar perpendicular to shot at head position
+        ctx.moveTo(headX + fpx * HEAD_W, headY + fpy * HEAD_W);
+        ctx.lineTo(headX - fpx * HEAD_W, headY - fpy * HEAD_W);
+        // Back of club head angles back along shaft
+        ctx.lineTo(headX - fpx * (HEAD_W - 2) + Math.cos(clubAngle) * HEAD_H, headY - fpy * (HEAD_W - 2) + Math.sin(clubAngle) * HEAD_H);
+        ctx.lineTo(headX + fpx * HEAD_W + Math.cos(clubAngle) * HEAD_H, headY + fpy * HEAD_W + Math.sin(clubAngle) * HEAD_H);
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = "#6880A0"; ctx.lineWidth = 1.5; ctx.stroke();
+
+        // Face highlight (thin bright line on the hitting face)
+        ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(headX + fpx * (HEAD_W - 1), headY + fpy * (HEAD_W - 1));
+        ctx.lineTo(headX - fpx * (HEAD_W - 1), headY - fpy * (HEAD_W - 1));
+        ctx.stroke();
+
+        // Tiny ball marker (shows exactly where head meets ball)
+        if (p === "aiming" && dragging.current) {
+          ctx.strokeStyle = "rgba(255,200,80,.8)"; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(headX, headY, BALL_R + 3, 0, Math.PI * 2); ctx.stroke();
+        }
+
+        ctx.restore();
+        void fwd; void fwdy; // suppress unused warning
+      }
     }
 
     // ── Ball ──────────────────────────────────────────────────────────────────
-    if (p !== "sinking" || b.sinkT < .9) {
-      let bpx = b.x, bpy = b.y, alpha = 1, scale = 1;
-      if (p === "sinking") {
-        b.sinkT += dt * 1.8;
-        const sp = Math.min(1, b.sinkT * 2.4);
-        bpx = b.x + (hole.x - b.x) * sp;
-        bpy = b.y + (hole.y - b.y) * sp;
-        scale = Math.max(0, 1 - Math.max(0, b.sinkT - .2) * 2.5);
-        alpha = Math.max(0, 1 - Math.max(0, b.sinkT - .1) * 3);
+    if (p!=="sinking" || b.sinkT<.9) {
+      let bpx=b.x, bpy=b.y, alpha=1, scale=1;
+      if (p==="sinking") {
+        b.sinkT+=dt*1.8;
+        const sp=Math.min(1,b.sinkT*2.4);
+        bpx=b.x+(hole.x-b.x)*sp; bpy=b.y+(hole.y-b.y)*sp;
+        scale=Math.max(0,1-Math.max(0,b.sinkT-.2)*2.5);
+        alpha=Math.max(0,1-Math.max(0,b.sinkT-.1)*3);
       }
-      const bob = (!b.vx && !b.vy && p === "aiming") ? Math.sin(b.breathe) * 1.8 : 0;
-      ctx.save(); ctx.globalAlpha = alpha; ctx.translate(bpx, bpy + bob); ctx.scale(scale, scale);
-      ctx.fillStyle = "rgba(0,0,0,.2)";
-      ctx.beginPath(); ctx.ellipse(0, BALL_R*.85, BALL_R*.92, BALL_R*.38, 0, 0, 7); ctx.fill();
-      const bg = ctx.createRadialGradient(-4, -5, 2, 0, 0, BALL_R);
-      bg.addColorStop(0, "#FFFFFF"); bg.addColorStop(1, "#F0EDE6");
-      ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(0, 0, BALL_R, 0, 7); ctx.fill();
-      ctx.fillStyle = "rgba(255,255,255,.92)";
-      ctx.beginPath(); ctx.arc(-4, -4, 2.8, 0, 7); ctx.fill();
+      const bob=(!b.vx&&!b.vy&&p==="aiming")?Math.sin(b.breathe)*1.8:0;
+      ctx.save();ctx.globalAlpha=alpha;ctx.translate(bpx,bpy+bob);ctx.scale(scale,scale);
+      ctx.fillStyle="rgba(0,0,0,.18)";ctx.beginPath();ctx.ellipse(0,BALL_R*.8,BALL_R*.88,BALL_R*.36,0,0,7);ctx.fill();
+      const bg=ctx.createRadialGradient(-3,-4,2,0,0,BALL_R);
+      bg.addColorStop(0,"#FFFFFF");bg.addColorStop(1,"#EEE8DC");
+      ctx.fillStyle=bg;ctx.beginPath();ctx.arc(0,0,BALL_R,0,7);ctx.fill();
+      ctx.fillStyle="rgba(255,255,255,.88)";ctx.beginPath();ctx.arc(-3,-3,2.5,0,7);ctx.fill();
       ctx.restore();
-      if (p === "aiming") {
-        const pulse = Math.sin(now / 280) * .5 + .5;
-        ctx.strokeStyle = `rgba(245,196,68,${.3 + pulse * .5})`; ctx.lineWidth = 2.5;
-        ctx.beginPath(); ctx.arc(bpx, bpy + bob, BALL_R + 5 + pulse * 4, 0, 7); ctx.stroke();
+      if (p==="aiming") {
+        const pulse=Math.sin(now/280)*.5+.5;
+        ctx.strokeStyle=`rgba(245,196,68,${.3+pulse*.5})`;ctx.lineWidth=2.5;
+        ctx.beginPath();ctx.arc(bpx,bpy+bob,BALL_R+5+pulse*4,0,7);ctx.stroke();
       }
     }
 
-    // ── Particles ─────────────────────────────────────────────────────────────
-    pts.current.forEach(pt => {
-      ctx.globalAlpha = Math.max(0, pt.life); ctx.fillStyle = "#E8E0C8";
-      ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.r, 0, 7); ctx.fill();
-      pt.x += pt.vx; pt.y += pt.vy; pt.life -= dt * 2.2;
-    });
-    pts.current = pts.current.filter(pt => pt.life > 0);
-
-    conf.current.forEach(pt => {
-      ctx.save(); ctx.globalAlpha = Math.max(0, pt.life);
-      ctx.translate(pt.x, pt.y); ctx.rotate(pt.rot); ctx.fillStyle = pt.c;
-      ctx.fillRect(-pt.s/2, -pt.s/2, pt.s, pt.s*.6); ctx.restore();
-      pt.vy += pt.g; pt.x += pt.vx; pt.y += pt.vy; pt.rot += pt.vr; pt.life -= dt * .6;
-    });
-    conf.current = conf.current.filter(pt => pt.life > 0);
-    ctx.globalAlpha = 1;
+    // ── Particles ────────────────────────────────────────────────────────────
+    pts.current.forEach(pt=>{ctx.globalAlpha=Math.max(0,pt.life);ctx.fillStyle="#E8E0C8";ctx.beginPath();ctx.arc(pt.x,pt.y,pt.r,0,7);ctx.fill();pt.x+=pt.vx;pt.y+=pt.vy;pt.life-=dt*2.2;});
+    pts.current=pts.current.filter(pt=>pt.life>0);
+    conf.current.forEach(pt=>{ctx.save();ctx.globalAlpha=Math.max(0,pt.life);ctx.translate(pt.x,pt.y);ctx.rotate(pt.rot);ctx.fillStyle=pt.c;ctx.fillRect(-pt.s/2,-pt.s/2,pt.s,pt.s*.6);ctx.restore();pt.vy+=pt.g;pt.x+=pt.vx;pt.y+=pt.vy;pt.rot+=pt.vr;pt.life-=dt*.6;});
+    conf.current=conf.current.filter(pt=>pt.life>0);
+    ctx.globalAlpha=1;
 
     // ── Physics ───────────────────────────────────────────────────────────────
-    if (p === "rolling") {
-      b.vx *= .984; b.vy *= .984;
-      b.x += b.vx; b.y += b.vy;
-
-      // Polygon boundary collision
-      let bounced = collidePoly(b, course.poly);
-
-      // Inner wall collisions
-      course.walls.forEach(w => { if (collideWall(b, w)) bounced = true; });
+    if (p==="rolling") {
+      b.vx*=.984; b.vy*=.984; b.x+=b.vx; b.y+=b.vy;
+      let bounced=collidePoly(b, course.poly);
+      course.walls.forEach(w=>{ if(collideWall(b,w)) bounced=true; });
       if (bounced) spawnDust(b.x, b.y);
 
-      // Hole check
-      const dh = Math.hypot(b.x - hole.x, b.y - hole.y);
-      const sp = Math.hypot(b.vx, b.vy);
-
-      if (dh < hole.r * 1.1 || (dh < hole.r * 1.8 && sp < 2)) {
+      const dh=Math.hypot(b.x-hole.x, b.y-hole.y), sp=Math.hypot(b.vx, b.vy);
+      if (dh<hole.r*1.1 || (dh<hole.r*1.8 && sp<2)) {
         // SUNK
-        b.vx = 0; b.vy = 0;
-        setPhase("sinking");
-        spawnConf(b.x, b.y - 10);
-        setTimeout(() => {
-          const ph = WIN_PHRASES[Math.floor(Math.random() * WIN_PHRASES.length)];
-          setWinPhrase(ph); setShowWin(true);
-          setTimeout(() => setShowWin(false), 1400);
-          setTimeout(() => setPhase("hole_result"), 1700);
+        b.vx=0; b.vy=0; setPhase("sinking"); spawnConf(b.x, b.y-10);
+        setTimeout(()=>{
+          setWinPhrase(WIN_PHRASES[Math.floor(Math.random()*WIN_PHRASES.length)]);
+          setShowWin(true);
+          setTimeout(()=>setShowWin(false), 1400);
+          setTimeout(()=>setPhase("hole_result"), 1700);
         }, 300);
-      } else if (sp < .06) {
-        // STOPPED — ball did not sink
-        // ── KEY CHANGE v6: ball stays at current position ──────────────────
-        b.vx = 0; b.vy = 0;
-
+      } else if (sp<.06) {
+        // STOPPED without sinking
+        b.vx=0; b.vy=0;
         if (!deadRef.current) {
-          deadRef.current = true;
-          const nh = heartsRef.current - 1;
-          heartsRef.current = nh;
-          setHearts(nh);
-
-          if (nh <= 0) {
-            // All hearts used → show question; ball position unchanged
-            setTimeout(() => setPhase("question"), 700);
+          deadRef.current=true;
+          const nh=heartsRef.current-1; heartsRef.current=nh; setHearts(nh);
+          if (nh<=0) {
+            // No hearts left — ask host for more
+            setPhase("waiting_hearts");
+            setTimeout(()=>{
+              onNeedHearts((result)=>{
+                // Host resolved: restore hearts, resume aiming from current position
+                const h=result.heartsGranted; heartsRef.current=h; setHearts(h);
+                if (result.xpEarned) setTotalXp(x=>x+(result.xpEarned??0));
+                b.vx=0; b.vy=0; b.breathe=0; deadRef.current=false;
+                setPhase("aiming");
+              });
+            }, 400);
           } else {
-            // Hearts remaining → show miss feedback, return to aiming from current position
-            setShowMissFeedback(true);
-            setTimeout(() => {
-              setShowMissFeedback(false);
-              deadRef.current = false;
-              // Ball stays at b.x, b.y — just clear velocity (already done above)
-              b.breathe = 0;
-              setPhase("aiming");
-            }, 900);
+            // Hearts remaining — show miss feedback, continue from here
+            setShowMiss(true);
+            setTimeout(()=>{ setShowMiss(false); deadRef.current=false; b.breathe=0; setPhase("aiming"); }, 900);
           }
         }
       }
-    } else if (p === "aiming") {
-      b.breathe += dt * 2;
+    } else if (p==="aiming") {
+      b.breathe+=dt*2;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Start RAF
-  useEffect(() => {
-    const w = window.innerWidth, h = window.innerHeight;
-    cwRef.current = w; chRef.current = h;
-    if (canvasRef.current) { canvasRef.current.width = w; canvasRef.current.height = h; }
-    rafRef.current = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(rafRef.current);
+  // Start RAF once — ResizeObserver handles all canvas sizing
+  useEffect(()=>{
+    rafRef.current=requestAnimationFrame(draw);
+    return()=>cancelAnimationFrame(rafRef.current);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Card visibility
-  useEffect(() => {
-    if (phase === "question") { const t = setTimeout(() => setCardVisible(true), 300); return () => clearTimeout(t); }
-    else setCardVisible(false);
-  }, [phase]);
-
-  // Init hole
-  const initHole = useCallback((idx: number) => {
-    const W = window.innerWidth, H = window.innerHeight;
-    cwRef.current = W; chRef.current = H;
-    const cv = canvasRef.current;
-    if (cv) { cv.width = W; cv.height = H; }
-    const course = buildCourse(idx, W, H);
-    courseRef.current = course;
-    // Ball starts at tee (only on new hole, not on miss)
-    ballRef.current = { x: course.start.x, y: course.start.y, vx: 0, vy: 0, breathe: 0, sinkT: 0 };
-    deadRef.current = false;
-    pts.current = []; conf.current = [];
-    holeIdxRef.current = idx;
-    genDecor(W, H);
-    shotsRef.current = 0; setShots(0);
-    setPicked(null); setTileResult(null); setWrongCount(0);
-    setShowHint(false); setAdvancing(false); setStepIdx(0); setCardShake(false);
-    setShowMissFeedback(false);
+  const initHole=useCallback((idx:number)=>{
+    const cv=canvasRef.current;
+    let W=cwRef.current, H=chRef.current;
+    if (cv) {
+      const r=cv.getBoundingClientRect();
+      if (r.width>10){ W=Math.round(r.width); H=Math.round(r.height); }
+      cwRef.current=W; chRef.current=H; cv.width=W; cv.height=H;
+    }
+    const course=buildCourse(idx,W,H); courseRef.current=course;
+    ballRef.current={x:course.start.x,y:course.start.y,vx:0,vy:0,breathe:0,sinkT:0};
+    deadRef.current=false; pts.current=[]; conf.current=[]; holeIdxRef.current=idx;
+    loadBgImage(idx); genDecor(W,H);
+    shotsRef.current=0; setShots(0); setShowMiss(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Pointer events
-  const getPos = (e: React.PointerEvent): Vec2 => {
-    const r = canvasRef.current!.getBoundingClientRect();
-    return { x: (e.clientX - r.left) * (cwRef.current / r.width), y: (e.clientY - r.top) * (chRef.current / r.height) };
+  const getPos=(e:React.PointerEvent):Vec2=>{
+    const r=canvasRef.current!.getBoundingClientRect();
+    return{x:(e.clientX-r.left)*(cwRef.current/r.width),y:(e.clientY-r.top)*(chRef.current/r.height)};
   };
-  const onPtrDown = (e: React.PointerEvent) => {
-    if (phaseRef.current !== "aiming") return;
-    const pos = getPos(e);
-    if (Math.hypot(pos.x - ballRef.current.x, pos.y - ballRef.current.y) < 70) {
-      dragging.current = true; dragCur.current = pos;
+  const onPtrDown=(e:React.PointerEvent)=>{
+    if (phaseRef.current!=="aiming") return;
+    const pos=getPos(e);
+    if (Math.hypot(pos.x-ballRef.current.x,pos.y-ballRef.current.y)<70) {
+      dragging.current=true; dragCur.current=pos;
       (e.target as Element).setPointerCapture(e.pointerId);
     }
   };
-  const onPtrMove = (e: React.PointerEvent) => { if (dragging.current) dragCur.current = getPos(e); };
-  const onPtrUp = (e: React.PointerEvent) => {
-    if (!dragging.current || phaseRef.current !== "aiming") return;
-    dragging.current = false;
-    const b = ballRef.current;
-    const dx = dragCur.current.x - b.x, dy = dragCur.current.y - b.y;
-    const d = Math.hypot(dx, dy);
-    if (d < 8) return;
-    const power = Math.min(d / 100, 1), angle = Math.atan2(dy, dx), speed = power * 14 + 2;
-    b.vx = -Math.cos(angle) * speed; b.vy = -Math.sin(angle) * speed;
-    shotsRef.current++; setShots(s => s + 1); setSessionShots(s => s + 1);
+  const onPtrMove=(e:React.PointerEvent)=>{ if(dragging.current) dragCur.current=getPos(e); };
+  const onPtrUp=(e:React.PointerEvent)=>{
+    if (!dragging.current||phaseRef.current!=="aiming") return;
+    dragging.current=false; const b=ballRef.current;
+    const dx=dragCur.current.x-b.x, dy=dragCur.current.y-b.y, d=Math.hypot(dx,dy);
+    if (d<8) return;
+    const power=Math.min(d/100,1), angle=Math.atan2(dy,dx), speed=power*14+2;
+    b.vx=-Math.cos(angle)*speed; b.vy=-Math.sin(angle)*speed;
+    shotsRef.current++; setShots(s=>s+1); setSessionShots(s=>s+1);
     spawnDust(b.x, b.y);
+    // Freeze club position at the moment of the shot, then animate
+    const _shotAngle = Math.atan2(-dy, -dx); // direction of shot (ball travels -dx,-dy)
+    const _CLUB_BEHIND = 90;
+    swingOriginRef.current = {
+      x: b.x - Math.cos(_shotAngle) * _CLUB_BEHIND,
+      y: b.y - Math.sin(_shotAngle) * _CLUB_BEHIND,
+      angle: _shotAngle,
+    };
+    swingRef.current=true; swingTRef.current=performance.now();
+    setSwinging(true);
+    setTimeout(()=>{ setSwinging(false); swingRef.current=false; }, 500);
     setPhase("rolling");
   };
 
-  // Question tile pick
-  const activeQ = gradeQuestions[qIdx % Math.max(1, gradeQuestions.length)];
-  const step = activeQ?.steps[stepIdx];
-
-  const tileOrder = useMemo(() => {
-    if (!step) return [];
-    const seed = qIdx * 7 + stepIdx * 3;
-    return [step.tileOk, step.tilesNo[0], step.tilesNo[1]]
-      .map((v, i) => ({ v, s: (v.charCodeAt(0) * 13 + seed + i * 17) % 100 }))
-      .sort((a, b) => a.s - b.s).map(x => x.v);
-  }, [step, qIdx, stepIdx]);
-
-  const pickTile = (tile: string) => {
-    if (!step || advancing || tileResult) return;
-    setPicked(tile);
-    if (tile === step.tileOk) {
-      setTileResult("correct"); setAdvancing(true);
-      setTimeout(() => {
-        const ns = stepIdx + 1;
-        if (activeQ && ns < activeQ.steps.length) {
-          setStepIdx(ns); setPicked(null); setTileResult(null);
-          setWrongCount(0); setShowHint(false); setAdvancing(false);
-        } else {
-          // Question solved → restore hearts, return to aiming at CURRENT BALL POSITION
-          setCardVisible(false);
-          setTimeout(() => {
-            setQIdx(i => i + 1);
-            heartsRef.current = 3; setHearts(3);
-            // ── KEY CHANGE v6: do NOT reset ball position ──────────────────
-            const b = ballRef.current;
-            b.vx = 0; b.vy = 0; b.breathe = 0;
-            deadRef.current = false;
-            setPhase("aiming");
-            setPicked(null); setTileResult(null); setWrongCount(0);
-            setShowHint(false); setAdvancing(false); setStepIdx(0);
-          }, 400);
-        }
-      }, 800);
-    } else {
-      setTileResult("wrong"); setCardShake(true); setWrongCount(w => w + 1);
-      setTimeout(() => { setPicked(null); setTileResult(null); setCardShake(false); }, 650);
-    }
+  // Game flow
+  const starsFor=(s:number,par:number)=>s<=par?3:s<=par+1?2:1;
+  const startGame=(adventure?: AdventureDef)=>{
+    const adv = adventure ?? activeAdventure ?? ADVENTURES[0];
+    setActiveAdventure(adv);
+    const startHole = adv.holeRange[0];
+    holeIdxRef.current=startHole; heartsRef.current=heartsPerHole;
+    setHoleIdx(startHole); setHearts(heartsPerHole); setHoleStars([]);
+    setSessionShots(0); setScore(0); setTotalXp(0);
+    initHole(startHole); setPhase("aiming");
   };
+  const goNext=()=>{
+    const def=HOLES[holeIdx%HOLES.length];
+    const s=starsFor(shotsRef.current, def.par);
+    const xp=s*15;
+    const newStars=[...holeStars, s];
+    const newScore=score+(s===3?100:s===2?60:30);
+    const newXp=totalXp+xp;
+    setHoleStars(newStars); setTotalXp(newXp); setScore(newScore);
 
-  // Hole complete
-  const starsFor = (s: number, par: number) => s <= par ? 3 : s <= par + 1 ? 2 : 1;
-  const goNext = () => {
-    const def = HOLES[holeIdx % HOLES.length];
-    const s = starsFor(shotsRef.current, def.par);
-    setHoleStars(hs => [...hs, s]);
-    setTotalXp(x => x + s * 15);
-    setScore(sc => sc + (s === 3 ? 100 : s === 2 ? 60 : 30));
-    const next = holeIdx + 1;
-    if (next >= HOLES.length) {
+    const next=holeIdx+1;
+    const adv = activeAdventure ?? ADVENTURES[0];
+    const adventureDone = next > adv.holeRange[1];
+
+    if (adventureDone) {
+      // Save stars for this adventure
+      setAdventureStars(prev => ({...prev, [adv.id]: newStars}));
+      holeIdxRef.current = next <= adv.holeRange[1] ? next : adv.holeRange[1]+1;
       setPhase("session_done");
+      onRoundEnd({totalShots:sessionShots+shotsRef.current, holeStars:newStars, score:newScore, xpEarned:newXp, holesPlayed:newStars.length});
     } else {
-      setHoleIdx(next); holeIdxRef.current = next;
-      heartsRef.current = 3; setHearts(3);
-      initHole(next);
-      setPhase("aiming");
+      setHoleIdx(next); holeIdxRef.current=next;
+      heartsRef.current=heartsPerHole; setHearts(heartsPerHole);
+      initHole(next); setPhase("aiming");
     }
   };
 
-  // ── TOPIC PICK ───────────────────────────────────────────────────────────────
-  if (phase === "topic_pick") {
-    return (
-      <div className={styles.root}>
-        <div className={styles.menuScreen}>
-          <div className={styles.logoWrap}>
-            <h1 className={styles.logoTitle}>⛳ Math Quest Golf</h1>
-            <p className={styles.logoSub}>SOLVE · AIM · SINK IT</p>
-          </div>
+  const startNextRound=()=>{
+    const next=holeIdxRef.current;
+    setHoleIdx(next);
+    heartsRef.current=heartsPerHole; setHearts(heartsPerHole);
+    initHole(next); setPhase("aiming");
+  };
 
-          <div className={styles.menuPanel}>
-            {/* Grade selector */}
-            <div className={styles.gradeSection}>
-              <p className={styles.menuLabel}>Your class</p>
-              <div className={styles.gradeRow}>
-                {GRADES.map(g => (
-                  <button
-                    key={g}
-                    className={`${styles.gradeBtn} ${selectedGrade === g ? styles.gradeBtnActive : ""}`}
-                    onClick={() => setSelectedGrade(g)}
-                  >
-                    {g}
-                  </button>
-                ))}
-              </div>
-            </div>
+  // ── Derived ────────────────────────────────────────────────────────────────
+  const isMenu=phase==="menu";
+  const isDone=phase==="session_done";
+  const isGame=!isMenu&&!isDone;
+  const def=HOLES[holeIdx%HOLES.length];
+  const total=holeStars.reduce((a,b)=>a+b,0);
 
-            {/* Topic selector */}
-            <p className={styles.menuLabel}>Choose a topic</p>
-            <div className={styles.modeRow}>
-              <div className={`${styles.modeCard} ${styles.modeCardActive}`}>
-                <div className={styles.modeBig}>📐</div>
-                <div className={styles.modeLabel}>Change of Subject</div>
-                <div className={styles.modeSub}>Rearrange equations</div>
-              </div>
-              <div className={`${styles.modeCard} ${styles.modeCardSoon}`}>
-                <div className={styles.modeBig}>🔢</div>
-                <div className={styles.modeLabel}>Simultaneous Eq.</div>
-                <div className={styles.modeSub}>Coming soon</div>
-              </div>
-            </div>
-
-            <div className={styles.gradeInfo}>
-              {gradeQuestions.length} questions available for {selectedGrade}
-            </div>
-
-            <button
-              className={styles.btnPlay}
-              onClick={() => {
-                holeIdxRef.current = 0; heartsRef.current = 3;
-                setHoleIdx(0); setHearts(3); setTotalXp(0);
-                setHoleStars([]); setSessionShots(0); setScore(0); setQIdx(0);
-                initHole(0);
-                setPhase("aiming");
-              }}
-            >
-              ▶ Play
-            </button>
-          </div>
-
-          {onExit && <button className={styles.ghostBtn} onClick={onExit}>← Back to Worlds</button>}
-        </div>
-      </div>
-    );
-  }
-
-  // ── SESSION DONE ─────────────────────────────────────────────────────────────
-  if (phase === "session_done") {
-    const total = holeStars.reduce((a, b) => a + b, 0);
-    return (
-      <div className={styles.root}>
-        <div className={styles.menuScreen}>
-          <div className={styles.menuPanel} style={{ gap:16 }}>
-            <div className={styles.resultTitle}>Round Complete! 🏆</div>
-            <div className={styles.starsRow}>{"⭐".repeat(Math.min(total, 15))}</div>
-            <div className={styles.statRow}>
-              <div className={styles.stat}><div className={styles.statNum}>{sessionShots}</div><div className={styles.statLbl}>SHOTS</div></div>
-              <div className={styles.stat}><div className={styles.statNum}>{score}</div><div className={styles.statLbl}>SCORE</div></div>
-              <div className={styles.stat}><div className={styles.statNum} style={{ color:C.gold }}>+{totalXp}</div><div className={styles.statLbl}>XP</div></div>
-            </div>
-            <button className={styles.btnPlay} onClick={() => setPhase("topic_pick")}>Play Again</button>
-            {onExit && <button className={styles.btnSecondary} onClick={onExit}>Back to Worlds</button>}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ── GAME SCREEN ──────────────────────────────────────────────────────────────
-  const def = HOLES[holeIdx % HOLES.length];
   return (
     <div className={styles.root}>
-      <div className={styles.gameFrame} ref={frameRef}>
-        <canvas
-          ref={canvasRef}
-          className={styles.canvas}
-          onPointerDown={onPtrDown}
-          onPointerMove={onPtrMove}
-          onPointerUp={onPtrUp}
-          style={{ touchAction:"none", display:"block", width:"100%", height:"100%" }}
-        />
 
-        {/* HUD */}
-        <div className={styles.hudTL}>🎯 {score}</div>
-        <div className={styles.hudTR}>Hole {holeIdx + 1} / {HOLES.length}</div>
-        <div className={styles.hudBL}>
-          {onExit && <button className={styles.exitBtn} onClick={onExit}>✕</button>}
-        </div>
-        <div className={styles.hudBR}>
-          {[0,1,2].map(i => (
-            <span key={i} className={styles.heart} style={{ opacity: i < hearts ? 1 : .2 }}>
-              {i < hearts ? "❤️" : "🤍"}
-            </span>
-          ))}
-        </div>
+      {/* Canvas — always in DOM so ResizeObserver always has something to watch */}
+      <canvas
+        ref={canvasRef}
+        className={styles.canvas}
+        onPointerDown={onPtrDown}
+        onPointerMove={onPtrMove}
+        onPointerUp={onPtrUp}
+        style={{touchAction:"none"}}
+      />
 
-        {/* Miss feedback — shows briefly when ball stops without sinking */}
-        {showMissFeedback && (
-          <div className={styles.missFeedback}>
-            Almost! Aim again from here
-          </div>
-        )}
+      {/* ── GAME HUD ─────────────────────────────────────────────────────────── */}
+      {isGame && (
+        <>
+          {/* ── TOP BAR: ☰ Menu (left) · ❤️❤️❤️ Hearts (centre) · Score (right) ── */}
+          <div className={styles.topBar}>
+            {/* Left: hamburger menu button */}
+            <button className={styles.topMenuBtn} onClick={()=>setMenuOpen(o=>!o)}>
+              <span>{menuOpen?"✕":"☰"}</span>
+            </button>
 
-        {/* Question card — only shows after all 3 hearts used */}
-        {activeQ && step && (
-          <div className={`${styles.qCard} ${cardVisible ? styles.qCardShow : ""} ${cardShake ? styles.qCardShake : ""}`}>
-            <div className={styles.qLabel}>OUT OF HEARTS — SOLVE TO CONTINUE</div>
-            <div className={styles.qGoal}>{activeQ.label}</div>
-            <div className={styles.qEq}>{stepIdx === 0 ? activeQ.formula : activeQ.steps[stepIdx - 1].resultFormula}</div>
-            <div className={styles.qMascot}>
-              <span className={styles.qMascotIco}>🦉</span>
-              <span className={styles.qMascotTxt}>{step.instruction}</span>
+            {/* Centre: hearts */}
+            <div className={styles.topBarHearts}>
+              {Array.from({length:heartsPerHole},(_,i)=>(
+                <span key={i} className={`${styles.heartIcon}${i<hearts?" "+styles.heartIconActive:""}`}>
+                  {i<hearts?"❤️":"🤍"}
+                </span>
+              ))}
             </div>
-            <div className={styles.qTiles}>
-              {tileOrder.map(tile => {
-                const ok = picked === tile && tileResult === "correct";
-                const bad = picked === tile && tileResult === "wrong";
-                return (
-                  <button
-                    key={tile}
-                    className={`${styles.qTile} ${ok ? styles.qTileOk : bad ? styles.qTileBad : ""}`}
-                    onClick={() => pickTile(tile)}
-                    disabled={advancing}
-                  >
-                    {tile}
+
+            {/* Right: score */}
+            <div className={styles.topBarScore}>
+              <span className={styles.topBarScoreNum}>{score}</span>
+              <span className={styles.topBarScoreLbl}>SCORE</span>
+            </div>
+          </div>
+
+          {/* ── IN-GAME PAUSE MENU dropdown ─────────────────────────────────── */}
+          {menuOpen && (
+            <div className={styles.pauseMenu}>
+              <div className={styles.pauseMenuTitle}>
+                Hole {holeIdx+1}/{HOLES.length} · {def.name}
+              </div>
+              <div className={styles.pauseMenuStats}>
+                <span>Shots: {shots}</span>
+                <span>Par: {def.par}</span>
+                <span>Score: {score}</span>
+              </div>
+              <button className={styles.pauseMenuBtn} onClick={()=>{
+                setMenuOpen(false);
+                // Restart current hole
+                heartsRef.current=heartsPerHole; setHearts(heartsPerHole);
+                initHole(holeIdx); setPhase("aiming");
+              }}>🔄 Restart Hole</button>
+              <button className={styles.pauseMenuBtn} onClick={()=>{
+                setMenuOpen(false); setPhase("menu");
+              }}>🏠 Main Menu</button>
+              {onExit && <button className={`${styles.pauseMenuBtn} ${styles.pauseMenuBtnExit}`} onClick={()=>{
+                setMenuOpen(false); onExit();
+              }}>✕ Exit Game</button>}
+              <button className={styles.pauseMenuClose} onClick={()=>setMenuOpen(false)}>
+                Continue Playing →
+              </button>
+            </div>
+          )}
+
+          {/* ── BOTTOM INFO BAR ─────────────────────────────────────────────── */}
+          <div className={styles.bottomBar}>
+            <div className={styles.bottomBarHole}>
+              <span className={styles.bottomHoleNum}>Hole {holeIdx+1}</span>
+              <span className={styles.bottomHoleName}>{def.name}</span>
+            </div>
+            <div className={styles.bottomBarCentre}>
+              {phase==="aiming"&&shots===0&&<span className={styles.aimHintInline}>Drag ball to aim</span>}
+              {phase==="aiming"&&hearts<heartsPerHole&&shots>0&&<span className={styles.heartsHintInline}>{hearts} heart{hearts!==1?"s":""} left</span>}
+              {phase==="waiting_hearts"&&<span className={styles.heartsHintInline}>Solving for hearts…</span>}
+            </div>
+            <div className={styles.bottomBarShots}>
+              <div className={styles.bottomShotsChip}>
+                <span className={styles.bottomShotsNum}>{shots}</span>
+                <span className={styles.bottomShotsLbl}>SHOTS</span>
+              </div>
+              <div className={styles.bottomParChip}>
+                <span className={styles.bottomParNum}>{def.par}</span>
+                <span className={styles.bottomParLbl}>PAR</span>
+              </div>
+            </div>
+          </div>
+
+          {showMiss && <div className={styles.missFeedback}>Almost! Aim from here</div>}
+          {showWin  && <div className={`${styles.winBanner} ${styles.winBannerShow}`}>{winPhrase}</div>}
+
+          {/* Hole result overlay */}
+          {phase==="hole_result" && (()=>{
+            const s=starsFor(shotsRef.current, def.par);
+            return (
+              <div className={styles.overlay}>
+                <div className={styles.resultPanel}>
+                  <div className={styles.resultHoleLabel}>Hole {holeIdx+1} Complete</div>
+                  <div className={styles.resultTitle}>{def.name}</div>
+                  <div className={styles.starsRow}>
+                    {[0,1,2].map(i=>(
+                      <span key={i} className={styles.rStar} style={{opacity:i<s?1:.2,animationDelay:`${i*.18}s`}}>⭐</span>
+                    ))}
+                  </div>
+                  <div className={styles.statRow}>
+                    <div className={styles.stat}><div className={styles.statNum}>{shotsRef.current}</div><div className={styles.statLbl}>SHOTS</div></div>
+                    <div className={styles.stat}><div className={styles.statNum}>Par {def.par}</div><div className={styles.statLbl}>TARGET</div></div>
+                    <div className={styles.stat}><div className={styles.statNum} style={{color:C.gold}}>+{s*15}</div><div className={styles.statLbl}>XP</div></div>
+                  </div>
+                  <button className={styles.btnPlay} onClick={goNext}>
+                    {holeIdx+1>=HOLES.length?"Finish Round →":"Next Hole →"}
                   </button>
-                );
-              })}
-            </div>
-            {wrongCount >= 2 && !showHint && (
-              <button className={styles.qHintBtn} onClick={() => setShowHint(true)}>💡 Show hint</button>
-            )}
-            {showHint && <div className={styles.qHint}>{step.hint}</div>}
-            {activeQ.steps.length > 1 && (
-              <div className={styles.qDots}>
-                {activeQ.steps.map((_, i) => <div key={i} className={`${styles.qDot} ${i <= stepIdx ? styles.qDotOn : ""}`} />)}
-              </div>
-            )}
-            {tileResult === "correct" && <div className={styles.qCorrect}>✓ {step.resultFormula}</div>}
-          </div>
-        )}
-
-        {/* Win banner */}
-        {showWin && (
-          <div className={`${styles.winBanner} ${showWin ? styles.winBannerShow : ""}`}>
-            {winPhrase}
-          </div>
-        )}
-
-        {/* Aim hint */}
-        {phase === "aiming" && shots === 0 && (
-          <div className={styles.aimHint}>Drag from the ball to aim · release to shoot</div>
-        )}
-
-        {/* Hearts hint */}
-        {phase === "aiming" && hearts < 3 && (
-          <div className={styles.heartsHint}>
-            {hearts} heart{hearts !== 1 ? "s" : ""} left — continuing from here
-          </div>
-        )}
-
-        {/* Hole result */}
-        {phase === "hole_result" && (() => {
-          const s = starsFor(shotsRef.current, def.par);
-          return (
-            <div className={styles.overlay}>
-              <div className={styles.resultPanel}>
-                <div className={styles.resultTitle}>{def.name}</div>
-                <div className={styles.starsRow}>
-                  {[0,1,2].map(i => (
-                    <span key={i} className={styles.rStar} style={{ opacity: i < s ? 1 : .2, animationDelay:`${i * .18}s` }}>⭐</span>
-                  ))}
                 </div>
-                <div className={styles.statRow}>
-                  <div className={styles.stat}><div className={styles.statNum}>{shotsRef.current}</div><div className={styles.statLbl}>SHOTS</div></div>
-                  <div className={styles.stat}><div className={styles.statNum}>Par {def.par}</div><div className={styles.statLbl}>TARGET</div></div>
-                  <div className={styles.stat}><div className={styles.statNum} style={{ color:C.gold }}>+{s*15}</div><div className={styles.statLbl}>XP</div></div>
-                </div>
-                <button className={styles.btnPlay} onClick={goNext}>
-                  {holeIdx + 1 >= HOLES.length ? "Finish Round →" : "Next Hole →"}
-                </button>
               </div>
+            );
+          })()}
+        </>
+      )}
+
+      {/* ── MENU OVERLAY — Adventure select screen ─────────────────────────── */}
+      {isMenu && (
+        <div className={styles.menuOverlay}>
+          {/* Animated background */}
+          <div className={styles.menuBg}>
+            {Array.from({length:20},(_,i)=>(
+              <div key={i} className={styles.menuGrassTile}
+                style={{left:`${(i%5)*22}%`,top:`${Math.floor(i/5)*28}%`,animationDelay:`${i*0.18}s`}}/>
+            ))}
+          </div>
+
+          {/* Top bar */}
+          <div className={styles.menuTopBar}>
+            {onExit&&<button className={styles.menuBackBtn} onClick={onExit}>‹ Worlds</button>}
+          </div>
+
+          {/* Logo */}
+          <div className={styles.menuHero}>
+            <div className={styles.menuBallBounce}>⛳</div>
+            <h1 className={styles.menuTitle}>Mini Golf</h1>
+            <p className={styles.menuTagline}>CHOOSE YOUR ADVENTURE</p>
+          </div>
+
+          {/* Adventure cards */}
+          <div className={styles.adventureList}>
+            {ADVENTURES.map((adv, advIdx) => {
+              const stars = adventureStars[adv.id] ?? [];
+              const isCompleted = stars.length === 5;
+              const totalStars = stars.reduce((a:number,b:number)=>a+b,0);
+              // Adventure is locked if previous one has never been started
+              const prevAdv = advIdx > 0 ? ADVENTURES[advIdx-1] : null;
+              const prevStars = prevAdv ? (adventureStars[prevAdv.id] ?? []) : [1]; // first is always unlocked
+              const isLocked = prevAdv !== null && prevStars.length === 0;
+
+              return (
+                <div
+                  key={adv.id}
+                  className={`${styles.advCard}${isLocked?" "+styles.advCardLocked:""}${isCompleted?" "+styles.advCardDone:""}`}
+                  onClick={()=>{ if(!isLocked) startGame(adv); }}
+                  style={{
+                    "--adv-accent": adv.accentColor,
+                    "--adv-dark":   adv.accentDark,
+                  } as React.CSSProperties}
+                >
+                  {/* Left: emoji + number */}
+                  <div className={styles.advCardIcon}>
+                    <span className={styles.advEmoji}>{isLocked?"🔒":adv.emoji}</span>
+                    <span className={styles.advNum}>{advIdx+1}</span>
+                  </div>
+
+                  {/* Centre: name + subtitle + holes */}
+                  <div className={styles.advCardBody}>
+                    <div className={styles.advName}>{adv.name}</div>
+                    <div className={styles.advSub}>{isLocked?"Complete previous adventure to unlock":adv.subtitle}</div>
+                    <div className={styles.advMeta}>
+                      <span className={styles.advDiff}>{adv.difficulty}</span>
+                      <span className={styles.advHoles}>5 holes</span>
+                    </div>
+                  </div>
+
+                  {/* Right: stars or lock */}
+                  <div className={styles.advCardRight}>
+                    {isCompleted ? (
+                      <>
+                        <div className={styles.advStarCount}>{totalStars}<span style={{fontSize:10}}>/15</span></div>
+                        <div className={styles.advStarIco}>⭐</div>
+                      </>
+                    ) : stars.length > 0 ? (
+                      <>
+                        <div className={styles.advProgress}>{stars.length}<span style={{fontSize:10}}>/5</span></div>
+                        <div className={styles.advProgressLbl}>played</div>
+                      </>
+                    ) : isLocked ? null : (
+                      <div className={styles.advPlayBtn}>▶</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {onExit&&<button className={styles.ghostBtn} onClick={onExit}>Back to Worlds</button>}
+        </div>
+      )}
+
+      {/* ── ROUND / SESSION DONE ─────────────────────────────────────────────── */}
+      {isDone && (()=>{
+        const nextIdx = holeIdxRef.current;
+        const hasNextRound = nextIdx < HOLES.length;
+        const completedRoundIdx = getRound(Math.max(0, nextIdx - 1));
+        const completedRound = ROUNDS[completedRoundIdx];
+        const nextRound = hasNextRound ? ROUNDS[getRound(nextIdx)] : null;
+        return (
+          <div className={styles.menuOverlay}>
+            <div className={styles.menuBg}>
+              {Array.from({length:20},(_,i)=>(
+                <div key={i} className={styles.menuGrassTile}
+                  style={{left:`${(i%5)*22}%`,top:`${Math.floor(i/5)*28}%`,animationDelay:`${i*0.18}s`}}/>
+              ))}
             </div>
-          );
-        })()}
+            <div className={styles.doneWrap}>
+              <div className={styles.doneTrophy}>{hasNextRound ? "🏅" : "🏆"}</div>
+              <h2 className={styles.doneTitle}>{hasNextRound ? "Round Complete!" : "Champion!"}</h2>
+              {completedRound && (
+                <p className={styles.doneRoundName}>{completedRound.name}</p>
+              )}
+              <div className={styles.doneStars}>{"⭐".repeat(Math.min(total, 15))}</div>
+              <div className={styles.doneStats}>
+                <div className={styles.doneStat}><span className={styles.doneStatNum}>{sessionShots}</span><span className={styles.doneStatLbl}>SHOTS</span></div>
+                <div className={styles.doneStat}><span className={styles.doneStatNum}>{score}</span><span className={styles.doneStatLbl}>SCORE</span></div>
+                <div className={styles.doneStat}><span className={styles.doneStatNum} style={{color:C.gold}}>+{totalXp}</span><span className={styles.doneStatLbl}>XP</span></div>
+              </div>
+              <div className={styles.doneHoles}>
+                {holeStars.map((s,i)=>(
+                  <div key={i} className={styles.doneHoleRow}>
+                    <span className={styles.doneHoleNum}>Hole {i+1}</span>
+                    <span className={styles.doneHoleName}>{HOLES[i]?.name}</span>
+                    <span className={styles.doneHoleStars}>{"⭐".repeat(s)}{"☆".repeat(3-s)}</span>
+                  </div>
+                ))}
+              </div>
+              {hasNextRound && nextRound && (
+                <div className={styles.nextRoundCard}>
+                  <div className={styles.nextRoundLabel}>Next up</div>
+                  <div className={styles.nextRoundName}>{nextRound.name}</div>
+                  <div className={styles.nextRoundSub}>{nextRound.subtitle}</div>
+                </div>
+              )}
+              {hasNextRound
+                ? <button className={styles.menuPlayBtn} onClick={startNextRound}>
+                    ▶ Play {nextRound?.name ?? "Next Round"}
+                  </button>
+                : <button className={styles.menuPlayBtn} onClick={()=>startGame()}>🔄 Play Again</button>
+              }
+              {onExit && <button className={styles.ghostBtn} onClick={onExit}>Back to Worlds</button>}
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+// ── MathQuestEngine — Arcade-compatible adapter ────────────────────────────────
+// This is what ArcadeGameClient loads via dynamic import.
+// It accepts the arcade's standard { onComplete, onExit } interface,
+// while internally managing the onNeedHearts learning flow via state.
+//
+// The learning overlay (ChangeOfSubjectEngine) is loaded dynamically
+// so it doesn't bloat the golf bundle when hearts are not needed.
+
+export interface MathQuestEngineProps {
+  onComplete?: (r: { score: number; hits: number; maxCombo: number; xp: number }) => void;
+  onExit?: () => void;
+}
+
+export function MathQuestEngine({ onComplete, onExit }: MathQuestEngineProps) {
+  const [showLearning, setShowLearning] = useState(false);
+  const [activityKey, setActivityKey]   = useState(0);
+  const resolveRef = useRef<((r: HeartRefillResult) => void) | null>(null);
+
+  const handleNeedHearts = useCallback((resolve: (r: HeartRefillResult) => void) => {
+    resolveRef.current = resolve;
+    setActivityKey(k => k + 1);
+    setShowLearning(true);
+  }, []);
+
+  const handleRoundEnd = useCallback((result: RoundResult) => {
+    onComplete?.({
+      score: result.score,
+      hits: result.holesPlayed,
+      maxCombo: Math.max(...(result.holeStars.length ? result.holeStars : [0])),
+      xp: result.xpEarned,
+    });
+  }, [onComplete]);
+
+  return (
+    <div style={{ position: "fixed", inset: 0 }}>
+      <MiniGolfEngine
+        onNeedHearts={handleNeedHearts}
+        onRoundEnd={handleRoundEnd}
+        onExit={onExit}
+        heartsPerHole={3}
+      />
+      {showLearning && (
+        <MathQuestLearningOverlayInline
+          key={activityKey}
+          onDone={(r: HeartRefillResult) => {
+            setShowLearning(false);
+            resolveRef.current?.(r);
+            resolveRef.current = null;
+          }}
+          onSkip={() => {
+            setShowLearning(false);
+            resolveRef.current?.({ heartsGranted: 0, xpEarned: 0 });
+            resolveRef.current = null;
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Inline learning overlay — self-contained, no extra file needed ────────────
+// Wraps ChangeOfSubjectEngine in the glass overlay shell.
+// Lives here so the MathQuestEngine export works as a single file.
+
+import { ChangeOfSubjectEngine } from "@/engines/mathematics/change-of-subject/ChangeOfSubjectEngine";
+import { randomMissionForTier }   from "@/engines/mathematics/change-of-subject/changeOfSubjectQuestions";
+import type { ChangeOfSubjectOutcome } from "@/engines/mathematics/change-of-subject/changeOfSubject.config";
+function buildLearningConfig() {
+  const qs = randomMissionForTier("learn");
+  const q  = qs[Math.floor(Math.random() * qs.length)];
+  return {
+    shared: {
+      pointsPerQuestion:20, retryPenalty:5, hintPenalty:5, hintTimePenalty:5,
+      baseTimerSecs:90, retryTimerCut:10, minTimerSecs:30, practiceTimerFromQ:99,
+    },
+    mission: {
+      id:`golf-hearts-${Date.now()}`, missionKey:"cos-learn-m1",
+      title:"Earn Hearts", xpReward:15, topicId:"change-of-subject",
+      subtopicId:undefined, payload:{ questions:[q] },
+    },
+  };
+}
+
+function MathQuestLearningOverlayInline({
+  onDone, onSkip,
+}: {
+  onDone: (r: HeartRefillResult) => void;
+  onSkip: () => void;
+}) {
+  const configRef = useRef(buildLearningConfig());
+  const handleComplete = useCallback((outcome: ChangeOfSubjectOutcome) => {
+    onDone({ heartsGranted: 3, xpEarned: outcome.xpEarned ?? 15 });
+  }, [onDone]);
+
+  return (
+    <div style={{
+      position:"absolute", inset:0, zIndex:90,
+      backdropFilter:"blur(6px) brightness(0.55) saturate(0.7)",
+      WebkitBackdropFilter:"blur(6px) brightness(0.55) saturate(0.7)",
+      display:"flex", flexDirection:"column", alignItems:"center",
+      justifyContent:"center", padding:"12px",
+    }}>
+      <div style={{
+        background:"#fff", borderRadius:24, width:"100%", maxWidth:460,
+        maxHeight:"88vh", display:"flex", flexDirection:"column",
+        boxShadow:"0 24px 64px rgba(0,0,0,.45)", overflow:"hidden",
+      }}>
+        {/* Header */}
+        <div style={{
+          display:"flex", alignItems:"center", gap:10,
+          padding:"14px 18px",
+          background:"linear-gradient(135deg,#1A4010,#2E6A20)",
+          flexShrink:0,
+        }}>
+          <span style={{fontSize:22}}>⛳</span>
+          <div style={{flex:1}}>
+            <div style={{fontFamily:"'Baloo 2',sans-serif",fontWeight:800,fontSize:14,color:"#fff"}}>
+              Out of Hearts — Solve to Continue
+            </div>
+            <div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:2}}>
+              Complete the activity to earn 3 hearts ❤️❤️❤️
+            </div>
+          </div>
+          <button onClick={onSkip} style={{
+            background:"rgba(255,255,255,.15)", border:"1.5px solid rgba(255,255,255,.3)",
+            borderRadius:100, color:"#fff", fontSize:12, fontWeight:700,
+            padding:"6px 12px", cursor:"pointer", fontFamily:"inherit",
+          }}>Skip ✕</button>
+        </div>
+        {/* Engine */}
+        <div style={{flex:1,overflow:"auto",minHeight:0}}>
+          <ChangeOfSubjectEngine
+            config={configRef.current as any}
+            onComplete={handleComplete}
+          />
+        </div>
+        {/* Footer */}
+        <div style={{padding:"10px 16px",borderTop:"1px solid #eee",background:"#fafaf8",flexShrink:0}}>
+          <button onClick={onSkip} style={{
+            width:"100%", padding:"10px 16px", borderRadius:100,
+            border:"1.5px solid #d4e0d0", background:"#f0f6ee",
+            color:"#3A6A30", fontFamily:"inherit", fontSize:13, fontWeight:700, cursor:"pointer",
+          }}>⛳ Back to Golf (skip — hearts not restored)</button>
+        </div>
       </div>
     </div>
   );

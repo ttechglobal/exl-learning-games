@@ -735,3 +735,106 @@
   font-family:"Baloo 2",sans-serif; font-size:16px; font-weight:700;
   color:rgba(255,255,255,.65); margin:0;
 }
+/* ══════════════════════════════════════════════════════════════════════════════
+   ADVENTURE GRID — square card layout with SVG art
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.adventureGrid {
+  position: relative; z-index: 10;
+  width: 100%; max-width: 520px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 0 16px 20px;
+  flex: 1;
+}
+
+@media (min-width: 420px) {
+  .adventureGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.advSquareCard {
+  background: rgba(255,255,255,.95);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgba(0,0,0,.18), 0 0 0 1.5px rgba(255,255,255,.3);
+  cursor: pointer;
+  transition: transform .14s, box-shadow .14s;
+  border: 2.5px solid rgba(255,255,255,.5);
+  display: flex; flex-direction: column;
+}
+.advSquareCard:hover:not(.advCardLocked) {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 12px 32px rgba(0,0,0,.22);
+}
+.advSquareCard:active:not(.advCardLocked) {
+  transform: scale(.97);
+}
+.advSquareCardDone {
+  box-shadow: 0 6px 24px rgba(245,196,68,.3), 0 0 0 2px rgba(245,196,68,.5);
+}
+
+/* Art box — square aspect ratio */
+.advArtBox {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.2;
+  overflow: hidden;
+  background: #e8f4e0;
+}
+.advArtBox svg { display: block; width: 100%; height: 100%; }
+
+.advLockOverlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,.38); font-size: 28px;
+}
+.advCompleteBadge {
+  position: absolute; top: 6px; right: 6px;
+  background: rgba(245,196,68,.92); border-radius: 100px;
+  font-family: 'Baloo 2', sans-serif; font-size: 11px; font-weight: 800;
+  color: #5A3010; padding: 2px 7px;
+}
+.advProgressBadge {
+  position: absolute; top: 6px; right: 6px;
+  background: rgba(255,255,255,.85); border-radius: 100px;
+  font-family: 'Baloo 2', sans-serif; font-size: 11px; font-weight: 800;
+  color: #3A6A30; padding: 2px 7px;
+}
+
+/* Info strip */
+.advSquareBody {
+  padding: 8px 10px 10px;
+  background: #fff;
+  flex: 1;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.advSquareName {
+  font-family: 'Baloo 2', sans-serif; font-size: 13px; font-weight: 800;
+  color: #1A3010; line-height: 1.15;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.advSquareMeta {
+  display: flex; align-items: center; gap: 5px;
+}
+.advSquareDiff {
+  font-size: 9px; font-weight: 800;
+  color: var(--adv-dark, #2E7A22);
+  background: rgba(0,0,0,.06); border-radius: 100px;
+  padding: 1px 6px; letter-spacing: .4px;
+}
+.advSquareHoles {
+  font-size: 9px; font-weight: 700; color: #8a9a8a;
+}
+
+/* Tap hint inside result panel */
+.tapHint {
+  font-size: 11px; color: #7a9a70; font-weight: 700;
+  text-align: center; animation: tapHintPulse 1.6s ease infinite;
+}
+@keyframes tapHintPulse {
+  0%,100% { opacity: .5; }
+  50% { opacity: 1; }
+}

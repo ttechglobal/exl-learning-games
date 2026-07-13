@@ -806,6 +806,15 @@ function drawCloud(ctx:CanvasRenderingContext2D, x:number, y:number, s:number) {
 
 const WIN_PHRASES = ["Excellent!","Nice Shot!","Great Job!","Sunk It!","Awesome!","Perfect!"];
 
+// -- Auto-advance helper
+function HoleAutoAdvance({ onAdvance, delay }: { onAdvance: () => void; delay: number }) {
+  useEffect(() => {
+    const t = setTimeout(onAdvance, delay);
+    return () => clearTimeout(t);
+  }, [onAdvance, delay]);
+  return null;
+}
+
 // ── Decoration ────────────────────────────────────────────────────────────────
 interface Decor {
   clouds:  {x:number;y:number;s:number;spd:number}[];
@@ -814,6 +823,103 @@ interface Decor {
   flowers: {x:number;y:number;sz:number;col:string}[];
 }
 const bgImageCache = new Map<string, HTMLImageElement>();
+
+// ── Adventure SVG Art ──────────────────────────────────────────────────────────
+function AdventureArt({ id, accent, locked }: { id: string; accent: string; locked: boolean }) {
+  const arts: Record<string, React.ReactNode> = {
+    meadow: (
+      <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
+        <defs><linearGradient id="sky-m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#C8ECFF"/><stop offset="1" stopColor="#E4F8FF"/></linearGradient></defs>
+        <rect width="120" height="80" fill="url(#sky-m)"/>
+        <ellipse cx="90" cy="14" rx="14" ry="7" fill="rgba(255,255,255,.9)"/>
+        <ellipse cx="80" cy="16" rx="10" ry="6" fill="rgba(255,255,255,.9)"/>
+        <rect y="54" width="120" height="26" fill="#7FC76B"/>
+        <rect y="58" width="120" height="22" fill="#6FB85D"/>
+        <ellipse cx="20" cy="58" rx="28" ry="10" fill="#85CF73"/>
+        <ellipse cx="100" cy="56" rx="32" ry="12" fill="#85CF73"/>
+        <rect x="10" y="32" width="5" height="18" fill="#7A4A28"/>
+        <circle cx="12" cy="28" r="12" fill="#5AA84A"/><circle cx="8" cy="32" r="9" fill="#4A9840"/>
+        <rect x="85" y="28" width="5" height="22" fill="#7A4A28"/>
+        <circle cx="87" cy="24" r="13" fill="#5AA84A"/><circle cx="82" cy="28" r="10" fill="#4A9840"/>
+        <line x1="58" y1="20" x2="58" y2="56" stroke="#8a5a2a" strokeWidth="2"/>
+        <polygon points="58,20 78,28 58,36" fill="#FF5A50"/>
+        <circle cx="32" cy="53" r="5" fill="#fff" stroke="#ddd" strokeWidth="1"/>
+      </svg>
+    ),
+    forest: (
+      <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
+        <rect width="120" height="80" fill="#1E4A30"/>
+        <rect y="58" width="120" height="22" fill="#3A6A30"/>
+        <rect x="10" y="12" width="5" height="46" fill="#5A3010"/>
+        <polygon points="12,6 -2,40 26,40" fill="#2E6A30"/>
+        <polygon points="12,18 -1,44 25,44" fill="#3A8A3A"/>
+        <rect x="55" y="8" width="5" height="50" fill="#5A3010"/>
+        <polygon points="57,2 42,36 72,36" fill="#2E6A30"/>
+        <polygon points="57,14 44,40 70,40" fill="#3A8A3A"/>
+        <rect x="100" y="15" width="5" height="43" fill="#5A3010"/>
+        <polygon points="102,9 88,38 116,38" fill="#2E6A30"/>
+        <polygon points="102,21 90,42 114,42" fill="#3A8A3A"/>
+        <path d="M10 72 Q40 62 60 66 Q80 70 110 62" stroke="#78B268" strokeWidth="5" fill="none" strokeLinecap="round"/>
+        <line x1="75" y1="38" x2="75" y2="62" stroke="#C8A040" strokeWidth="2"/>
+        <polygon points="75,38 92,44 75,50" fill="#FF5A50"/>
+      </svg>
+    ),
+    canyon: (
+      <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
+        <rect width="120" height="80" fill="#FFD0A0"/>
+        <polygon points="0,0 0,80 42,80 42,38 22,28 0,0" fill="#C87840"/>
+        <polygon points="120,0 120,80 78,80 78,38 98,28 120,0" fill="#C87840"/>
+        <line x1="0" y1="22" x2="40" y2="50" stroke="#B06830" strokeWidth="2" opacity=".6"/>
+        <line x1="0" y1="36" x2="40" y2="58" stroke="#A05828" strokeWidth="1.5" opacity=".5"/>
+        <line x1="120" y1="22" x2="80" y2="50" stroke="#B06830" strokeWidth="2" opacity=".6"/>
+        <line x1="120" y1="36" x2="80" y2="58" stroke="#A05828" strokeWidth="1.5" opacity=".5"/>
+        <rect x="38" y="56" width="44" height="24" fill="#D4A870"/>
+        <rect x="50" y="42" width="20" height="38" fill="#E0B880"/>
+        <line x1="60" y1="28" x2="60" y2="54" stroke="#8a5a2a" strokeWidth="2"/>
+        <polygon points="60,28 76,34 60,40" fill="#FF5A50"/>
+        <circle cx="60" cy="65" r="4" fill="#fff" stroke="#ddd" strokeWidth="1"/>
+      </svg>
+    ),
+    archipelago: (
+      <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
+        <rect width="120" height="80" fill="#2A90C8"/>
+        <ellipse cx="28" cy="54" rx="22" ry="14" fill="#F5C85A"/>
+        <ellipse cx="28" cy="50" rx="18" ry="10" fill="#7FC76B"/>
+        <ellipse cx="90" cy="50" rx="20" ry="12" fill="#F5C85A"/>
+        <ellipse cx="90" cy="46" rx="16" ry="8" fill="#7FC76B"/>
+        <ellipse cx="58" cy="62" rx="14" ry="8" fill="#F5C85A"/>
+        <ellipse cx="58" cy="59" rx="11" ry="6" fill="#7FC76B"/>
+        <line x1="28" y1="50" x2="28" y2="28" stroke="#8a5a2a" strokeWidth="3"/>
+        <ellipse cx="20" cy="26" rx="10" ry="5" fill="#5AA84A" transform="rotate(-20 20 26)"/>
+        <ellipse cx="36" cy="24" rx="10" ry="5" fill="#5AA84A" transform="rotate(20 36 24)"/>
+        <line x1="90" y1="46" x2="90" y2="24" stroke="#8a5a2a" strokeWidth="2"/>
+        <polygon points="90,24 106,30 90,36" fill="#FF5A50"/>
+        <path d="M0 72 Q30 68 60 72 Q90 76 120 72" stroke="rgba(255,255,255,.35)" strokeWidth="2" fill="none"/>
+        <path d="M0 65 Q30 61 60 65 Q90 69 120 65" stroke="rgba(255,255,255,.2)" strokeWidth="2" fill="none"/>
+      </svg>
+    ),
+    championship: (
+      <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
+        <defs><linearGradient id="sky-ch" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#1A1A2E"/><stop offset="1" stopColor="#2A2A50"/></linearGradient></defs>
+        <rect width="120" height="80" fill="url(#sky-ch)"/>
+        {([10,8,30,15,55,5,75,12,95,8,110,18,20,22,45,18,85,20,105,6] as number[]).reduce((acc: number[][], v, i, arr) => i%2===0 ? [...acc, [v, arr[i+1]]] : acc, []).map(([x,y],i)=>(
+          <circle key={i} cx={x} cy={y} r={1+i%2} fill="#FFD700" opacity=".8"/>
+        ))}
+        <rect x="53" y="46" width="14" height="4" fill="#C89820"/>
+        <rect x="50" y="50" width="20" height="4" fill="#C89820"/>
+        <path d="M50,20 L50,46 Q60,52 70,46 L70,20 Z" fill="#F5C444"/>
+        <path d="M44,24 Q40,30 42,38 Q46,44 50,44 L50,24 Z" fill="#E8B83A"/>
+        <path d="M76,24 Q80,30 78,38 Q74,44 70,44 L70,24 Z" fill="#E8B83A"/>
+        <rect y="64" width="120" height="16" fill="#1A3A1A"/>
+        <rect y="58" width="120" height="8" fill="#2A5A2A"/>
+        <line x1="90" y1="38" x2="90" y2="60" stroke="#C89820" strokeWidth="2"/>
+        <polygon points="90,38 106,44 90,50" fill="#FF5A50"/>
+      </svg>
+    ),
+  };
+  const art = arts[id] ?? arts.meadow;
+  return <div style={{width:"100%",height:"100%",opacity:locked?.45:1}}>{art}</div>;
+}
 
 // ── Component ──────────────────────────────────────────────────────────────────
 export function MiniGolfEngine({
@@ -1078,136 +1184,7 @@ export function MiniGolfEngine({
       ctx.fillStyle=col;rrect(ctx,b.x-35,b.y+22,70*power,9,5);ctx.fill();
     }
 
-    // ── Golf club ─────────────────────────────────────────────────────────────
-    // Real golf stance: club is ALWAYS angled toward the ball.
-    // The head rests AT the ball; the shaft angles back at ~55° to an imaginary
-    // golfer standing behind. In 2D top-down we represent this as:
-    //
-    //   Grip end (further back, perpendicular offset)
-    //       |
-    //    (shaft — long diagonal)
-    //       |
-    //   Club head (AT the ball position)
-    //
-    // The perpendicular offset makes the grip appear "above" the shot line,
-    // simulating the classic angled address stance.
-    //
-    // AIMING: head is at ball, grip trails behind at an angle.
-    // SWING:  head sweeps from ball forward; origin frozen; angled throughout.
-    {
-      const SHAFT = 96;        // long shaft — real golf club length
-      const TILT  = 0.55;     // shaft tilt angle from shot axis (radians ~31°)
-      const HEAD_W = 9, HEAD_H = 16;
-      const showClub = (p === "aiming" && dragging.current) || swingRef.current;
 
-      if (showClub) {
-        // Determine the shot direction angle
-        let shotAngle: number;
-        let clubSwing = 0; // extra rotation during swing
-
-        if (p === "aiming" && dragging.current) {
-          const dx2 = b.x - dragCur.current.x, dy2 = b.y - dragCur.current.y;
-          shotAngle = Math.atan2(dy2, dx2);
-        } else {
-          // Frozen at shot moment
-          shotAngle = swingOriginRef.current.angle;
-          // Swing arc: snap through from address to follow-through
-          const t = Math.min(1, (now - swingTRef.current) / 500);
-          clubSwing = t < 0.2
-            ? -(1 - t / 0.2) * 0.4           // slight backswing
-            : (t - 0.2) / 0.8 * 1.6;         // fast through to follow-through
-        }
-
-        // Club HEAD is always at (or near) the ball
-        // During aiming: exactly at ball
-        // During swing: at the frozen ball position (ball has left)
-        let headX: number, headY: number;
-        if (p === "aiming" && dragging.current) {
-          headX = b.x; headY = b.y;
-        } else {
-          // Head sweeps slightly past the ball during follow-through
-          const sweep = Math.max(0, clubSwing - 0.2) * 30;
-          headX = swingOriginRef.current.x + Math.cos(shotAngle) * SHAFT + Math.cos(shotAngle) * sweep;
-          headY = swingOriginRef.current.y + Math.sin(shotAngle) * SHAFT + Math.sin(shotAngle) * sweep;
-        }
-
-        // Shaft angle: shot axis + tilt + swing rotation
-        const clubAngle = shotAngle + Math.PI + TILT + clubSwing;
-        // (Math.PI flips direction so shaft goes from head back toward golfer)
-
-        // Grip position: shaft length from head in clubAngle direction
-        const gripX = headX + Math.cos(clubAngle) * SHAFT;
-        const gripY = headY + Math.sin(clubAngle) * SHAFT;
-
-        ctx.save();
-
-        // Drop shadow under entire club
-        ctx.strokeStyle = "rgba(0,0,0,.12)"; ctx.lineWidth = 4; ctx.lineCap = "round";
-        ctx.beginPath();
-        ctx.moveTo(gripX + 2, gripY + 3);
-        ctx.lineTo(headX + 2, headY + 3);
-        ctx.stroke();
-
-        // Shaft — gradient from dark grip to steel near head
-        const shaftGrad = ctx.createLinearGradient(gripX, gripY, headX, headY);
-        shaftGrad.addColorStop(0, "#5A3010");   // grip — dark wood
-        shaftGrad.addColorStop(0.18, "#C8A860"); // taper transition
-        shaftGrad.addColorStop(1, "#D8D0C0");   // near head — steel
-        ctx.strokeStyle = shaftGrad; ctx.lineWidth = 3.5; ctx.lineCap = "round";
-        ctx.beginPath(); ctx.moveTo(gripX, gripY); ctx.lineTo(headX, headY); ctx.stroke();
-
-        // Grip wrap — thicker, darker at the very top
-        ctx.strokeStyle = "#2A1808"; ctx.lineWidth = 8; ctx.lineCap = "round";
-        ctx.beginPath();
-        ctx.moveTo(gripX, gripY);
-        ctx.lineTo(gripX + Math.cos(clubAngle + Math.PI) * 16, gripY + Math.sin(clubAngle + Math.PI) * 16);
-        ctx.stroke();
-        // Grip texture cross-hatching
-        for (let gi = 2; gi < 16; gi += 4) {
-          const gx = gripX + Math.cos(clubAngle + Math.PI) * gi;
-          const gy = gripY + Math.sin(clubAngle + Math.PI) * gi;
-          const perp2 = clubAngle + Math.PI / 2;
-          ctx.strokeStyle = "#7A4A22"; ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.moveTo(gx + Math.cos(perp2) * 4, gy + Math.sin(perp2) * 4);
-          ctx.lineTo(gx - Math.cos(perp2) * 4, gy - Math.sin(perp2) * 4);
-          ctx.stroke();
-        }
-
-        // Club head — iron/putter face angled relative to shaft
-        // The face is perpendicular to the shot direction (not the shaft)
-        const facePerp = shotAngle + Math.PI / 2;
-        const fpx = Math.cos(facePerp), fpy = Math.sin(facePerp);
-        const fwd = Math.cos(shotAngle), fwdy = Math.sin(shotAngle);
-
-        ctx.fillStyle = "#A8B4C4";
-        ctx.beginPath();
-        // Face of club: flat bar perpendicular to shot at head position
-        ctx.moveTo(headX + fpx * HEAD_W, headY + fpy * HEAD_W);
-        ctx.lineTo(headX - fpx * HEAD_W, headY - fpy * HEAD_W);
-        // Back of club head angles back along shaft
-        ctx.lineTo(headX - fpx * (HEAD_W - 2) + Math.cos(clubAngle) * HEAD_H, headY - fpy * (HEAD_W - 2) + Math.sin(clubAngle) * HEAD_H);
-        ctx.lineTo(headX + fpx * HEAD_W + Math.cos(clubAngle) * HEAD_H, headY + fpy * HEAD_W + Math.sin(clubAngle) * HEAD_H);
-        ctx.closePath(); ctx.fill();
-        ctx.strokeStyle = "#6880A0"; ctx.lineWidth = 1.5; ctx.stroke();
-
-        // Face highlight (thin bright line on the hitting face)
-        ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(headX + fpx * (HEAD_W - 1), headY + fpy * (HEAD_W - 1));
-        ctx.lineTo(headX - fpx * (HEAD_W - 1), headY - fpy * (HEAD_W - 1));
-        ctx.stroke();
-
-        // Tiny ball marker (shows exactly where head meets ball)
-        if (p === "aiming" && dragging.current) {
-          ctx.strokeStyle = "rgba(255,200,80,.8)"; ctx.lineWidth = 2;
-          ctx.beginPath(); ctx.arc(headX, headY, BALL_R + 3, 0, Math.PI * 2); ctx.stroke();
-        }
-
-        ctx.restore();
-        void fwd; void fwdy; // suppress unused warning
-      }
-    }
 
     // ── Ball ──────────────────────────────────────────────────────────────────
     if (p!=="sinking" || b.sinkT<.9) {
@@ -1255,9 +1232,10 @@ export function MiniGolfEngine({
         setTimeout(()=>{
           setWinPhrase(WIN_PHRASES[Math.floor(Math.random()*WIN_PHRASES.length)]);
           setShowWin(true);
-          setTimeout(()=>setShowWin(false), 1400);
-          setTimeout(()=>setPhase("hole_result"), 1700);
-        }, 300);
+          setTimeout(()=>setShowWin(false), 1200);
+          // Seamless: auto-advance after brief result flash
+          setTimeout(()=>setPhase("hole_result"), 1400);
+        }, 200);
       } else if (sp<.06) {
         // STOPPED without sinking
         b.vx=0; b.vy=0;
@@ -1267,7 +1245,7 @@ export function MiniGolfEngine({
           if (nh<=0) {
             // No hearts left — ask host for more
             setPhase("waiting_hearts");
-            setTimeout(()=>{
+            {
               onNeedHearts((result)=>{
                 // Host resolved: restore hearts, resume aiming from current position
                 const h=result.heartsGranted; heartsRef.current=h; setHearts(h);
@@ -1275,11 +1253,11 @@ export function MiniGolfEngine({
                 b.vx=0; b.vy=0; b.breathe=0; deadRef.current=false;
                 setPhase("aiming");
               });
-            }, 400);
+            }
           } else {
             // Hearts remaining — show miss feedback, continue from here
             setShowMiss(true);
-            setTimeout(()=>{ setShowMiss(false); deadRef.current=false; b.breathe=0; setPhase("aiming"); }, 900);
+            setTimeout(()=>{ setShowMiss(false); deadRef.current=false; b.breathe=0; setPhase("aiming"); }, 500);
           }
         }
       }
@@ -1497,8 +1475,11 @@ export function MiniGolfEngine({
           {/* Hole result overlay */}
           {phase==="hole_result" && (()=>{
             const s=starsFor(shotsRef.current, def.par);
+            // Auto-advance: tap to go immediately, or wait 2s
+            const adv=activeAdventure??ADVENTURES[0];
+            const isLast=holeIdx>=adv.holeRange[1];
             return (
-              <div className={styles.overlay}>
+              <div className={styles.overlay} onClick={goNext} style={{cursor:"pointer"}}>
                 <div className={styles.resultPanel}>
                   <div className={styles.resultHoleLabel}>Hole {holeIdx+1} Complete</div>
                   <div className={styles.resultTitle}>{def.name}</div>
@@ -1512,15 +1493,15 @@ export function MiniGolfEngine({
                     <div className={styles.stat}><div className={styles.statNum}>Par {def.par}</div><div className={styles.statLbl}>TARGET</div></div>
                     <div className={styles.stat}><div className={styles.statNum} style={{color:C.gold}}>+{s*15}</div><div className={styles.statLbl}>XP</div></div>
                   </div>
-                  <button className={styles.btnPlay} onClick={goNext}>
-                    {holeIdx+1>=HOLES.length?"Finish Round →":"Next Hole →"}
-                  </button>
+                  <HoleAutoAdvance onAdvance={goNext} delay={1800} />
+                  <div className={styles.tapHint}>{isLast?"Tap to finish →":"Tap for next hole →"}</div>
                 </div>
               </div>
             );
           })()}
         </>
       )}
+
 
       {/* ── MENU OVERLAY — Adventure select screen ─────────────────────────── */}
       {isMenu && (
@@ -1545,58 +1526,43 @@ export function MiniGolfEngine({
             <p className={styles.menuTagline}>CHOOSE YOUR ADVENTURE</p>
           </div>
 
-          {/* Adventure cards */}
-          <div className={styles.adventureList}>
+          {/* Adventure cards — square grid */}
+          <div className={styles.adventureGrid}>
             {ADVENTURES.map((adv, advIdx) => {
               const stars = adventureStars[adv.id] ?? [];
               const isCompleted = stars.length === 5;
               const totalStars = stars.reduce((a:number,b:number)=>a+b,0);
-              // Adventure is locked if previous one has never been started
               const prevAdv = advIdx > 0 ? ADVENTURES[advIdx-1] : null;
-              const prevStars = prevAdv ? (adventureStars[prevAdv.id] ?? []) : [1]; // first is always unlocked
+              const prevStars = prevAdv ? (adventureStars[prevAdv.id] ?? []) : [1];
               const isLocked = prevAdv !== null && prevStars.length === 0;
 
               return (
                 <div
                   key={adv.id}
-                  className={`${styles.advCard}${isLocked?" "+styles.advCardLocked:""}${isCompleted?" "+styles.advCardDone:""}`}
+                  className={`${styles.advSquareCard}${isLocked?" "+styles.advCardLocked:""}${isCompleted?" "+styles.advSquareCardDone:""}`}
                   onClick={()=>{ if(!isLocked) startGame(adv); }}
-                  style={{
-                    "--adv-accent": adv.accentColor,
-                    "--adv-dark":   adv.accentDark,
-                  } as React.CSSProperties}
+                  style={{"--adv-accent": adv.accentColor, "--adv-dark": adv.accentDark} as React.CSSProperties}
                 >
-                  {/* Left: emoji + number */}
-                  <div className={styles.advCardIcon}>
-                    <span className={styles.advEmoji}>{isLocked?"🔒":adv.emoji}</span>
-                    <span className={styles.advNum}>{advIdx+1}</span>
-                  </div>
-
-                  {/* Centre: name + subtitle + holes */}
-                  <div className={styles.advCardBody}>
-                    <div className={styles.advName}>{adv.name}</div>
-                    <div className={styles.advSub}>{isLocked?"Complete previous adventure to unlock":adv.subtitle}</div>
-                    <div className={styles.advMeta}>
-                      <span className={styles.advDiff}>{adv.difficulty}</span>
-                      <span className={styles.advHoles}>5 holes</span>
-                    </div>
-                  </div>
-
-                  {/* Right: stars or lock */}
-                  <div className={styles.advCardRight}>
-                    {isCompleted ? (
-                      <>
-                        <div className={styles.advStarCount}>{totalStars}<span style={{fontSize:10}}>/15</span></div>
-                        <div className={styles.advStarIco}>⭐</div>
-                      </>
-                    ) : stars.length > 0 ? (
-                      <>
-                        <div className={styles.advProgress}>{stars.length}<span style={{fontSize:10}}>/5</span></div>
-                        <div className={styles.advProgressLbl}>played</div>
-                      </>
-                    ) : isLocked ? null : (
-                      <div className={styles.advPlayBtn}>▶</div>
+                  {/* SVG environment illustration */}
+                  <div className={styles.advArtBox}>
+                    <AdventureArt id={adv.id} accent={adv.accentColor} locked={isLocked} />
+                    {isLocked && <div className={styles.advLockOverlay}>🔒</div>}
+                    {isCompleted && (
+                      <div className={styles.advCompleteBadge}>
+                        ⭐{totalStars}<span style={{fontSize:9}}>/15</span>
+                      </div>
                     )}
+                    {!isCompleted && stars.length > 0 && (
+                      <div className={styles.advProgressBadge}>{stars.length}/5</div>
+                    )}
+                  </div>
+                  {/* Info strip */}
+                  <div className={styles.advSquareBody}>
+                    <div className={styles.advSquareName}>{isLocked?"🔒 Locked":adv.name}</div>
+                    <div className={styles.advSquareMeta}>
+                      <span className={styles.advSquareDiff}>{adv.difficulty}</span>
+                      <span className={styles.advSquareHoles}>5 holes</span>
+                    </div>
                   </div>
                 </div>
               );
@@ -1650,12 +1616,15 @@ export function MiniGolfEngine({
                   <div className={styles.nextRoundSub}>{nextRound.subtitle}</div>
                 </div>
               )}
-              {hasNextRound
-                ? <button className={styles.menuPlayBtn} onClick={startNextRound}>
-                    ▶ Play {nextRound?.name ?? "Next Round"}
+              {hasNextRound && nextRound
+                ? <button className={styles.menuPlayBtn} onClick={()=>startGame(nextRound as AdventureDef)}>
+                    ▶ Play {nextRound.name}
                   </button>
-                : <button className={styles.menuPlayBtn} onClick={()=>startGame()}>🔄 Play Again</button>
+                : null
               }
+              <button className={styles.menuPlayBtn} style={{background:"rgba(255,255,255,.18)",marginTop:8,boxShadow:"none"}} onClick={()=>setPhase("menu")}>
+                ← Back to Adventures
+              </button>
               {onExit && <button className={styles.ghostBtn} onClick={onExit}>Back to Worlds</button>}
             </div>
           </div>

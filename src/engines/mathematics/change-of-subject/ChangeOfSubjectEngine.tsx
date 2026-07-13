@@ -40,7 +40,6 @@ import { MISSIONS, MISSIONS_BY_TIER, randomMissionForTier, BUILTIN_QUESTIONS } f
 import { renderTokens, tokenHTML, answerHTML } from "./mathRender";
 import styles from "./ChangeOfSubjectEngine.module.css";
 import cosAudio from "./cosaudio";
-import { MicroGameWhackAMole } from "./MicroGameWhackAMole";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -60,7 +59,6 @@ type Screen =
   | "question_intro"    // "Make t the subject" callout before Q starts
   | "playing"           // active gameplay
   | "mission_complete"  // this mission is done — show score + next mission CTA
-  | "micro_game";       // 30-second fun burst before next mission
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -183,7 +181,12 @@ export function ChangeOfSubjectEngine({
   config,
   onComplete,
   menu,
-}: EngineRuntimeProps<ChangeOfSubjectConfig, ChangeOfSubjectOutcome>) {
+  autoStartTier,
+}: EngineRuntimeProps<ChangeOfSubjectConfig, ChangeOfSubjectOutcome> & {
+  /** If set, immediately enters this tier on mount, bypassing the hub screen.
+   *  Used by the golf page to skip straight to questions. */
+  autoStartTier?: "learn" | "challenge" | "master";
+}) {
   // ── Config resolution ──────────────────────────────────────────────────
   const shared = config.shared;
 
@@ -230,7 +233,21 @@ export function ChangeOfSubjectEngine({
   const [activeMissionKey, setActiveMissionKey] = useState<string>("learn_m1");
 
   // ── State ──────────────────────────────────────────────────────────────
-  const [screen, setScreen] = useState<Screen>("hub");
+  const [screen, setScreen] = useState<Screen>(
+    // If autoStartTier is set, skip hub entirely
+    // We still start at "hub" but immediately enterTier via useEffect below
+    "hub"
+  );
+  // Auto-enter tier on mount (e.g. golf hearts mode)
+  const autoStartTierRef = useRef(autoStartTier);
+  useEffect(() => {
+    if (autoStartTierRef.current) {
+      // Small delay ensures state is settled before enterTier runs
+      const t = setTimeout(() => enterTier(autoStartTierRef.current!), 80);
+      return () => clearTimeout(t);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [tier, setTier] = useState<Tier>("learn");
   const [qIdx, setQIdx] = useState(0);
   const [sIdx, setSIdx] = useState(0);
@@ -1399,7 +1416,7 @@ export function ChangeOfSubjectEngine({
                 {/* PRIMARY — go to micro-game first, then next mission */}
                 <button
                   className={styles.btnTeal}
-                  onClick={() => setScreen("micro_game")}
+                  onClick={() => goNextMission()}
                   style={{ width: "100%", fontSize: 16, padding: "14px 20px", borderRadius: 12,
                            boxShadow: "0 5px 0 #1c443b", transition: "transform .1s, box-shadow .1s",
                            display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
@@ -1427,18 +1444,6 @@ export function ChangeOfSubjectEngine({
   // Pure fun, zero maths. Fires between mission_complete and the next mission.
   // 20 seconds, moles pop from 9 holes, tap to whack. Bonus XP for score ≥ 5.
   // Skip button always visible so no one feels trapped.
-  if (screen === "micro_game") {
-    return (
-      <MicroGameWhackAMole
-        onFinish={(_bonusXp: number) => {
-          // Bonus XP from micro-game noted — future: could award via separate lightweight call
-          // For now: proceed directly to next mission to keep the flow seamless
-          goNextMission();
-        }}
-      />
-    );
-  }
-
   // ── Playing screen ──────────────────────────────────────────────────────
   const isMCQ = stepPhase === "mcq_left" || stepPhase === "mcq_right";
 

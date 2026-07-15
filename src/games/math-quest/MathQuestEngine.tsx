@@ -937,7 +937,9 @@ export function MiniGolfEngine({
   const [winPhrase, setWinPhrase] = useState("");
   const [showWin, setShowWin]     = useState(false);
   const [showMiss, setShowMiss]        = useState(false);
-  const [adventureStars, setAdventureStars] = useState<Record<string,number[]>>({}); // adventure id → hole stars
+  const [adventureStars, setAdventureStars] = useState<Record<string,number[]>>(() => {
+    try { return JSON.parse(localStorage.getItem("golf_adventureStars_v1") ?? "{}"); } catch { return {}; }
+  }); // adventure id → hole stars, persisted
   const [activeAdventure, setActiveAdventure] = useState<AdventureDef|null>(null);
   const [menuOpen, setMenuOpen]   = useState(false);  // in-game pause menu
   const [swinging, setSwinging]  = useState(false);   // golf club swing animation
@@ -991,6 +993,11 @@ export function MiniGolfEngine({
       }
     }
   }, []);
+
+  // Persist adventure progress whenever it changes
+  useEffect(() => {
+    try { localStorage.setItem("golf_adventureStars_v1", JSON.stringify(adventureStars)); } catch {}
+  }, [adventureStars]);
 
   useEffect(() => {
     const cv=canvasRef.current; if (!cv) return;
@@ -1359,7 +1366,9 @@ export function MiniGolfEngine({
       onRoundEnd({totalShots:sessionShots+shotsRef.current, holeStars:newStars, score:newScore, xpEarned:newXp, holesPlayed:newStars.length});
     } else {
       setHoleIdx(next); holeIdxRef.current=next;
-      heartsRef.current=heartsPerHole; setHearts(heartsPerHole);
+      // +1 heart for completing a hole (not full refill)
+      const newH = Math.min(heartsPerHole, heartsRef.current + 1);
+      heartsRef.current=newH; setHearts(newH);
       initHole(next); setPhase("aiming");
     }
   };

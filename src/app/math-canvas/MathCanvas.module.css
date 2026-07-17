@@ -70,18 +70,7 @@
 .tbName  { font-size: 13px; font-weight: 800; color: var(--bright); }
 .beta    { font-size: 9px; font-weight: 800; color: var(--purple); background: var(--plt); border: 1px solid rgba(138,63,209,.22); padding: 1px 5px; border-radius: 20px; }
 .tbRight { display: flex; align-items: center; gap: 5px; }
-.modeChip{ font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; border: 2px solid; }
 .xpChip  { font-size: 10px; font-weight: 800; color: var(--purple); background: var(--plt); border: 2px solid rgba(138,63,209,.2); padding: 2px 8px; border-radius: 20px; }
-
-/* mode chip colours */
-.modeGuided   { color: var(--green); background: var(--glt); border-color: var(--gbdr); }
-.modeAssisted { color: var(--amber); background: var(--alt); border-color: var(--abdr); }
-.modeChallenge{ color: var(--red);   background: var(--rlt); border-color: var(--rbdr); }
-
-/* ── MODE STRIP ── */
-.modeStrip { flex-shrink: 0; display: flex; gap: 5px; padding: 6px 12px 5px; border-bottom: 2px solid var(--bdr); background: var(--bg2); }
-.modeBtn { flex: 1; padding: 6px 4px; background: var(--bg3); border: 2px solid var(--bdr); border-radius: 8px; font-family: inherit; font-size: 10px; font-weight: 800; color: var(--muted); cursor: pointer; text-align: center; text-transform: uppercase; letter-spacing: .04em; box-shadow: 0 2px 0 var(--bdr); transition: all .1s; }
-.modeBtn:active { transform: translateY(2px); box-shadow: none; }
 
 /* ── BODY ── */
 .body { flex: 1 1 0; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }

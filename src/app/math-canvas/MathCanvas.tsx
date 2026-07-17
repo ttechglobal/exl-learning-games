@@ -397,17 +397,10 @@ export function MathsCanvas() {
         setAudited(false);
         setAuditResults([]);
       } else {
-        // Flash the bad line on paper for 1.5s then remove
+        // Wrong line stays on the paper — student can see it and tap to edit
         setLines(prev => [...prev, { expr: str, auditStatus: "error", auditMsg: evaluation.coachMessage }]);
         setInput("");
         setCurPos(0);
-        setTimeout(() => {
-          setLines(prev => {
-            const last = prev[prev.length - 1];
-            if (last && last.auditStatus === "error") return prev.slice(0, -1);
-            return prev;
-          });
-        }, 1800);
       }
     } else {
       // Assisted / Challenge: accept all, audit on "Check my solution"
@@ -487,24 +480,8 @@ export function MathsCanvas() {
           <span className={styles.beta}>BETA</span>
         </div>
         <div className={styles.tbRight}>
-          <span className={`${styles.modeChip} ${modeClasses[mode]}`}>
-            {mode === "guided" ? "Guided" : mode === "assisted" ? "Assisted" : "Challenge"}
-          </span>
           <span className={styles.xpChip}>⭐ {xp} XP</span>
         </div>
-      </div>
-
-      {/* MODE STRIP */}
-      <div className={styles.modeStrip}>
-        {(["guided", "assisted", "challenge"] as Mode[]).map(m => (
-          <button
-            key={m}
-            className={`${styles.modeBtn} ${mode === m ? modeClasses[m] : ""}`}
-            onClick={() => reset(probIdx, m)}
-          >
-            {m === "guided" ? "🤖 Guided" : m === "assisted" ? "💡 Assisted" : "🏆 Challenge"}
-          </button>
-        ))}
       </div>
 
       {/* BODY */}
@@ -543,29 +520,7 @@ export function MathsCanvas() {
             </div>
           </div>
 
-          {/* Math Coach */}
-          {mode !== "challenge" && (
-            <div className={`${styles.coach} ${coachHighlightClass}`}>
-              <div className={styles.coachAv}>
-                🤖
-                <div className={`${styles.coachDot} ${coachHighlight === "good" ? styles.dotGood : coachHighlight === "error" ? styles.dotError : ""}`} />
-              </div>
-              <div className={styles.coachBody}>
-                <div className={styles.coachLbl}>
-                  Math Coach
-                  {mode === "guided" && learnerState.scaffoldLevel > 0 && (
-                    <span className={styles.scaffoldBadge}>
-                      {learnerState.scaffoldLevel === 1 ? " · prompting" : learnerState.scaffoldLevel === 2 ? " · concept" : learnerState.scaffoldLevel === 3 ? " · guiding" : " · showing"}
-                    </span>
-                  )}
-                </div>
-                <div
-                  className={styles.coachMsg}
-                  dangerouslySetInnerHTML={{ __html: coachMsg }}
-                />
-              </div>
-            </div>
-          )}
+
 
           {/* Working paper */}
           <div className={styles.paper}>
@@ -587,7 +542,7 @@ export function MathsCanvas() {
             {lines.map((l, i) => {
               const ar = audited ? auditResults[i] : undefined;
               const isErrFlash = l.auditStatus === "error" && !audited;
-              const cls = isErrFlash ? styles.wlErrFlash
+              const cls = isErrFlash ? styles.wlErr
                 : ar
                   ? (ar.status === "ok" ? styles.wlOk : ar.status === "downstream" ? styles.wlDs : styles.wlErr)
                   : styles.wlDraft;
@@ -605,12 +560,14 @@ export function MathsCanvas() {
                     <div
                       className={styles.wlExpr}
                       onClick={() => {
-                        if (isErrFlash || (ar && ar.status === "error")) return;
+                        // Any line can be tapped to edit — including wrong ones
                         setInput(l.expr);
                         setCurPos(l.expr.length);
                         setLines(prev => prev.slice(0, i));
                         setAudited(false);
                         setAuditResults([]);
+                        setCoachMsg("Line restored — correct it and press Done ✓");
+                        setCoachHighlight("neutral");
                       }}
                     >
                       {renderExpr(l.expr, prob.vars)}

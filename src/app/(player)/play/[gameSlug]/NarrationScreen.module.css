@@ -1,0 +1,292 @@
+/**
+ * NarrationScreen.module.css
+ *
+ * Game-style character narration screen — replaces EntryScreen's
+ * informational card with a story-driven "meet your mentor" moment.
+ *
+ * Layout: full-height flex column.
+ *   .scene   — fills the top ~58% with the illustrated background + character
+ *   .dialogueCard — anchored to the bottom, parchment-style dialogue box
+ *
+ * The character SVG bleeds upward out of the scene area intentionally —
+ * the figure's head crosses into the safe zone above the dialogue card,
+ * which is the same cinematic device the reference images use (character
+ * feels present in the scene, not caged in a box).
+ */
+
+/* ── OUTER SHELL ─────────────────────────────────────────────────────────── */
+
+.screen {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: var(--eg-font-display, "Nunito", "Space Grotesk", sans-serif);
+  background: #0a1808;
+}
+
+/* ── SCENE AREA ──────────────────────────────────────────────────────────── */
+
+.scene {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sceneBg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Character portrait — centred, bleeds down into dialogue card */
+.characterWrap {
+  position: absolute;
+  bottom: -28px; /* intentional bleed into dialogue area */
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(260px, 70vw);
+  height: auto;
+  aspect-ratio: 240 / 310;
+  z-index: 4;
+  /* Entrance animation */
+  animation: characterRise 0.5s var(--eg-ease-pop, cubic-bezier(0.3, 1.6, 0.5, 1)) 0.1s both;
+}
+
+@keyframes characterRise {
+  from { opacity: 0; transform: translateX(-50%) translateY(18px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Name badge — pinned below the character, above the dialogue card */
+.nameBadge {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  background: #2e1258;
+  border: 2px solid #6a3aab;
+  border-radius: 10px;
+  padding: 5px 20px;
+  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  box-shadow: 0 4px 0 #150828, 0 6px 16px rgba(0,0,0,0.4);
+  animation: badgePop 0.4s var(--eg-ease-pop, cubic-bezier(0.3, 1.6, 0.5, 1)) 0.3s both;
+}
+
+@keyframes badgePop {
+  from { opacity: 0; transform: translateX(-50%) scale(0.88); }
+  to   { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+.nameBadgeName {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #e8d5ff;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.nameBadgeRole {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: rgba(200, 168, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+/* Mission chip — top right of the scene */
+.missionChip {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 8;
+  background: #e07210;
+  border-radius: 7px;
+  padding: 4px 12px;
+  font-size: 0.68rem;
+  font-weight: 900;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 2px solid #9a4c08;
+  box-shadow: 0 3px 0 #9a4c08;
+  max-width: 42%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── DIALOGUE CARD ───────────────────────────────────────────────────────── */
+
+.dialogueCard {
+  position: relative;
+  z-index: 5;
+  flex-shrink: 0;
+  background: #f5f0e4;
+  border-top: 3px solid #c8ba96;
+  padding: 22px 20px 18px;
+  /* Extra top padding so the character bleed doesn't overlap text */
+  padding-top: 28px;
+}
+
+/* Small pointed notch at the top centre of the card — classic dialogue
+   bubble "pointer" pointing up toward the character */
+.dialogueNotch {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid #f5f0e4;
+  filter: drop-shadow(0 -2px 0 #c8ba96);
+}
+
+/* Dialogue text */
+.dialogueText {
+  font-size: 0.93rem;
+  line-height: 1.65;
+  color: #2a1a08;
+  font-weight: 700;
+  min-height: 5rem; /* reserve space so the card doesn't jump height */
+  letter-spacing: 0.01em;
+}
+
+/* Fade transitions between lines */
+.dialogueFadeIn {
+  animation: fadeIn 0.2s ease both;
+}
+.dialogueFadeOut {
+  animation: fadeOut 0.15s ease both;
+  pointer-events: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-4px); }
+}
+
+/* Footer: dots + button */
+.dialogueFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+/* Progress dots */
+.dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #c4b490;
+  transition: width 0.2s ease, background 0.2s ease, border-radius 0.2s ease;
+}
+
+.dotActive {
+  width: 20px;
+  border-radius: 4px;
+  background: #2e1258;
+}
+
+/* Next / Begin button */
+.nextBtn {
+  background: #2e1258;
+  border: none;
+  border-radius: 50px;
+  padding: 11px 24px;
+  font-size: 0.82rem;
+  font-weight: 900;
+  color: #fff;
+  font-family: var(--eg-font-display, "Nunito", "Space Grotesk", sans-serif);
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  border-bottom: 3px solid #150828;
+  transition: transform 0.1s, border-bottom 0.1s, background 0.2s;
+}
+
+.nextBtn:active {
+  transform: translateY(2px);
+  border-bottom: 1px solid #150828;
+}
+
+/* Final "Begin mission" state — amber/gold to signal the call to action */
+.nextBtnFinal {
+  background: #d4700c;
+  border-bottom-color: #8a4408;
+  box-shadow: 0 0 0 3px rgba(212, 112, 12, 0.2);
+  animation: pulseGlow 1.8s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(212, 112, 12, 0.2); }
+  50%       { box-shadow: 0 0 0 6px rgba(212, 112, 12, 0.12); }
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
+
+@media (min-width: 480px) {
+  .characterWrap {
+    width: min(300px, 60vw);
+    bottom: -32px;
+  }
+  .dialogueText {
+    font-size: 1rem;
+    min-height: 4.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .screen {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: auto;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  }
+  .scene {
+    min-height: 340px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .characterWrap,
+  .nameBadge {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: translateX(-50%) !important;
+  }
+  .dialogueFadeIn,
+  .dialogueFadeOut {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  .nextBtnFinal {
+    animation: none !important;
+  }
+}

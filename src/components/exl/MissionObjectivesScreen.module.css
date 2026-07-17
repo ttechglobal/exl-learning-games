@@ -1,0 +1,60 @@
+/**
+ * MissionObjectivesScreen.module.css — EXL standard
+ */
+
+.backCircle {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(0,0,0,0.52); border: 2px solid rgba(255,255,255,0.22);
+  color: #fff; font-size: 16px; font-weight: 800; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.backCircle:hover { background: rgba(0,0,0,0.7); }
+.backCircle:active { transform: scale(0.94); }
+
+.objectivesChip {
+  background: rgba(0,0,0,0.5); border: 1.5px solid rgba(255,255,255,0.2);
+  border-radius: 20px; padding: 4px 12px;
+  font-size: 0.66rem; font-weight: 800; color: #fff;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+
+/* Card content */
+.eyebrow {
+  font-size: 0.7rem; font-weight: 800; color: #8a6820;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  margin-bottom: 14px;
+}
+
+.list {
+  list-style: none; margin: 0 0 20px; padding: 0;
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+.item {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 0.9rem; font-weight: 700; color: #2a1a06; line-height: 1.5;
+}
+
+.check {
+  flex-shrink: 0;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #2a0f52;
+  color: #fff; font-size: 0.68rem; font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 1px;
+  box-shadow: 0 2px 0 #12082a;
+}
+
+.startBtn {
+  width: 100%;
+  background: var(--accent, var(--eg-subject-chemistry));
+  border: none; border-radius: 50px;
+  padding: 14px 24px;
+  font-size: 0.9rem; font-weight: 900; color: #fff;
+  font-family: var(--eg-font-display, "Baloo 2", "Space Grotesk", sans-serif);
+  cursor: pointer; letter-spacing: 0.04em;
+  border-bottom: 4px solid color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 65%, black);
+  transition: transform 0.1s, border-bottom 0.1s;
+}
+.startBtn:active { transform: translateY(3px); border-bottom: 1px solid color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 65%, black); }

@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { GameRuntime } from "@/components/runtime/GameRuntime";
 import { GameMenu } from "@/components/runtime/GameMenu";
 import { PrePlayShell } from "@/components/runtime/PrePlayShell";
-import { EntryScreen } from "@/app/(player)/play/[gameSlug]/EntryScreen";
 import { LevelSelectScreen } from "@/app/(player)/play/[gameSlug]/LevelSelectScreen";
 import { TrackMapScreen } from "@/app/(player)/play/[gameSlug]/TrackMapScreen";
 import { DifficultySelectScreen } from "@/app/(player)/play/[gameSlug]/DifficultySelectScreen";
-import { MissionObjectivesScreen } from "@/app/(player)/play/[gameSlug]/MissionObjectivesScreen";
+import { NarrationScreen } from "@/components/exl/NarrationScreen";
+import { MissionObjectivesScreen } from "@/components/exl/MissionObjectivesScreen";
 import { resolveMissionObjectives } from "@/lib/content/missionObjectives";
 import { resetConceptsSeen } from "@/lib/content/contentPrefs";
 import { engineSupportsDifficultyChoice, type PlayerDifficulty } from "@/lib/content/difficultyModifiers";
@@ -43,7 +43,7 @@ const SUBJECT_FALLBACK_ACCENT: Record<string, string> = {
  * (Level Select if applicable) -> Mission Briefing (EntryScreen) ->
  * Difficulty Select (if the engine supports it) -> Mission Objectives ->
  * Runtime (which itself owns Quick Concepts -> gameplay -> Mission
- * Complete/Rewards, see GameRuntime.tsx).
+ * Complete/Rewards, see ).
  *
  * BACK BUTTON vs IN-GAME MENU: per direct feedback, these are not the same
  * control and should not share a screen. The in-game menu (Restart
@@ -436,25 +436,18 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
     );
   }
 
-  if (screen === "entry") {
-    return (
-      <PrePlayShell
-        gameSlug={game.slug}
-        gameTitle={game.title}
-        subject={game.subject}
-        accentColor={resolveAccentColor()}
-        onBack={handleBack}
-        backLabel={isLevelBased ? "Back to Levels" : trackMapHasDifficultyTiers ? "Back to Level" : isTrackMap ? "Back to Map" : "Back to Worlds"}
-      >
-        <EntryScreen
-          gameSlug={game.slug}
-          subject={game.subject}
-          mission={activeMission}
-          onStart={() => setScreen(supportsDifficultyChoice ? "difficulty" : "objectives")}
-        />
-      </PrePlayShell>
-    );
-  }
+     if (screen === "entry") {
+  return (
+    <NarrationScreen
+      gameSlug={game.slug}
+      subject={game.subject}
+      mission={activeMission}
+      onStart={() => setScreen(supportsDifficultyChoice ? "difficulty" : "objectives")}
+      onBack={handleBack}
+      backLabel={isLevelBased ? "Back to Levels" : isTrackMap ? "Back to Map" : "Back to Worlds"}
+    />
+  );
+}
 
   if (screen === "difficulty") {
     return (
@@ -487,11 +480,14 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
         onBack={handleBack}
         backLabel={supportsDifficultyChoice ? "Back to Difficulty" : "Back to Mission Briefing"}
       >
-        <MissionObjectivesScreen
-          objectives={resolveMissionObjectives(game.engine_type, game.slug, activeMission.payload)}
-          accentColor={resolveAccentColor()}
-          onStart={() => setScreen("runtime")}
-        />
+      <MissionObjectivesScreen
+        objectives={resolveMissionObjectives(game.engine_type, activeMission.payload)}
+        accentColor={resolveAccentColor()}
+        subject={game.subject}          // ← NEW PROP
+        onStart={() => setScreen("runtime")}
+        onBack={handleBack}             // ← replaces PrePlayShell's onBack
+      />
+
       </PrePlayShell>
     );
   }

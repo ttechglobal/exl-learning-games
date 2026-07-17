@@ -14,65 +14,18 @@ const SUBJECT_FALLBACK_ACCENT: Record<string, string> = {
   mathematics: "var(--eg-subject-mathematics)"
 };
 
-/**
- * Falls back to a topic_id-derived label when MissionRow.learning_goal is
- * null — true for any mission seeded before that column existed (see the
- * migration caveat on MissionRow.learning_goal). "chemical-bonding"
- * becomes "Chemical Bonding" rather than showing nothing or the raw slug.
- */
 function fallbackLearningGoal(topicId: string, subtopicId: string | null): string {
   const label = (subtopicId ?? topicId).replace(/-/g, " ");
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 export interface EntryScreenProps {
-  /** Still needed for resolveMissionBriefing(gameSlug) — this is a lookup
-   *  key, not something displayed here. Game title/subject are no longer
-   *  props of this component at all; they're shown once, above this
-   *  screen, by MissionTopBar (rendered by PrePlayShell, see
-   *  PlayClient.tsx). */
   gameSlug: string;
   subject: string;
   mission: MissionRow;
   onStart: () => void;
 }
 
-/**
- * Mission Briefing screen content — rendered INSIDE PrePlayShell's
- * .content slot (see PlayClient.tsx). No longer owns its own page-level
- * wrapper, backdrop, or min-height:100vh; PrePlayShell handles all of
- * that for the whole pre-play flow now, not just this one screen. This
- * component is just: mascot, narrative briefing, element glyph (when
- * relevant), Learning Goal, and the Start Mission button.
- *
- * Per direct instruction: Reward/Difficulty/Time are REMOVED from this
- * screen entirely (an earlier revision simplified them into one quiet
- * line — that wasn't enough; they don't belong here at all).
- *
- * GAME TITLE / SUBJECT KICKER REMOVED per direct feedback: that
- * information now lives ONCE, in MissionTopBar. MISSION TITLE ALSO
- * REMOVED from the card per a second, more specific round of feedback:
- * with the page title already visible at the top of the screen, showing
- * it again in the card (even as `mission.title` rather than `gameTitle`)
- * read as the same information twice for single-mission games like
- * Element Hunter, where the mission title and the game's identity are
- * effectively the same thing. The element glyph (atomic number + symbol)
- * stays — it's a content preview, not a title, and earns its place on
- * the briefing.
- *
- * Still does the periodic-table-glyph preview for particle-assembly-style
- * missions (target.proton in payload) — unaffected by this revision.
- *
- * VIEW HIGH SCORES + INLINE PREVIEW REMOVED per direct decision: the
- * per-game leaderboard surfaces (InlineLeaderboardPreview,
- * LeaderboardModal, HighScoreEntry, getGameLeaderboard) are retired
- * entirely — see lib/db/queries/leaderboard.ts's header. The
- * weekly/monthly/all-time leaderboard (linked from the homepage and its
- * own /leaderboard page) is now the only competitive ranking surface in
- * the app, so this screen no longer needs a leaderboard entry point of
- * its own — gameId/gameTitle were only ever needed for that and have
- * been dropped from this component's props accordingly.
- */
 export function EntryScreen({ gameSlug, subject, mission, onStart }: EntryScreenProps) {
   const target = (mission.payload as { target?: Record<string, number> }).target;
   const protonCount = target?.proton;
@@ -89,6 +42,9 @@ export function EntryScreen({ gameSlug, subject, mission, onStart }: EntryScreen
       </div>
 
       <div className={styles.card}>
+        {/* Notch pointing up at mascot — same dialogue-bubble device as NarrationScreen */}
+        <div className={styles.cardNotch} />
+
         <div className={styles.cardLabel}>Mission Briefing</div>
 
         <p className={styles.briefingText}>{briefing}</p>
@@ -108,7 +64,7 @@ export function EntryScreen({ gameSlug, subject, mission, onStart }: EntryScreen
         </div>
 
         <button className={styles.startButton} onClick={onStart}>
-          Start Mission
+          Start Mission →
         </button>
       </div>
     </div>

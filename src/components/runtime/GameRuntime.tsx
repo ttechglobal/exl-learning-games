@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { LearnScreen } from "@/components/runtime/LearnScreen";
 import { ConceptSnapshot } from "@/components/runtime/ConceptSnapshot";
-import { ReflectionScreen } from "@/components/runtime/ReflectionScreen";
+import { ReflectionScreen } from "@/components/exl/ReflectionScreen";
 import { PeriodicTableReveal } from "@/motion/PeriodicTableReveal";
 import { PersonalBest } from "@/components/runtime/PersonalBest";
 import { getEngineDefinition } from "@/engines/registry";
@@ -415,21 +415,21 @@ export function GameRuntime({
 
   // Legacy path — keep snapshot/reviewingConcepts working for any
   // call sites that haven't migrated yet
-  if (phase === "snapshot" || phase === "reviewingConcepts") {
-    const cards = resolveSnapshotCards(gameSlug, snapshot);
-    return (
-      <ConceptSnapshot
-        cards={cards}
-        onContinue={() => setPhase(phase === "reviewingConcepts" ? "reflection" : "playing")}
-        engineType={phase === "snapshot" ? engineType : undefined}
-        gameSlug={gameSlug}
-        gameTitle={gameTitle}
-        subject={subject}
-        onBack={phase === "snapshot" ? onBackFromConcepts : undefined}
-        backLabel="Back to Objectives"
-      />
-    );
-  }
+  // if (phase === "snapshot" || phase === "reviewingConcepts") {
+  //   const cards = resolveSnapshotCards(gameSlug, snapshot);
+  //   return (
+  //     <ConceptSnapshot
+  //       cards={cards}
+  //       onContinue={() => setPhase(phase === "reviewingConcepts" ? "reflection" : "playing")}
+  //       engineType={phase === "snapshot" ? engineType : undefined}
+  //       gameSlug={gameSlug}
+  //       gameTitle={gameTitle}
+  //       subject={subject}
+  //       onBack={phase === "snapshot" ? onBackFromConcepts : undefined}
+  //       backLabel="Back to Objectives"
+  //     />
+  //   );
+  // }
 
   if (phase === "playing") {
     if (!engineDef) {
@@ -503,6 +503,7 @@ export function GameRuntime({
       onBackToHome={onBackToHome}
       onChangeDifficulty={onChangeDifficulty}
       gameSlug={gameSlug}
+      subject={subject}   
       extraContent={extraContent}
     />
   );

@@ -1,17 +1,7 @@
 /**
- * HomePage.module.css
- *
- * "Learning arcade lobby" redesign — replaces the previous mascot-hero
- * homepage. No traditional marketing hero: a minimal top bar, one bold
- * typographic statement, a compact subject rail acting as navigation, a
- * promoted games grid (games are the main event, subjects are just a
- * filter), and a closing panel that restates the platform's purpose before
- * the final CTA.
- *
- * Deliberately consumes ONLY the shared --eg-* tokens from motion/tokens.css
- * (extended for this redesign with --eg-brand-* and --eg-surface-* values) —
- * no parallel token system. Light/dark is opt-in via [data-theme] on .page;
- * gameplay screens never set this attribute, so they're unaffected.
+ * HomePage.module.css — EXL Learning World
+ * Clean, bold, world-portal aesthetic.
+ * Uses existing --eg-* tokens. Light/dark via [data-theme].
  */
 
 .page {
@@ -21,815 +11,229 @@
   font-family: var(--eg-font-body);
   background: var(--eg-surface-bg);
   color: var(--eg-surface-text);
-  transition: background 0.25s ease, color 0.25s ease;
+  transition: background 0.25s, color 0.25s;
 }
+.page :global(a) { text-decoration: none; color: inherit; }
+.page :global(button) { font-family: inherit; }
 
-.page :global(a) {
-  text-decoration: none;
-  color: inherit;
-}
-.page :global(button) {
-  font-family: inherit;
-}
+.fd { font-family: var(--eg-font-display); }
 
 .container {
-  max-width: 1280px;
+  max-width: 1160px;
   margin: 0 auto;
   padding: 0 24px;
   position: relative;
   z-index: 1;
 }
 
-.fd {
-  font-family: var(--eg-font-display);
-}
-
-/* ============ AMBIENT BACKGROUND LAYER ============ */
+/* ── AMBIENT ── */
 .ambient {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
-  background-image: linear-gradient(var(--eg-grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--eg-grid-line) 1px, transparent 1px);
-  background-size: 46px 46px;
+  background-image:
+    linear-gradient(rgba(11,19,48,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(11,19,48,0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
 }
-.ambientBlob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(60px);
-  opacity: var(--eg-ambient-opacity);
+[data-theme="dark"] .ambient {
+  background-image:
+    linear-gradient(rgba(122,140,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(122,140,255,0.05) 1px, transparent 1px);
 }
-.ambientSymbol {
-  position: absolute;
-  opacity: 0.5;
-}
-.driftA {
-  animation: driftA 14s ease-in-out infinite;
-}
-.driftB {
-  animation: driftB 17s ease-in-out infinite;
-}
-.driftC {
-  animation: driftA 20s ease-in-out infinite reverse;
-}
-@keyframes driftA {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  50% { transform: translate(14px, -18px) rotate(8deg); }
-}
-@keyframes driftB {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  50% { transform: translate(-16px, 14px) rotate(-6deg); }
-}
+.blob { position: absolute; border-radius: 50%; filter: blur(72px); }
 
-/* Header chrome now lives in components/ui/SiteHeader.module.css — see
-   SiteHeader.tsx, used here and on /worlds so the top bar can't drift
-   between pages. */
-
-/* ============ HERO TYPOGRAPHY ============ */
-.playHero {
+/* ── HERO ── */
+.hero {
   position: relative;
   z-index: 1;
-  text-align: center;
-  padding: 54px 0 30px;
+  padding: 72px 24px 64px;
+  max-width: 1160px;
+  margin: 0 auto;
 }
-.playHero h1 {
-  font-family: var(--eg-font-display);
-  font-weight: 800;
-  letter-spacing: -1px;
-  font-size: clamp(34px, 6vw, 64px);
-  line-height: 1.05;
-  text-transform: uppercase;
-  margin: 0;
-}
-.w1 {
-  color: var(--eg-surface-text);
-}
-.w2 {
-  color: var(--eg-brand);
-}
-.w3 {
-  color: var(--eg-gold);
-}
-.playHero p {
-  color: var(--eg-surface-text-dim);
-  font-size: 15px;
-  margin: 14px auto 0;
-  max-width: 460px;
-}
-.heroCta {
+.heroInner { max-width: 640px; }
+
+.eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-top: 26px;
-  padding: 14px 30px;
-  border-radius: 16px;
-  background: var(--eg-brand);
-  /* !important is deliberate and necessary here: .page :global(a) above
-   * sets color: inherit on every anchor in this page, and as a
-   * descendant selector (.page + bare `a`) its specificity actually beats
-   * a single class like .heroCta. In light mode that meant this button's
-   * text inherited --eg-surface-text (near-black) instead of using this
-   * rule's white — on the dark brand-navy background that made the text
-   * read as invisible. Dark mode happened to still look fine because its
-   * inherited text color is pale, masking the bug — this is the actual
-   * fix, not a coincidence of theme. */
-  color: #fff !important;
+  font-size: 11px;
   font-weight: 700;
-  font-size: 16px;
-  box-shadow: 0 8px 0 color-mix(in srgb, var(--eg-brand) 70%, black), 0 14px 28px -10px rgba(0, 0, 0, 0.3);
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
-}
-.heroCta:hover {
-  transform: translateY(-2px);
-}
-.heroCta:active {
-  transform: translateY(3px);
-  box-shadow: 0 3px 0 color-mix(in srgb, var(--eg-brand) 70%, black);
-}
-.playHeroMotifs {
-  position: relative;
-  height: 0;
-}
-.phMotif {
-  position: absolute;
-  animation: floaty 4s ease-in-out infinite;
-}
-@keyframes floaty {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-9px); }
-}
-
-/* ============ SUBJECT CARDS ============ */
-.railHead {
-  display: flex;
-  align-items: center;
-  padding: 6px 0 14px;
-}
-.railTag {
-  font-weight: 700;
-  font-size: 14px;
-  color: var(--eg-surface-text);
-}
-
-/*
- * Replaces the old horizontal-scroll .subjectRail/.chip pills — per
- * direct instruction, subject cards needed to be genuinely bigger, not
- * just restyled pills. Real grid (wraps naturally on mobile down to a
- * single column), each card a proper tappable tile with its own icon
- * badge, name, and count — not a small inline pill competing for
- * horizontal scroll space.
- */
-.subjectGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 16px;
-}
-.subjectCard {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 10px;
-  background: var(--eg-surface-card);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--eg-brand);
+  margin-bottom: 20px;
+  padding: 5px 12px;
+  background: var(--eg-brand-tint);
+  border-radius: 20px;
   border: 1px solid var(--eg-surface-border);
-  border-radius: 22px;
-  padding: 28px 16px;
-  transition: transform 0.15s, box-shadow 0.15s;
 }
-.subjectCard:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--eg-surface-shadow-card);
-  border-color: transparent;
-}
-.subjectCardIco {
-  width: 58px;
-  height: 58px;
-  border-radius: 50%;
-  background: var(--c-tint);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-}
-.subjectCardName {
-  font-weight: 700;
-  font-size: 17px;
+[data-theme="dark"] .eyebrow { color: var(--eg-brand-deep); background: var(--eg-brand-soft); border-color: rgba(74,91,168,0.3); }
+.eyebrowDot { width: 6px; height: 6px; border-radius: 50%; background: var(--eg-subject-biology); flex-shrink: 0; animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.5);opacity:0.6} }
+
+.heroTitle {
+  font-size: clamp(36px, 7vw, 72px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
   color: var(--eg-surface-text);
+  margin-bottom: 20px;
 }
-.subjectCardCount {
-  font-size: 12.5px;
+.accent { color: var(--eg-brand); }
+[data-theme="dark"] .accent { color: var(--eg-brand-deep); }
+
+.heroSub {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--eg-surface-text-dim);
+  max-width: 520px;
+  margin-bottom: 32px;
+}
+
+.heroCtas { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 48px; }
+.ctaMain {
+  display: inline-flex;
+  align-items: center;
+  padding: 13px 28px;
+  background: var(--eg-brand);
+  color: #fff;
+  border-radius: 10px;
+  font-size: 15px;
   font-weight: 700;
-  color: var(--c);
-  background: var(--c-tint);
-  padding: 4px 12px;
-  border-radius: 8px;
+  transition: transform 0.12s, box-shadow 0.12s;
+  box-shadow: 0 4px 20px rgba(11,19,48,0.22);
 }
-.subjectCardLocked {
-  opacity: 0.55;
-}
+.ctaMain:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(11,19,48,0.3); }
+.ctaMain:active { transform: translateY(0); }
+[data-theme="dark"] .ctaMain { background: var(--eg-brand-deep); box-shadow: 0 4px 20px rgba(74,91,168,0.3); }
 
-@media (max-width: 480px) {
-  .subjectGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .subjectCard {
-    padding: 22px 12px;
-  }
-  .subjectCardIco {
-    width: 50px;
-    height: 50px;
-    font-size: 24px;
-  }
+.ctaSub {
+  font-size: 14px;
+  color: var(--eg-surface-text-dim);
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 1px;
+  transition: color 0.15s;
 }
+.ctaSub:hover { color: var(--eg-surface-text); }
 
-/* ============ GAME ZONE (section mood) ============ */
-.gameZone {
-  position: relative;
-  z-index: 1;
-  margin-top: 24px;
-  padding: 36px 0 56px;
-  background: linear-gradient(180deg, var(--eg-brand-tint) 0%, transparent 100%);
-}
-
-.popularGrid {
+/* Portal cards */
+.portals {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  gap: 10px;
 }
-.pgCard {
-  background: var(--eg-surface-card);
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: var(--eg-surface-shadow-soft);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-  display: block;
-}
-.pgCard:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--eg-surface-shadow-card);
-}
-.pgArt {
+@media (max-width: 680px) { .portals { grid-template-columns: repeat(2, 1fr); } }
+
+.portal {
   position: relative;
-  height: 140px;
+  padding: 16px 14px 13px;
+  border-radius: 12px;
+  border: 1.5px solid var(--wb);
+  background: var(--wt);
   overflow: hidden;
+  transition: transform 0.14s, box-shadow 0.14s;
+  animation: portalIn 0.5s both;
+  cursor: pointer;
 }
-.pgArtImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.pgBadge {
+.portal:hover { transform: translateY(-3px); box-shadow: 0 8px 24px -4px rgba(0,0,0,0.12); }
+@keyframes portalIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+
+.portalGlyph {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.3px;
-  padding: 4px 9px;
-  border-radius: 7px;
-  color: #fff;
+  top: -4px; right: 8px;
+  font-size: 52px;
+  opacity: 0.10;
+  line-height: 1;
+  pointer-events: none;
+  color: var(--wc);
+  user-select: none;
 }
-.badgeFeatured {
-  background: var(--eg-gold);
-  color: #4a2e00;
+.portalName { display: block; font-size: 11px; font-weight: 700; color: var(--wc); margin-bottom: 3px; position: relative; }
+.portalCount { display: block; font-size: 10px; color: var(--eg-surface-text-faint); position: relative; }
+
+/* ── HOW IT WORKS ── */
+.how { padding: 80px 0; position: relative; z-index: 1; }
+.sectionLabel {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--eg-surface-text-faint); margin-bottom: 32px;
 }
-.badgeNew {
-  background: var(--eg-subject-biology);
-}
-.badgeTrending {
-  background: var(--eg-subject-physics);
-}
-.badgePopular {
-  background: var(--eg-subject-mathematics);
-}
-.badgeSoon {
+.howGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+@media (max-width: 680px) { .howGrid { grid-template-columns: 1fr; } }
+
+.howStep {
+  padding: 28px;
   background: var(--eg-surface-card);
-  color: var(--eg-surface-text-dim);
+  border: 1px solid var(--eg-surface-border);
+  border-radius: 14px;
   box-shadow: var(--eg-surface-shadow-soft);
 }
-.pgBody {
-  padding: 15px 16px 17px;
-}
-.pgTop {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-  gap: 8px;
-}
-.pgTitle {
-  font-weight: 700;
-  font-size: 15.5px;
-  color: var(--eg-surface-text);
-}
-.pgStars {
-  font-size: 11px;
-  color: var(--eg-gold);
-  letter-spacing: 1px;
-  white-space: nowrap;
-}
-.pgDesc {
-  font-size: 12.5px;
-  color: var(--eg-surface-text-dim);
-  line-height: 1.5;
-  margin: 0 0 12px;
-  min-height: 38px;
-}
-.pgMeta {
-  display: flex;
-  gap: 12px;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: var(--eg-surface-text-dim);
-}
+.howIcon { font-size: 28px; margin-bottom: 12px; }
+.howN { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--eg-surface-text-faint); margin-bottom: 6px; }
+.howTitle { font-size: 16px; font-weight: 700; color: var(--eg-surface-text); margin-bottom: 8px; }
+.howBody { font-size: 13.5px; line-height: 1.65; color: var(--eg-surface-text-dim); margin: 0; }
 
-@media (max-width: 980px) {
-  .popularGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-@media (max-width: 560px) {
-  .popularGrid {
-    grid-template-columns: 1fr;
-  }
-}
+/* ── WORLDS ── */
+.worldsSec { padding: 0 0 80px; position: relative; z-index: 1; }
+.secTitle { font-size: clamp(26px, 4vw, 40px); font-weight: 800; letter-spacing: -0.02em; color: var(--eg-surface-text); margin-bottom: 28px; }
+.worldsGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+@media (max-width: 600px) { .worldsGrid { grid-template-columns: 1fr; } }
+@media (min-width: 900px) { .worldsGrid { grid-template-columns: repeat(4, 1fr); } }
 
-/* ============ LEADERBOARD PANEL ============ */
-.lbZone {
+.worldCard {
   position: relative;
-  z-index: 1;
-  padding: 40px 0 70px;
-  /* Fallback for browsers without color-mix() support (confirmed cause
-   * of a real bug report: the section rendered fully transparent on
-   * some devices because the ONLY background declaration used
-   * color-mix(), and an unsupported function makes the whole
-   * declaration invalid — not "ignored gracefully," the property falls
-   * back to whatever's already set, which here was nothing at all).
-   * This plain rgba line is a hand-mixed approximation of
-   * --eg-gold (#ffb23c light / #ffc36b dark) at ~14% over white, so a
-   * non-supporting browser still gets a visible warm tint instead of
-   * see-through nothing. The color-mix() line below it OVERRIDES this
-   * on any browser that does support it — same "two background
-   * declarations, second one wins if valid" cascade trick used for the
-   * other color-mix() backgrounds in this file. */
-  background: rgba(255, 178, 60, 0.12);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--eg-gold) 14%, transparent) 0%, transparent 100%);
-}
-/* ═══════════════════════════════════════════════════
-   LEADERBOARD PANEL — two cards side by side:
-   Left:  Last Week's Champion (dark, gold-tinted)
-   Right: This Week's live board (surface card, white)
-═══════════════════════════════════════════════════ */
-.lbPanel {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 20px;
-  width: 100%;
-  box-sizing: border-box;
-  align-items: start;
-}
-
-/* ── LEFT: Previous week champion ── */
-.prevChampCard {
-  position: relative;
-  background: linear-gradient(160deg, #1a1128 0%, #0f1923 60%, #0d1a14 100%);
-  border-radius: 22px;
-  padding: 28px 22px 24px;
-  text-align: center;
+  border-radius: 16px;
+  border: 1.5px solid var(--wb);
+  background: var(--eg-surface-card);
   overflow: hidden;
-  color: #fff;
-  border: 1px solid rgba(255,255,255,.07);
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.14s, box-shadow 0.14s;
+  cursor: pointer;
 }
-.prevChampGlow {
+.worldCard:hover { transform: translateY(-4px); box-shadow: 0 16px 40px -8px rgba(0,0,0,0.15); }
+
+.wcBg {
   position: absolute;
-  top: -50px; left: 50%;
-  transform: translateX(-50%);
-  width: 220px; height: 220px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(251,191,36,.22), transparent 70%);
+  top: -12px; right: -8px;
+  font-size: 110px;
+  opacity: 0.07;
+  color: var(--wc);
+  line-height: 1;
+  user-select: none;
   pointer-events: none;
 }
-.prevChampBadge {
-  position: absolute;
-  top: 14px; left: 14px;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .1em;
-  color: rgba(251,191,36,.9);
-  background: rgba(251,191,36,.12);
-  border: 1px solid rgba(251,191,36,.25);
-  border-radius: 999px;
-  padding: 3px 9px;
-}
-.championCrown {
-  font-size: 28px;
-  position: relative;
-  z-index: 1;
-  margin-bottom: 4px;
-}
-.championAvatar {
-  width: 64px; height: 64px;
-  border-radius: 50%;
-  background: rgba(255,255,255,.12);
-  margin: 0 auto 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 28px;
-  position: relative; z-index: 1;
-  border: 2.5px solid rgba(255,255,255,.25);
-  box-shadow: 0 0 20px rgba(251,191,36,.3);
-}
-.championName {
-  font-weight: 800;
-  font-size: 17px;
-  position: relative; z-index: 1;
-  color: #fff;
-  margin-bottom: 4px;
-}
-.champRankBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border-radius: 999px;
-  padding: 3px 10px;
-  font-size: 11px;
-  font-weight: 800;
-  color: #fff;
-  margin: 6px 0 4px;
-  position: relative; z-index: 1;
-  letter-spacing: .02em;
-}
-.championLabel {
-  font-size: 11px;
-  font-weight: 700;
-  opacity: 0.65;
-  margin-top: 2px;
-  position: relative; z-index: 1;
-  letter-spacing: .05em;
-  text-transform: uppercase;
-  color: rgba(251,191,36,.8);
-}
-.championStats {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 16px;
-  position: relative; z-index: 1;
-  border-top: 1px solid rgba(255,255,255,.08);
-  padding-top: 14px;
-}
-.championStats b {
-  font-family: var(--eg-font-display);
-  font-size: 18px;
-  display: block;
-  color: #fbbf24;
-}
-.championSchool {
-  font-size: 12px !important;
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #fff !important;
-}
-.championStats span {
-  font-size: 10px;
-  font-weight: 700;
-  opacity: 0.6;
-  color: #fff;
-}
-.noChampState {
-  position: relative; z-index: 1;
-  padding: 20px 0;
-  color: rgba(255,255,255,.6);
+.wcBody { position: relative; padding: 22px 20px; display: flex; flex-direction: column; flex: 1; }
+.wcIcon { font-size: 28px; margin-bottom: 10px; }
+.wcName { font-size: 16px; font-weight: 800; color: var(--eg-surface-text); margin-bottom: 6px; }
+.wcTag { font-size: 12px; color: var(--eg-surface-text-dim); line-height: 1.5; flex: 1; margin-bottom: 14px; }
+.wcFoot { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--eg-surface-text-faint); }
+.liveDot { color: var(--eg-subject-biology); font-size: 8px; }
+.soonBadge { font-size: 10px; padding: 2px 8px; background: var(--eg-surface-card-2); border-radius: 20px; color: var(--eg-surface-text-faint); border: 1px solid var(--eg-surface-border); }
+
+/* ── STATEMENT ── */
+.statement { padding: 80px 0; position: relative; z-index: 1; }
+.statementInner {
+  max-width: 680px;
+  margin: 0 auto;
   text-align: center;
-}
-
-/* ── RIGHT: This week's live board ── */
-.thisWeekCard {
-  background: var(--eg-surface-card);
-  border-radius: 22px;
-  padding: 6px 6px 12px;
-  box-shadow: var(--eg-surface-shadow-soft);
-  overflow: hidden;
-  min-width: 0;
-}
-.thisWeekHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px 8px;
-}
-.thisWeekTitle {
-  font-family: var(--eg-font-display);
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--eg-surface-text);
-}
-.thisWeekLive {
-  font-size: 10px;
-  font-weight: 700;
-  color: #22c55e;
-  letter-spacing: .05em;
-  animation: livePulse 2s ease-in-out infinite;
-}
-@keyframes livePulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.lbList {
-  overflow: hidden;
-  min-width: 0;
-}
-.lbRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  min-width: 0;
-  overflow: hidden;
-  transition: background .12s;
-}
-.lbRow:hover { background: var(--eg-surface-card-2); }
-.lbRowFirst {
-  background: color-mix(in srgb, var(--eg-gold) 10%, transparent);
-}
-.lbRowYou {
-  background: rgba(255, 178, 60, 0.14);
-  background: color-mix(in srgb, var(--eg-gold) 16%, transparent);
-}
-.lbRank {
-  width: 24px;
-  font-weight: 800;
-  color: var(--eg-surface-text-faint);
-  font-family: var(--eg-font-display);
-  text-align: center;
-  font-size: 13px;
-  flex-shrink: 0;
-}
-.lbAvatar {
-  width: 34px; height: 34px;
-  border-radius: 50%;
-  background: var(--eg-surface-card-2);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-.lbInfo {
-  flex: 1;
-  min-width: 0;
-}
-.lbNameRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  overflow: hidden;
-  flex-wrap: wrap;
-}
-.lbName {
-  font-weight: 700;
-  font-size: 13px;
-  color: var(--eg-surface-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-/* Rank badge pill next to player name */
-.lbRankBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  border-radius: 999px;
-  padding: 2px 7px;
-  font-size: 10px;
-  font-weight: 800;
-  color: #fff;
-  white-space: nowrap;
-  flex-shrink: 0;
-  letter-spacing: .02em;
-}
-.lbSchoolTag {
-  font-size: 10.5px;
-  color: var(--eg-surface-text-faint);
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex-shrink: 1;
-  width: 100%;
-  margin-top: 1px;
-}
-.lbXp {
-  font-weight: 800;
-  font-size: 13px;
-  color: var(--eg-surface-text);
-  white-space: nowrap;
-  flex-shrink: 0;
-  text-align: right;
-}
-.lbXp span {
-  font-size: 10px;
-  color: var(--eg-surface-text-faint);
-  font-weight: 600;
-  margin-left: 2px;
-}
-.lbEmpty {
-  padding: 28px 14px;
-  text-align: center;
-  color: var(--eg-surface-text-dim);
-  font-size: 13px;
-}
-
-/* Secondary, quiet link beneath the top-5 preview — points to the new
- * /leaderboard page (top 20 + weekly/monthly/all-time tabs + your rank).
- * Deliberately understated (no button chrome/box-shadow like .heroCta
- * or .btnFinale) since this is a "see more" affordance on a homepage
- * teaser, not a primary call to action competing with Start Learning. */
-.lbSeeFullLink {
-  font-family: var(--eg-font-display);
-  font-weight: 700;
-  font-size: 13px;
-  color: var(--eg-gold);
-  text-decoration: none;
-}
-.lbSeeFullLink:hover {
-  text-decoration: underline;
-}
-
-/* Wraps the "See full leaderboard" link + share button in a centered row */
-.lbFooterRow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  margin-top: 14px;
-  flex-wrap: wrap;
-  padding: 4px 0;
-}
-
-@media (max-width: 900px) {
-  .lbPanel {
-    grid-template-columns: 1fr;
-  }
-  .prevChampCard { min-height: unset; }
-  .thisWeekCard { margin-top: 0; }
-}
-
-/* ============ CLOSING SECTION ============ */
-.finaleZone {
-  position: relative;
-  z-index: 1;
-  padding: 20px 0 70px;
-}
-.finalePanel {
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(160deg, var(--eg-brand) 0%, var(--eg-brand-deep) 100%);
-  border-radius: 28px;
-  padding: 64px 30px;
-  text-align: center;
-}
-.finaleGlow {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(50px);
-  opacity: 0.35;
-}
-.finaleGlowG1 {
-  width: 280px;
-  height: 280px;
-  top: -80px;
-  left: -60px;
-  background: var(--eg-subject-mathematics);
-}
-.finaleGlowG2 {
-  width: 240px;
-  height: 240px;
-  bottom: -80px;
-  right: -40px;
-  background: var(--eg-gold);
-}
-.finalePanel h2 {
-  position: relative;
-  z-index: 1;
-  font-family: var(--eg-font-display);
-  font-weight: 800;
-  font-size: clamp(26px, 4.4vw, 38px);
-  color: #fff;
-  line-height: 1.22;
-  margin: 0;
-}
-.finaleSub {
-  position: relative;
-  z-index: 1;
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 14.5px;
-  margin: 12px auto 0;
-  max-width: 520px;
-}
-.finaleGrid {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  justify-content: center;
-  gap: 14px;
-  flex-wrap: wrap;
-  margin: 34px 0 36px;
-}
-.finaleItem {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 30px;
-  padding: 9px 16px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.92);
-}
-.fiIco {
-  font-size: 14px;
-}
-.btnFinale {
-  position: relative;
-  z-index: 1;
-  background: #fff;
-  /* Same fix as .heroCta above, same root cause: .page :global(a)'s
-   * color: inherit otherwise beats this rule by specificity. Not yet
-   * reported as broken, but in dark mode --eg-surface-text (pale) would
-   * read near-invisible on this button's white background the same way
-   * --eg-surface-text (dark) did on .heroCta's dark background in light
-   * mode — fixing proactively rather than waiting for the report. */
-  color: var(--eg-brand) !important;
-  border: none;
-  cursor: pointer;
-  font-family: var(--eg-font-display);
-  font-weight: 800;
-  font-size: 15px;
-  padding: 15px 34px;
-  border-radius: 14px;
-  box-shadow: 0 10px 24px -8px rgba(0, 0, 0, 0.35);
-  transition: transform 0.12s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-.btnFinale:hover {
-  transform: translateY(-2px);
-}
-
-/* ============ FOOTER ============ */
-.siteFooter {
-  position: relative;
-  z-index: 1;
-  padding: 26px 0;
-  border-top: 1px solid var(--eg-surface-border);
-  margin-top: 10px;
-}
-.footerRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-.footerBrand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 700;
-  font-size: 13.5px;
-  color: var(--eg-surface-text-dim);
-}
-.footerMark {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
+  padding: 56px 40px;
   background: var(--eg-brand);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
+  border-radius: 20px;
 }
-.footerTag {
-  font-size: 12px;
-  color: var(--eg-surface-text-faint);
-}
+[data-theme="dark"] .statementInner { background: var(--eg-brand-soft); }
+.statementEyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 20px; }
+.statementQ { font-size: clamp(22px, 3.5vw, 34px); font-weight: 800; line-height: 1.2; color: #fff; margin: 0 0 18px; letter-spacing: -0.02em; }
+.statementBody { font-size: 14px; line-height: 1.7; color: rgba(255,255,255,0.65); margin-bottom: 28px; }
+.statement .ctaMain { background: #fff; color: var(--eg-brand); margin: 0 auto; }
+.statement .ctaMain:hover { transform: translateY(-2px); }
 
-@media (prefers-reduced-motion: reduce) {
-  .phMotif,
-  .driftA,
-  .driftB,
-  .driftC {
-    animation: none !important;
-  }
-}
+/* ── FOOTER ── */
+.footer { border-top: 1px solid var(--eg-surface-border); padding: 24px 0; position: relative; z-index: 1; }
+.footerInner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.footerBrand { display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 700; color: var(--eg-surface-text); }
+.footerMark { width: 28px; height: 28px; border-radius: 7px; background: var(--eg-brand); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 14px; }
+.footerMotto { font-size: 11px; color: var(--eg-surface-text-faint); }

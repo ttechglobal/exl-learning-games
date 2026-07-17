@@ -1,20 +1,11 @@
 /**
- * TrackMapScreen.module.css
+ * TrackMapScreen.module.css — REDESIGNED
  *
- * REWRITTEN from a vertical list of inline-styled rows into a
- * horizontal, swipeable card deck — per direct feedback ("instead of a
- * long list, it should be like cards, like in a game... can even be
- * swipable"). Uses native CSS scroll-snap rather than a JS swipe
- * library: this app has no existing carousel/swipe dependency anywhere
- * (checked), and scroll-snap gives real touch-swipe, momentum, and
- * snapping for free, on every platform, with zero new dependencies —
- * appropriate for what's fundamentally a horizontally-scrolling list of
- * cards, not a true edge-swipeable single-card-at-a-time interaction.
- *
- * Per direct decision: locked cards STAY VISIBLE in the deck (dimmed,
- * not removed) rather than only appearing once unlocked — the player
- * can see the whole path/scope of the game by swiping through, even
- * before earning access to later steps.
+ * Elevated to match the game-native visual language:
+ * - Parchment heading panel (matching NarrationScreen's dialogue card palette)
+ * - Deck cards use push-shadow (border-bottom) instead of plain borders
+ * - Locked cards: dashed, desaturated with lock visual
+ * - Dot indicator: matches NarrationScreen progress dots
  */
 
 .wrap {
@@ -34,31 +25,35 @@
   z-index: 1;
 }
 
+/* ── PARCHMENT HEADING PANEL ───────────────────────────────────── */
 .heading {
   text-align: center;
   margin-bottom: 18px;
-  padding: 0 20px;
+  padding: 10px 24px;
+  background: #f5f0e4;
+  border: 2px solid #c8ba96;
+  border-radius: 16px;
+  box-shadow: 0 4px 0 #c0b080, 0 6px 16px rgba(0,0,0,0.25);
+  width: calc(100% - 40px);
+  max-width: 420px;
+  box-sizing: border-box;
 }
 .gameTitle {
   font-family: var(--eg-font-display);
-  font-weight: 700;
-  font-size: 1.3rem;
-  color: var(--eg-text-bright);
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: #2a1a08;
 }
 .subheading {
-  font-size: 0.84rem;
-  color: var(--eg-text-dim);
-  margin-top: 4px;
+  font-size: 0.78rem;
+  color: #8a7555;
+  font-weight: 600;
+  margin-top: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
-/* The actual swipeable deck. overflow-x: auto + scroll-snap-type gives
- * native momentum scrolling and snap-to-card behavior on touch devices
- * with zero JS; scrollbar hidden since the dot indicator below already
- * communicates position. padding-inline creates "peek" space so the
- * very first/last card isn't flush against the viewport edge — a
- * visual cue that there's more to swipe to, consistent with how a real
- * card carousel reads as swipeable at a glance, not just a left-aligned
- * list. */
+/* ── SWIPEABLE DECK ─────────────────────────────────────────────── */
 .deck {
   display: flex;
   gap: 14px;
@@ -66,7 +61,7 @@
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
-  padding: 4px 28px 16px;
+  padding: 8px 28px 20px;
   box-sizing: border-box;
   scrollbar-width: none;
 }
@@ -80,6 +75,7 @@
   width: min(240px, 78vw);
 }
 
+/* ── UNLOCKED CARD — push-shadow style ─────────────────────────── */
 .card {
   width: 100%;
   height: 100%;
@@ -90,40 +86,45 @@
   padding: 18px;
   text-align: left;
   cursor: pointer;
-  border: 2.5px solid var(--card-color, #7b4fcb);
-  background: var(--card-bg, #fff);
-  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.05), 0 10px 20px rgba(58, 42, 85, 0.1);
-  transition: transform 0.15s ease;
+
+  background: #f5f0e4;
+  border: 2px solid var(--card-color, #7b4fcb);
+  border-bottom: 4px solid color-mix(in srgb, var(--card-color, #7b4fcb) 80%, #000);
+
+  box-shadow:
+    0 6px 0 color-mix(in srgb, var(--card-color, #7b4fcb) 60%, #000),
+    0 10px 20px rgba(58, 42, 85, 0.15);
+
+  transition: transform 0.12s ease, border-bottom-width 0.1s ease, box-shadow 0.1s ease;
 }
 .card:active {
-  transform: scale(0.97);
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+  box-shadow:
+    0 2px 0 color-mix(in srgb, var(--card-color, #7b4fcb) 60%, #000),
+    0 4px 10px rgba(58, 42, 85, 0.1);
 }
 
+/* ── LOCKED CARD ─────────────────────────────────────────────────── */
 .cardLocked {
   cursor: default;
-  border: 2.5px dashed rgba(120, 120, 130, 0.3);
-  background: rgba(120, 120, 130, 0.06);
-  opacity: 0.65;
-  /* dimmed but never invisible — see file header: locked cards stay in
-   * the deck on purpose, this is the actual visual "dimming" that
-   * implements that decision. */
+  background: rgba(200, 186, 150, 0.12);
+  border: 2px dashed rgba(200, 186, 150, 0.5);
+  border-bottom: 2px dashed rgba(200, 186, 150, 0.5);
+  box-shadow: none;
+  opacity: 0.6;
 }
 .cardLocked:active {
   transform: none;
 }
 
-/* Holds the compound name badge — see CompoundNameBadge in
- * TrackMapScreen.tsx, which replaced an earlier version that drew the
- * actual target molecular structure here (a real, confirmed mistake:
- * that revealed the answer to a build-the-molecule puzzle before the
- * player had even attempted it). No file dependency either way. */
 .cardArtWrap {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 10;
   border-radius: 12px;
   margin-bottom: 10px;
-  background: rgba(123, 79, 203, 0.06);
+  background: rgba(200, 186, 150, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -131,6 +132,7 @@
   padding: 8px;
   box-sizing: border-box;
 }
+
 .compoundNameBadge {
   font-family: var(--eg-font-display);
   font-weight: 700;
@@ -140,8 +142,9 @@
   line-height: 1.3;
 }
 .cardLocked .compoundNameBadge {
-  opacity: 0.55;
-  filter: grayscale(0.4);
+  opacity: 0.5;
+  filter: grayscale(0.5);
+  color: #8a7555;
 }
 
 .cardLockIcon {
@@ -149,24 +152,25 @@
   top: 10px;
   right: 10px;
   font-size: 1.1rem;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(245, 240, 228, 0.9);
   border-radius: 50%;
   width: 28px;
   height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1.5px solid #c8ba96;
 }
 
 .cardTitle {
   font-family: var(--eg-font-display);
   font-weight: 700;
   font-size: 0.98rem;
-  color: var(--eg-text-bright);
+  color: #2a1a08;
   line-height: 1.25;
 }
 .cardLocked .cardTitle {
-  color: var(--eg-text-dim);
+  color: #8a7555;
 }
 
 .cardMetaRow {
@@ -177,10 +181,10 @@
 }
 .cardDifficulty {
   font-size: 0.7rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--card-color, #7b4fcb);
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
 }
 .cardXp {
   font-family: var(--eg-font-display);
@@ -190,37 +194,38 @@
 }
 .cardLockedSubtext {
   font-size: 0.72rem;
-  color: var(--eg-text-dim);
+  color: #8a7555;
   margin-top: 8px;
 }
 
-/* Dot progress indicator below the deck — purely visual feedback on
- * "how far through the swipeable deck am I," matching the same dot
- * pattern ConceptSnapshot.module.css already uses for its own
- * card-by-card progress, so a player who's seen that pattern in Quick
- * Concepts recognizes this one immediately. */
+/* ── PROGRESS DOTS — matches NarrationScreen ───────────────────── */
 .dots {
   display: flex;
-  gap: 6px;
-  margin-top: 4px;
+  gap: 5px;
+  margin-top: 8px;
+  align-items: center;
 }
 .dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: rgba(123, 79, 203, 0.25);
+  background: rgba(200, 186, 150, 0.5);
+  transition: width 0.2s ease, background 0.2s ease, border-radius 0.2s ease;
 }
 .dotCompleted {
   background: #4caf6e;
 }
 .dotActive {
-  background: #7b4fcb;
-  width: 9px;
-  height: 9px;
+  width: 20px;
+  border-radius: 4px;
+  background: #2e1258;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .card {
+    transition: none;
+  }
+  .dot {
     transition: none;
   }
 }

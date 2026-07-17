@@ -1,35 +1,24 @@
 "use client";
 
 /**
- * WorldsClient.tsx — Worlds Dashboard v4
+ * WorldsClient.tsx — EXL Learning World Dashboard
  *
- * Play mode:
- *   - Arcade games centrepiece (2-row grid, "See all" expands)
- *   - Subject sections below, max 2 games each + "See all →"
- *   - No continue banner
- *
- * Focus mode:
- *   - Search bar ("What do you want to study?")
- *   - Subject cards (no left-border outline treatment)
- *   - Continue banner (only here)
- *   - No arcade strip
- *
- * Both modes:
- *   - Rank badge visible in page (not buried in HUD)
- *   - Leaderboard CTA at bottom of page
+ * Changes from previous version:
+ * - XP total card removed (unnecessary noise on the browse page)
+ * - QuickPlayModal removed — game cards are now direct links to /play/[slug]
+ * - GameCardArt prop bug fixed: was passing slug/subject, now passes
+ *   gameSlug/emoji/color/tint as the component actually expects
  */
 
-import { useState, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useState } from "react";
 import { useTheme } from "@/components/ui/ThemeProvider";
+import { SiteHeader } from "@/components/ui/SiteHeader";
 import { subjectMeta } from "@/lib/content/subjects";
 import { GAME_CARD_DESC } from "@/lib/content/gameCardMeta";
 import { GameCardArt } from "@/components/ui/GameCardArt";
-import { QuickPlayModal } from "@/components/ui/QuickPlayModal";
 import type { GameRow, Difficulty } from "@/types/db";
 import styles from "@/app/(player)/worlds/WorldsClient.module.css";
-
-// ── Types ──────────────────────────────────────────────────────────────────────
 
 export interface GameSummary {
   game: GameRow;
@@ -44,593 +33,223 @@ export interface GameSummary {
 export interface WorldsClientProps {
   bySubject: Record<string, GameSummary[]>;
   currentStudentXp?: number;
+  currentStudentRank?: number;
   studentName?: string;
 }
 
-// ── Constants ──────────────────────────────────────────────────────────────────
-
-type YearClass = "JSS1" | "JSS2" | "JSS3" | "SS1" | "SS2" | "SS3" | "WAEC" | "JAMB";
-const YEAR_CLASSES: YearClass[] = ["JSS1", "JSS2", "JSS3", "SS1", "SS2", "SS3", "WAEC", "JAMB"];
-const SUBJECT_ORDER = ["mathematics", "chemistry", "physics", "biology"];
-type AppMode = "play" | "focus";
-
-const SUBJECT_DESCRIPTIONS: Record<string, string> = {
-  mathematics: "Algebra, formulas, equations",
-  chemistry:   "Atoms, bonding, reactions",
-  physics:     "Forces, waves, electricity",
-  biology:     "Cells, genetics, ecology",
+const WORLD_META: Record<string, {
+  name: string; tagline: string; glyph: string;
+  color: string; tint: string; border: string; darkBg: string;
+}> = {
+  chemistry: {
+    name: "Chemistry World",
+    tagline: "Build atoms, break bonds, see matter behave.",
+    glyph: "⚗",
+    color: "var(--eg-subject-chemistry)",
+    tint: "rgba(123,79,203,0.07)",
+    border: "rgba(123,79,203,0.18)",
+    darkBg: "rgba(123,79,203,0.12)",
+  },
+  mathematics: {
+    name: "Mathematics World",
+    tagline: "Solve equations, construct proofs, own the numbers.",
+    glyph: "∑",
+    color: "var(--eg-subject-mathematics)",
+    tint: "rgba(47,155,214,0.07)",
+    border: "rgba(47,155,214,0.18)",
+    darkBg: "rgba(47,155,214,0.12)",
+  },
+  physics: {
+    name: "Physics World",
+    tagline: "Apply forces, trace light, move through space.",
+    glyph: "⚡",
+    color: "var(--eg-subject-physics)",
+    tint: "rgba(255,111,145,0.07)",
+    border: "rgba(255,111,145,0.18)",
+    darkBg: "rgba(255,111,145,0.12)",
+  },
+  biology: {
+    name: "Biology World",
+    tagline: "Study cells, map ecosystems, decode life.",
+    glyph: "⬡",
+    color: "var(--eg-subject-biology)",
+    tint: "rgba(76,175,110,0.07)",
+    border: "rgba(76,175,110,0.18)",
+    darkBg: "rgba(76,175,110,0.12)",
+  },
 };
 
-// ── Static arcade games ────────────────────────────────────────────────────────
-
-interface StaticArcadeGameDef {
-  slug: string;
-  title: string;
-  emoji: string;
-  tagline: string;
-  accentColor: string;
-  isReady: boolean;
+function diffLabel(min: Difficulty | null, max: Difficulty | null) {
+  if (!min) return null;
+  const L: Record<Difficulty, string> = { EASY: "Easy", MEDIUM: "Medium", HARD: "Hard" };
+  return min === max ? L[min] : `${L[min]}–${L[max ?? min]}`;
 }
 
-const STATIC_ARCADE_GAMES: StaticArcadeGameDef[] = [
-  { slug: "whack-a-mole",  title: "Whack-a-Mole",  emoji: "🐹", tagline: "Tap critters across 5 waves",    accentColor: "#f59e0b", isReady: true  },
-  { slug: "math-quest",    title: "Math Quest",     emoji: "⛳", tagline: "Golf + maths = one more hole",   accentColor: "#4ade80", isReady: true  },
-  { slug: "element-crush", title: "Element Crush",  emoji: "🍬", tagline: "Match element tiles",            accentColor: "#00d4ff", isReady: false },
-  { slug: "symbol-drop",   title: "Symbol Drop",    emoji: "🎯", tagline: "Catch falling symbols",          accentColor: "#a78bfa", isReady: false },
-];
-
-// ── Ranks ──────────────────────────────────────────────────────────────────────
-
-const RANKS = [
-  { label: "Recruit",  min: 0,    icon: "🌱", color: "#6b7280" },
-  { label: "Cadet",    min: 100,  icon: "⚡", color: "#3b82f6" },
-  { label: "Scholar",  min: 300,  icon: "📚", color: "#8b5cf6" },
-  { label: "Expert",   min: 600,  icon: "🎯", color: "#f59e0b" },
-  { label: "Champion", min: 1000, icon: "🏆", color: "#ef4444" },
-  { label: "Legend",   min: 2000, icon: "🌟", color: "#ec4899" },
-];
-
-function getRank(xp: number) {
-  for (let i = RANKS.length - 1; i >= 0; i--) {
-    if (xp >= RANKS[i].min) return RANKS[i];
-  }
-  return RANKS[0];
-}
-function getNextRank(xp: number) {
-  for (const r of RANKS) { if (xp < r.min) return r; }
-  return null;
-}
-function topicLabel(topicId: string | null | undefined): string {
-  if (!topicId) return "Game";
-  return topicId.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-}
-
-const LS_CLASS = "exl-pref-class";
-const LS_LAST  = "exl-last-played";
-const LS_MODE  = "exl-pref-mode";
-function safeLS(key: string, fb: string) { try { return localStorage.getItem(key) ?? fb; } catch { return fb; } }
-function safeLSSet(key: string, v: string) { try { localStorage.setItem(key, v); } catch { /* */ } }
-
-// ── Component ──────────────────────────────────────────────────────────────────
-
-export function WorldsClient({ bySubject, currentStudentXp = 0, studentName }: WorldsClientProps) {
+export function WorldsClient({ bySubject, currentStudentRank, studentName }: WorldsClientProps) {
   const { theme, toggleTheme } = useTheme();
+  const [activeWorld, setActiveWorld] = useState<string | null>(null);
 
-  const [selectedClass, setSelectedClass] = useState<YearClass>("JSS3");
-  const [lastPlayed,    setLastPlayed]    = useState<string | null>(null);
-  const [prefsLoaded,   setPrefsLoaded]   = useState(false);
-  const [mode,          setMode]          = useState<AppMode>("play");
-  const [activeSubject, setActiveSubject] = useState<string | null>(null);
-  const [arcadeExpanded, setArcadeExpanded] = useState(false);
-  const [focusSearch,   setFocusSearch]  = useState("");
-
-  // HUD search (Play mode / global)
-  const [searchQuery, setSearchQuery] = useState("");
-  const q = searchQuery.toLowerCase().trim();
-  const isSearching = q.length > 0;
-
-  const [quickPlayGame, setQuickPlayGame] = useState<GameRow | null>(null);
-
-  useEffect(() => {
-    setSelectedClass(safeLS(LS_CLASS, "JSS3") as YearClass);
-    setLastPlayed(safeLS(LS_LAST, "") || null);
-    setMode((safeLS(LS_MODE, "play") as AppMode) || "play");
-    setPrefsLoaded(true);
-  }, []);
-
-  const handleClassChange = useCallback((c: YearClass) => {
-    setSelectedClass(c); safeLSSet(LS_CLASS, c);
-  }, []);
-
-  const handleModeChange = useCallback((m: AppMode) => {
-    setMode(m); safeLSSet(LS_MODE, m);
-    setActiveSubject(null);
-    setSearchQuery("");
-    setFocusSearch("");
-    setArcadeExpanded(false);
-  }, []);
-
-  const handleGameClick = useCallback((slug: string) => {
-    safeLSSet(LS_LAST, slug); setLastPlayed(slug);
-  }, []);
-
-  const allGames = useMemo(() => Object.values(bySubject).flat(), [bySubject]);
-
-  const filterByClass = useCallback((games: GameSummary[]) =>
-    games.filter(g => {
-      const yg = g.game.year_groups ?? [];
-      if (!["WAEC", "JAMB"].includes(selectedClass) && yg.length > 0) {
-        return yg.includes(selectedClass);
-      }
-      return true;
-    }), [selectedClass]);
-
-  const searchResults = useMemo(() => {
-    if (!q) return [];
-    return allGames.filter(({ game }) => {
-      const hay = [game.title, game.subject, game.topic_id, GAME_CARD_DESC[game.slug] ?? ""].join(" ").toLowerCase();
-      return q.split(" ").every(w => hay.includes(w));
-    });
-  }, [allGames, q]);
-
-  // Focus mode search: filter subjects + games by the focus search term
-  const fq = focusSearch.toLowerCase().trim();
-  const focusFilteredSubjects = useMemo(() => {
-    return SUBJECT_ORDER.map(sub => {
-      const games = filterByClass(bySubject[sub] ?? []);
-      if (!fq) return { sub, games, count: games.length };
-      // match subject name or any game title/topic
-      const subMeta = subjectMeta(sub);
-      const subMatch = subMeta.name.toLowerCase().includes(fq) || SUBJECT_DESCRIPTIONS[sub]?.toLowerCase().includes(fq);
-      const matchedGames = games.filter(({ game }) => {
-        const hay = [game.title, game.topic_id, GAME_CARD_DESC[game.slug] ?? ""].join(" ").toLowerCase();
-        return hay.includes(fq);
-      });
-      if (subMatch) return { sub, games, count: games.length };
-      return { sub, games: matchedGames, count: matchedGames.length };
-    }).filter(s => s.count > 0);
-  }, [bySubject, filterByClass, fq]);
-
-  const subjectStats = useMemo(() =>
-    SUBJECT_ORDER.map(sub => {
-      const games = filterByClass(bySubject[sub] ?? []);
-      return { sub, games, count: games.length };
-    }).filter(s => s.count > 0),
-  [bySubject, filterByClass]);
-
-  const lastPlayedGame = useMemo(() =>
-    lastPlayed ? allGames.find(g => g.game.slug === lastPlayed) ?? null : null,
-  [allGames, lastPlayed]);
-
-  const rank     = getRank(currentStudentXp);
-  const nextRank = getNextRank(currentStudentXp);
-  const xpToNext = nextRank ? nextRank.min - currentStudentXp : 0;
-  const xpPct    = nextRank
-    ? Math.round(((currentStudentXp - rank.min) / (nextRank.min - rank.min)) * 100)
-    : 100;
-
-  const activeSubjectGames = useMemo(() =>
-    activeSubject ? filterByClass(bySubject[activeSubject] ?? []) : [],
-  [activeSubject, bySubject, filterByClass]);
-
-  const activeSubjectMeta = activeSubject ? subjectMeta(activeSubject) : null;
-  const showSubjectView   = activeSubject !== null && !isSearching;
-
-  // How many arcade rows to show (2 cards per row in scroll, show first row = 2 cards)
-  const visibleArcadeGames = arcadeExpanded ? STATIC_ARCADE_GAMES : STATIC_ARCADE_GAMES.slice(0, 2);
+  const allSubjects = ["chemistry", "mathematics", "physics", "biology"];
+  const totalGames = Object.values(bySubject).reduce((s, g) => s + g.length, 0);
 
   return (
     <div className={styles.page} data-theme={theme}>
 
-      {/* Ambient grid + blobs */}
+      {/* Ambient */}
       <div className={styles.ambient} aria-hidden="true">
-        <div className={`${styles.ambientBlob} ${styles.blobA}`} />
-        <div className={`${styles.ambientBlob} ${styles.blobB}`} />
+        <div className={styles.blob} style={{ width: 600, height: 600, top: "-10%", right: "-15%", background: "radial-gradient(circle, rgba(123,79,203,0.1) 0%, transparent 70%)" }} />
+        <div className={styles.blob} style={{ width: 400, height: 400, bottom: "10%", left: "-5%", background: "radial-gradient(circle, rgba(47,155,214,0.08) 0%, transparent 70%)" }} />
       </div>
 
-      {/* ── HUD ── */}
-      <header className={styles.hud}>
-        <div className={styles.hudInner}>
+      <SiteHeader theme={theme} onToggleTheme={toggleTheme} active="games" />
 
-          <div className={styles.hudLeft}>
-            {showSubjectView ? (
-              <button className={styles.backBtn} onClick={() => setActiveSubject(null)}>
-                <span>←</span>
-                <span className={styles.backLabel}>Back</span>
-              </button>
-            ) : (
-              <Link href="/" className={styles.logo}>
-                <div className={styles.logoMark}>E</div>
-                <span className={styles.logoText}>EXL</span>
-              </Link>
-            )}
+      {/* ── PAGE HEADER ── */}
+      <div className={styles.pageHead}>
+        <div className={styles.container}>
+          <div className={styles.dashRow}>
+            <div className={styles.dashLeft}>
+              <div className={styles.dashEyebrow}>Your Dashboard</div>
+              <h1 className={`${styles.dashTitle} ${styles.fd}`}>
+                {studentName ? `${studentName}'s Worlds` : "Learning Worlds"}
+              </h1>
+              <p className={styles.dashSub}>Choose a world. Every experience builds real understanding.</p>
+            </div>
+
+            {/* Compact stat strip — replaces the big XP card */}
+            <div className={styles.statStrip}>
+              {currentStudentRank && (
+                <div className={styles.statPill}>
+                  <span className={styles.statPillIcon}>🏆</span>
+                  <span className={styles.statPillLabel}>Rank</span>
+                  <span className={styles.statPillValue}>#{currentStudentRank}</span>
+                </div>
+              )}
+              <div className={styles.statPill}>
+                <span className={styles.statPillIcon}>🎮</span>
+                <span className={styles.statPillLabel}>Experiences</span>
+                <span className={styles.statPillValue}>{totalGames}</span>
+              </div>
+            </div>
           </div>
 
-          <div className={styles.hudCenter}>
-            {showSubjectView && activeSubjectMeta ? (
-              <div className={styles.hudSubjectTitle}>
-                <span>{activeSubjectMeta.emoji}</span>
-                <span>{activeSubjectMeta.name}</span>
-              </div>
-            ) : (
-              <span className={styles.hudTitle}>Worlds</span>
-            )}
-          </div>
-
-          <div className={styles.hudRight}>
-            {/* Search — only in play mode hub */}
-            {!showSubjectView && mode === "play" && (
-              <div className={`${styles.searchBox} ${isSearching ? styles.searchBoxActive : ""}`}>
-                <span className={styles.searchIcon}>🔍</span>
-                <input
-                  className={styles.searchInput}
-                  type="search"
-                  placeholder="Search games…"
-                  value={searchQuery}
-                  onChange={e => { setSearchQuery(e.target.value); setActiveSubject(null); }}
-                />
-                {searchQuery && (
-                  <button className={styles.searchClear} onClick={() => setSearchQuery("")}>✕</button>
-                )}
-              </div>
-            )}
-
-            <select
-              className={styles.classSelector}
-              value={selectedClass}
-              onChange={e => handleClassChange(e.target.value as YearClass)}
-              aria-label="Select year class"
+          {/* World selector tabs */}
+          <div className={styles.worldTabs}>
+            <button
+              className={`${styles.worldTab} ${activeWorld === null ? styles.worldTabActive : ""}`}
+              onClick={() => setActiveWorld(null)}
             >
-              {YEAR_CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-
-            {/* Rank chip — compact in HUD, always visible */}
-            {prefsLoaded && !showSubjectView && (
-              <div className={styles.hudRankChip} style={{ "--rank-color": rank.color } as React.CSSProperties}
-                title={`${rank.label} · ${currentStudentXp.toLocaleString()} XP`}>
-                <span className={styles.hudRankIcon}>{rank.icon}</span>
-                <span className={styles.hudRankLabel}>{rank.label}</span>
-                <div className={styles.hudRankBar}>
-                  <div className={styles.hudRankFill} style={{ width: `${xpPct}%`, background: rank.color }} />
-                </div>
-              </div>
-            )}
-
-            <button className={styles.themeBtn} onClick={toggleTheme} aria-label="Toggle theme">
-              {theme === "dark" ? "☀️" : "🌙"}
+              All Worlds
             </button>
-
-            <Link href="/profile" className={styles.avatarBtn} aria-label="Profile">
-              <span className={styles.avatarInner}>
-                {studentName ? studentName.slice(0, 2).toUpperCase() : "👤"}
-              </span>
-            </Link>
+            {allSubjects.map(s => {
+              const wm = WORLD_META[s];
+              const count = (bySubject[s] ?? []).length;
+              return (
+                <button
+                  key={s}
+                  className={`${styles.worldTab} ${activeWorld === s ? styles.worldTabActive : ""}`}
+                  style={{ "--wc": wm?.color } as React.CSSProperties}
+                  onClick={() => setActiveWorld(activeWorld === s ? null : s)}
+                >
+                  {subjectMeta(s).emoji} {subjectMeta(s).name}
+                  {count > 0 && <span className={styles.tabCount}>{count}</span>}
+                </button>
+              );
+            })}
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* ── MAIN ── */}
-      <div className={styles.main}>
+      {/* ── WORLD SECTIONS ── */}
+      <main className={styles.main}>
+        <div className={styles.container}>
+          {allSubjects
+            .filter(s => activeWorld === null || activeWorld === s)
+            .map(subject => {
+              const summaries = bySubject[subject] ?? [];
+              const wm = WORLD_META[subject] ?? {
+                name: `${subject} World`, tagline: "", glyph: "○",
+                color: "var(--eg-brand)", tint: "rgba(11,19,48,0.06)", border: "rgba(11,19,48,0.15)", darkBg: "rgba(11,19,48,0.2)"
+              };
+              const meta = subjectMeta(subject);
+              const isLive = summaries.length > 0;
 
-        {/* ══ SEARCH RESULTS ══ */}
-        {isSearching && mode === "play" && (
-          <div className={styles.searchResults}>
-            <div className={styles.searchResultsMeta}>
-              <span>{searchResults.length} result{searchResults.length !== 1 ? "s" : ""} for &ldquo;{searchQuery}&rdquo;</span>
-              <button className={styles.searchResultsClear} onClick={() => setSearchQuery("")}>Clear</button>
-            </div>
-            {searchResults.length === 0 ? (
-              <div className={styles.emptyState}>
-                <div className={styles.emptyIcon}>🔍</div>
-                <p>No games matched. Try a different word.</p>
-              </div>
-            ) : (
-              <div className={styles.gameGrid}>
-                {searchResults.map(({ game }) => {
-                  const m = subjectMeta(game.subject);
-                  return (
-                    <GameCard key={game.id} game={game}
-                      subjectColor={m.color} subjectTint={m.tint} subjectEmoji={m.emoji}
-                      desc={GAME_CARD_DESC[game.slug]}
-                      onPlay={() => setQuickPlayGame(game)}
-                      onCardClick={() => handleGameClick(game.slug)} />
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ══ SUBJECT DRILL-DOWN ══ */}
-        {showSubjectView && activeSubjectMeta && (
-          <div className={styles.subjectView}>
-            <div className={styles.subjectHero} style={{ background: activeSubjectMeta.color }}>
-              <span className={styles.subjectHeroEmoji}>{activeSubjectMeta.emoji}</span>
-              <div>
-                <div className={styles.subjectHeroName}>{activeSubjectMeta.name}</div>
-                <div className={styles.subjectHeroSub}>{activeSubjectGames.length} game{activeSubjectGames.length !== 1 ? "s" : ""} available</div>
-              </div>
-            </div>
-            {activeSubjectGames.length === 0 ? (
-              <div className={styles.emptyState}>
-                <div className={styles.emptyIcon}>📡</div>
-                <p>No games for {selectedClass} yet.</p>
-              </div>
-            ) : (
-              <div className={styles.gameGrid}>
-                {activeSubjectGames.map(({ game }) => (
-                  <GameCard key={game.id} game={game}
-                    subjectColor={activeSubjectMeta.color} subjectTint={activeSubjectMeta.tint} subjectEmoji={activeSubjectMeta.emoji}
-                    desc={GAME_CARD_DESC[game.slug]}
-                    onPlay={() => setQuickPlayGame(game)}
-                    onCardClick={() => handleGameClick(game.slug)} />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ══ HUB ══ */}
-        {!isSearching && !showSubjectView && (
-          <>
-            {/* MODE SWITCHER — clean, no rank here (rank lives in HUD) */}
-            <div className={styles.modeRow}>
-              <div className={styles.modePills}>
-                <button
-                  className={`${styles.modePill} ${mode === "play" ? styles.modePillActive : ""}`}
-                  onClick={() => handleModeChange("play")}
+              return (
+                <section
+                  key={subject}
+                  className={styles.worldSection}
+                  id={`world-${subject}`}
+                  style={{ "--wc": wm.color, "--wt": wm.tint, "--wb": wm.border } as React.CSSProperties}
                 >
-                  🕹️ Play
-                </button>
-                <button
-                  className={`${styles.modePill} ${mode === "focus" ? styles.modePillActive : ""}`}
-                  onClick={() => handleModeChange("focus")}
-                >
-                  🎯 Focus
-                </button>
-              </div>
-            </div>
-
-            {/* ── PLAY MODE ── */}
-            {mode === "play" && (
-              <>
-                {/* Arcade centrepiece — horizontal scroll, expand to grid */}
-                <div className={styles.arcadeSection}>
-                  <div className={styles.sectionHead}>
-                    <span className={styles.sectionLabel}>🕹️ Arcade</span>
-                    <button
-                      className={styles.seeAllBtn}
-                      onClick={() => setArcadeExpanded(e => !e)}
-                    >
-                      {arcadeExpanded ? "Show less" : `See all ${STATIC_ARCADE_GAMES.length} →`}
-                    </button>
+                  {/* World banner */}
+                  <div className={styles.worldBanner}>
+                    <div className={styles.wbGlyph} aria-hidden="true">{wm.glyph}</div>
+                    <div className={styles.wbBody}>
+                      <div className={styles.wbSubject}>{meta.emoji} {meta.name}</div>
+                      <h2 className={`${styles.wbName} ${styles.fd}`}>{wm.name}</h2>
+                      <p className={styles.wbTagline}>{wm.tagline}</p>
+                    </div>
+                    <div className={styles.wbMeta}>
+                      {isLive
+                        ? <span className={styles.wbLive}>● {summaries.length} experience{summaries.length !== 1 ? "s" : ""}</span>
+                        : <span className={styles.wbSoon}>Coming soon</span>
+                      }
+                    </div>
                   </div>
-                  <div className={arcadeExpanded ? styles.arcadeGrid : styles.arcadeStrip}>
-                    {visibleArcadeGames.map(ag => (
-                      <StaticArcadeCard key={ag.slug} game={ag} />
-                    ))}
-                  </div>
-                </div>
 
-                {/* Subject games — mixed single horizontal scroll row.
-                    2 games from each subject, all in one swipeable row.
-                    "Switch to Focus →" at the end nudges curious users. */}
-                {(() => {
-                  const mixedGames = subjectStats.flatMap(({ sub, games }) =>
-                    games.slice(0, 2).map(s => ({ ...s, sub }))
-                  );
-                  if (mixedGames.length === 0) return null;
-                  return (
-                    <div className={styles.subjectSection}>
-                      <div className={styles.subjectSectionHead}>
-                        <span className={styles.subjectSectionLabel}>Practice Games</span>
-                        <button
-                          className={styles.seeAllBtn}
-                          onClick={() => handleModeChange("focus")}
-                        >
-                          View by subject →
-                        </button>
-                      </div>
-                      <div className={styles.mixedScroll}>
-                        {mixedGames.map(({ game, sub }) => {
-                          const m = subjectMeta(sub);
-                          return (
-                            <div key={game.id} className={styles.mixedCard}>
-                              <GameCard
-                                game={game}
-                                subjectColor={m.color} subjectTint={m.tint} subjectEmoji={m.emoji}
-                                desc={GAME_CARD_DESC[game.slug]}
-                                onPlay={() => setQuickPlayGame(game)}
-                                onCardClick={() => handleGameClick(game.slug)} />
+                  {/* Game cards — direct links, no modal */}
+                  {isLive ? (
+                    <div className={styles.gameGrid}>
+                      {summaries.map(({ game, missionCount, xpMin, xpMax, difficultyMin, difficultyMax }) => {
+                        const desc = GAME_CARD_DESC[game.slug] ?? game.name;
+                        const diff = diffLabel(difficultyMin, difficultyMax);
+
+                        return (
+                          <Link
+                            key={game.id}
+                            href={`/play/${game.slug}`}
+                            className={styles.gameCard}
+                          >
+                            {/* Art — now passes the correct props GameCardArt expects */}
+                            <div className={styles.gcArt}>
+                              <GameCardArt
+                                gameSlug={game.slug}
+                                emoji={meta.emoji}
+                                color={meta.color}
+                                tint={meta.tint}
+                              />
+                              {diff && <span className={styles.gcDiff}>{diff}</span>}
                             </div>
-                          );
-                        })}
-                        {/* End nudge */}
-                        <div className={styles.mixedScrollCta} onClick={() => handleModeChange("focus")}>
-                          <span className={styles.mixedScrollCtaIcon}>🎯</span>
-                          <span className={styles.mixedScrollCtaText}>Switch to Focus mode to study by subject</span>
-                          <span className={styles.mixedScrollCtaArrow}>→</span>
-                        </div>
+
+                            {/* Info */}
+                            <div className={styles.gcInfo}>
+                              <div className={`${styles.gcName} ${styles.fd}`}>{game.name}</div>
+                              <div className={styles.gcDesc}>{desc}</div>
+                              <div className={styles.gcMeta}>
+                                <span className={styles.gcXp}>+{xpMin === xpMax ? xpMin : `${xpMin}–${xpMax}`} XP</span>
+                                <span className={styles.gcMissions}>{missionCount} mission{missionCount !== 1 ? "s" : ""}</span>
+                              </div>
+                              <div className={styles.gcPlay}>
+                                Play now →
+                              </div>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className={styles.comingSoon}>
+                      <div className={styles.csGlyph}>{wm.glyph}</div>
+                      <div className={styles.csText}>
+                        <strong>{wm.name}</strong> experiences are in development.
+                        Keep an eye on this space — they&apos;re coming soon.
                       </div>
                     </div>
-                  );
-                })()}
-
-                {subjectStats.length === 0 && (
-                  <div className={styles.emptyState}>
-                    <div className={styles.emptyIcon}>📡</div>
-                    <p>No games for {selectedClass} yet.</p>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* ── FOCUS MODE ── */}
-            {mode === "focus" && (
-              <>
-                {/* Continue — only in focus mode */}
-                {prefsLoaded && lastPlayedGame && (() => {
-                  const g = lastPlayedGame.game;
-                  const m = subjectMeta(g.subject);
-                  return (
-                    <div className={styles.continueWrap}>
-                      <div className={styles.continueLabelRow}>
-                        <div className={styles.continuePulse} />
-                        <span className={styles.continueBannerLabel}>Continue where you left off</span>
-                      </div>
-                      <div className={styles.continueBanner}>
-                        <div className={styles.continueBannerArt}>
-                          <GameCardArt gameSlug={g.slug} emoji={m.emoji} color={m.color} tint={m.tint} />
-                        </div>
-                        <div className={styles.continueBannerBody}>
-                          <div className={styles.continueBannerSubject} style={{ color: m.color }}>{m.emoji} {m.name}</div>
-                          <div className={styles.continueBannerTitle}>{g.title}</div>
-                        </div>
-                        <Link
-                          href={`/play/${g.slug}`}
-                          className={styles.continueBannerBtn}
-                          style={{ background: m.color }}
-                          onClick={() => handleGameClick(g.slug)}
-                        >
-                          ▶ Play
-                        </Link>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* Focus search bar */}
-                <div className={styles.focusSearchWrap}>
-                  <span className={styles.focusSearchIcon}>🔍</span>
-                  <input
-                    className={styles.focusSearchInput}
-                    type="search"
-                    placeholder="What do you want to study?"
-                    value={focusSearch}
-                    onChange={e => setFocusSearch(e.target.value)}
-                  />
-                  {focusSearch && (
-                    <button className={styles.focusSearchClear} onClick={() => setFocusSearch("")}>✕</button>
                   )}
-                </div>
-
-                {/* Subject cards — clean, no left-border outline */}
-                {focusFilteredSubjects.length === 0 ? (
-                  <div className={styles.emptyState}>
-                    <div className={styles.emptyIcon}>📡</div>
-                    <p>No matches for &ldquo;{focusSearch}&rdquo;</p>
-                  </div>
-                ) : (
-                  <div className={styles.focusSubjectGrid}>
-                    {focusFilteredSubjects.map(({ sub, count }) => {
-                      const m = subjectMeta(sub);
-                      return (
-                        <button
-                          key={sub}
-                          className={styles.focusSubjectCard}
-                          onClick={() => setActiveSubject(sub)}
-                        >
-                          <div className={styles.focusSubjectCardBg} style={{ background: m.color }} />
-                          <span className={styles.focusSubjectEmoji}>{m.emoji}</span>
-                          <span className={styles.focusSubjectName}>{m.name}</span>
-                          <span className={styles.focusSubjectDesc}>{SUBJECT_DESCRIPTIONS[sub]}</span>
-                          <span className={styles.focusSubjectCount} style={{ color: m.color }}>
-                            {count} game{count !== 1 ? "s" : ""}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* ── LEADERBOARD CTA — bottom of page, both modes ── */}
-            <Link href="/leaderboard" className={styles.leaderboardCta}>
-              <div className={styles.leaderboardCtaLeft}>
-                <span className={styles.leaderboardCtaIcon}>🏆</span>
-                <div>
-                  <div className={styles.leaderboardCtaTitle}>Leaderboard</div>
-                  <div className={styles.leaderboardCtaSub}>See how you rank against everyone</div>
-                </div>
-              </div>
-              <span className={styles.leaderboardCtaArrow}>→</span>
-            </Link>
-          </>
-        )}
-      </div>
-
-      <QuickPlayModal game={quickPlayGame} onClose={() => setQuickPlayGame(null)} />
-    </div>
-  );
-}
-
-// ── StaticArcadeCard ───────────────────────────────────────────────────────────
-
-function StaticArcadeCard({ game }: { game: StaticArcadeGameDef }) {
-  if (!game.isReady) {
-    return (
-      <div className={`${styles.arcadeCard} ${styles.arcadeCardSoon}`}>
-        <div className={styles.arcadeCardArt} style={{ background: `${game.accentColor}12` }}>
-          <span className={styles.arcadeCardEmoji}>{game.emoji}</span>
-          <span className={styles.arcadeSoonBadge}>Soon</span>
+                </section>
+              );
+            })}
         </div>
-        <div className={styles.arcadeCardBody}>
-          <div className={styles.arcadeCardTitle}>{game.title}</div>
-          <div className={styles.arcadeCardMeta}>{game.tagline}</div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={styles.arcadeCard}>
-      <Link href={`/games/${game.slug}`} className={styles.arcadeCardInner}>
-        <div className={styles.arcadeCardArt} style={{ background: `${game.accentColor}18` }}>
-          <span className={styles.arcadeCardEmoji}>{game.emoji}</span>
-        </div>
-        <div className={styles.arcadeCardBody}>
-          <div className={styles.arcadeCardTitle}>{game.title}</div>
-          <div className={styles.arcadeCardMeta}>{game.tagline}</div>
-        </div>
-      </Link>
-      <Link href={`/games/${game.slug}`} className={styles.arcadePlayBtn} style={{ background: game.accentColor }}>
-        ▶ Play
-      </Link>
-    </div>
-  );
-}
-
-// ── GameCard ───────────────────────────────────────────────────────────────────
-
-interface GameCardProps {
-  game: GameRow;
-  subjectColor: string;
-  subjectTint: string;
-  subjectEmoji: string;
-  desc: string | undefined;
-  onPlay: () => void;
-  onCardClick: () => void;
-}
-
-function GameCard({ game, subjectColor, subjectTint, subjectEmoji, desc, onPlay, onCardClick }: GameCardProps) {
-  return (
-    <div className={styles.gameCard}>
-      <Link href={`/play/${game.slug}`} className={styles.gameCardInner} onClick={onCardClick}>
-        <div className={styles.gameCardArt}>
-          <GameCardArt gameSlug={game.slug} emoji={subjectEmoji} color={subjectColor} tint={subjectTint} />
-        </div>
-        <div className={styles.gameCardBody}>
-          <div className={styles.gameCardTag} style={{ color: subjectColor, background: subjectTint }}>
-            {topicLabel(game.topic_id)}
-          </div>
-          <div className={styles.gameCardTitle}>{game.title}</div>
-          {desc && <p className={styles.gameCardDesc}>{desc}</p>}
-        </div>
-      </Link>
-      <button className={styles.gameCardPlayBtn} style={{ background: subjectColor }} onClick={onPlay}>
-        ▶ Play
-      </button>
+      </main>
     </div>
   );
 }

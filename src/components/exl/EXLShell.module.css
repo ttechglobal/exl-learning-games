@@ -1,0 +1,271 @@
+/**
+ * EXLShell.module.css
+ *
+ * The EXL Learning World visual standard.
+ *
+ * Design decisions:
+ *
+ * SCENE — a fixed-ratio illustrated environment that feels like a game
+ * world, not a browser page. The night backdrop with the lit window is
+ * the signature establishing shot — consistent across every screen so
+ * students always feel inside the same world.
+ *
+ * CHARACTER — bleeds upward out of the scene area by ~32px so the figure
+ * is anchored IN the scene but also clearly belongs to the card below.
+ * The name badge sits between them as a literal bridge.
+ *
+ * NAME BADGE — two-line: name (larger, bold) + role (small caps, muted).
+ * Deep purple fill with a raised shadow — the same badge colour is used
+ * on all subjects so the badge reads as EXL identity, not subject identity.
+ * Subject identity lives in the coat colour and shelf items instead.
+ *
+ * PARCHMENT CARD — warm off-white (#f6f1e4) with a natural linen texture
+ * via a subtle repeating gradient. This is the EXL signature element:
+ * every screen's content lives inside this card. The 3px ochre top
+ * border and the upward notch connect it visually to the character above.
+ * The card is NOT a modal — it has no border-radius on three sides,
+ * anchoring it to the viewport bottom like a theatre stage floor.
+ *
+ * TYPOGRAPHY — uses --eg-font-display (Baloo 2 / Space Grotesk) for all
+ * game-facing text. This is intentional and consistent with the rest of
+ * the codebase's engine/screen components.
+ */
+
+/* ── SHELL ───────────────────────────────────────────────────────────────── */
+
+.shell {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #090e08; /* deep forest floor — visible if scene doesn't fill */
+  font-family: var(--eg-font-display, "Baloo 2", "Space Grotesk", sans-serif);
+}
+
+/* ── SCENE ───────────────────────────────────────────────────────────────── */
+
+.scene {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  /* Clamp scene height on very tall phones so the card gets enough room */
+  max-height: 56vh;
+  overflow: hidden;
+}
+
+.sceneBg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+/* ── CONTROLS (back button slot, chip slot) ──────────────────────────────── */
+
+.topLeft {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 10;
+}
+
+.topRight {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 10;
+  max-width: 45%;
+}
+
+/* ── CHARACTER ───────────────────────────────────────────────────────────── */
+
+.characterWrap {
+  position: absolute;
+  bottom: -32px; /* intentional bleed into card */
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(240px, 64vw);
+  aspect-ratio: 240 / 320;
+  z-index: 5;
+  /* Entrance: rises from just below */
+  animation: characterRise 0.5s cubic-bezier(0.3, 1.55, 0.5, 1) 0.08s both;
+}
+
+@keyframes characterRise {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+/* Celebrate pose: subtle bob */
+.characterWrap[data-pose="celebrate"] {
+  animation:
+    characterRise 0.5s cubic-bezier(0.3, 1.55, 0.5, 1) 0.08s both,
+    celebrateBob 1.2s ease-in-out 0.6s infinite;
+}
+
+@keyframes celebrateBob {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50%       { transform: translateX(-50%) translateY(-6px); }
+}
+
+/* Focused pose: lean forward slightly */
+.characterWrap[data-pose="focused"] {
+  transform-origin: bottom center;
+  animation:
+    characterRise 0.5s cubic-bezier(0.3, 1.55, 0.5, 1) 0.08s both,
+    focusedLean 3s ease-in-out 0.6s infinite;
+}
+
+@keyframes focusedLean {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  50%       { transform: translateX(-50%) rotate(-0.8deg); }
+}
+
+/* ── NAME BADGE ──────────────────────────────────────────────────────────── */
+
+.nameBadge {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 7;
+  /* Deep purple — EXL identity colour, same across all subjects */
+  background: #2a0f52;
+  border: 2px solid #6a38b0;
+  border-radius: 10px;
+  padding: 5px 20px 6px;
+  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  /* Raised shadow for that game-badge feel */
+  box-shadow: 0 4px 0 #12082a, 0 7px 20px rgba(0, 0, 0, 0.45);
+  animation: badgePop 0.42s cubic-bezier(0.3, 1.55, 0.5, 1) 0.25s both;
+}
+
+@keyframes badgePop {
+  from { opacity: 0; transform: translateX(-50%) scale(0.84); }
+  to   { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+.badgeName {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #e4d0ff;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.badgeRole {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: rgba(200, 165, 255, 0.65);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  line-height: 1;
+}
+
+/* ── PARCHMENT CARD ──────────────────────────────────────────────────────── */
+
+.card {
+  position: relative;
+  z-index: 6;
+  flex-shrink: 0;
+  background: #f6f1e4;
+  /* Linen texture: subtle warm grain via repeating gradient */
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(180, 160, 100, 0.04) 3px,
+      rgba(180, 160, 100, 0.04) 4px
+    );
+  /* Ochre top border — the EXL signature trim */
+  border-top: 3px solid #c8a84a;
+  /* Extra padding top: card content must clear the character bleed (~32px)
+     plus the name badge that sits above it (~38px) */
+  padding: 52px 22px 24px;
+}
+
+/* Notch: upward-pointing triangle at top-centre of the card.
+   Points toward the character, making the card read as speech. */
+.cardNotch {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 12px solid #c8a84a;
+}
+/* White fill notch layered on top */
+.cardNotch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: -10px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid #f6f1e4;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
+
+@media (min-width: 480px) {
+  .characterWrap {
+    width: min(270px, 58vw);
+  }
+  .card {
+    padding: 56px 28px 28px;
+  }
+}
+
+/* Desktop: constrain to phone-width, centered, elevated */
+@media (min-width: 768px) {
+  .shell {
+    max-width: 420px;
+    min-height: auto;
+    margin: 32px auto;
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 6px rgba(255,255,255,0.06),
+      0 24px 64px rgba(0, 0, 0, 0.6),
+      0 8px 20px rgba(0, 0, 0, 0.4);
+  }
+  .scene {
+    max-height: 320px;
+  }
+}
+
+/* ── ACCESSIBILITY ───────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .characterWrap,
+  .nameBadge {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  .characterWrap {
+    transform: translateX(-50%) !important;
+  }
+  .nameBadge {
+    transform: translateX(-50%) !important;
+  }
+}

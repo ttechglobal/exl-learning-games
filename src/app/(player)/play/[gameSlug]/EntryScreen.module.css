@@ -1,26 +1,13 @@
 /**
- * EntryScreen.module.css
+ * EntryScreen.module.css — REDESIGNED
  *
- * No longer owns a page-level wrapper, backdrop, or min-height:100vh —
- * PrePlayShell (see PlayClient.tsx) provides all of that for the whole
- * pre-play flow now. This file is just the mascot + card content that
- * renders inside PrePlayShell's .content slot.
- *
- * CARD WIDTH FIX: previously `width: min(420px, 90vw)` — 90vw is sized
- * against the VIEWPORT, not this component's actual parent. Combined
- * with the old .wrap's own 24px padding (now removed) and overflow:
- * hidden, the card could end up wider than the space actually available
- * inside the padded parent, with the overflow getting silently clipped
- * on the right rather than the card shrinking to fit — this was the
- * confirmed "card is cut off on the right" bug. Now `width: 100%` with a
- * max-width cap and box-sizing implied by normal block layout — the card
- * sizes against its real container instead of the raw viewport, so it
- * can never be wider than the space PrePlayShell actually gives it.
+ * Elevated to match the NarrationScreen's game-native visual language:
+ * - Parchment dialogue card (#f5f0e4 / #c8ba96 border) instead of plain white
+ * - Deep-purple push-shadow CTA button (border-bottom: 3px solid) with tactile press
+ * - Amber "Begin" final CTA matching NarrationScreen's nextBtnFinal
+ * - Warm goal row tinted off the card instead of a separate accent pill
  */
 
-/* Local layout scope only now — stacks mascot above card, hosts the
- * --accent-color variable used by children. No page-level concerns
- * (min-height, overflow, backdrop) since PrePlayShell owns those. */
 .wrap {
   position: relative;
   z-index: 1;
@@ -42,24 +29,26 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ── PARCHMENT CARD — matches NarrationScreen's .dialogueCard feel ─── */
 .card {
   position: relative;
   z-index: 1;
   box-sizing: border-box;
-  /* calc() instead of width:100% + margin — see DifficultySelectScreen
-   * .module.css's .tierList comment for why width:100% plus margin
-   * overflows the parent by exactly the margin amount. This is the
-   * actual mechanism behind the "card clipped on the right" report:
-   * adding side margin for breathing room without correspondingly
-   * reducing the width pushes the card's right edge past its container. */
   width: calc(100% - 20px);
   max-width: 420px;
   margin: 8px 10px 0;
-  background: #ffffff;
-  border: 3px solid var(--accent-color, var(--eg-subject-chemistry));
+
+  /* Parchment, not plain white */
+  background: #f5f0e4;
+  border: 2.5px solid #c8ba96;
   border-radius: 22px;
   padding: 26px;
-  box-shadow: 0 10px 0 rgba(0, 0, 0, 0.05), 0 14px 30px rgba(43, 28, 74, 0.12);
+
+  /* Layered shadow — depth below the card */
+  box-shadow:
+    0 6px 0 #c0b080,
+    0 10px 28px rgba(43, 28, 74, 0.18);
+
   opacity: 0;
   transform: scale(0.94) translateY(10px);
   animation: cardMaterialize 0.5s var(--eg-ease-pop) 0.22s forwards;
@@ -72,32 +61,39 @@
   }
 }
 
+/* Small notch at top — like NarrationScreen's .dialogueNotch */
+.cardNotch {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid #f5f0e4;
+  filter: drop-shadow(0 -2px 0 #c8ba96);
+}
+
 .cardLabel {
   font-size: 0.72rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--eg-text-dim);
-  font-weight: 600;
+  color: #8a7555;
+  font-weight: 700;
   margin-bottom: 10px;
 }
 
 .briefingText {
   font-size: 0.92rem;
-  color: var(--eg-text-bright);
-  line-height: 1.6;
+  color: #2a1a08;
+  line-height: 1.65;
   margin: 0 0 18px;
-  text-align: left;
-  /* Reserve roughly the height of 3 lines at this font size so the
-   * typewriter reveal (see TypewriterText) doesn't shift the card's
-   * height — and everything below it (glyph, goal, button) — as the
-   * text grows character by character. */
+  font-weight: 700;
   min-height: 4.8em;
+  letter-spacing: 0.01em;
 }
 
-/* Holds the element glyph on its own now that the mission title row
- * (which used to share this space) was removed per direct feedback —
- * centered rather than space-between, since it's no longer balancing
- * against a title on the other side. */
 .elementGlyphRow {
   display: flex;
   justify-content: center;
@@ -109,8 +105,8 @@
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  border: 2px solid var(--accent-color, var(--eg-subject-chemistry));
-  background: color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 12%, white);
+  border: 2px solid var(--accent-color, #7b4fcb);
+  background: color-mix(in srgb, var(--accent-color, #7b4fcb) 12%, #f5f0e4);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -120,57 +116,68 @@
 }
 .elementGlyphNumber {
   font-size: 0.52rem;
-  color: var(--eg-text-dim);
+  color: #8a7555;
 }
 .elementGlyphSymbol {
   font-size: 1.2rem;
   font-weight: 700;
-  color: var(--eg-text-bright);
+  color: #2a1a08;
 }
 
+/* Goal row — warm tinted strip, matches parchment palette */
 .goalRow {
-  background: color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 8%, white);
+  background: rgba(200, 186, 150, 0.25);
+  border: 1.5px solid rgba(200, 186, 150, 0.5);
   border-radius: 12px;
   padding: 10px 14px;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
 }
 .goalLabel {
   font-size: 0.66rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--accent-color, var(--eg-subject-chemistry));
+  color: var(--accent-color, #7b4fcb);
   font-weight: 700;
   margin-bottom: 3px;
 }
 .goalText {
   font-size: 0.84rem;
-  color: var(--eg-text-bright);
+  color: #2a1a08;
   line-height: 1.4;
+  font-weight: 600;
 }
 
+/* ── GAME-NATIVE CTA BUTTON — push-shadow tactile style ─────────────── */
 .startButton {
   width: 100%;
-  min-height: 54px;
-  border-radius: 14px;
+  min-height: 52px;
+  border-radius: 50px;
   border: none;
-  background: var(--accent-color, var(--eg-subject-chemistry));
-  color: #ffffff;
-  font-family: var(--eg-font-display);
-  font-weight: 700;
-  font-size: 1.05rem;
-  letter-spacing: 0.01em;
+  background: #d4700c;
+  color: #fff;
+  font-family: var(--eg-font-display, "Nunito", sans-serif);
+  font-weight: 900;
+  font-size: 1rem;
+  letter-spacing: 0.03em;
   cursor: pointer;
-  box-shadow: 0 5px 0 color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 70%, black);
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+
+  /* Push-shadow — same device as NarrationScreen's .nextBtnFinal */
+  border-bottom: 3px solid #8a4408;
+  box-shadow: 0 0 0 3px rgba(212, 112, 12, 0.2);
+  animation: pulseGlow 1.8s ease-in-out infinite;
+
+  transition: transform 0.1s ease, border-bottom 0.1s ease;
 }
 .startButton:active {
-  transform: translateY(3px);
-  box-shadow: 0 2px 0 color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 70%, black);
+  transform: translateY(2px);
+  border-bottom: 1px solid #8a4408;
 }
 
-/* Narrow phones: less card padding, slightly smaller supporting text —
- * same treatment as DifficultySelectScreen / MissionObjectivesScreen for
- * consistency across the whole pre-play flow. */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(212, 112, 12, 0.2); }
+  50%       { box-shadow: 0 0 0 7px rgba(212, 112, 12, 0.10); }
+}
+
 @media (max-width: 420px) {
   .card {
     padding: 20px 18px;
@@ -189,5 +196,9 @@
     animation: none !important;
     opacity: 1;
     transform: none;
+  }
+  .startButton {
+    animation: none !important;
+    box-shadow: 0 0 0 3px rgba(212, 112, 12, 0.2);
   }
 }

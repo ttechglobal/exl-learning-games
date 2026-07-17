@@ -11,9 +11,13 @@ export interface GameMenuProps {
 }
 
 /**
- * In-game menu — game-feel redesign.
- * Full-screen overlay with game-style buttons and immersive dark background.
- * Exit goes to /worlds (left edge aligned back button).
+ * In-game menu — redesigned to match the NarrationScreen visual language.
+ *
+ * Trigger button: dark push-shadow (#2e1258) matching BackButton.
+ * Panel: parchment (#f5f0e4) dialogue-card style with:
+ *   - Dark push-shadow action buttons (Restart, Review, Change Difficulty)
+ *   - Amber "Continue Playing" CTA matching NarrationScreen's Begin button
+ *   - Amber-tinted Exit to Worlds (distinct action, different color)
  */
 export function GameMenu({ onRestart, onChangeDifficulty, onReviewConcepts }: GameMenuProps) {
   const [open, setOpen] = useState(false);
@@ -27,14 +31,12 @@ export function GameMenu({ onRestart, onChangeDifficulty, onReviewConcepts }: Ga
       {open && (
         <div className={styles.overlay} onClick={() => setOpen(false)}>
           <div className={styles.sheet} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.sheetLabel}>⏸ Paused</div>
+
+            <div className={styles.sheetLabel}>⏸ Game Paused</div>
 
             <button
               className={styles.sheetButton}
-              onClick={() => {
-                onRestart();
-                setOpen(false);
-              }}
+              onClick={() => { onRestart(); setOpen(false); }}
             >
               ↻ Restart Mission
             </button>
@@ -42,10 +44,7 @@ export function GameMenu({ onRestart, onChangeDifficulty, onReviewConcepts }: Ga
             {onReviewConcepts && (
               <button
                 className={styles.sheetButton}
-                onClick={() => {
-                  onReviewConcepts();
-                  setOpen(false);
-                }}
+                onClick={() => { onReviewConcepts(); setOpen(false); }}
               >
                 ✦ Review Concepts
               </button>
@@ -54,10 +53,7 @@ export function GameMenu({ onRestart, onChangeDifficulty, onReviewConcepts }: Ga
             {onChangeDifficulty && (
               <button
                 className={styles.sheetButton}
-                onClick={() => {
-                  onChangeDifficulty();
-                  setOpen(false);
-                }}
+                onClick={() => { onChangeDifficulty(); setOpen(false); }}
               >
                 🎯 Change Difficulty
               </button>
@@ -67,9 +63,12 @@ export function GameMenu({ onRestart, onChangeDifficulty, onReviewConcepts }: Ga
               ✕ Exit to Worlds
             </Link>
 
+            <hr className={styles.divider} />
+
             <button className={styles.cancelButton} onClick={() => setOpen(false)}>
               ▶ Continue Playing
             </button>
+
           </div>
         </div>
       )}

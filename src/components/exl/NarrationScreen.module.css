@@ -1,28 +1,115 @@
 /**
  * NarrationScreen.module.css
- * Screen-specific styles only. Layout/character/card all live in EXLShell.
+ *
+ * Game-style character narration screen.
+ *
+ * DESKTOP FIX: Previously constrained to max-width:480px on ≥768px,
+ * rendering as a phone-shaped card floating in whitespace. Now goes
+ * full-width with a side-by-side layout on desktop — scene/character
+ * on the left, dialogue card on the right — matching how visual novels
+ * and RPG dialogue screens actually use wide screens.
+ *
+ * Mobile: stacked (scene top, dialogue card bottom) — unchanged.
+ * Desktop (≥768px): two-column, scene fills left half, dialogue right.
  */
 
-.backCircle {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.52);
-  border: 2px solid rgba(255, 255, 255, 0.22);
-  color: #fff;
-  font-size: 16px;
-  font-weight: 800;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s;
-}
-.backCircle:hover { background: rgba(0, 0, 0, 0.7); }
-.backCircle:active { transform: scale(0.94); }
+/* ── OUTER SHELL ─────────────────────────────────────────────────────────── */
 
+.screen {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: var(--eg-font-display, "Nunito", "Space Grotesk", sans-serif);
+  background: #0a1808;
+}
+
+/* ── SCENE AREA ──────────────────────────────────────────────────────────── */
+
+.scene {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sceneBg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Character portrait — centred, bleeds down into dialogue card */
+.characterWrap {
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(260px, 70vw);
+  height: auto;
+  aspect-ratio: 240 / 310;
+  z-index: 4;
+  animation: characterRise 0.5s var(--eg-ease-pop, cubic-bezier(0.3, 1.6, 0.5, 1)) 0.1s both;
+}
+
+@keyframes characterRise {
+  from { opacity: 0; transform: translateX(-50%) translateY(18px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Name badge — pinned below the character, above the dialogue card */
+.nameBadge {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  background: #2e1258;
+  border: 2px solid #6a3aab;
+  border-radius: 10px;
+  padding: 5px 20px;
+  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  box-shadow: 0 4px 0 #150828, 0 6px 16px rgba(0,0,0,0.4);
+  animation: badgePop 0.4s var(--eg-ease-pop, cubic-bezier(0.3, 1.6, 0.5, 1)) 0.3s both;
+}
+
+@keyframes badgePop {
+  from { opacity: 0; transform: translateX(-50%) scale(0.88); }
+  to   { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+.nameBadgeName {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #e8d5ff;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.nameBadgeRole {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: rgba(200, 168, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+/* Mission chip — top right of the scene */
 .missionChip {
-  background: #c86a08;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 8;
+  background: #e07210;
   border-radius: 7px;
   padding: 4px 12px;
   font-size: 0.68rem;
@@ -30,83 +117,289 @@
   color: #fff;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  border-bottom: 2px solid #8a4406;
-  box-shadow: 0 3px 0 #8a4406;
+  border-bottom: 2px solid #9a4c08;
+  box-shadow: 0 3px 0 #9a4c08;
+  max-width: 42%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Dialogue text */
-.text {
-  font-size: 0.94rem;
-  line-height: 1.68;
-  color: #2a1a06;
+/* Back button — top left of the scene */
+.backBtn {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 8;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1.5px solid #6a3aab;
+  border-bottom: 3px solid #150828;
+  background: #2e1258;
+  box-shadow: 0 3px 0 #150828, 0 5px 14px rgba(0,0,0,0.4);
+  color: #e8d5ff;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s ease, border-bottom-width 0.1s ease;
+}
+.backBtn:active {
+  transform: translateY(2px);
+  border-bottom-width: 1px;
+}
+
+/* ── DIALOGUE CARD ───────────────────────────────────────────────────────── */
+
+.dialogueCard {
+  position: relative;
+  z-index: 5;
+  flex-shrink: 0;
+  background: #f5f0e4;
+  border-top: 3px solid #c8ba96;
+  padding: 28px 20px 20px;
+}
+
+.dialogueNotch {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid #f5f0e4;
+  filter: drop-shadow(0 -2px 0 #c8ba96);
+}
+
+.dialogueText {
+  font-size: 0.93rem;
+  line-height: 1.65;
+  color: #2a1a08;
   font-weight: 700;
-  min-height: 4.8rem; /* prevents card height jump during typewriter */
+  min-height: 5rem;
   letter-spacing: 0.01em;
 }
 
-.fadeIn  { animation: fadeIn  0.18s ease both; }
-.fadeOut { animation: fadeOut 0.14s ease both; pointer-events: none; }
+.dialogueFadeIn {
+  animation: fadeIn 0.2s ease both;
+}
+.dialogueFadeOut {
+  animation: fadeOut 0.15s ease both;
+  pointer-events: none;
+}
 
-@keyframes fadeIn  { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
-@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-4px); } }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-4px); }
+}
 
-/* Footer row */
-.footer {
+.dialogueFooter {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 18px;
+  margin-top: 16px;
 }
 
-/* Progress dots */
-.dots { display: flex; gap: 5px; align-items: center; }
+.dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
 
 .dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #c4b080;
+  background: #c4b490;
   transition: width 0.2s ease, background 0.2s ease, border-radius 0.2s ease;
 }
 
 .dotActive {
-  width: 22px;
+  width: 20px;
   border-radius: 4px;
-  background: #2a0f52;
+  background: #2e1258;
 }
 
-/* Next / Begin button */
 .nextBtn {
-  background: #2a0f52;
+  background: #2e1258;
   border: none;
   border-radius: 50px;
-  padding: 11px 26px;
+  padding: 11px 24px;
   font-size: 0.82rem;
   font-weight: 900;
   color: #fff;
-  font-family: var(--eg-font-display, "Baloo 2", "Space Grotesk", sans-serif);
+  font-family: var(--eg-font-display, "Nunito", "Space Grotesk", sans-serif);
   cursor: pointer;
   letter-spacing: 0.03em;
-  border-bottom: 3px solid #120828;
-  transition: transform 0.1s, border-bottom 0.1s, background 0.18s;
+  border-bottom: 3px solid #150828;
+  transition: transform 0.1s, border-bottom-width 0.1s, background 0.2s;
 }
-.nextBtn:active { transform: translateY(2px); border-bottom: 1px solid #120828; }
 
-/* Final state — amber pulse to signal the mission start */
+.nextBtn:active {
+  transform: translateY(2px);
+  border-bottom-width: 1px;
+}
+
 .nextBtnFinal {
-  background: #c86a08;
-  border-bottom-color: #884406;
-  animation: amberPulse 1.8s ease-in-out infinite;
+  background: #d4700c;
+  border-bottom-color: #8a4408;
+  box-shadow: 0 0 0 3px rgba(212, 112, 12, 0.2);
+  animation: pulseGlow 1.8s ease-in-out infinite;
 }
 
-@keyframes amberPulse {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(200, 106, 8, 0.22); }
-  50%       { box-shadow: 0 0 0 7px rgba(200, 106, 8, 0.08); }
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(212, 112, 12, 0.2); }
+  50%       { box-shadow: 0 0 0 6px rgba(212, 112, 12, 0.12); }
 }
+
+/* ── MOBILE ──────────────────────────────────────────────────────────────── */
+
+@media (min-width: 480px) {
+  .characterWrap {
+    width: min(300px, 60vw);
+    bottom: -32px;
+  }
+  .dialogueText {
+    font-size: 1rem;
+    min-height: 4.5rem;
+  }
+}
+
+/* ── DESKTOP — side-by-side layout ──────────────────────────────────────── */
+
+@media (min-width: 768px) {
+  /* Full-width two-column instead of a narrow phone card */
+  .screen {
+    flex-direction: row;
+    min-height: 100vh;
+    max-width: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* Left column: scene with character */
+  .scene {
+    flex: 1 1 55%;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Character: larger, positioned center of the scene panel */
+  .characterWrap {
+    width: min(360px, 44vw);
+    bottom: 0;
+    /* Re-center within the left panel */
+    left: 50%;
+    transform: translateX(-50%);
+    animation: characterRiseDesktop 0.5s var(--eg-ease-pop, cubic-bezier(0.3, 1.6, 0.5, 1)) 0.1s both;
+  }
+
+  @keyframes characterRiseDesktop {
+    from { opacity: 0; transform: translateX(-50%) translateY(18px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+
+  /* Name badge: centered in scene panel on desktop */
+  .nameBadge {
+    bottom: 20px;
+    left: 50%;
+  }
+
+  /* Mission chip stays top-right of the SCENE panel */
+  .missionChip {
+    top: 20px;
+    right: 20px;
+  }
+
+  /* Back button stays top-left of scene panel */
+  .backBtn {
+    top: 20px;
+    left: 20px;
+  }
+
+  /* Right column: dialogue card fills full height, vertically centred content */
+  .dialogueCard {
+    flex: 0 0 min(420px, 42vw);
+    min-height: 100vh;
+    border-top: none;
+    border-left: 3px solid #c8ba96;
+
+    /* Stack content vertically centred */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 48px 36px 40px;
+
+    /* Notch now points LEFT toward the character */
+  }
+
+  /* Replace top-pointing notch with a left-pointing one */
+  .dialogueNotch {
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    border-left: none;
+    border-right: 10px solid #f5f0e4;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    filter: drop-shadow(-2px 0 0 #c8ba96);
+  }
+
+  .dialogueText {
+    font-size: 1.08rem;
+    line-height: 1.7;
+    min-height: 6rem;
+  }
+
+  .dialogueFooter {
+    margin-top: 24px;
+  }
+
+  .nextBtn {
+    font-size: 0.9rem;
+    padding: 13px 28px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .scene {
+    flex: 1 1 60%;
+  }
+  .dialogueCard {
+    flex: 0 0 min(480px, 38vw);
+    padding: 56px 48px 48px;
+  }
+  .dialogueText {
+    font-size: 1.14rem;
+  }
+}
+
+/* ── REDUCED MOTION ──────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  .fadeIn, .fadeOut, .nextBtnFinal { animation: none !important; opacity: 1 !important; }
+  .characterWrap,
+  .nameBadge {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: translateX(-50%) !important;
+  }
+  .dialogueFadeIn,
+  .dialogueFadeOut {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  .nextBtnFinal {
+    animation: none !important;
+  }
+  .backBtn {
+    transition: none;
+  }
 }

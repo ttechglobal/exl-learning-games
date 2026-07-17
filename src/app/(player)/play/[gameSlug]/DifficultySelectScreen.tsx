@@ -1,86 +1,93 @@
 "use client";
 
-import { Mascot } from "@/motion/Mascot";
 import { DIFFICULTY_INFO, type PlayerDifficulty } from "@/lib/content/difficultyModifiers";
+import { CharacterFigure, SceneBackground } from "@/app/(player)/play/[gameSlug]/NarrationScene";
 import styles from "@/app/(player)/play/[gameSlug]/DifficultySelectScreen.module.css";
 
 export interface DifficultySelectScreenProps {
+  subject: string;
   accentColor: string;
   onSelect: (difficulty: PlayerDifficulty) => void;
+  onBack?: () => void;
 }
 
 const ORDER: PlayerDifficulty[] = ["EASY", "MEDIUM", "HARD"];
 const INTENSITY: Record<PlayerDifficulty, number> = { EASY: 1, MEDIUM: 2, HARD: 3 };
 
-/** Explicit map instead of building the class name via template-literal
- *  string construction — same reasoning as the badge-class fix in
- *  HomePage.tsx: CSS Modules class names are hashed/typed, so a
- *  dynamically-built key is fragile even when the union is closed. */
 const TIER_CLASS: Record<PlayerDifficulty, string> = {
   EASY: styles.tierEASY,
   MEDIUM: styles.tierMEDIUM,
-  HARD: styles.tierHARD
+  HARD: styles.tierHARD,
 };
 
 /**
- * Restyled per direct feedback: the original version rendered three
- * identical-shaped rows that only differed by border color, reading more
- * like a settings list than a meaningful choice between three different
- * intensities. Now each tier card actually grows (padding, icon size,
- * label size) and saturates (background/border color-mix percentage)
- * from Easy to Hard, and a row of small "intensity bars" per tier fills
- * up more as difficulty increases — the escalation should be visible at
- * a glance, not just read off three same-shaped labels.
- *
- * No longer owns its own page-level wrapper or backdrop — PrePlayShell
- * (see PlayClient.tsx) provides the full-bleed environment art for the
- * whole pre-play flow now, not just this one screen.
- *
- * HEADING LEGIBILITY: per direct feedback, "Before You Begin" / "Choose
- * Your Difficulty" weren't easily readable. Root cause — these used
- * dim/bright TEXT-only colors with no backing of any kind, sitting
- * directly on the (often busy) environment photo behind everything once
- * PrePlayShell's backdrop replaced what used to be a much plainer
- * background. See .heading in the CSS: now sits on its own small pill
- * with a solid-ish background and a text-shadow, instead of trusting
- * text color alone to stay legible over arbitrary photo content.
+ * Redesigned as a full NarrationScreen-style screen:
+ * - Owns its own dark scene (no longer uses PrePlayShell)
+ * - Character fills the scene area just like NarrationScreen
+ * - Parchment card at the bottom / right column contains the tier choices
+ * - Desktop: side-by-side layout matching NarrationScreen exactly
  */
-export function DifficultySelectScreen({ accentColor, onSelect }: DifficultySelectScreenProps) {
+export function DifficultySelectScreen({ subject, accentColor: _accentColor, onSelect, onBack }: DifficultySelectScreenProps) {
   return (
-    <>
-      <div className={styles.mascotRow}>
-        <Mascot pose="idle" widthPx={92} />
+    <div className={styles.screen}>
+
+      {/* ── SCENE ── */}
+      <div className={styles.scene}>
+        <SceneBackground subject={subject} />
+
+        {onBack && (
+          <button className={styles.backBtn} onClick={onBack} aria-label="Go back">
+            ←
+          </button>
+        )}
+
+        <div className={styles.characterWrap} aria-hidden="true">
+          <CharacterFigure subject={subject} />
+        </div>
+
+        <div className={styles.sceneBadge}>
+          <span className={styles.sceneBadgeTitle}>Choose Difficulty</span>
+          <span className={styles.sceneBadgeSub}>Before You Begin</span>
+        </div>
       </div>
 
-      <div className={styles.heading} style={{ "--accent-color": accentColor } as React.CSSProperties}>
-        <div className={styles.headingLabel}>Before You Begin</div>
-        <div className={styles.headingTitle}>Choose Your Difficulty</div>
-      </div>
+      {/* ── PARCHMENT CARD — tier buttons ── */}
+      <div className={styles.card}>
+        <div className={styles.cardNotch} />
+        <div className={styles.cardLabel}>Select Your Challenge</div>
 
-      <div className={styles.tierList}>
-        {ORDER.map((tier) => {
-          const info = DIFFICULTY_INFO[tier];
-          const filledBars = INTENSITY[tier];
-          return (
-            <button key={tier} className={`${styles.tierButton} ${TIER_CLASS[tier]}`} onClick={() => onSelect(tier)}>
-              <div className={styles.tierIconWrap}>
-                <span className={styles.tierEmoji}>{info.emoji}</span>
-              </div>
-              <div className={styles.tierBody}>
-                <div className={styles.tierTopRow}>
-                  <span className={styles.tierLabel}>{info.label}</span>
-                  <span className={styles.intensityBars}>
-                    {[1, 2, 3].map((i) => (
-                      <span key={i} className={`${styles.intensityBar} ${i <= filledBars ? styles.filled : ""}`} />
-                    ))}
-                  </span>
+        <div className={styles.tierList}>
+          {ORDER.map((tier) => {
+            const info = DIFFICULTY_INFO[tier];
+            const filledBars = INTENSITY[tier];
+            return (
+              <button
+                key={tier}
+                className={`${styles.tierButton} ${TIER_CLASS[tier]}`}
+                onClick={() => onSelect(tier)}
+              >
+                <div className={styles.tierIconWrap}>
+                  <span className={styles.tierEmoji}>{info.emoji}</span>
                 </div>
-                <span className={styles.tierDesc}>{info.description}</span>
-              </div>
-            </button>
-          );
-        })}
+                <div className={styles.tierBody}>
+                  <div className={styles.tierTopRow}>
+                    <span className={styles.tierLabel}>{info.label}</span>
+                    <span className={styles.intensityBars}>
+                      {[1, 2, 3].map((i) => (
+                        <span
+                          key={i}
+                          className={`${styles.intensityBar} ${i <= filledBars ? styles.filled : ""}`}
+                        />
+                      ))}
+                    </span>
+                  </div>
+                  <span className={styles.tierDesc}>{info.description}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
-    </>
+    </div>
   );
 }

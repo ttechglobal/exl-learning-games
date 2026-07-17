@@ -199,9 +199,8 @@ export function WorldsClient({ bySubject, currentStudentRank, studentName }: Wor
                   {/* Game cards — direct links, no modal */}
                   {isLive ? (
                     <div className={styles.gameGrid}>
-                      {summaries.map(({ game, missionCount, xpMin, xpMax, difficultyMin, difficultyMax }) => {
-                        const desc = GAME_CARD_DESC[game.slug] ?? game.name;
-                        const diff = diffLabel(difficultyMin, difficultyMax);
+                      {summaries.map(({ game, missionCount, xpMin, xpMax }) => {
+                        const desc = GAME_CARD_DESC[game.slug] ?? game.title;
 
                         return (
                           <Link
@@ -217,12 +216,11 @@ export function WorldsClient({ bySubject, currentStudentRank, studentName }: Wor
                                 color={meta.color}
                                 tint={meta.tint}
                               />
-                              {diff && <span className={styles.gcDiff}>{diff}</span>}
                             </div>
 
                             {/* Info */}
                             <div className={styles.gcInfo}>
-                              <div className={`${styles.gcName} ${styles.fd}`}>{game.name}</div>
+                              <div className={`${styles.gcName} ${styles.fd}`}>{game.title}</div>
                               <div className={styles.gcDesc}>{desc}</div>
                               <div className={styles.gcMeta}>
                                 <span className={styles.gcXp}>+{xpMin === xpMax ? xpMin : `${xpMin}–${xpMax}`} XP</span>

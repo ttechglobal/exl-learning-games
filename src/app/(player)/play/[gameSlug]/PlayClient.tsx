@@ -9,8 +9,6 @@ import { LevelSelectScreen } from "@/app/(player)/play/[gameSlug]/LevelSelectScr
 import { TrackMapScreen } from "@/app/(player)/play/[gameSlug]/TrackMapScreen";
 import { DifficultySelectScreen } from "@/app/(player)/play/[gameSlug]/DifficultySelectScreen";
 import { NarrationScreen } from "@/components/exl/NarrationScreen";
-import { MissionObjectivesScreen } from "@/components/exl/MissionObjectivesScreen";
-import { resolveMissionObjectives } from "@/lib/content/missionObjectives";
 import { resetConceptsSeen } from "@/lib/content/contentPrefs";
 import { engineSupportsDifficultyChoice, type PlayerDifficulty } from "@/lib/content/difficultyModifiers";
 import { getElementByAtomicNumber, CATEGORY_COLORS } from "@/motion/periodicTableData";
@@ -29,7 +27,7 @@ export interface PlayClientProps {
   completedMissionIds: Set<string>;
 }
 
-type Screen = "levelSelect" | "trackMap" | "difficultyTrack" | "entry" | "difficulty" | "objectives" | "runtime";
+type Screen = "levelSelect" | "trackMap" | "difficultyTrack" | "entry" | "difficulty" | "runtime";
 
 const SUBJECT_FALLBACK_ACCENT: Record<string, string> = {
   chemistry: "var(--eg-subject-chemistry)",
@@ -299,10 +297,6 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
       setScreen("entry");
       return;
     }
-    if (screen === "objectives") {
-      setScreen(supportsDifficultyChoice ? "difficulty" : "entry");
-      return;
-    }
     // levelSelect, trackMap, or any unexpected state
     router.push("/worlds");
   }
@@ -442,7 +436,7 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
       gameSlug={game.slug}
       subject={game.subject}
       mission={activeMission}
-      onStart={() => setScreen(supportsDifficultyChoice ? "difficulty" : "objectives")}
+      onStart={() => setScreen(supportsDifficultyChoice ? "difficulty" : "runtime")}
       onBack={handleBack}
       backLabel={isLevelBased ? "Back to Levels" : isTrackMap ? "Back to Map" : "Back to Worlds"}
     />
@@ -451,46 +445,19 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
 
   if (screen === "difficulty") {
     return (
-      <PrePlayShell
-        gameSlug={game.slug}
-        gameTitle={game.title}
+      <DifficultySelectScreen
         subject={game.subject}
         accentColor={resolveAccentColor()}
+        onSelect={(difficulty) => {
+          setPlayerDifficulty(difficulty);
+          setScreen("runtime");
+        }}
         onBack={handleBack}
-        backLabel="Back to Mission Briefing"
-      >
-        <DifficultySelectScreen
-          accentColor={resolveAccentColor()}
-          onSelect={(difficulty) => {
-            setPlayerDifficulty(difficulty);
-            setScreen("objectives");
-          }}
-        />
-      </PrePlayShell>
-    );
-  }
-
-  if (screen === "objectives") {
-    return (
-      <PrePlayShell
-        gameSlug={game.slug}
-        gameTitle={game.title}
-        subject={game.subject}
-        accentColor={resolveAccentColor()}
-        onBack={handleBack}
-        backLabel={supportsDifficultyChoice ? "Back to Difficulty" : "Back to Mission Briefing"}
-      >
-      <MissionObjectivesScreen
-        objectives={resolveMissionObjectives(game.engine_type, activeMission.payload)}
-        accentColor={resolveAccentColor()}
-        subject={game.subject}          // ← NEW PROP
-        onStart={() => setScreen("runtime")}
-        onBack={handleBack}             // ← replaces PrePlayShell's onBack
       />
-
-      </PrePlayShell>
     );
   }
+
+
 
   // screen === 'runtime'
   return (
@@ -622,13 +589,13 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
           if (supportsDifficultyChoice) {
             setScreen("difficulty");
           } else {
-            setScreen("objectives");
+            setScreen("runtime");
           }
         }
       }}
       onBackToHome={() => router.push("/worlds")}
       onChangeDifficulty={supportsDifficultyChoice ? handleChangeDifficulty : undefined}
-      onBackFromConcepts={() => setScreen("objectives")}
+      onBackFromConcepts={() => setScreen("runtime")}
       accentColor={resolveAccentColor()}
       openInReviewMode={openInReview}
       onReviewModeConsumed={() => setOpenInReview(false)}

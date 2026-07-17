@@ -1,30 +1,33 @@
 "use client";
 
-/**
- * NarrationScreen.tsx — v2
- *
- * Mission briefing via character dialogue. Renders inside EXLShell.
- * Replaces EntryScreen in PlayClient.tsx.
- * ConceptSnapshot removed from the flow — guided engine teaches in-play.
- */
-
-import { useState, useEffect, useRef, useCallback } from "react";
-import { EXLShell } from "@/components/exl/EXLShell";
-import { resolveMissionBriefing } from "@/lib/content/missionBriefing";
+import { useState, useEffect, useRef } from "react";
 import type { MissionRow } from "@/types/db";
+import { resolveMissionBriefing } from "@/lib/content/missionBriefing";
 import styles from "./NarrationScreen.module.css";
+import { CHARACTERS, FALLBACK_CHARACTER, SceneBackground, CharacterFigure } from "./NarrationScene";
 
-function BackCircle({ onClick, label }: { onClick: () => void; label: string }) {
-  return (
-    <button className={styles.backCircle} onClick={onClick} aria-label={label}>
-      ←
-    </button>
-  );
+
+// ─── Briefing lines ──────────────────────────────────────────────────────────
+
+function splitIntoLines(text: string): string[] {
+  const sentences = text
+    .split(/(?<=\.)\s+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+  if (sentences.length <= 1) return [text];
+  const cards: string[] = [];
+  let i = 0;
+  while (i < sentences.length && cards.length < 3) {
+    cards.push(sentences[i]);
+    i++;
+  }
+  if (i < sentences.length) {
+    cards.push(sentences.slice(i).join(" "));
+  }
+  return cards;
 }
 
-function MissionChip({ title }: { title: string }) {
-  return <div className={styles.missionChip}>{title}</div>;
-}
+// ─── Typewriter text effect ──────────────────────────────────────────────────
 
 function TypewriterText({ text, onDone }: { text: string; onDone: () => void }) {
   const [displayed, setDisplayed] = useState("");
@@ -34,89 +37,149 @@ function TypewriterText({ text, onDone }: { text: string; onDone: () => void }) 
   useEffect(() => {
     setDisplayed("");
     indexRef.current = 0;
+
     const tick = () => {
       if (indexRef.current < text.length) {
         indexRef.current++;
         setDisplayed(text.slice(0, indexRef.current));
-        timerRef.current = setTimeout(tick, 20);
+        timerRef.current = setTimeout(tick, 22);
       } else {
         onDone();
       }
     };
-    timerRef.current = setTimeout(tick, 80);
+
+    timerRef.current = setTimeout(tick, 60);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [text, onDone]);
 
   return <span>{displayed}</span>;
 }
 
-function splitBriefing(text: string): string[] {
-  const sentences = text.split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
-  if (sentences.length <= 1) return [text];
-  const cards: string[] = [];
-  let i = 0;
-  while (i < sentences.length && cards.length < 3) {
-    if (i + 1 < sentences.length && sentences[i].length < 60) {
-      cards.push(sentences[i] + " " + sentences[i + 1]);
-      i += 2;
-    } else {
-      cards.push(sentences[i]);
-      i++;
-    }
-  }
-  if (i < sentences.length) cards[cards.length - 1] += " " + sentences.slice(i).join(" ");
-  return cards;
-}
+// ─── Props ───────────────────────────────────────────────────────────────────
 
 export interface NarrationScreenProps {
   gameSlug: string;
   subject: string;
   mission: MissionRow;
   onStart: () => void;
-  onBack: () => void;
+  /** Back navigation — provided by PlayClient, renders a game-styled back
+   *  button inside the scene area (top-left) so NarrationScreen stays
+   *  self-contained and doesn't need PrePlayShell's header row. */
+  onBack?: () => void;
   backLabel?: string;
 }
 
-export function NarrationScreen({ gameSlug, subject, mission, onStart, onBack, backLabel = "Back" }: NarrationScreenProps) {
-  const briefing = resolveMissionBriefing(gameSlug);
-  const [lines] = useState<string[]>(() => {
-    const parsed = splitBriefing(briefing);
-    const goal = mission.learning_goal ? `Your goal: ${mission.learning_goal}. Ready?` : "Ready to begin?";
-    return [...parsed, goal];
+// ─── Main component ──────────────────────────────────────────────────────────
+
+export function NarrationScreen({ gameSlug, subject, mission, onStart, onBack }: NarrationScreenProps) {
+  const character = CHARACTERS[subject] ?? FALLBACK_CHARACTER;
+
+  const briefingText = resolveMissionBriefing(gameSlug);
+  const [baseLines] = useState<string[]>(() => {
+    const parsed = splitIntoLines(briefingText);
+    return [
+      ...parsed,
+      mission.learning_goal
+        ? `Your goal: ${mission.learning_goal}. Ready to begin?`
+        : "Ready to begin?",
+    ];
   });
+
   const [lineIndex, setLineIndex] = useState(0);
   const [typingDone, setTypingDone] = useState(false);
-  const [fading, setFading] = useState(false);
-  const isLast = lineIndex === lines.length - 1;
-  const handleDone = useCallback(() => setTypingDone(true), []);
+  const [isAnimatingOut, setIsAnimatingOut] = useState(false);
+
+  const currentLine = baseLines[lineIndex];
+  const isLast = lineIndex === baseLines.length - 1;
 
   function handleNext() {
-    if (!typingDone) { setTypingDone(true); return; }
-    if (isLast) { onStart(); return; }
-    setFading(true);
-    setTimeout(() => { setLineIndex(i => i + 1); setTypingDone(false); setFading(false); }, 160);
+    if (!typingDone) {
+      setTypingDone(true);
+      return;
+    }
+    if (isLast) {
+      onStart();
+      return;
+    }
+    setIsAnimatingOut(true);
+    setTimeout(() => {
+      setLineIndex(i => i + 1);
+      setTypingDone(false);
+      setIsAnimatingOut(false);
+    }, 160);
   }
 
   return (
-    <EXLShell
-      subject={subject}
-      pose="idle"
-      topLeft={<BackCircle onClick={onBack} label={backLabel} />}
-      topRight={<MissionChip title={mission.title} />}
-    >
-      <div className={[styles.text, fading ? styles.fadeOut : styles.fadeIn].join(" ")} aria-live="polite" aria-atomic="true">
-        {!fading && <TypewriterText key={lines[lineIndex]} text={lines[lineIndex]} onDone={handleDone} />}
-      </div>
-      <div className={styles.footer}>
-        <div className={styles.dots} role="status" aria-label={`Line ${lineIndex + 1} of ${lines.length}`}>
-          {lines.map((_, i) => (
-            <div key={i} className={[styles.dot, i === lineIndex ? styles.dotActive : ""].join(" ")} />
-          ))}
+    <div className={styles.screen}>
+
+      {/* ── SCENE (character + background) ── */}
+      <div className={styles.scene}>
+        <SceneBackground subject={subject} />
+
+        {/* Back button — rendered inside the scene so it sits on the dark
+            background and doesn't need PrePlayShell's header row */}
+        {onBack && (
+          <button
+            className={styles.backBtn}
+            onClick={onBack}
+            aria-label="Go back"
+          >
+            ←
+          </button>
+        )}
+
+        <div className={styles.characterWrap} aria-hidden="true">
+          <CharacterFigure subject={subject} />
         </div>
-        <button className={[styles.nextBtn, isLast && typingDone ? styles.nextBtnFinal : ""].join(" ")} onClick={handleNext}>
-          {isLast && typingDone ? "Begin mission →" : typingDone ? "Next →" : "Skip"}
-        </button>
+
+        <div className={styles.nameBadge}>
+          <span className={styles.nameBadgeName}>{character.name}</span>
+          <span className={styles.nameBadgeRole}>{character.role}</span>
+        </div>
+
+        <div className={styles.missionChip} aria-label="Mission label">
+          {mission.title}
+        </div>
       </div>
-    </EXLShell>
+
+      {/* ── DIALOGUE CARD ── */}
+      <div className={styles.dialogueCard}>
+        <div className={styles.dialogueNotch} />
+
+        <div
+          className={[
+            styles.dialogueText,
+            isAnimatingOut ? styles.dialogueFadeOut : styles.dialogueFadeIn,
+          ].join(" ")}
+        >
+          {!isAnimatingOut && (
+            <TypewriterText
+              key={currentLine}
+              text={currentLine}
+              onDone={() => setTypingDone(true)}
+            />
+          )}
+        </div>
+
+        <div className={styles.dialogueFooter}>
+          <div className={styles.dots} role="status" aria-label={`Line ${lineIndex + 1} of ${baseLines.length}`}>
+            {baseLines.map((_, i) => (
+              <div
+                key={i}
+                className={[styles.dot, i === lineIndex ? styles.dotActive : ""].join(" ")}
+              />
+            ))}
+          </div>
+
+          <button
+            className={[styles.nextBtn, isLast && typingDone ? styles.nextBtnFinal : ""].join(" ")}
+            onClick={handleNext}
+            aria-label={isLast && typingDone ? "Begin mission" : typingDone ? "Next line" : "Skip animation"}
+          >
+            {isLast && typingDone ? "Begin mission" : typingDone ? "Next →" : "Skip"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { GameRuntime } from "@/components/runtime/GameRuntime";
 import { GameMenu } from "@/components/runtime/GameMenu";
+import { GameTitleScreen } from "@/components/runtime/GameTitleScreen";
 import { PrePlayShell } from "@/components/runtime/PrePlayShell";
 import { LevelSelectScreen } from "@/app/(player)/play/[gameSlug]/LevelSelectScreen";
 import { TrackMapScreen } from "@/app/(player)/play/[gameSlug]/TrackMapScreen";
@@ -27,7 +28,7 @@ export interface PlayClientProps {
   completedMissionIds: Set<string>;
 }
 
-type Screen = "levelSelect" | "trackMap" | "difficultyTrack" | "entry" | "difficulty" | "runtime";
+type Screen = "title" | "levelSelect" | "trackMap" | "difficultyTrack" | "entry" | "difficulty" | "runtime";
 
 const SUBJECT_FALLBACK_ACCENT: Record<string, string> = {
   chemistry: "var(--eg-subject-chemistry)",
@@ -159,11 +160,7 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
   const skipPreGameScreens = game.engine_type === "change-of-subject";
 
   const [screen, setScreen] = useState<Screen>(
-    isLevelBased ? "levelSelect"
-    : trackMapHasDifficultyTiers ? "difficultyTrack"
-    : isTrackMap ? "trackMap"
-    : skipPreGameScreens ? "runtime"   // ← CoS goes straight in
-    : "entry"
+    skipPreGameScreens ? "runtime" : "title"
   );
   const [activeMissionId, setActiveMissionId] = useState(initialMissionId);
   const [playerDifficulty, setPlayerDifficulty] = useState<PlayerDifficulty | null>(null);
@@ -288,20 +285,45 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
   function handleBack() {
     if (screen === "entry") {
       if (isLevelBased) setScreen("levelSelect");
-      else if (trackMapHasDifficultyTiers) setScreen("trackMap"); // back to filtered track
+      else if (trackMapHasDifficultyTiers) setScreen("trackMap");
       else if (isTrackMap) setScreen("trackMap");
-      else router.push("/worlds");
+      else setScreen("title");   // back to title, not /worlds
       return;
     }
     if (screen === "difficulty") {
       setScreen("entry");
       return;
     }
-    // levelSelect, trackMap, or any unexpected state
+    // levelSelect, trackMap, title, or any unexpected state
+    if (screen === "title") { router.push("/worlds"); return; }
     router.push("/worlds");
   }
 
   const menu = <GameMenu onRestart={handleRestart} onChangeDifficulty={supportsDifficultyChoice ? handleChangeDifficulty : undefined} />;
+
+  // ── TITLE SCREEN — shown for every game before any other pre-play screen ──
+  if (screen === "title") {
+    // Compute total XP available from all missions
+    const totalXp = sortedMissions.reduce((s, m) => s + (m.xp_reward ?? 0), 0);
+    // Destination after title: same first screen as before
+    function afterTitle() {
+      if (isLevelBased) setScreen("levelSelect");
+      else if (trackMapHasDifficultyTiers) setScreen("difficultyTrack");
+      else if (isTrackMap) setScreen("trackMap");
+      else setScreen("entry");
+    }
+    return (
+      <GameTitleScreen
+        gameTitle={game.title}
+        subject={game.subject}
+        missionTitle={activeMission.title}
+        missionCount={sortedMissions.length}
+        xpReward={totalXp}
+        onPlay={afterTitle}
+        onBack={() => router.push("/worlds")}
+      />
+    );
+  }
 
   if (screen === "levelSelect") {
     return (

@@ -172,22 +172,12 @@ export function WorldsClient({
               )}
             </div>
 
-            {/* Stats strip inside hero */}
+            {/* Stats strip inside hero — rank only, no XP duplicate */}
             <div className={styles.heroStats}>
               {currentStudentRank && (
                 <div className={styles.heroStat}>
                   <span className={styles.heroStatVal}>#{currentStudentRank}</span>
                   <span className={styles.heroStatLabel}>Your Rank</span>
-                </div>
-              )}
-              <div className={styles.heroStat}>
-                <span className={styles.heroStatVal}>{totalGames}</span>
-                <span className={styles.heroStatLabel}>Experiences</span>
-              </div>
-              {currentStudentXp !== undefined && (
-                <div className={styles.heroStat}>
-                  <span className={styles.heroStatVal}>{currentStudentXp.toLocaleString()}</span>
-                  <span className={styles.heroStatLabel}>XP Earned</span>
                 </div>
               )}
             </div>
@@ -258,7 +248,7 @@ export function WorldsClient({
                             href={`/play/${game.slug}`}
                             className={styles.card}
                           >
-                            {/* Art — floats; card hover lifts it */}
+                            {/* Art — sits inside card, no floating offset */}
                             <div className={styles.cardArtWrap}>
                               <div className={styles.cardArt}>
                                 <GameCardArt
@@ -278,8 +268,8 @@ export function WorldsClient({
                                 <span className={styles.cardXp}>+{xpMin === xpMax ? xpMin : `${xpMin}–${xpMax}`} XP</span>
                                 <span className={styles.cardMissions}>{missionCount} mission{missionCount !== 1 ? "s" : ""}</span>
                               </div>
-                              <div className={styles.cardCta}>Explore →</div>
                             </div>
+                            <div className={styles.cardCta}>Explore →</div>
                           </Link>
                         );
                       })}
@@ -323,25 +313,6 @@ export function WorldsClient({
               <div className={styles.sideSubject}>{subMeta.emoji} {subMeta.name}</div>
               <h3 className={styles.sideName}>{featuredMeta?.heroLine}</h3>
               <p className={styles.sideDesc}>{featuredMeta?.tagline}</p>
-
-              <div className={styles.sideStats}>
-                <div className={styles.sideStat}>
-                  <span className={styles.sideStatVal}>{featuredGames.length}</span>
-                  <span className={styles.sideStatLabel}>Experiences</span>
-                </div>
-                <div className={styles.sideStat}>
-                  <span className={styles.sideStatVal}>
-                    {featuredGames.reduce((s, g) => s + g.missionCount, 0)}
-                  </span>
-                  <span className={styles.sideStatLabel}>Missions</span>
-                </div>
-                <div className={styles.sideStat}>
-                  <span className={styles.sideStatVal}>
-                    {featuredGames.reduce((s, g) => s + g.xpMax, 0).toLocaleString()}
-                  </span>
-                  <span className={styles.sideStatLabel}>Max XP</span>
-                </div>
-              </div>
 
               {/* Games list in side panel */}
               <div className={styles.sideGameList}>

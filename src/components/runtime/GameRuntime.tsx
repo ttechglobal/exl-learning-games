@@ -224,9 +224,12 @@ export function GameRuntime({
   // Learn shows on first visit per game. After that, go straight to playing.
   // openInReviewMode forces the reviewingLearn phase (from game menu).
   const [phase, setPhase] = useState<Phase>(() => {
+    // NarrationScreen handles the mission briefing before GameRuntime
+    // mounts, so we skip the learn phase entirely and go straight to
+    // playing. The Review Concepts path (openInReviewMode) still works
+    // for accessing content from the game menu.
     if (openInReviewMode) return "reviewingLearn";
-    if (typeof window === "undefined") return "learn";
-    return hasSeenLearn(gameSlug) ? "playing" : "learn";
+    return "playing";
   });
 
   // Notify parent that review mode has been consumed so it resets the flag

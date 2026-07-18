@@ -183,6 +183,20 @@ export const GAME_THEMES: Record<string, GameTheme> = {
     },
   },
 
+  /**
+   * Matter Lab
+   * World: a sealed temperature-control chamber, glowing particle dots
+   * shifting between blue (solid), cyan (liquid), and amber (gas) as the
+   * student manipulates a heat slider. Deep space-lab atmosphere.
+   * Palette: deep space-black → electric cyan → warm amber
+   */
+  "matter-lab": {
+    description: "Control the heat and watch particles change state — drag the temperature slider and name what you see happening.",
+    preGameGradient: "linear-gradient(160deg, #03080f 0%, #071828 50%, #040e1a 100%)",
+    gameGradient:    "linear-gradient(160deg, #03080f 0%, #0a1a2e 100%)",
+    accent: "#38c0f0",
+  },
+
   // ── Physics ─────────────────────────────────────────────────────────────
 
   /**

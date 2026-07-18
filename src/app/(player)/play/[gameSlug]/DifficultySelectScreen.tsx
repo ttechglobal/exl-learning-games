@@ -46,15 +46,16 @@ export function DifficultySelectScreen({ subject, accentColor: _accentColor, onS
         </div>
 
         <div className={styles.sceneBadge}>
-          <span className={styles.sceneBadgeTitle}>Choose Difficulty</span>
-          <span className={styles.sceneBadgeSub}>Before You Begin</span>
+          <span className={styles.sceneBadgeTitle}>Choose Your Stage</span>
+          <span className={styles.sceneBadgeSub}>How would you like to learn?</span>
         </div>
       </div>
 
       {/* ── PARCHMENT CARD — tier buttons ── */}
       <div className={styles.card}>
         <div className={styles.cardNotch} />
-        <div className={styles.cardLabel}>Select Your Challenge</div>
+        <div className={styles.cardLabel}>Select Your Learning Stage</div>
+        <p className={styles.cardSub}>You can always replay at a higher stage once you feel ready.</p>
 
         <div className={styles.tierList}>
           {ORDER.map((tier) => {

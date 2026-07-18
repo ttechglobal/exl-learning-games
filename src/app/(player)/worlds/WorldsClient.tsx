@@ -3,11 +3,15 @@
 /**
  * WorldsClient.tsx — EXL Learning World Dashboard
  *
- * Changes from previous version:
- * - XP total card removed (unnecessary noise on the browse page)
- * - QuickPlayModal removed — game cards are now direct links to /play/[slug]
- * - GameCardArt prop bug fixed: was passing slug/subject, now passes
- *   gameSlug/emoji/color/tint as the component actually expects
+ * REDESIGN: Inspired by the Moze reference dashboard.
+ * Structure:
+ *   Hero banner    — featured world with character art + tagline + CTA
+ *   World chips    — horizontal filter pills (All + 4 subjects)
+ *   Game grid      — 3-column card grid (character floats above card)
+ *   Featured panel — right column on desktop; stacks below on mobile
+ *
+ * Light/dark: built entirely on CSS custom properties from tokens.css.
+ * No hardcoded colours in JSX — every value is a token or derived from --wc.
  */
 
 import Link from "next/link";
@@ -19,6 +23,8 @@ import { GAME_CARD_DESC } from "@/lib/content/gameCardMeta";
 import { GameCardArt } from "@/components/ui/GameCardArt";
 import type { GameRow, Difficulty } from "@/types/db";
 import styles from "@/app/(player)/worlds/WorldsClient.module.css";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface GameSummary {
   game: GameRow;
@@ -37,198 +43,242 @@ export interface WorldsClientProps {
   studentName?: string;
 }
 
+// ─── World metadata ───────────────────────────────────────────────────────────
+
 const WORLD_META: Record<string, {
-  name: string; tagline: string; glyph: string;
-  color: string; tint: string; border: string; darkBg: string;
+  name: string;
+  tagline: string;
+  heroLine: string;   // bolder, shorter hero headline
+  glyph: string;
+  color: string;
+  colorRgb: string;   // raw rgb for rgba() constructions
+  gradient: string;   // hero banner gradient
 }> = {
   chemistry: {
     name: "Chemistry World",
     tagline: "Build atoms, break bonds, see matter behave.",
-    glyph: "⚗",
+    heroLine: "Where matter reveals its secrets.",
+    glyph: "⚗️",
     color: "var(--eg-subject-chemistry)",
-    tint: "rgba(123,79,203,0.07)",
-    border: "rgba(123,79,203,0.18)",
-    darkBg: "rgba(123,79,203,0.12)",
+    colorRgb: "123,79,203",
+    gradient: "linear-gradient(135deg, #1a0840 0%, #2d1260 50%, #180638 100%)",
   },
   mathematics: {
     name: "Mathematics World",
     tagline: "Solve equations, construct proofs, own the numbers.",
-    glyph: "∑",
+    heroLine: "Numbers behave. Learn to speak their language.",
+    glyph: "📐",
     color: "var(--eg-subject-mathematics)",
-    tint: "rgba(47,155,214,0.07)",
-    border: "rgba(47,155,214,0.18)",
-    darkBg: "rgba(47,155,214,0.12)",
+    colorRgb: "47,155,214",
+    gradient: "linear-gradient(135deg, #031828 0%, #062848 50%, #041020 100%)",
   },
   physics: {
     name: "Physics World",
     tagline: "Apply forces, trace light, move through space.",
+    heroLine: "Every force tells a story. Find it.",
     glyph: "⚡",
     color: "var(--eg-subject-physics)",
-    tint: "rgba(255,111,145,0.07)",
-    border: "rgba(255,111,145,0.18)",
-    darkBg: "rgba(255,111,145,0.12)",
+    colorRgb: "255,111,145",
+    gradient: "linear-gradient(135deg, #200818 0%, #380820 50%, #1a0412 100%)",
   },
   biology: {
     name: "Biology World",
     tagline: "Study cells, map ecosystems, decode life.",
-    glyph: "⬡",
+    heroLine: "Life is the most complex system ever built.",
+    glyph: "🧬",
     color: "var(--eg-subject-biology)",
-    tint: "rgba(76,175,110,0.07)",
-    border: "rgba(76,175,110,0.18)",
-    darkBg: "rgba(76,175,110,0.12)",
+    colorRgb: "76,175,110",
+    gradient: "linear-gradient(135deg, #021408 0%, #082814 50%, #020e06 100%)",
   },
 };
 
-function diffLabel(min: Difficulty | null, max: Difficulty | null) {
-  if (!min) return null;
-  const L: Record<Difficulty, string> = { EASY: "Easy", MEDIUM: "Medium", HARD: "Hard" };
-  return min === max ? L[min] : `${L[min]}–${L[max ?? min]}`;
-}
+const ALL_SUBJECTS = ["chemistry", "mathematics", "physics", "biology"];
 
-export function WorldsClient({ bySubject, currentStudentRank, studentName }: WorldsClientProps) {
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export function WorldsClient({
+  bySubject,
+  currentStudentXp,
+  currentStudentRank,
+  studentName,
+}: WorldsClientProps) {
   const { theme, toggleTheme } = useTheme();
   const [activeWorld, setActiveWorld] = useState<string | null>(null);
 
-  const allSubjects = ["chemistry", "mathematics", "physics", "biology"];
+  // Pick the featured world: first live subject, or first subject overall
+  const featuredSubject = activeWorld
+    ?? ALL_SUBJECTS.find(s => (bySubject[s]?.length ?? 0) > 0)
+    ?? ALL_SUBJECTS[0];
+
+  const featuredMeta   = WORLD_META[featuredSubject];
+  const featuredGames  = bySubject[featuredSubject] ?? [];
+  const featuredFirst  = featuredGames[0] ?? null;
+  const subMeta        = subjectMeta(featuredSubject);
+
+  const visibleSubjects = activeWorld ? [activeWorld] : ALL_SUBJECTS;
   const totalGames = Object.values(bySubject).reduce((s, g) => s + g.length, 0);
 
   return (
     <div className={styles.page} data-theme={theme}>
 
-      {/* Ambient */}
+      {/* ── AMBIENT GLOW LAYER ──────────────────────────────────────────── */}
       <div className={styles.ambient} aria-hidden="true">
-        <div className={styles.blob} style={{ width: 600, height: 600, top: "-10%", right: "-15%", background: "radial-gradient(circle, rgba(123,79,203,0.1) 0%, transparent 70%)" }} />
-        <div className={styles.blob} style={{ width: 400, height: 400, bottom: "10%", left: "-5%", background: "radial-gradient(circle, rgba(47,155,214,0.08) 0%, transparent 70%)" }} />
+        <div className={styles.ambientBlob1} />
+        <div className={styles.ambientBlob2} />
       </div>
 
-      <SiteHeader theme={theme} onToggleTheme={toggleTheme} active="games" />
+      <SiteHeader
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        active="games"
+        currentStudentXp={currentStudentXp}
+      />
 
-      {/* ── PAGE HEADER ── */}
-      <div className={styles.pageHead}>
-        <div className={styles.container}>
-          <div className={styles.dashRow}>
-            <div className={styles.dashLeft}>
-              <div className={styles.dashEyebrow}>Your Dashboard</div>
-              <h1 className={`${styles.dashTitle} ${styles.fd}`}>
-                {studentName ? `${studentName}'s Worlds` : "Learning Worlds"}
-              </h1>
-              <p className={styles.dashSub}>Choose a world. Every experience builds real understanding.</p>
+      <div className={styles.shell}>
+
+        {/* ── LEFT COLUMN — main content ────────────────────────────────── */}
+        <div className={styles.mainCol}>
+
+          {/* ── HERO BANNER ───────────────────────────────────────────────── */}
+          <div
+            className={styles.hero}
+            style={{
+              background: featuredMeta?.gradient ?? "linear-gradient(135deg,#0a0820,#1a1040)",
+              "--wrgb": featuredMeta?.colorRgb ?? "123,79,203",
+              "--wc": featuredMeta?.color ?? "var(--eg-subject-chemistry)",
+            } as React.CSSProperties}
+          >
+            {/* Decorative floating glyph */}
+            <div className={styles.heroGlyph} aria-hidden="true">
+              {featuredMeta?.glyph}
             </div>
 
-            {/* Compact stat strip — replaces the big XP card */}
-            <div className={styles.statStrip}>
+            {/* Text content */}
+            <div className={styles.heroBody}>
+              <div className={styles.heroEyebrow}>
+                {subMeta.emoji} {featuredMeta?.name ?? "Learning World"}
+              </div>
+              <h1 className={styles.heroTitle}>
+                {featuredMeta?.heroLine ?? "Enter a world of learning."}
+              </h1>
+              <p className={styles.heroSub}>{featuredMeta?.tagline}</p>
+              {featuredFirst && (
+                <Link
+                  href={`/play/${featuredFirst.game.slug}`}
+                  className={styles.heroCta}
+                >
+                  ▶ Start Exploring
+                </Link>
+              )}
+            </div>
+
+            {/* Stats strip inside hero */}
+            <div className={styles.heroStats}>
               {currentStudentRank && (
-                <div className={styles.statPill}>
-                  <span className={styles.statPillIcon}>🏆</span>
-                  <span className={styles.statPillLabel}>Rank</span>
-                  <span className={styles.statPillValue}>#{currentStudentRank}</span>
+                <div className={styles.heroStat}>
+                  <span className={styles.heroStatVal}>#{currentStudentRank}</span>
+                  <span className={styles.heroStatLabel}>Your Rank</span>
                 </div>
               )}
-              <div className={styles.statPill}>
-                <span className={styles.statPillIcon}>🎮</span>
-                <span className={styles.statPillLabel}>Experiences</span>
-                <span className={styles.statPillValue}>{totalGames}</span>
+              <div className={styles.heroStat}>
+                <span className={styles.heroStatVal}>{totalGames}</span>
+                <span className={styles.heroStatLabel}>Experiences</span>
               </div>
+              {currentStudentXp !== undefined && (
+                <div className={styles.heroStat}>
+                  <span className={styles.heroStatVal}>{currentStudentXp.toLocaleString()}</span>
+                  <span className={styles.heroStatLabel}>XP Earned</span>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* World selector tabs */}
-          <div className={styles.worldTabs}>
+          {/* ── WORLD CHIPS ───────────────────────────────────────────────── */}
+          <div className={styles.chipsRow}>
             <button
-              className={`${styles.worldTab} ${activeWorld === null ? styles.worldTabActive : ""}`}
+              className={[styles.chip, activeWorld === null ? styles.chipActive : ""].filter(Boolean).join(" ")}
               onClick={() => setActiveWorld(null)}
             >
-              All Worlds
+              🌍 All Worlds
             </button>
-            {allSubjects.map(s => {
-              const wm = WORLD_META[s];
-              const count = (bySubject[s] ?? []).length;
+            {ALL_SUBJECTS.map(s => {
+              const wm  = WORLD_META[s];
+              const sm  = subjectMeta(s);
+              const cnt = (bySubject[s] ?? []).length;
               return (
                 <button
                   key={s}
-                  className={`${styles.worldTab} ${activeWorld === s ? styles.worldTabActive : ""}`}
-                  style={{ "--wc": wm?.color } as React.CSSProperties}
+                  className={[styles.chip, activeWorld === s ? styles.chipActive : ""].filter(Boolean).join(" ")}
+                  style={{ "--wc": wm?.color, "--wrgb": wm?.colorRgb } as React.CSSProperties}
                   onClick={() => setActiveWorld(activeWorld === s ? null : s)}
                 >
-                  {subjectMeta(s).emoji} {subjectMeta(s).name}
-                  {count > 0 && <span className={styles.tabCount}>{count}</span>}
+                  {sm.emoji} {sm.name}
+                  {cnt > 0 && <span className={styles.chipCount}>{cnt}</span>}
                 </button>
               );
             })}
           </div>
-        </div>
-      </div>
 
-      {/* ── WORLD SECTIONS ── */}
-      <main className={styles.main}>
-        <div className={styles.container}>
-          {allSubjects
-            .filter(s => activeWorld === null || activeWorld === s)
-            .map(subject => {
+          {/* ── GAME SECTIONS ─────────────────────────────────────────────── */}
+          <main className={styles.sections}>
+            {visibleSubjects.map(subject => {
               const summaries = bySubject[subject] ?? [];
-              const wm = WORLD_META[subject] ?? {
-                name: `${subject} World`, tagline: "", glyph: "○",
-                color: "var(--eg-brand)", tint: "rgba(11,19,48,0.06)", border: "rgba(11,19,48,0.15)", darkBg: "rgba(11,19,48,0.2)"
-              };
-              const meta = subjectMeta(subject);
+              const wm  = WORLD_META[subject] ?? { name: `${subject} World`, glyph: "○", color: "var(--eg-brand)", colorRgb: "11,19,48", gradient: "" };
+              const sm  = subjectMeta(subject);
               const isLive = summaries.length > 0;
 
               return (
                 <section
                   key={subject}
                   className={styles.worldSection}
-                  id={`world-${subject}`}
-                  style={{ "--wc": wm.color, "--wt": wm.tint, "--wb": wm.border } as React.CSSProperties}
+                  style={{ "--wc": wm.color, "--wrgb": wm.colorRgb } as React.CSSProperties}
                 >
-                  {/* World banner */}
-                  <div className={styles.worldBanner}>
-                    <div className={styles.wbGlyph} aria-hidden="true">{wm.glyph}</div>
-                    <div className={styles.wbBody}>
-                      <div className={styles.wbSubject}>{meta.emoji} {meta.name}</div>
-                      <h2 className={`${styles.wbName} ${styles.fd}`}>{wm.name}</h2>
-                      <p className={styles.wbTagline}>{wm.tagline}</p>
+                  {/* Section header */}
+                  <div className={styles.secHead}>
+                    <span className={styles.secGlyph}>{wm.glyph}</span>
+                    <div className={styles.secBody}>
+                      <h2 className={styles.secName}>{wm.name}</h2>
+                      <p className={styles.secTag}>{WORLD_META[subject]?.tagline}</p>
                     </div>
-                    <div className={styles.wbMeta}>
-                      {isLive
-                        ? <span className={styles.wbLive}>● {summaries.length} experience{summaries.length !== 1 ? "s" : ""}</span>
-                        : <span className={styles.wbSoon}>Coming soon</span>
-                      }
-                    </div>
+                    {isLive && (
+                      <span className={styles.secCount}>
+                        {summaries.length} experience{summaries.length !== 1 ? "s" : ""}
+                      </span>
+                    )}
                   </div>
 
-                  {/* Game cards — direct links, no modal */}
+                  {/* Card grid */}
                   {isLive ? (
-                    <div className={styles.gameGrid}>
+                    <div className={styles.cardGrid}>
                       {summaries.map(({ game, missionCount, xpMin, xpMax }) => {
                         const desc = GAME_CARD_DESC[game.slug] ?? game.title;
-
                         return (
                           <Link
                             key={game.id}
                             href={`/play/${game.slug}`}
-                            className={styles.gameCard}
+                            className={styles.card}
                           >
-                            {/* Art — now passes the correct props GameCardArt expects */}
-                            <div className={styles.gcArt}>
-                              <GameCardArt
-                                gameSlug={game.slug}
-                                emoji={meta.emoji}
-                                color={meta.color}
-                                tint={meta.tint}
-                              />
+                            {/* Art — floats; card hover lifts it */}
+                            <div className={styles.cardArtWrap}>
+                              <div className={styles.cardArt}>
+                                <GameCardArt
+                                  gameSlug={game.slug}
+                                  emoji={sm.emoji}
+                                  color={sm.color}
+                                  tint={sm.tint}
+                                />
+                              </div>
                             </div>
 
-                            {/* Info */}
-                            <div className={styles.gcInfo}>
-                              <div className={`${styles.gcName} ${styles.fd}`}>{game.title}</div>
-                              <div className={styles.gcDesc}>{desc}</div>
-                              <div className={styles.gcMeta}>
-                                <span className={styles.gcXp}>+{xpMin === xpMax ? xpMin : `${xpMin}–${xpMax}`} XP</span>
-                                <span className={styles.gcMissions}>{missionCount} mission{missionCount !== 1 ? "s" : ""}</span>
+                            {/* Card body */}
+                            <div className={styles.cardBody}>
+                              <div className={styles.cardName}>{game.title}</div>
+                              <div className={styles.cardDesc}>{desc}</div>
+                              <div className={styles.cardMeta}>
+                                <span className={styles.cardXp}>+{xpMin === xpMax ? xpMin : `${xpMin}–${xpMax}`} XP</span>
+                                <span className={styles.cardMissions}>{missionCount} mission{missionCount !== 1 ? "s" : ""}</span>
                               </div>
-                              <div className={styles.gcPlay}>
-                                Play now →
-                              </div>
+                              <div className={styles.cardCta}>Explore →</div>
                             </div>
                           </Link>
                         );
@@ -236,18 +286,93 @@ export function WorldsClient({ bySubject, currentStudentRank, studentName }: Wor
                     </div>
                   ) : (
                     <div className={styles.comingSoon}>
-                      <div className={styles.csGlyph}>{wm.glyph}</div>
-                      <div className={styles.csText}>
-                        <strong>{wm.name}</strong> experiences are in development.
-                        Keep an eye on this space — they&apos;re coming soon.
+                      <span className={styles.csGlyph}>{wm.glyph}</span>
+                      <div>
+                        <div className={styles.csTitle}>{wm.name} — Coming Soon</div>
+                        <div className={styles.csSub}>Experiences for this world are in development. Check back soon.</div>
                       </div>
                     </div>
                   )}
                 </section>
               );
             })}
+          </main>
         </div>
-      </main>
+
+        {/* ── RIGHT PANEL — featured world detail ───────────────────────── */}
+        <aside className={styles.sidePanel}>
+          <div className={styles.sidePanelInner}>
+
+            {/* Featured world art */}
+            <div
+              className={styles.sideHero}
+              style={{
+                background: featuredMeta?.gradient ?? "linear-gradient(135deg,#0a0820,#1a1040)",
+                "--wc": featuredMeta?.color,
+                "--wrgb": featuredMeta?.colorRgb,
+              } as React.CSSProperties}
+            >
+              <div className={styles.sideHeroGlyph} aria-hidden="true">
+                {featuredMeta?.glyph}
+              </div>
+              <div className={styles.sideHeroLabel}>{featuredMeta?.name}</div>
+            </div>
+
+            {/* Featured world info */}
+            <div className={styles.sideMeta}>
+              <div className={styles.sideSubject}>{subMeta.emoji} {subMeta.name}</div>
+              <h3 className={styles.sideName}>{featuredMeta?.heroLine}</h3>
+              <p className={styles.sideDesc}>{featuredMeta?.tagline}</p>
+
+              <div className={styles.sideStats}>
+                <div className={styles.sideStat}>
+                  <span className={styles.sideStatVal}>{featuredGames.length}</span>
+                  <span className={styles.sideStatLabel}>Experiences</span>
+                </div>
+                <div className={styles.sideStat}>
+                  <span className={styles.sideStatVal}>
+                    {featuredGames.reduce((s, g) => s + g.missionCount, 0)}
+                  </span>
+                  <span className={styles.sideStatLabel}>Missions</span>
+                </div>
+                <div className={styles.sideStat}>
+                  <span className={styles.sideStatVal}>
+                    {featuredGames.reduce((s, g) => s + g.xpMax, 0).toLocaleString()}
+                  </span>
+                  <span className={styles.sideStatLabel}>Max XP</span>
+                </div>
+              </div>
+
+              {/* Games list in side panel */}
+              <div className={styles.sideGameList}>
+                {featuredGames.slice(0, 4).map(({ game, missionCount, xpMax }) => (
+                  <Link key={game.id} href={`/play/${game.slug}`} className={styles.sideGameRow}>
+                    <div className={styles.sideGameArt}>
+                      <GameCardArt gameSlug={game.slug} emoji={subMeta.emoji} color={subMeta.color} tint={subMeta.tint} />
+                    </div>
+                    <div className={styles.sideGameInfo}>
+                      <div className={styles.sideGameName}>{game.title}</div>
+                      <div className={styles.sideGameMeta}>{missionCount} missions · +{xpMax} XP</div>
+                    </div>
+                    <div className={styles.sideGameCta}>Play</div>
+                  </Link>
+                ))}
+              </div>
+
+              {featuredGames.length > 0 && (
+                <Link
+                  href={`/play/${featuredGames[0].game.slug}`}
+                  className={styles.sideEnterBtn}
+                  style={{ "--wc": featuredMeta?.color, "--wrgb": featuredMeta?.colorRgb } as React.CSSProperties}
+                >
+                  Enter {featuredMeta?.name}
+                </Link>
+              )}
+            </div>
+          </div>
+        </aside>
+
+      </div>
     </div>
   );
 }

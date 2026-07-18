@@ -1,8 +1,34 @@
 /**
- * HomePage.module.css — EXL Learning World
- * Clean, bold, world-portal aesthetic.
- * Uses existing --eg-* tokens. Light/dark via [data-theme].
+ * HomePage.module.css — EXL Learning World v2
+ *
+ * DESIGN LANGUAGE (translated from reference):
+ *
+ *  Grid texture    — fine dot/line grid fills the entire page background,
+ *                    giving depth and a "graph paper notebook" quality that
+ *                    suits a learning platform. Opacity is very low so it
+ *                    never competes with content.
+ *
+ *  Stroke headline — -webkit-text-stroke on the hero h1 creates the
+ *                    outlined typographic energy from the reference without
+ *                    its neon yellow palette. We use navy outline on white
+ *                    fill in light mode; amber outline on transparent (ghost
+ *                    text) in dark mode for contrast.
+ *
+ *  Accent tray     — the reference's speech-bubble "Game" word is translated
+ *                    to a warm amber pill behind "Learning" in the headline.
+ *
+ *  Floating atoms  — subject-coloured hexagonal/circular decoratives at the
+ *                    page edges replace the reference's game controllers.
+ *
+ *  World card tray — dark rounded panel (like the reference's purple tray)
+ *                    hosts the four world cards. Cards have full-bleed dark
+ *                    gradient art areas and a coloured "Explore →" CTA bar.
+ *
+ *  Light/dark      — every value is a token or rgba(). Grid, text-stroke,
+ *                    and tray adjust per mode; the hero stroke inverts.
  */
+
+/* ── RESET & PAGE ─────────────────────────────────────────────────────────── */
 
 .page {
   position: relative;
@@ -16,8 +42,6 @@
 .page :global(a) { text-decoration: none; color: inherit; }
 .page :global(button) { font-family: inherit; }
 
-.fd { font-family: var(--eg-font-display); }
-
 .container {
   max-width: 1160px;
   margin: 0 auto;
@@ -26,214 +50,620 @@
   z-index: 1;
 }
 
-/* ── AMBIENT ── */
-.ambient {
+/* ── GRID TEXTURE ─────────────────────────────────────────────────────────── */
+/* Fine square grid — the reference's most defining background treatment.     */
+
+.gridTexture {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* Two overlapping linear-gradients make a grid */
+  background-image:
+    linear-gradient(rgba(11,19,48,0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(11,19,48,0.055) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+[data-theme="dark"] .gridTexture {
+  background-image:
+    linear-gradient(rgba(122,140,255,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(122,140,255,0.06) 1px, transparent 1px);
+}
+
+/* ── FLOATING ATOM DECORATIVES ────────────────────────────────────────────── */
+
+.floaters {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
-  background-image:
-    linear-gradient(rgba(11,19,48,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(11,19,48,0.04) 1px, transparent 1px);
-  background-size: 48px 48px;
 }
-[data-theme="dark"] .ambient {
-  background-image:
-    linear-gradient(rgba(122,140,255,0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(122,140,255,0.05) 1px, transparent 1px);
-}
-.blob { position: absolute; border-radius: 50%; filter: blur(72px); }
 
-/* ── HERO ── */
+.floater {
+  position: absolute;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--frgb, 123,79,203), 0.1);
+  border: 1.5px solid rgba(var(--frgb, 123,79,203), 0.22);
+  box-shadow: 0 0 20px rgba(var(--frgb, 123,79,203), 0.1);
+  animation: floatDrift 5s ease-in-out infinite;
+  backdrop-filter: blur(2px);
+}
+[data-theme="dark"] .floater {
+  background: rgba(var(--frgb, 123,79,203), 0.14);
+  border-color: rgba(var(--frgb, 123,79,203), 0.3);
+}
+
+.floaterGlyph {
+  font-size: 1.3em;
+  opacity: 0.7;
+  line-height: 1;
+}
+
+@keyframes floatDrift {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50%       { transform: translateY(-10px) rotate(2deg); }
+}
+@media (prefers-reduced-motion: reduce) { .floater { animation: none !important; } }
+
+/* ── SITE HEADER sits above everything ───────────────────────────────────── */
+
+/* ── HERO ─────────────────────────────────────────────────────────────────── */
+
 .hero {
   position: relative;
   z-index: 1;
-  padding: 72px 24px 64px;
+  padding: 64px 24px 48px;
   max-width: 1160px;
   margin: 0 auto;
+  display: flex;
+  align-items: center;
+  min-height: 52vh;
 }
-.heroInner { max-width: 640px; }
 
+.heroInner {
+  max-width: 680px;
+}
+
+/* Eyebrow pill */
 .eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--eg-brand);
-  margin-bottom: 20px;
-  padding: 5px 12px;
+  margin-bottom: 22px;
+  padding: 5px 14px;
   background: var(--eg-brand-tint);
   border-radius: 20px;
   border: 1px solid var(--eg-surface-border);
 }
-[data-theme="dark"] .eyebrow { color: var(--eg-brand-deep); background: var(--eg-brand-soft); border-color: rgba(74,91,168,0.3); }
-.eyebrowDot { width: 6px; height: 6px; border-radius: 50%; background: var(--eg-subject-biology); flex-shrink: 0; animation: pulse 2s ease-in-out infinite; }
-@keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.5);opacity:0.6} }
+[data-theme="dark"] .eyebrow {
+  color: #a0aaff;
+  background: var(--eg-brand-soft);
+  border-color: rgba(74,91,168,0.35);
+}
+
+.eyebrowDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--eg-subject-biology);
+  flex-shrink: 0;
+  animation: dot-pulse 2.2s ease-in-out infinite;
+}
+@keyframes dot-pulse {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.6); opacity: 0.55; }
+}
+
+/* ── STROKE HEADLINE — the reference's defining typographic move ────────── */
 
 .heroTitle {
-  font-size: clamp(36px, 7vw, 72px);
-  font-weight: 800;
-  line-height: 1.08;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-weight: 900;
+  line-height: 1.0;
   letter-spacing: -0.03em;
-  color: var(--eg-surface-text);
-  margin-bottom: 20px;
+  margin: 0 0 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
-.accent { color: var(--eg-brand); }
-[data-theme="dark"] .accent { color: var(--eg-brand-deep); }
 
+/* Line 1 — "Let the" — large, outlined (stroke text) */
+.titleLine1 {
+  display: block;
+  font-size: clamp(52px, 8.5vw, 96px);
+  /* Ghost/stroke style: transparent fill, solid outline */
+  color: transparent;
+  -webkit-text-stroke: 3px var(--eg-surface-text);
+  paint-order: stroke fill;
+  letter-spacing: -0.04em;
+}
+[data-theme="dark"] .titleLine1 {
+  -webkit-text-stroke: 2.5px rgba(255,255,255,0.75);
+}
+
+/* Line 2 — "Learning" — in an amber pill tray (reference speech-bubble word) */
+.titleTray {
+  display: block;
+  line-height: 1;
+}
+.titleTrayWord {
+  display: inline-block;
+  font-size: clamp(52px, 8.5vw, 96px);
+  color: #fff;
+  background: var(--eg-brand, #0b1330);
+  border-radius: 18px;
+  padding: 2px 22px 6px;
+  letter-spacing: -0.04em;
+  /* Warm amber shadow matching the reference's vivid card colours */
+  box-shadow: 0 6px 0 rgba(11,19,48,0.25), 0 10px 32px rgba(11,19,48,0.18);
+}
+[data-theme="dark"] .titleTrayWord {
+  background: var(--eg-gold, #ffb23c);
+  color: #13162a;
+  box-shadow: 0 6px 0 rgba(255,140,0,0.35), 0 10px 32px rgba(255,178,60,0.2);
+}
+
+/* Line 3 — "Begin." — same stroke as line 1 */
+.titleLine3 {
+  display: block;
+  font-size: clamp(52px, 8.5vw, 96px);
+  color: var(--eg-surface-text);   /* solid fill this time — contrast */
+  -webkit-text-stroke: 0;
+  letter-spacing: -0.04em;
+}
+
+/* Hero sub */
 .heroSub {
-  font-size: 16px;
-  line-height: 1.7;
+  font-size: clamp(14px, 1.8vw, 17px);
+  line-height: 1.65;
   color: var(--eg-surface-text-dim);
-  max-width: 520px;
-  margin-bottom: 32px;
+  max-width: 500px;
+  margin-bottom: 30px;
 }
 
-.heroCtas { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 48px; }
+.heroCtas {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+/* Primary CTA — pill shape matching the reference's "Play Now" energy */
 .ctaMain {
   display: inline-flex;
   align-items: center;
-  padding: 13px 28px;
+  gap: 6px;
+  padding: 14px 30px;
   background: var(--eg-brand);
-  color: #fff;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 700;
+  color: #fff !important;
+  border-radius: 50px;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 0 rgba(5,7,15,0.35), 0 8px 24px rgba(11,19,48,0.22);
   transition: transform 0.12s, box-shadow 0.12s;
-  box-shadow: 0 4px 20px rgba(11,19,48,0.22);
+  text-decoration: none;
 }
-.ctaMain:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(11,19,48,0.3); }
-.ctaMain:active { transform: translateY(0); }
-[data-theme="dark"] .ctaMain { background: var(--eg-brand-deep); box-shadow: 0 4px 20px rgba(74,91,168,0.3); }
+.ctaMain:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 0 rgba(5,7,15,0.35), 0 14px 32px rgba(11,19,48,0.3);
+  color: #fff !important;
+}
+.ctaMain:active { transform: translateY(1px); box-shadow: 0 2px 0 rgba(5,7,15,0.35); }
+[data-theme="dark"] .ctaMain {
+  background: var(--eg-gold, #ffb23c);
+  color: #13162a !important;
+  box-shadow: 0 4px 0 rgba(180,100,0,0.5), 0 8px 24px rgba(255,178,60,0.25);
+}
+[data-theme="dark"] .ctaMain:hover { color: #13162a !important; }
 
-.ctaSub {
-  font-size: 14px;
+.ctaNote {
+  font-size: 13px;
+  color: var(--eg-surface-text-faint);
+  font-weight: 500;
+}
+
+/* ── WORLD TRAY SECTION ─────────────────────────────────────────────────── */
+/* The reference's defining structural element: a dark panel housing cards.  */
+
+.traySection {
+  position: relative;
+  z-index: 1;
+  padding: 0 0 72px;
+}
+
+.trayHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.trayLabel {
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--eg-surface-text);
+  letter-spacing: -0.01em;
+}
+
+.seeAll {
+  font-size: 13px;
+  font-weight: 600;
   color: var(--eg-surface-text-dim);
   border-bottom: 1px solid currentColor;
   padding-bottom: 1px;
-  transition: color 0.15s;
+  transition: color 0.14s;
 }
-.ctaSub:hover { color: var(--eg-surface-text); }
+.seeAll:hover { color: var(--eg-surface-text); }
 
-/* Portal cards */
-.portals {
+/* The tray — dark panel like the reference's purple container */
+.worldTray {
+  background: var(--eg-brand, #0b1330);
+  border-radius: 28px;
+  padding: 24px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  gap: 14px;
+  box-shadow:
+    0 0 0 1.5px rgba(255,255,255,0.06),
+    0 24px 64px rgba(0,0,0,0.35);
 }
-@media (max-width: 680px) { .portals { grid-template-columns: repeat(2, 1fr); } }
-
-.portal {
-  position: relative;
-  padding: 16px 14px 13px;
-  border-radius: 12px;
-  border: 1.5px solid var(--wb);
-  background: var(--wt);
-  overflow: hidden;
-  transition: transform 0.14s, box-shadow 0.14s;
-  animation: portalIn 0.5s both;
-  cursor: pointer;
-}
-.portal:hover { transform: translateY(-3px); box-shadow: 0 8px 24px -4px rgba(0,0,0,0.12); }
-@keyframes portalIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
-
-.portalGlyph {
-  position: absolute;
-  top: -4px; right: 8px;
-  font-size: 52px;
-  opacity: 0.10;
-  line-height: 1;
-  pointer-events: none;
-  color: var(--wc);
-  user-select: none;
-}
-.portalName { display: block; font-size: 11px; font-weight: 700; color: var(--wc); margin-bottom: 3px; position: relative; }
-.portalCount { display: block; font-size: 10px; color: var(--eg-surface-text-faint); position: relative; }
-
-/* ── HOW IT WORKS ── */
-.how { padding: 80px 0; position: relative; z-index: 1; }
-.sectionLabel {
-  font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--eg-surface-text-faint); margin-bottom: 32px;
-}
-.howGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-@media (max-width: 680px) { .howGrid { grid-template-columns: 1fr; } }
-
-.howStep {
-  padding: 28px;
+[data-theme="dark"] .worldTray {
   background: var(--eg-surface-card);
-  border: 1px solid var(--eg-surface-border);
-  border-radius: 14px;
-  box-shadow: var(--eg-surface-shadow-soft);
+  box-shadow: 0 0 0 1.5px var(--eg-surface-border), 0 24px 64px rgba(0,0,0,0.5);
 }
-.howIcon { font-size: 28px; margin-bottom: 12px; }
-.howN { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--eg-surface-text-faint); margin-bottom: 6px; }
-.howTitle { font-size: 16px; font-weight: 700; color: var(--eg-surface-text); margin-bottom: 8px; }
-.howBody { font-size: 13.5px; line-height: 1.65; color: var(--eg-surface-text-dim); margin: 0; }
+@media (max-width: 780px) { .worldTray { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .worldTray { grid-template-columns: 1fr; gap: 10px; } }
 
-/* ── WORLDS ── */
-.worldsSec { padding: 0 0 80px; position: relative; z-index: 1; }
-.secTitle { font-size: clamp(26px, 4vw, 40px); font-weight: 800; letter-spacing: -0.02em; color: var(--eg-surface-text); margin-bottom: 28px; }
-.worldsGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-@media (max-width: 600px) { .worldsGrid { grid-template-columns: 1fr; } }
-@media (min-width: 900px) { .worldsGrid { grid-template-columns: repeat(4, 1fr); } }
+/* ── WORLD CARD ──────────────────────────────────────────────────────────── */
 
 .worldCard {
-  position: relative;
-  border-radius: 16px;
-  border: 1.5px solid var(--wb);
-  background: var(--eg-surface-card);
-  overflow: hidden;
-  min-height: 200px;
   display: flex;
   flex-direction: column;
-  transition: transform 0.14s, box-shadow 0.14s;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #fff;
+  border: 1.5px solid rgba(255,255,255,0.1);
+  transition: transform 0.16s cubic-bezier(0.2,0.8,0.4,1), box-shadow 0.16s;
   cursor: pointer;
+  text-decoration: none;
+  animation: cardIn 0.45s both;
 }
-.worldCard:hover { transform: translateY(-4px); box-shadow: 0 16px 40px -8px rgba(0,0,0,0.15); }
+[data-theme="dark"] .worldCard {
+  background: var(--eg-surface-card-2);
+  border-color: rgba(255,255,255,0.07);
+}
+@keyframes cardIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+.worldCard:hover {
+  transform: translateY(-7px) scale(1.015);
+  box-shadow:
+    0 0 0 2px rgba(var(--wrgb, 123,79,203), 0.5),
+    0 20px 48px rgba(0,0,0,0.45);
+}
 
-.wcBg {
+/* Art area — full-bleed gradient with giant glyph (reference's card image) */
+.wcArt {
+  position: relative;
+  height: 160px;
+  overflow: hidden;
+  flex-shrink: 0;
+  /* background set inline — subject gradient */
+}
+
+.wcArtGlyph {
   position: absolute;
-  top: -12px; right: -8px;
-  font-size: 110px;
-  opacity: 0.07;
-  color: var(--wc);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 80px;
   line-height: 1;
-  user-select: none;
+  opacity: 0.18;
+  color: #fff;
+  filter: drop-shadow(0 0 30px rgba(var(--wrgb,123,79,203),0.8));
   pointer-events: none;
+  user-select: none;
 }
-.wcBody { position: relative; padding: 22px 20px; display: flex; flex-direction: column; flex: 1; }
-.wcIcon { font-size: 28px; margin-bottom: 10px; }
-.wcName { font-size: 16px; font-weight: 800; color: var(--eg-surface-text); margin-bottom: 6px; }
-.wcTag { font-size: 12px; color: var(--eg-surface-text-dim); line-height: 1.5; flex: 1; margin-bottom: 14px; }
-.wcFoot { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--eg-surface-text-faint); }
-.liveDot { color: var(--eg-subject-biology); font-size: 8px; }
-.soonBadge { font-size: 10px; padding: 2px 8px; background: var(--eg-surface-card-2); border-radius: 20px; color: var(--eg-surface-text-faint); border: 1px solid var(--eg-surface-border); }
 
-/* ── STATEMENT ── */
-.statement { padding: 80px 0; position: relative; z-index: 1; }
+.wcArtBadge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0,0,0,0.45);
+  color: rgba(255,255,255,0.9);
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.15);
+  backdrop-filter: blur(4px);
+}
+
+/* Card body */
+.wcBody {
+  padding: 12px 14px 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wcHeadline {
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--eg-surface-text, #13162a);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.wcTagline {
+  font-size: 0.71rem;
+  color: var(--eg-surface-text-dim);
+  line-height: 1.45;
+  flex: 1;
+}
+
+.wcFoot {
+  font-size: 0.66rem;
+  font-weight: 700;
+  margin-top: 4px;
+}
+.wcLive { color: var(--eg-subject-biology, #4caf6e); }
+.wcSoon {
+  color: var(--eg-surface-text-faint);
+  background: var(--eg-surface-card-2, #f2f4f9);
+  padding: 1px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--eg-surface-border);
+}
+[data-theme="dark"] .wcSoon { background: rgba(255,255,255,0.06); }
+
+/* CTA bar — "Play Now" bottom bar from the reference */
+.wcCta {
+  padding: 10px 14px;
+  background: rgba(var(--wrgb, 123,79,203), 1);
+  color: #fff;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 0.03em;
+  transition: filter 0.12s;
+}
+.worldCard:hover .wcCta { filter: brightness(1.12); }
+
+/* ── HOW IT WORKS ─────────────────────────────────────────────────────────── */
+
+.how {
+  position: relative;
+  z-index: 1;
+  padding: 72px 0;
+  background: var(--eg-surface-card);
+  border-top: 1px solid var(--eg-surface-border);
+  border-bottom: 1px solid var(--eg-surface-border);
+}
+[data-theme="dark"] .how {
+  background: var(--eg-surface-card);
+}
+
+.howEyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--eg-surface-text-faint);
+  margin-bottom: 12px;
+}
+
+.howTitle {
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: clamp(22px, 3.5vw, 36px);
+  font-weight: 900;
+  color: var(--eg-surface-text);
+  letter-spacing: -0.02em;
+  margin: 0 0 36px;
+}
+
+.howGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+@media (max-width: 680px) { .howGrid { grid-template-columns: 1fr; gap: 14px; } }
+
+.howStep {
+  padding: 28px 24px;
+  background: var(--eg-surface-bg);
+  border: 1.5px solid var(--eg-surface-border);
+  border-radius: 18px;
+  box-shadow: var(--eg-surface-shadow-soft);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.14s;
+}
+.howStep:hover { transform: translateY(-3px); }
+
+.howStepIcon { font-size: 2rem; margin-bottom: 10px; }
+
+.howStepNum {
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--eg-surface-text-faint);
+  margin-bottom: 6px;
+}
+
+.howStepTitle {
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--eg-surface-text);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.howStepBody {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--eg-surface-text-dim);
+  margin: 0;
+}
+
+/* ── STATEMENT ─────────────────────────────────────────────────────────────── */
+
+.statement {
+  position: relative;
+  z-index: 1;
+  padding: 80px 0;
+}
+
 .statementInner {
-  max-width: 680px;
+  max-width: 700px;
   margin: 0 auto;
   text-align: center;
-  padding: 56px 40px;
+  padding: 64px 48px;
   background: var(--eg-brand);
-  border-radius: 20px;
+  border-radius: 28px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(11,19,48,0.35);
 }
-[data-theme="dark"] .statementInner { background: var(--eg-brand-soft); }
-.statementEyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 20px; }
-.statementQ { font-size: clamp(22px, 3.5vw, 34px); font-weight: 800; line-height: 1.2; color: #fff; margin: 0 0 18px; letter-spacing: -0.02em; }
-.statementBody { font-size: 14px; line-height: 1.7; color: rgba(255,255,255,0.65); margin-bottom: 28px; }
-.statement .ctaMain { background: #fff; color: var(--eg-brand); margin: 0 auto; }
-.statement .ctaMain:hover { transform: translateY(-2px); }
+[data-theme="dark"] .statementInner {
+  background: var(--eg-brand-soft);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.55);
+}
 
-/* ── FOOTER ── */
-.footer { border-top: 1px solid var(--eg-surface-border); padding: 24px 0; position: relative; z-index: 1; }
-.footerInner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-.footerBrand { display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 700; color: var(--eg-surface-text); }
-.footerMark { width: 28px; height: 28px; border-radius: 7px; background: var(--eg-brand); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 14px; }
+/* Decorative quote mark — fills the background */
+.statementMark {
+  position: absolute;
+  top: -24px;
+  left: 28px;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 200px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.05);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.statementQ {
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: clamp(22px, 3.5vw, 36px);
+  font-weight: 900;
+  line-height: 1.2;
+  color: #fff;
+  margin: 0 0 18px;
+  letter-spacing: -0.02em;
+  position: relative;
+}
+
+.statementBody {
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.62);
+  margin-bottom: 32px;
+  position: relative;
+}
+
+.statement .ctaMain {
+  background: #fff;
+  color: var(--eg-brand) !important;
+  margin: 0 auto;
+  display: inline-flex;
+}
+.statement .ctaMain:hover {
+  background: #f0f2ff;
+  color: var(--eg-brand) !important;
+}
+[data-theme="dark"] .statement .ctaMain {
+  background: var(--eg-gold, #ffb23c);
+  color: #13162a !important;
+}
+[data-theme="dark"] .statement .ctaMain:hover { color: #13162a !important; }
+
+/* ── FOOTER ──────────────────────────────────────────────────────────────── */
+
+.footer {
+  border-top: 1px solid var(--eg-surface-border);
+  padding: 28px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.footerInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.footerBrand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--eg-surface-text);
+}
+
+.footerMark {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--eg-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-weight: 900;
+  font-size: 15px;
+}
+[data-theme="dark"] .footerMark { background: var(--eg-gold); color: #13162a; }
+
+.footerName { color: var(--eg-surface-text); }
 .footerMotto { font-size: 11px; color: var(--eg-surface-text-faint); }
+
+/* ── RESPONSIVE ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .hero { padding: 48px 20px 36px; }
+  .traySection { padding-bottom: 48px; }
+  .trayHeader { margin-bottom: 12px; }
+  .statementInner { padding: 40px 24px; border-radius: 20px; }
+  .how { padding: 52px 0; }
+}
+
+@media (max-width: 400px) {
+  .worldTray { padding: 14px; gap: 10px; border-radius: 20px; }
+  .wcArt { height: 120px; }
+}
+
+/* ── DARK MODE FINE TUNING ────────────────────────────────────────────────── */
+
+[data-theme="dark"] .worldCard {
+  border-color: rgba(255,255,255,0.08);
+}
+[data-theme="dark"] .wcArtBadge {
+  background: rgba(0,0,0,0.6);
+  border-color: rgba(255,255,255,0.12);
+}
+[data-theme="dark"] .wcHeadline { color: var(--eg-surface-text); }

@@ -9,6 +9,10 @@ import { StepwiseEquationSolverEngine }  from "@/engines/mathematics/stepwise-eq
 import { StepwiseEquationSolverSharedConfigSchema } from "@/engines/mathematics/stepwise-equation-solver/stepwiseEquationSolver.config";
 
 // ─── Chemistry ────────────────────────────────────────────────────────────────
+import { MatterSortEngine }              from "@/engines/chemistry/matter-sort/MatterSortEngine";
+import { MatterSortSharedConfigSchema }  from "@/engines/chemistry/matter-sort/matterSort.config";
+import { ParticleFieldEngine }           from "@/engines/chemistry/particle-field/ParticleFieldEngine";
+import { ParticleFieldSharedConfigSchema } from "@/engines/chemistry/particle-field/particleField.config";
 import { TileMatchEngine }               from "@/engines/chemistry/tile-match/TileMatchEngine";
 import { TileMatchSharedConfigSchema }   from "@/engines/chemistry/tile-match/tileMatch.config";
 import { BondMatchEngine }               from "@/engines/chemistry/bond-match/BondMatchEngine";
@@ -94,6 +98,18 @@ const particleAssemblyDefinition: EngineDefinition = {
   Component: ParticleAssemblyEngine as unknown as EngineDefinition["Component"],
 };
 
+const matterSortDefinition: EngineDefinition = {
+  engineType: "matter-sort",
+  configSchema: MatterSortSharedConfigSchema as unknown as z.ZodSchema<unknown>,
+  Component: MatterSortEngine as unknown as EngineDefinition["Component"],
+};
+
+const particleFieldDefinition: EngineDefinition = {
+  engineType: "particle-field",
+  configSchema: ParticleFieldSharedConfigSchema as unknown as z.ZodSchema<unknown>,
+  Component: ParticleFieldEngine as unknown as EngineDefinition["Component"],
+};
+
 // ─── PHYSICS ──────────────────────────────────────────────────────────────────
 
 const opticsExperimentDefinition: EngineDefinition = {
@@ -129,6 +145,9 @@ const registry: Record<string, EngineDefinition> = {
   "bond-match":                bondMatchDefinition,
   "molecule-builder":          moleculeBuilderDefinition,
   "particle-assembly":         particleAssemblyDefinition,
+
+  "matter-sort":               matterSortDefinition,
+  "particle-field":            particleFieldDefinition,
 
   // Physics
   "optics-experiment":         opticsExperimentDefinition,

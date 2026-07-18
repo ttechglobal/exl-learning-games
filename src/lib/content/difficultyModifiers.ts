@@ -66,9 +66,9 @@
 export type PlayerDifficulty = "EASY" | "MEDIUM" | "HARD";
 
 export const DIFFICULTY_INFO: Record<PlayerDifficulty, { label: string; emoji: string; description: string }> = {
-  EASY: { label: "Easy", emoji: "\u{1F7E2}", description: "Perfect for learning and reinforcement." },
-  MEDIUM: { label: "Medium", emoji: "\u{1F7E1}", description: "Balanced challenge." },
-  HARD: { label: "Hard", emoji: "\u{1F534}", description: "Designed for mastery and speed." }
+  EASY:   { label: "Guided Learning", emoji: "🟢", description: "Dr. Adaobi guides every step. Maximum support — ideal if this is new to you." },
+  MEDIUM: { label: "Practice",        emoji: "🟡", description: "You lead, help is available. Build your confidence on familiar ground." },
+  HARD:   { label: "Challenge",       emoji: "🔴", description: "No hints. Unfamiliar scenarios. Prove you've got it." }
 };
 
 type StaticModifier = Record<string, unknown>;

@@ -51,7 +51,7 @@
   --eg-text-bright: #2c2240;
   --eg-text-dim: #8b7fa3;
 
-  --eg-font-display: "Baloo 2", "Space Grotesk", sans-serif;
+  --eg-font-display: "Fredoka", "Space Grotesk", sans-serif;
   --eg-font-body: "Inter", sans-serif;
 
   /* Motion timing - reuse these instead of picking new durations per engine */

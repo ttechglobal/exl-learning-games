@@ -1,17 +1,16 @@
 /**
  * NarrationScreen.module.css
  *
- * Game-style character narration screen — replaces EntryScreen's
- * informational card with a story-driven "meet your mentor" moment.
+ * Game-style character narration screen.
  *
- * Layout: full-height flex column.
- *   .scene   — fills the top ~58% with the illustrated background + character
- *   .dialogueCard — anchored to the bottom, parchment-style dialogue box
+ * DESKTOP FIX: Previously constrained to max-width:480px on ≥768px,
+ * rendering as a phone-shaped card floating in whitespace. Now goes
+ * full-width with a side-by-side layout on desktop — scene/character
+ * on the left, dialogue card on the right — matching how visual novels
+ * and RPG dialogue screens actually use wide screens.
  *
- * The character SVG bleeds upward out of the scene area intentionally —
- * the figure's head crosses into the safe zone above the dialogue card,
- * which is the same cinematic device the reference images use (character
- * feels present in the scene, not caged in a box).
+ * Mobile: stacked (scene top, dialogue card bottom) — unchanged.
+ * Desktop (≥768px): two-column, scene fills left half, dialogue right.
  */
 
 /* ── OUTER SHELL ─────────────────────────────────────────────────────────── */
@@ -47,14 +46,13 @@
 /* Character portrait — centred, bleeds down into dialogue card */
 .characterWrap {
   position: absolute;
-  bottom: -28px; /* intentional bleed into dialogue area */
+  bottom: -28px;
   left: 50%;
   transform: translateX(-50%);
   width: min(260px, 70vw);
   height: auto;
   aspect-ratio: 240 / 310;
   z-index: 4;
-  /* Entrance animation */
   animation: characterRise 0.5s var(--eg-ease-pop, cubic-bezier(0.3, 1.6, 0.5, 1)) 0.1s both;
 }
 
@@ -127,6 +125,32 @@
   white-space: nowrap;
 }
 
+/* Back button — top left of the scene */
+.backBtn {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 8;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1.5px solid #6a3aab;
+  border-bottom: 3px solid #150828;
+  background: #2e1258;
+  box-shadow: 0 3px 0 #150828, 0 5px 14px rgba(0,0,0,0.4);
+  color: #e8d5ff;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s ease, border-bottom-width 0.1s ease;
+}
+.backBtn:active {
+  transform: translateY(2px);
+  border-bottom-width: 1px;
+}
+
 /* ── DIALOGUE CARD ───────────────────────────────────────────────────────── */
 
 .dialogueCard {
@@ -135,13 +159,9 @@
   flex-shrink: 0;
   background: #f5f0e4;
   border-top: 3px solid #c8ba96;
-  padding: 22px 20px 18px;
-  /* Extra top padding so the character bleed doesn't overlap text */
-  padding-top: 28px;
+  padding: 28px 20px 20px;
 }
 
-/* Small pointed notch at the top centre of the card — classic dialogue
-   bubble "pointer" pointing up toward the character */
 .dialogueNotch {
   position: absolute;
   top: -10px;
@@ -155,17 +175,15 @@
   filter: drop-shadow(0 -2px 0 #c8ba96);
 }
 
-/* Dialogue text */
 .dialogueText {
   font-size: 0.93rem;
   line-height: 1.65;
   color: #2a1a08;
   font-weight: 700;
-  min-height: 5rem; /* reserve space so the card doesn't jump height */
+  min-height: 5rem;
   letter-spacing: 0.01em;
 }
 
-/* Fade transitions between lines */
 .dialogueFadeIn {
   animation: fadeIn 0.2s ease both;
 }
@@ -183,7 +201,6 @@
   to   { opacity: 0; transform: translateY(-4px); }
 }
 
-/* Footer: dots + button */
 .dialogueFooter {
   display: flex;
   align-items: center;
@@ -191,7 +208,6 @@
   margin-top: 16px;
 }
 
-/* Progress dots */
 .dots {
   display: flex;
   gap: 5px;
@@ -212,7 +228,6 @@
   background: #2e1258;
 }
 
-/* Next / Begin button */
 .nextBtn {
   background: #2e1258;
   border: none;
@@ -225,15 +240,14 @@
   cursor: pointer;
   letter-spacing: 0.03em;
   border-bottom: 3px solid #150828;
-  transition: transform 0.1s, border-bottom 0.1s, background 0.2s;
+  transition: transform 0.1s, border-bottom-width 0.1s, background 0.2s;
 }
 
 .nextBtn:active {
   transform: translateY(2px);
-  border-bottom: 1px solid #150828;
+  border-bottom-width: 1px;
 }
 
-/* Final "Begin mission" state — amber/gold to signal the call to action */
 .nextBtnFinal {
   background: #d4700c;
   border-bottom-color: #8a4408;
@@ -246,7 +260,7 @@
   50%       { box-shadow: 0 0 0 6px rgba(212, 112, 12, 0.12); }
 }
 
-/* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
+/* ── MOBILE ──────────────────────────────────────────────────────────────── */
 
 @media (min-width: 480px) {
   .characterWrap {
@@ -259,23 +273,128 @@
   }
 }
 
+/* ── DESKTOP — side-by-side layout ──────────────────────────────────────── */
+
 @media (min-width: 768px) {
+  /* Full-width two-column instead of a narrow phone card */
   .screen {
-    max-width: 480px;
-    margin: 0 auto;
-    min-height: auto;
-    border-radius: 24px;
-    overflow: hidden;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+    flex-direction: row;
+    min-height: 100vh;
+    max-width: none;
+    border-radius: 0;
+    box-shadow: none;
   }
+
+  /* Left column: scene with character */
   .scene {
-    min-height: 340px;
+    flex: 1 1 55%;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Character: larger, vertically centred in the scene panel so it's
+     always fully visible without scrolling. bottom:0 put the feet at
+     the very base of the panel which worked on tall viewports but cut
+     off the head on shorter ones. Centering vertically keeps the full
+     figure on screen at every desktop viewport height. */
+  .characterWrap {
+    width: min(340px, 40vw);
+    /* Vertically centre the figure in the scene panel */
+    bottom: auto;
+    top: 50%;
+    transform: translateX(-50%) translateY(-45%);
+    left: 50%;
+    animation: characterRiseDesktop 0.5s var(--eg-ease-pop, cubic-bezier(0.3, 1.6, 0.5, 1)) 0.1s both;
+  }
+
+  @keyframes characterRiseDesktop {
+    from { opacity: 0; transform: translateX(-50%) translateY(calc(-45% + 18px)); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(-45%); }
+  }
+
+  /* Name badge: pinned near the bottom of the scene, always in frame */
+  .nameBadge {
+    bottom: 28px;
+    left: 50%;
+  }
+
+  /* Mission chip stays top-right of the SCENE panel */
+  .missionChip {
+    top: 20px;
+    right: 20px;
+  }
+
+  /* Back button stays top-left of scene panel */
+  .backBtn {
+    top: 20px;
+    left: 20px;
+  }
+
+  /* Right column: dialogue card fills full height, vertically centred content */
+  .dialogueCard {
+    flex: 0 0 min(420px, 42vw);
+    min-height: 100vh;
+    border-top: none;
+    border-left: 3px solid #c8ba96;
+
+    /* Stack content vertically centred */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 48px 36px 40px;
+
+    /* Notch now points LEFT toward the character */
+  }
+
+  /* Replace top-pointing notch with a left-pointing one */
+  .dialogueNotch {
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    border-left: none;
+    border-right: 10px solid #f5f0e4;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    filter: drop-shadow(-2px 0 0 #c8ba96);
+  }
+
+  .dialogueText {
+    font-size: 1.08rem;
+    line-height: 1.7;
+    min-height: 6rem;
+  }
+
+  .dialogueFooter {
+    margin-top: 24px;
+  }
+
+  .nextBtn {
+    font-size: 0.9rem;
+    padding: 13px 28px;
   }
 }
 
-/* Reduced motion */
+@media (min-width: 1100px) {
+  .scene {
+    flex: 1 1 60%;
+  }
+  .dialogueCard {
+    flex: 0 0 min(480px, 38vw);
+    padding: 56px 48px 48px;
+  }
+  .dialogueText {
+    font-size: 1.14rem;
+  }
+}
+
+/* ── REDUCED MOTION ──────────────────────────────────────────────────────── */
+
 @media (prefers-reduced-motion: reduce) {
-  .characterWrap,
+  .characterWrap {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: translateX(-50%) !important;
+  }
   .nameBadge {
     animation: none !important;
     opacity: 1 !important;
@@ -288,5 +407,8 @@
   }
   .nextBtnFinal {
     animation: none !important;
+  }
+  .backBtn {
+    transition: none;
   }
 }

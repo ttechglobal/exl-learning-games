@@ -1,0 +1,427 @@
+/**
+ * ParticleFieldEngine.module.css — Matter Lab v3
+ *
+ * LAYOUT:
+ *  .layout      — flex row: sliderWrap | canvasWrap (fills remaining space)
+ *  .canvasWrap  — position:relative; canvas fills it; overlays sit inside
+ *  .adaobiStrip — absolute, bottom-left of canvas; avatar + speech bubble
+ *  .pickerCard  — rendered below the layout row (not inside canvasWrap)
+ *                 so it doesn't cover the canvas when the student is reading
+ *
+ * The canvas is sized by CSS (flex:1, min-height on .canvasWrap).
+ * JS reads offsetWidth/offsetHeight each frame — never relies on
+ * getBoundingClientRect or ResizeObserver so first-frame sizing is correct.
+ */
+
+/* ── ROOT ─────────────────────────────────────────────────────────────────── */
+
+.layout {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  width: 100%;
+  /* Give the layout most of the available vertical space */
+  flex: 1 1 0;
+  min-height: 220px;
+  max-height: 55vh;   /* cap so picker card is always visible below */
+}
+
+/* ── SLIDER ──────────────────────────────────────────────────────────────── */
+
+.sliderWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 36px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.sliderLabel {
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.46rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.35);
+}
+
+.sliderTrack {
+  position: relative;
+  width: 26px;
+  flex: 1;
+  min-height: 140px;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.13);
+  border-radius: 18px;
+  cursor: ns-resize;
+  touch-action: none;
+  user-select: none;
+}
+.sliderTrack.sliderOff {
+  opacity: 0.28;
+  pointer-events: none;
+}
+
+.sliderFill {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  border-radius: 0 0 18px 18px;
+  background: linear-gradient(to top,
+    #3a7fff 0%, #38c0f0 35%, #ffa040 75%, #ff5020 100%);
+  transition: height 0.06s linear;
+  min-height: 3px;
+}
+
+.thumb {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 32px;
+  background: #f5f0e4;
+  border: 1.5px solid #c8ba96;
+  border-bottom: 3px solid #a09070;
+  border-radius: 10px;
+  box-shadow: 0 3px 0 #a09070, 0 4px 10px rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4;
+  cursor: ns-resize;
+  pointer-events: none;   /* parent track captures all pointer events */
+}
+.thumbVal {
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: #2a1a08;
+}
+
+.thresh {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 9px; height: 9px;
+  background: rgba(255,200,80,0.65);
+  border: 1.5px solid rgba(255,200,80,1);
+  border-radius: 50%;
+  z-index: 3;
+  transition: background 0.3s;
+}
+.threshDone {
+  background: rgba(72,215,110,0.85);
+  border-color: rgba(72,215,110,1);
+}
+
+/* Ghost hand */
+.ghost {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 10;
+  animation: ghostFloat 1.4s ease-in-out infinite;
+}
+@keyframes ghostFloat {
+  0%,100% { opacity: 0.55; transform: translate(-50%, -50%); }
+  50%      { opacity: 1;    transform: translate(-50%, calc(-50% - 9px)); }
+}
+.ghostArr {
+  font-size: 1.5rem;
+  color: rgba(255,255,255,0.85);
+  text-shadow: 0 0 14px rgba(255,200,60,0.9);
+  display: block;
+  text-align: center;
+}
+
+/* ── CANVAS WRAP ─────────────────────────────────────────────────────────── */
+
+.canvasWrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 220px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.canvas {
+  /* CSS sets dimensions; JS reads offsetWidth/offsetHeight each frame */
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  border-radius: 16px;
+  background: #030a14;
+  border: 1.5px solid rgba(56,192,240,0.08);
+}
+
+/* Phase badge */
+.phaseBadge {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50px;
+  padding: 3px 14px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Slow-motion ring */
+.slowRing {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  border: 2.5px solid rgba(255,200,60,0.7);
+  pointer-events: none;
+  animation: slowPulse 0.7s ease-in-out infinite alternate;
+  z-index: 6;
+}
+@keyframes slowPulse {
+  from { opacity: 0.4; }
+  to   { opacity: 1; }
+}
+
+/* Formal name flash */
+.formalFlash {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+  animation: flashPop 0.3s cubic-bezier(0.2,1.4,0.4,1) both;
+}
+@keyframes flashPop {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+.formalName {
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: clamp(1.4rem, 6vw, 2.4rem);
+  font-weight: 900;
+  color: #ffb23c;
+  text-shadow: 0 0 30px rgba(255,178,60,0.7), 0 2px 0 rgba(0,0,0,0.5);
+  text-align: center;
+  padding: 0 14px;
+}
+
+/* ── DR. ADAOBI OVERLAY STRIP ───────────────────────────────────────────── */
+/* Sits inside canvasWrap, anchored bottom-left                              */
+
+.adaobiStrip {
+  position: absolute;
+  bottom: 8px;
+  left: 6px;
+  right: 6px;
+  z-index: 8;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 6px;
+  /* semi-transparent backdrop so particles show through behind */
+}
+
+.adaobiAvatar {
+  width: 44px;
+  height: 56px;
+  flex-shrink: 0;
+  /* slight drop shadow so character reads against dark canvas */
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.7));
+}
+
+.adaobiBubble {
+  flex: 1;
+  min-width: 0;
+  background: rgba(245,240,228,0.96);
+  border: 1.5px solid #c8ba96;
+  border-bottom: 3px solid #a09070;
+  border-radius: 12px 12px 12px 4px;  /* pointed bottom-left toward avatar */
+  box-shadow: 0 3px 0 #a09070, 0 5px 16px rgba(0,0,0,0.5);
+  padding: 7px 10px 8px;
+}
+
+.adaobiText {
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #2a1a08;
+  line-height: 1.45;
+  margin: 0;
+  /* Clamp to 3 lines so it doesn't cover too much canvas */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.beginBtn {
+  margin-top: 6px;
+  width: 100%;
+  padding: 6px;
+  background: #2e1258;
+  border: 1.5px solid #6a3aab;
+  border-bottom: 2.5px solid #150828;
+  border-radius: 9px;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #e8d5ff;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 2.5px 0 #150828;
+  transition: transform 0.08s;
+}
+.beginBtn:active {
+  transform: translateY(2px);
+  border-bottom-width: 1px;
+  box-shadow: none;
+}
+
+.doneChip {
+  margin-top: 6px;
+  padding: 5px;
+  background: #1a5a30;
+  border: 1.5px solid #4caf6e;
+  border-radius: 8px;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #c8ffd8;
+  text-align: center;
+}
+
+/* ── PICKER CARD ─────────────────────────────────────────────────────────── */
+/* Rendered BELOW .layout so it doesn't cover the canvas */
+
+.pickerCard {
+  margin-top: 8px;
+  background: #f5f0e4;
+  border: 2px solid #c8ba96;
+  border-bottom: 4px solid #a09070;
+  border-radius: 18px;
+  box-shadow: 0 5px 0 #8a7840, 0 8px 24px rgba(0,0,0,0.45);
+  padding: 11px 12px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  animation: cardUp 0.22s cubic-bezier(0.2,1,0.4,1) both;
+}
+@keyframes cardUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.pickerPrompt {
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #2a1a08;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.pickerFeedback {
+  background: #fff8e6;
+  border: 1.5px solid #e0c060;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #5a3a00;
+  line-height: 1.4;
+  animation: feedIn 0.18s ease both;
+}
+@keyframes feedIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.labelGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.labelBtn {
+  background: #2e1258;
+  border: 2px solid #6a3aab;
+  border-bottom: 3px solid #3d1870;
+  border-radius: 11px;
+  padding: 9px 8px;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.67rem;
+  font-weight: 600;
+  color: #e8d5ff;
+  line-height: 1.35;
+  text-align: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.08s, background 0.1s;
+}
+.labelBtn:active { transform: scale(0.96) translateY(2px); border-bottom-width: 1px; }
+.labelBtn:hover:not(:disabled) { background: #3d1870; }
+.labelBtn:disabled { cursor: default; }
+
+.labelCorrect {
+  background: #1a5a30 !important;
+  border-color: #4caf6e !important;
+  border-bottom-color: #2d7a48 !important;
+  color: #c8ffd8 !important;
+  animation: correctPop 0.35s cubic-bezier(0.2,1.4,0.4,1) both;
+}
+@keyframes correctPop {
+  from { transform: scale(0.88); }
+  to   { transform: scale(1.04); }
+}
+.labelFaded { opacity: 0.28; }
+
+/* ── CONSERVATION ────────────────────────────────────────────────────────── */
+
+.conservRow { display: flex; align-items: center; justify-content: center; gap: 18px; }
+.conservScale { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.scaleLabel { font-size: 0.56rem; font-weight: 700; color: #5a3a00; text-transform: uppercase; letter-spacing: 0.07em; }
+.conservArrow { font-size: 1.1rem; color: #5a3a00; font-weight: 700; }
+.conservHint { font-family: var(--eg-font-display,"Fredoka",sans-serif); font-size: 0.68rem; color: #5a3a00; text-align: center; line-height: 1.4; margin: 0; }
+.conservBtn {
+  background: #1a5a30; border: 2px solid #4caf6e; border-bottom: 3px solid #2d7a48;
+  border-radius: 12px; padding: 10px; font-family: var(--eg-font-display,"Fredoka",sans-serif);
+  font-size: 0.76rem; font-weight: 700; color: #c8ffd8;
+  cursor: pointer; touch-action: manipulation; width: 100%;
+  transition: transform 0.08s;
+}
+.conservBtn:active { transform: scale(0.97) translateY(2px); border-bottom-width: 1px; }
+
+/* ── RESPONSIVE ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 380px) {
+  .layout { max-height: 48vh; }
+  .adaobiAvatar { width: 36px; height: 46px; }
+  .adaobiText { font-size: 0.6rem; -webkit-line-clamp: 2; }
+  .labelGrid { grid-template-columns: 1fr; }
+  .labelBtn { font-size: 0.62rem; }
+}
+
+@media (min-width: 600px) {
+  .layout { max-height: 60vh; }
+  .adaobiAvatar { width: 56px; height: 72px; }
+  .adaobiText { font-size: 0.74rem; -webkit-line-clamp: 4; }
+  .formalName { font-size: 2.2rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slowRing, .ghost, .formalFlash, .pickerCard, .labelCorrect { animation: none !important; }
+}

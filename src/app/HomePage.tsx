@@ -2,7 +2,28 @@
 
 /**
  * HomePage.tsx — EXL Learning World
- * Redesigned around the "Learning Worlds" identity.
+ *
+ * REDESIGN v2 — inspired by the bold arcade-poster reference:
+ *
+ * WHAT WE BORROWED:
+ *   - Grid dot/line background as a full-page texture
+ *   - Massive display headline with -webkit-text-stroke (stroke text)
+ *   - Two-tone structural palette: deep navy page + amber/gold accent
+ *   - Floating decorative elements around the hero
+ *   - A "tray" container (rounded, coloured panel) housing the world cards
+ *   - Cards with full-bleed art and a strong CTA bar at the bottom
+ *
+ * WHAT WE KEPT EXL:
+ *   - Subject colour system (chemistry purple, maths blue, etc.)
+ *   - Light/dark mode via tokens
+ *   - The four learning worlds as the product structure
+ *   - Dr. Adaobi and the learning-world narrative
+ *   - Fredoka display type (already in the design system)
+ *
+ * WHAT WE DID NOT DO:
+ *   - Yellow/purple — too playful for a learning platform, would undermine
+ *     credibility with schools and parents. We use the existing navy/amber
+ *     EXL brand palette at full confidence instead.
  */
 
 import Link from "next/link";
@@ -17,11 +38,76 @@ interface HomePageProps {
 }
 
 const WORLDS = [
-  { key: "chemistry",   name: "Chemistry World",   tagline: "Build atoms. Break bonds. See matter behave.",        icon: "⚗️",  glyph: "⚗",  color: "var(--eg-subject-chemistry)",   tint: "rgba(123,79,203,0.09)",   border: "rgba(123,79,203,0.22)"  },
-  { key: "mathematics", name: "Mathematics World", tagline: "Solve equations. Own the numbers.",                   icon: "📐",  glyph: "∑",  color: "var(--eg-subject-mathematics)", tint: "rgba(47,155,214,0.09)",   border: "rgba(47,155,214,0.22)"  },
-  { key: "physics",     name: "Physics World",     tagline: "Apply forces. Trace light. Move through space.",      icon: "⚡",  glyph: "⚡", color: "var(--eg-subject-physics)",     tint: "rgba(255,111,145,0.09)",  border: "rgba(255,111,145,0.22)" },
-  { key: "biology",     name: "Biology World",     tagline: "Study cells. Map ecosystems. Decode life.",           icon: "🧬",  glyph: "⬡",  color: "var(--eg-subject-biology)",     tint: "rgba(76,175,110,0.09)",   border: "rgba(76,175,110,0.22)"  },
+  {
+    key: "chemistry",
+    name: "Chemistry World",
+    headline: "Build atoms. Break bonds.",
+    tagline: "See what matter is really made of.",
+    icon: "⚗️",
+    glyph: "⚗",
+    rgb: "123,79,203",
+    color: "var(--eg-subject-chemistry)",
+    gradient: "linear-gradient(145deg, #1a0840 0%, #2d1260 60%, #0e0420 100%)",
+  },
+  {
+    key: "mathematics",
+    name: "Mathematics World",
+    headline: "Solve equations.",
+    tagline: "Own the numbers. Build the proofs.",
+    icon: "📐",
+    glyph: "∑",
+    rgb: "47,155,214",
+    color: "var(--eg-subject-mathematics)",
+    gradient: "linear-gradient(145deg, #031828 0%, #062848 60%, #020e18 100%)",
+  },
+  {
+    key: "physics",
+    name: "Physics World",
+    headline: "Apply forces. Trace light.",
+    tagline: "Move through space — for real.",
+    icon: "⚡",
+    glyph: "⚡",
+    rgb: "255,111,145",
+    color: "var(--eg-subject-physics)",
+    gradient: "linear-gradient(145deg, #200818 0%, #380820 60%, #120410 100%)",
+  },
+  {
+    key: "biology",
+    name: "Biology World",
+    headline: "Study cells. Map life.",
+    tagline: "Decode the most complex system ever built.",
+    icon: "🧬",
+    glyph: "⬡",
+    rgb: "76,175,110",
+    color: "var(--eg-subject-biology)",
+    gradient: "linear-gradient(145deg, #021408 0%, #082814 60%, #010a04 100%)",
+  },
 ];
+
+const STEPS = [
+  { icon: "🎯", title: "Enter a World", body: "Choose a subject — Chemistry, Maths, Physics, Biology. Each maps directly to the curriculum you're studying." },
+  { icon: "🔬", title: "Interact with concepts", body: "Build atoms. Drag particles. Solve equations on a live canvas. The interaction IS the lesson." },
+  { icon: "📈", title: "Build mastery", body: "EXL tracks every topic you've understood. Real progress — not streaks, not points, just knowledge." },
+];
+
+// ── Floating decorative atoms (pure CSS shapes, no images) ───────────────────
+// These are the analog of the game controllers/cassettes in the reference.
+const FLOATERS = [
+  { top: "12%", left: "3%",  size: 52, delay: 0,    subject: "chemistry"   },
+  { top: "8%",  right: "5%", size: 44, delay: 0.4,  subject: "mathematics" },
+  { top: "58%", left: "1%",  size: 38, delay: 0.8,  subject: "physics"     },
+  { top: "70%", right: "3%", size: 48, delay: 0.2,  subject: "biology"     },
+];
+
+const FLOATER_COLOR: Record<string, string> = {
+  chemistry:   "123,79,203",
+  mathematics: "47,155,214",
+  physics:     "255,111,145",
+  biology:     "76,175,110",
+};
+const FLOATER_GLYPH: Record<string, string> = {
+  chemistry: "⚗", mathematics: "∑", physics: "⚡", biology: "⬡",
+};
 
 export function HomePage({ gamesBySubject, currentStudentXp }: HomePageProps) {
   const { theme, toggleTheme } = useTheme();
@@ -30,97 +116,116 @@ export function HomePage({ gamesBySubject, currentStudentXp }: HomePageProps) {
   return (
     <div className={styles.page} data-theme={theme}>
 
-      {/* Ambient blobs */}
-      <div className={styles.ambient} aria-hidden="true">
-        <div className={styles.blob} style={{ width: 640, height: 640, top: "-22%", left: "-12%", background: "radial-gradient(circle, rgba(123,79,203,0.13) 0%, transparent 70%)" }} />
-        <div className={styles.blob} style={{ width: 520, height: 520, top: "38%",  right: "-10%", background: "radial-gradient(circle, rgba(47,155,214,0.10) 0%, transparent 70%)" }} />
-        <div className={styles.blob} style={{ width: 420, height: 420, bottom: "4%", left: "18%",  background: "radial-gradient(circle, rgba(76,175,110,0.09) 0%, transparent 70%)" }} />
+      {/* ── GRID TEXTURE + FLOATING ATOMS ──────────────────────────────── */}
+      <div className={styles.gridTexture} aria-hidden="true" />
+
+      {/* Floating subject-atom decoratives */}
+      <div className={styles.floaters} aria-hidden="true">
+        {FLOATERS.map((f, i) => (
+          <div
+            key={i}
+            className={styles.floater}
+            style={{
+              top: f.top,
+              left: "left" in f ? (f as { left: string }).left : undefined,
+              right: "right" in f ? (f as { right: string }).right : undefined,
+              width: f.size,
+              height: f.size,
+              animationDelay: `${f.delay}s`,
+              "--frgb": FLOATER_COLOR[f.subject],
+            } as React.CSSProperties}
+          >
+            <span className={styles.floaterGlyph}>{FLOATER_GLYPH[f.subject]}</span>
+          </div>
+        ))}
       </div>
 
       <SiteHeader theme={theme} onToggleTheme={toggleTheme} active="games" currentStudentXp={currentStudentXp} />
 
-      {/* ── HERO ── */}
+      {/* ── HERO ────────────────────────────────────────────────────────── */}
       <section className={styles.hero}>
         <div className={styles.heroInner}>
+
+          {/* Eyebrow pill */}
           <div className={styles.eyebrow}>
             <span className={styles.eyebrowDot} />
             EXL Learning World
           </div>
-          <h1 className={`${styles.heroTitle} ${styles.fd}`}>
-            Every subject is<br />
-            <span className={styles.accent}>a world to explore.</span>
+
+          {/* Massive stroke headline — the reference's defining move */}
+          <h1 className={styles.heroTitle}>
+            <span className={styles.titleLine1}>Let the</span>
+            {/* "Learning" on its own line, in the accent tray — reference's speech bubble word */}
+            <span className={styles.titleTray}>
+              <span className={styles.titleTrayWord}>Learning</span>
+            </span>
+            <span className={styles.titleLine3}>Begin.</span>
           </h1>
+
           <p className={styles.heroSub}>
-            Interact with atoms. Solve equations. Run experiments.
-            School concepts you can touch, manipulate, and master —
-            not just read about.
+            Chemistry. Mathematics. Physics. Biology.
+            Four worlds. One platform. Zero passive learning.
           </p>
+
           <div className={styles.heroCtas}>
-            <Link href="/worlds" className={`${styles.ctaMain} ${styles.fd}`}>Enter a World</Link>
-            <Link href="/worlds" className={styles.ctaSub}>{totalGames} experiences available →</Link>
+            <Link href="/worlds" className={styles.ctaMain}>
+              Enter a World →
+            </Link>
+            <span className={styles.ctaNote}>{totalGames} interactive experience{totalGames !== 1 ? "s" : ""} live</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ── WORLD TRAY — the reference's purple card panel ──────────────── */}
+      <section className={styles.traySection}>
+        <div className={styles.container}>
+
+          <div className={styles.trayHeader}>
+            <span className={styles.trayLabel}>🌍 Choose your world</span>
+            <Link href="/worlds" className={styles.seeAll}>See all →</Link>
           </div>
 
-          {/* World portal cards */}
-          <div className={styles.portals}>
+          <div className={styles.worldTray}>
             {WORLDS.map((w, i) => {
               const games = gamesBySubject[w.key] ?? [];
               return (
-                <Link key={w.key} href="/worlds" className={styles.portal}
-                  style={{ "--wc": w.color, "--wt": w.tint, "--wb": w.border, animationDelay: `${i * 0.07}s` } as React.CSSProperties}
+                <Link
+                  key={w.key}
+                  href="/worlds"
+                  className={styles.worldCard}
+                  style={{
+                    "--wrgb": w.rgb,
+                    "--wc": w.color,
+                    animationDelay: `${i * 0.08}s`,
+                  } as React.CSSProperties}
                 >
-                  <span className={styles.portalGlyph}>{w.glyph}</span>
-                  <span className={styles.portalName}>{w.icon} {w.name}</span>
-                  <span className={styles.portalCount}>{games.length > 0 ? `${games.length} exp.` : "Soon"}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+                  {/* Full-bleed gradient art area */}
+                  <div
+                    className={styles.wcArt}
+                    style={{ background: w.gradient }}
+                  >
+                    {/* Giant glyph as atmosphere */}
+                    <span className={styles.wcArtGlyph} aria-hidden="true">{w.glyph}</span>
+                    {/* Subject badge */}
+                    <div className={styles.wcArtBadge}>{w.icon} {w.name}</div>
+                  </div>
 
-      {/* ── HOW IT WORKS ── */}
-      <section className={styles.how}>
-        <div className={styles.container}>
-          <div className={styles.sectionLabel}>How it works</div>
-          <div className={styles.howGrid}>
-            {[
-              { icon: "🎯", n: "01", title: "Enter a World", body: "Choose a subject. Each world maps to the real curriculum — Chemistry, Maths, Physics, Biology." },
-              { icon: "🔬", n: "02", title: "Interact with concepts", body: "Build atoms. Solve equations on a live canvas. The interaction IS the lesson — not a description of it." },
-              { icon: "📈", n: "03", title: "Build mastery", body: "EXL tracks exactly which topics you've mastered. Your progress follows you across every session." },
-            ].map(s => (
-              <div key={s.n} className={styles.howStep}>
-                <div className={styles.howIcon}>{s.icon}</div>
-                <div className={styles.howN}>{s.n}</div>
-                <div className={styles.howTitle}>{s.title}</div>
-                <p className={styles.howBody}>{s.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── THE WORLDS ── */}
-      <section className={styles.worldsSec}>
-        <div className={styles.container}>
-          <div className={styles.sectionLabel}>The worlds</div>
-          <h2 className={`${styles.secTitle} ${styles.fd}`}>Where do you want to go?</h2>
-          <div className={styles.worldsGrid}>
-            {WORLDS.map((w) => {
-              const games = gamesBySubject[w.key] ?? [];
-              return (
-                <Link key={w.key} href="/worlds" className={styles.worldCard}
-                  style={{ "--wc": w.color, "--wt": w.tint, "--wb": w.border } as React.CSSProperties}
-                >
-                  <div className={styles.wcBg} aria-hidden="true">{w.glyph}</div>
+                  {/* Card body */}
                   <div className={styles.wcBody}>
-                    <div className={styles.wcIcon}>{w.icon}</div>
-                    <div className={`${styles.wcName} ${styles.fd}`}>{w.name}</div>
-                    <div className={styles.wcTag}>{w.tagline}</div>
+                    <div className={styles.wcHeadline}>{w.headline}</div>
+                    <div className={styles.wcTagline}>{w.tagline}</div>
                     <div className={styles.wcFoot}>
-                      {games.length > 0
-                        ? <><span className={styles.liveDot}>●</span> {games.length} experience{games.length !== 1 ? "s" : ""} live</>
-                        : <span className={styles.soonBadge}>Coming soon</span>}
+                      {games.length > 0 ? (
+                        <span className={styles.wcLive}>● {games.length} live</span>
+                      ) : (
+                        <span className={styles.wcSoon}>Soon</span>
+                      )}
                     </div>
+                  </div>
+
+                  {/* "Play Now" bar — reference's signature card element */}
+                  <div className={styles.wcCta}>
+                    Explore →
                   </div>
                 </Link>
               );
@@ -129,34 +234,55 @@ export function HomePage({ gamesBySubject, currentStudentXp }: HomePageProps) {
         </div>
       </section>
 
-      {/* ── STATEMENT ── */}
-      <section className={styles.statement}>
+      {/* ── HOW IT WORKS ──────────────────────────────────────────────────── */}
+      <section className={styles.how}>
         <div className={styles.container}>
-          <div className={styles.statementInner}>
-            <div className={styles.statementEyebrow}>Our philosophy</div>
-            <blockquote className={`${styles.statementQ} ${styles.fd}`}>
-              "Students learn by doing,<br />not by reading."
-            </blockquote>
-            <p className={styles.statementBody}>
-              EXL is the interactive layer for learning — the environment between
-              a student and a concept where genuine understanding is built through
-              action, not observation.
-            </p>
-            <Link href="/worlds" className={`${styles.ctaMain} ${styles.fd}`}>Start exploring →</Link>
+          <div className={styles.howEyebrow}>How it works</div>
+          <h2 className={styles.howTitle}>Not a quiz. Not a video. Something different.</h2>
+          <div className={styles.howGrid}>
+            {STEPS.map((s, i) => (
+              <div key={i} className={styles.howStep}>
+                <div className={styles.howStepIcon}>{s.icon}</div>
+                <div className={styles.howStepNum}>0{i + 1}</div>
+                <div className={styles.howStepTitle}>{s.title}</div>
+                <p className={styles.howStepBody}>{s.body}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
+      {/* ── PHILOSOPHY STATEMENT ─────────────────────────────────────────── */}
+      <section className={styles.statement}>
+        <div className={styles.container}>
+          <div className={styles.statementInner}>
+            {/* Decorative large quote mark */}
+            <div className={styles.statementMark} aria-hidden="true">"</div>
+            <blockquote className={styles.statementQ}>
+              Students learn by doing,<br />not by reading.
+            </blockquote>
+            <p className={styles.statementBody}>
+              EXL is the interactive layer between a student and a concept.
+              Understanding is built through action, not observation.
+            </p>
+            <Link href="/worlds" className={styles.ctaMain}>
+              Start exploring →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ────────────────────────────────────────────────────────── */}
       <footer className={styles.footer}>
         <div className={`${styles.container} ${styles.footerInner}`}>
           <div className={styles.footerBrand}>
-            <div className={`${styles.footerMark} ${styles.fd}`}>E</div>
-            <span className={styles.fd}>EXL Learning World</span>
+            <div className={styles.footerMark}>E</div>
+            <span className={styles.footerName}>EXL Learning World</span>
           </div>
           <span className={styles.footerMotto}>Interact → Understand → Practise → Construct → Master</span>
         </div>
       </footer>
+
     </div>
   );
 }

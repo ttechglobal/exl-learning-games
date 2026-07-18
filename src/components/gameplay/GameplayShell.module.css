@@ -1,13 +1,24 @@
 /**
- * GameplayShell.module.css — REDESIGNED
+ * GameplayShell.module.css
  *
- * Elevated to match NarrationScreen's game-native visual language:
- * - Stat cards: dark (#2e1258 base) with push-shadow border-bottom
- * - Mission banner: parchment (#f5f0e4) with warm border and push-shadow
- * - Game title label: matches the NarrationScreen badge/chip aesthetic
- * - Paused overlay: unchanged (dark scrim + label)
+ * HUD layout: menu button + stat cards share ONE flex row (.menuSlot).
+ * Stat cards are ALWAYS horizontal (row direction) — never column-stacked.
  *
- * Layout structure unchanged — only visual treatment updated.
+ * Problem in screenshot: at >=600px the old CSS set statCard to
+ * flex-direction:column + flex:0 1 140px. With flex-wrap:wrap on the
+ * parent, two 140px-min cards in a ~270px container both wrapped to new
+ * lines, stacking vertically. The menu button then had nothing to align
+ * with, so it floated separately to the left.
+ *
+ * Fix: statCards stay flex-direction:row at all sizes. On desktop they
+ * grow slightly wider but never reflow into columns. The label/value
+ * pair reads left-to-right (label · value) on mobile and stacks
+ * label-over-value only inside the card's OWN column — which is achieved
+ * by keeping the card as flex-direction:column (internal) but fixing
+ * the card's OWN width so it doesn't try to reflow in the outer row.
+ *
+ * Visual treatment: dark push-shadow (#2e1258) matching NarrationScreen /
+ * BackButton palette throughout. Parchment mission banner.
  */
 
 .shell {
@@ -22,6 +33,7 @@
   padding: 14px 14px 28px;
 }
 
+/* ── PAUSED OVERLAY ─────────────────────────────────────────────── */
 .pausedOverlay {
   position: absolute;
   inset: 0;
@@ -41,7 +53,7 @@
   border-radius: 20px;
 }
 
-/* ── MENU SLOT — unchanged layout, refined menu title ────────────── */
+/* ── MENU SLOT — menu + stats always in ONE horizontal row ────────── */
 .menuSlot {
   position: relative;
   z-index: 50;
@@ -51,6 +63,7 @@
   gap: 10px;
   min-height: 42px;
   margin-bottom: 10px;
+  flex-wrap: nowrap; /* prevent any wrapping in this row */
 }
 
 .menuTitleGroup {
@@ -58,6 +71,7 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
+  flex-shrink: 0;
 }
 
 /* Game title chip — matches NarrationScreen's .missionChip language */
@@ -67,8 +81,8 @@
   border-bottom: 3px solid #150828;
   border-radius: 10px;
   padding: 5px 14px;
-  font-family: var(--eg-font-display);
-  font-weight: 800;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-weight: 700;
   font-size: 0.82rem;
   color: #e8d5ff;
   white-space: nowrap;
@@ -78,60 +92,57 @@
   box-shadow: 0 3px 0 #150828;
 }
 
-/* ── STATS ROW ───────────────────────────────────────────────────── */
+/* ── STATS ROW — always horizontal, never wraps ─────────────────── */
 .statsRow {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  flex-direction: row;      /* ALWAYS row — never column */
+  flex-wrap: nowrap;        /* NEVER wrap — prevent vertical stacking */
   align-items: center;
   gap: 8px;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
-@media (min-width: 600px) {
-  .menuSlot {
-    justify-content: flex-start;
-    gap: 16px;
-  }
-  .statsRow {
-    justify-content: flex-start;
-    gap: 12px;
-  }
-}
-
-/* ── STAT CARDS — dark push-shadow style (mobile: compact pill) ─── */
+/* ── STAT CARD — compact pill on mobile, slightly wider on desktop ── */
 .statCard {
-  flex: 0 0 auto;
+  flex: 0 0 auto;           /* don't grow OR shrink below content size */
   display: flex;
+  flex-direction: column;   /* label over value INSIDE the card */
   align-items: center;
-  gap: 6px;
+  gap: 0;
 
-  /* Dark parchment-contrast — stands out against any environment photo */
   background: #2e1258;
   border: 1.5px solid #6a3aab;
   border-bottom: 3px solid #150828;
   border-radius: 12px;
-  padding: 5px 10px;
+  padding: 6px 12px;
+  min-width: 64px;
   text-align: center;
 
-  box-shadow: 0 3px 0 #150828, 0 5px 12px rgba(0,0,0,0.35);
+  box-shadow: 0 3px 0 #150828, 0 5px 12px rgba(0, 0, 0, 0.35);
 }
 
 .statLabel {
-  font-family: var(--eg-font-display);
-  font-size: 0.56rem;
-  letter-spacing: 0.06em;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(200, 168, 255, 0.7);
+  color: rgba(200, 168, 255, 0.75);
+  line-height: 1.2;
 }
+
 .statValue {
-  font-family: var(--eg-font-display);
-  font-weight: 800;
-  font-size: 0.95rem;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-weight: 700;
+  font-size: 1.1rem;
   color: #e8d5ff;
+  line-height: 1.15;
 }
+
 .statDanger  { color: #ff8070; }
 .statSuccess { color: #7de8a0; }
-.statGold    { color: var(--eg-gold); }
+.statGold    { color: var(--eg-gold, #ffb23c); }
+
 .statValue.urgent {
   animation: statPulse 0.5s ease-in-out infinite;
 }
@@ -140,9 +151,43 @@
   50%       { transform: scale(1.18); }
 }
 
-/* Caption hidden on mobile compact pills */
+/* Caption — shown on desktop only */
 .statCaption {
   display: none;
+  font-size: 0.62rem;
+  color: var(--eg-gold, #ffb23c);
+  font-weight: 700;
+  margin-top: 2px;
+  min-height: 12px;
+  line-height: 1;
+}
+
+/* ── DESKTOP UPGRADES ≥600px ─────────────────────────────────────── */
+@media (min-width: 600px) {
+  .menuSlot {
+    justify-content: flex-start;
+    gap: 14px;
+  }
+
+  .statCard {
+    padding: 8px 18px;
+    min-width: 80px;
+    border-radius: 14px;
+    border-bottom-width: 4px;
+    box-shadow: 0 4px 0 #150828, 0 8px 16px rgba(0, 0, 0, 0.35);
+  }
+
+  .statLabel {
+    font-size: 0.64rem;
+  }
+
+  .statValue {
+    font-size: 1.45rem;
+  }
+
+  .statCaption {
+    display: block;
+  }
 }
 
 /* ── TOP ZONE (mission prompt) ───────────────────────────────────── */
@@ -171,17 +216,19 @@
     0 4px 0 #c0b080,
     0 6px 16px rgba(43, 28, 74, 0.2);
 }
+
 .missionLabel {
-  font-family: var(--eg-font-display);
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
   font-size: 0.65rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #8a7555;
   margin-bottom: 3px;
 }
+
 .missionText {
-  font-family: var(--eg-font-display);
-  font-weight: 800;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-weight: 700;
   font-size: 1.02rem;
   color: #2a1a08;
 }
@@ -199,44 +246,12 @@
   padding-top: 8px;
 }
 
-/* ── TABLET / DESKTOP UPGRADES ───────────────────────────────────── */
-@media (min-width: 600px) {
-  .statCard {
-    flex: 0 1 140px;
-    flex-direction: column;
-    gap: 0;
-    border-radius: 16px;
-    padding: 10px 16px;
-    border-bottom-width: 4px;
-    box-shadow: 0 4px 0 #150828, 0 8px 16px rgba(0,0,0,0.35);
-  }
-  .statLabel {
-    font-size: 0.66rem;
-    letter-spacing: 0.08em;
-  }
-  .statValue {
-    font-size: 1.5rem;
-  }
-  .statCaption {
-    display: block;
-    font-size: 0.7rem;
-    color: var(--eg-gold);
-    font-weight: 700;
-    margin-top: 2px;
-    min-height: 14px;
-  }
-  .missionBanner {
-    padding: 12px 24px;
-  }
-  .missionText {
-    font-size: 1.15rem;
-  }
-}
-
+/* ── LARGE DESKTOP ≥1024px ───────────────────────────────────────── */
 @media (min-width: 1024px) {
   .shell {
     padding: 20px 32px 40px;
   }
+
   .menuSlot,
   .topZone {
     width: 100%;
@@ -244,15 +259,27 @@
     margin-left: auto;
     margin-right: auto;
   }
+
   .gameplayFrame {
     max-width: 920px;
     margin: 0 auto;
   }
+
   .statCard {
-    padding: 12px 22px;
+    padding: 10px 22px;
+    min-width: 90px;
   }
+
   .statValue {
-    font-size: 1.7rem;
+    font-size: 1.65rem;
+  }
+
+  .missionBanner {
+    padding: 12px 28px;
+  }
+
+  .missionText {
+    font-size: 1.15rem;
   }
 }
 

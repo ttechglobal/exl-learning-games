@@ -41,7 +41,16 @@ const OBJECTIVES_BY_SLUG: Record<string, MissionObjectives> = {
       "Hit Submit when your molecule matches the target."
     ]
   },
-  "element-hunter": {
+  "matter-lab": {
+    brief:
+      "The lab's temperature system has malfunctioned — every sample is stuck in the wrong state.\n\nTake control of the heat slider and tell Dr. Adaobi what you see happening to the particles.",
+    items: [
+      "Drag the slider up to heat, down to cool.",
+      "Watch the particles — their speed and spacing will change.",
+      "When particles change behaviour, tap the label that matches what you see.",
+      "The chemistry word appears after you identify the physical event."
+    ]
+  },
     brief:
       "Every element on the Periodic Table has its own atomic number, electrons, and position. You need to know them fast.\n\nFind the right element from the clue before the timer runs out.",
     items: [
@@ -111,7 +120,16 @@ const OBJECTIVES_BY_ENGINE: Record<string, MissionObjectives> = {
       "Submit when your molecule matches the target."
     ]
   },
-  "nova-explorer": {
+  "particle-field": {
+    brief:
+      "The particles are ready. Take control of the temperature and watch what happens.\n\nWhen the particles change behaviour, identify what you see.",
+    items: [
+      "Drag the temperature slider up to heat, down to cool.",
+      "Watch particle speed and spacing respond.",
+      "Tap the label that describes the physical change you observe.",
+      "The chemistry term appears after you name the event correctly."
+    ]
+  },
     brief:
       "Ancient formulae have been discovered in the Lost Worlds — but every hidden variable is buried under layers of mathematical obstacles.\n\nHelp Nova remove the obstacles one by one and uncover the variable.",
     items: [

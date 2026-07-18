@@ -158,7 +158,14 @@
   text-transform: uppercase;
   color: #8a7555;
   font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.cardSub {
+  font-size: 0.76rem;
+  color: #7a6545;
   margin-bottom: 14px;
+  line-height: 1.4;
 }
 
 /* ── TIER BUTTONS — parchment-on-dark style ─────────────────────────────── */

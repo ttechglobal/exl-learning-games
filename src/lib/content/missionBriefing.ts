@@ -23,7 +23,9 @@ const BRIEFING_BY_SLUG: Record<string, string> = {
     "Welcome, Scientist. Elements have scattered across the lab shelves. Track down the right ones before the timer runs out.",
   "carbon-builder":
     "Welcome, Scientist. The lab needs working molecules, not loose atoms — bond them correctly, respecting every element's bonding limit, or the structure won't hold.",
-  "nova-explorer":
+  "matter-lab":
+    "Welcome, Lab Technician. The temperature control system has failed — every sample is stuck in the wrong state. Take manual control of the heat, and tell Dr. Adaobi exactly what you observe happening to the particles.",
+  "lost-worlds":
     "Welcome, Explorer. Ancient formulae have been discovered in the Lost Worlds — but their variables are buried under layers of mathematical obstacles. Help Nova excavate the hidden variables and restore knowledge to the Archive."
 };
 

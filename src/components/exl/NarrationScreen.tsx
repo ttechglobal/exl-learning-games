@@ -11,18 +11,28 @@ import { CHARACTERS, FALLBACK_CHARACTER, SceneBackground, CharacterFigure } from
 
 function splitIntoLines(text: string): string[] {
   const sentences = text
-    .split(/(?<=\.)\s+/)
+    .split(/(?<=[.!?])\s+/)
     .map(s => s.trim())
     .filter(Boolean);
   if (sentences.length <= 1) return [text];
+  // Merge short sentences so we get max 2 narrative cards.
+  // A sentence under 60 chars (e.g. "Welcome, Scientist.") gets paired
+  // with the next one rather than shown alone — avoids one-word cards
+  // that feel like the briefing is stuttering.
   const cards: string[] = [];
   let i = 0;
-  while (i < sentences.length && cards.length < 3) {
-    cards.push(sentences[i]);
-    i++;
+  while (i < sentences.length && cards.length < 2) {
+    if (i + 1 < sentences.length && sentences[i].length < 60) {
+      cards.push(sentences[i] + " " + sentences[i + 1]);
+      i += 2;
+    } else {
+      cards.push(sentences[i]);
+      i++;
+    }
   }
+  // Any remaining sentences get appended to the last card
   if (i < sentences.length) {
-    cards.push(sentences.slice(i).join(" "));
+    cards[cards.length - 1] += " " + sentences.slice(i).join(" ");
   }
   return cards;
 }
@@ -31,8 +41,13 @@ function splitIntoLines(text: string): string[] {
 
 function TypewriterText({ text, onDone }: { text: string; onDone: () => void }) {
   const [displayed, setDisplayed] = useState("");
-  const indexRef = useRef(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const indexRef  = useRef(0);
+  const timerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Keep onDone in a ref so it never triggers the effect to re-run
+  // (the function identity changes every render; putting it in deps
+  //  caused the typewriter to restart mid-word in React StrictMode)
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
 
   useEffect(() => {
     setDisplayed("");
@@ -44,13 +59,13 @@ function TypewriterText({ text, onDone }: { text: string; onDone: () => void }) 
         setDisplayed(text.slice(0, indexRef.current));
         timerRef.current = setTimeout(tick, 22);
       } else {
-        onDone();
+        onDoneRef.current();
       }
     };
 
     timerRef.current = setTimeout(tick, 60);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, [text, onDone]);
+  }, [text]); // text only — onDone accessed via ref, never a dep
 
   return <span>{displayed}</span>;
 }
@@ -65,13 +80,13 @@ export interface NarrationScreenProps {
   /** Back navigation — provided by PlayClient, renders a game-styled back
    *  button inside the scene area (top-left) so NarrationScreen stays
    *  self-contained and doesn't need PrePlayShell's header row. */
-  onBack?: () => void;
+  onBack: () => void;
   backLabel?: string;
 }
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
-export function NarrationScreen({ gameSlug, subject, mission, onStart, onBack }: NarrationScreenProps) {
+export function NarrationScreen({ gameSlug, subject, mission, onStart, onBack, backLabel: _backLabel }: NarrationScreenProps) {
   const character = CHARACTERS[subject] ?? FALLBACK_CHARACTER;
 
   const briefingText = resolveMissionBriefing(gameSlug);

@@ -336,9 +336,9 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
     const tiers = ["EASY", "MEDIUM", "HARD"] as const;
     const availableTiers = tiers.filter((t) => sortedMissions.some((m) => m.difficulty === t));
     const TIER_INFO: Record<string, { emoji: string; label: string; desc: string }> = {
-      EASY:   { emoji: "🟢", label: "Easy",   desc: "Guided step by step — great for building confidence." },
-      MEDIUM: { emoji: "🟡", label: "Medium", desc: "Some guidance removed — you choose the strategy." },
-      HARD:   { emoji: "🔴", label: "Hard",   desc: "Full independence — exam-level challenge." }
+      EASY:   { emoji: "🟢", label: "Guided Learning", desc: "Dr. Adaobi guides every step — maximum support for new learners." },
+      MEDIUM: { emoji: "🟡", label: "Practice",        desc: "You lead, help is available — build your confidence." },
+      HARD:   { emoji: "🔴", label: "Challenge",       desc: "No hints, unfamiliar scenarios — prove you understand it." }
     };
     return (
       <PrePlayShell
@@ -433,6 +433,7 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
      if (screen === "entry") {
   return (
     <NarrationScreen
+      key={activeMission.id}
       gameSlug={game.slug}
       subject={game.subject}
       mission={activeMission}

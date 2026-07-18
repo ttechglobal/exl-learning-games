@@ -1,0 +1,329 @@
+{
+  "slug": "matter-lab",
+  "title": "Matter Lab",
+  "engineType": "particle-field",
+  "subject": "chemistry",
+  "topicId": "nature-of-matter",
+  "sharedConfig": {
+    "particleCount": 40,
+    "transitionPauseMs": 1500,
+    "maxWrongBeforeReveal": 3,
+    "hintAfterWrongAttempts": 2,
+    "phases": {
+      "solid":  { "tempRange": [0,  34], "speedMult": 0.15, "fixedPositions": true,  "spacingFraction": 0.075 },
+      "liquid": { "tempRange": [35, 69], "speedMult": 0.55, "fixedPositions": false, "spacingFraction": 0.085 },
+      "gas":    { "tempRange": [70, 100], "speedMult": 2.2,  "fixedPositions": false, "spacingFraction": 0.22  }
+    },
+    "particleColors": {
+      "solid":  "#7b8fff",
+      "liquid": "#38c0f0",
+      "gas":    "#ff9d4a"
+    },
+    "curriculumVariants": {
+      "nigeria":   { "anchor": "an ice sachet melting in your hand",   "substanceName": "ice sachet" },
+      "cambridge": { "anchor": "ice melting in a beaker",               "substanceName": "ice"        },
+      "mixed":     { "anchor": "ice melting",                           "substanceName": "ice"        },
+      "us":        { "anchor": "an ice cube left out on the counter",   "substanceName": "ice cube"   }
+    },
+    "curriculumTopicCodes": {
+      "nigeria":   ["WAEC-CHM-SS1-T1-03"],
+      "cambridge": ["IGCSE-CHM-0620-1.2"],
+      "mixed":     ["WAEC-CHM-SS1-T1-03", "IGCSE-CHM-0620-1.2"],
+      "us":        ["NGSS-MS-PS1-4"]
+    }
+  },
+  "snapshot": {
+    "cards": [
+      {
+        "title": "Particles never stop",
+        "body": "Even in solid ice, particles are vibrating. They slow down when cooled — but they never fully stop."
+      },
+      {
+        "title": "Heat = particle energy",
+        "body": "Adding heat makes particles move faster and push further apart. Remove heat — they slow down and pull closer."
+      },
+      {
+        "title": "How to Play",
+        "body": "Drag the temperature slider up to heat, down to cool. When particles change behaviour, tap the label that matches what you see."
+      }
+    ]
+  },
+  "missions": [
+    {
+      "missionKey": "matter-lab-m1",
+      "title": "The Frozen Sample",
+      "difficulty": "EASY",
+      "sequenceIndex": 1,
+      "xpReward": 10,
+      "topicId": "nature-of-matter",
+      "subtopicId": "melting",
+      "learningGoal": "Particles in a solid vibrate in fixed positions; adding energy lets them slide past each other — that is melting.",
+      "estimatedMinutes": 3,
+      "payload": {
+        "startTemp": 5,
+        "substanceName": "water (ice)",
+        "difficulty": "EASY",
+        "showGhostHand": true,
+        "narrateBeforePicker": true,
+        "transitions": [
+          {
+            "key": "melting",
+            "threshold": 35,
+            "direction": "up",
+            "formalName": "Melting",
+            "correctLabel": "Particles breaking free of each other",
+            "options": [
+              "Particles breaking free of each other",
+              "Particles vibrating faster in place",
+              "Particles escaping from the surface",
+              "Particles locking into fixed positions",
+              "Particles disappearing into the air",
+              "Particles slowing down and pulling together"
+            ],
+            "confirmationNarration": "Exactly. They were already vibrating — you gave them enough energy to slide past each other. That is melting. The substance is still water. Nothing was destroyed.",
+            "wrongFeedback": {
+              "Particles vibrating faster in place": "They are moving faster — you noticed that. But watch the gaps between them. Are they still locked to the same spot, or are they starting to pass through each other?",
+              "Particles escaping from the surface": "Surface escape is a different event — that would be evaporation. Right now watch the entire group of particles, not just the edges.",
+              "Particles locking into fixed positions": "You would see that if you were cooling, not heating. Check the slider direction — you have been adding heat.",
+              "Particles disappearing into the air": "Look at the canvas and count — did any particles actually disappear? The number stays the same throughout every change of state.",
+              "Particles slowing down and pulling together": "Slowing down and pulling together happens when you remove heat. You are adding heat here. Watch which direction the particles are moving relative to each other."
+            },
+            "showConservationDrag": false
+          }
+        ]
+      }
+    },
+    {
+      "missionKey": "matter-lab-m2",
+      "title": "Steam Pressure",
+      "difficulty": "EASY",
+      "sequenceIndex": 2,
+      "xpReward": 10,
+      "topicId": "nature-of-matter",
+      "subtopicId": "condensation",
+      "learningGoal": "Removing energy from a gas causes particles to slow and pull together — that is condensation, the reverse of evaporation.",
+      "estimatedMinutes": 3,
+      "payload": {
+        "startTemp": 90,
+        "substanceName": "water vapour",
+        "difficulty": "EASY",
+        "showGhostHand": false,
+        "narrateBeforePicker": false,
+        "transitions": [
+          {
+            "key": "condensation",
+            "threshold": 69,
+            "direction": "down",
+            "formalName": "Condensation",
+            "correctLabel": "Particles slowing down and pulling together",
+            "options": [
+              "Particles slowing down and pulling together",
+              "Particles breaking free of each other",
+              "Particles disappearing",
+              "Particles locking into fixed positions",
+              "Particles escaping from the surface",
+              "Particles vibrating faster in place"
+            ],
+            "confirmationNarration": "Right. You removed energy — the particles slowed down enough for attraction to pull them together. Gas became liquid. This is condensation. The same particles, just closer and slower.",
+            "wrongFeedback": {
+              "Particles breaking free of each other": "Breaking free happens when you add energy, not remove it. You are cooling the sample — watch the slider direction.",
+              "Particles disappearing": "Count the dots. None of them vanished — they are just rearranging. Matter is conserved through every change of state.",
+              "Particles locking into fixed positions": "Locking into position would be freezing — a further cooling step. At this threshold, the particles are gaining enough attraction to move together, but they are not fixed yet.",
+              "Particles escaping from the surface": "Surface escape is evaporation, which happens when heating. Here you are cooling and the particles are coming together, not leaving.",
+              "Particles vibrating faster in place": "Faster vibration happens when you add heat. You are removing heat here — watch what the particles are doing to each other."
+            },
+            "showConservationDrag": false
+          }
+        ]
+      }
+    },
+    {
+      "missionKey": "matter-lab-m3",
+      "title": "Full Cycle",
+      "difficulty": "MEDIUM",
+      "sequenceIndex": 3,
+      "xpReward": 20,
+      "topicId": "nature-of-matter",
+      "subtopicId": "melting-and-boiling",
+      "learningGoal": "There are two distinct transition thresholds — one where solid becomes liquid, one where liquid becomes gas — and mass is conserved at both.",
+      "estimatedMinutes": 4,
+      "payload": {
+        "startTemp": 5,
+        "substanceName": "water",
+        "difficulty": "MEDIUM",
+        "showGhostHand": false,
+        "narrateBeforePicker": false,
+        "transitions": [
+          {
+            "key": "melting-full",
+            "threshold": 35,
+            "direction": "up",
+            "formalName": "Melting",
+            "correctLabel": "Particles breaking free of each other",
+            "options": [
+              "Particles breaking free of each other",
+              "Particles vibrating faster in place",
+              "Particles escaping from the surface",
+              "Particles slowing down and pulling together"
+            ],
+            "confirmationNarration": "Melting — the particles gained enough energy to slide past each other. Keep heating to find the next change.",
+            "wrongFeedback": {
+              "Particles vibrating faster in place": "They are vibrating faster, yes — but are they still stuck to the same positions, or are they now passing through each other?",
+              "Particles escaping from the surface": "Surface escape would be evaporation. Look at all the particles, not just those on the outer edge.",
+              "Particles slowing down and pulling together": "That is the opposite direction. You are heating, not cooling."
+            },
+            "showConservationDrag": true
+          },
+          {
+            "key": "boiling-full",
+            "threshold": 70,
+            "direction": "up",
+            "formalName": "Boiling",
+            "correctLabel": "Particles throughout the liquid gaining enough energy to form gas",
+            "options": [
+              "Particles throughout the liquid gaining enough energy to form gas",
+              "Only the fastest surface particles leaving",
+              "Particles breaking free of each other",
+              "Particles disappearing"
+            ],
+            "confirmationNarration": "Boiling. The entire liquid — not just the surface — now has enough energy to become gas. Every particle eventually escapes. This is different from evaporation, which happens only at the surface.",
+            "wrongFeedback": {
+              "Only the fastest surface particles leaving": "That would be evaporation — a surface-only event that can happen at any temperature. Boiling is different. Watch — it is happening throughout the whole liquid, not just the top.",
+              "Particles breaking free of each other": "Breaking free of each other was melting — the first transition. Something bigger is happening now: the entire liquid is turning to gas, not just rearranging into a liquid.",
+              "Particles disappearing": "The particles are still there — they have just spread so far apart they are in the gas state. Count them before and after."
+            },
+            "showConservationDrag": true
+          }
+        ]
+      }
+    },
+    {
+      "missionKey": "matter-lab-m4",
+      "title": "The Surface Mystery",
+      "difficulty": "MEDIUM",
+      "sequenceIndex": 4,
+      "xpReward": 20,
+      "topicId": "nature-of-matter",
+      "subtopicId": "evaporation",
+      "learningGoal": "Evaporation happens only at the surface and only for the fastest-moving particles — it can occur at any temperature, not just at boiling point.",
+      "estimatedMinutes": 4,
+      "payload": {
+        "startTemp": 40,
+        "substanceName": "palm oil",
+        "difficulty": "MEDIUM",
+        "showGhostHand": false,
+        "narrateBeforePicker": false,
+        "transitions": [
+          {
+            "key": "evaporation",
+            "threshold": 55,
+            "direction": "up",
+            "formalName": "Evaporation",
+            "correctLabel": "Only the fastest surface particles escaping",
+            "options": [
+              "Only the fastest surface particles escaping",
+              "All particles gaining enough energy to become gas",
+              "Particles breaking free of each other throughout",
+              "Particles disappearing from the edges"
+            ],
+            "confirmationNarration": "That is evaporation. Only the fastest-moving particles near the surface have enough energy to escape. The rest of the liquid stays liquid. This is why wet clothes dry in the sun without boiling.",
+            "wrongFeedback": {
+              "All particles gaining enough energy to become gas": "That would be boiling — the whole liquid converting to gas at once. Here the temperature is well below boiling point. Look at where the escaping particles are coming from.",
+              "Particles breaking free of each other throughout": "Breaking free throughout was melting. The sample is already liquid. Only a small number of particles are leaving — and only from one place. Where exactly?",
+              "Particles disappearing from the edges": "They are not disappearing — they are escaping into the gas phase. And it is not the edges generally, but specifically the surface. What is special about the particles that leave?"
+            },
+            "showConservationDrag": false
+          }
+        ]
+      }
+    },
+    {
+      "missionKey": "matter-lab-m5",
+      "title": "Mothballs",
+      "difficulty": "HARD",
+      "sequenceIndex": 5,
+      "xpReward": 40,
+      "topicId": "nature-of-matter",
+      "subtopicId": "sublimation",
+      "learningGoal": "Some substances transition directly from solid to gas — the expected melting event never occurs, and no liquid phase appears.",
+      "estimatedMinutes": 4,
+      "payload": {
+        "startTemp": 5,
+        "substanceName": "naphthalene (mothballs)",
+        "difficulty": "HARD",
+        "showGhostHand": false,
+        "narrateBeforePicker": false,
+        "transitions": [
+          {
+            "key": "sublimation",
+            "threshold": 62,
+            "direction": "up",
+            "formalName": "Sublimation",
+            "correctLabel": "Particles going directly from solid to gas",
+            "options": [
+              "Particles going directly from solid to gas",
+              "Particles breaking free of each other",
+              "Particles escaping only from the surface",
+              "Particles gaining energy before melting first",
+              "Particles disappearing",
+              "Particles slowly forming a liquid"
+            ],
+            "confirmationNarration": "Sublimation. No liquid phase appeared at all. Some substances — like naphthalene in mothballs — have inter-particle forces that allow a direct solid-to-gas transition. The particles themselves are unchanged. Only their arrangement changed.",
+            "wrongFeedback": {
+              "Particles breaking free of each other": "Breaking free of each other is what happens in melting — but watch the canvas. Did a liquid phase appear? The particles went from fixed-position jitter straight to free movement with large gaps. That skipped the liquid entirely.",
+              "Particles escaping only from the surface": "Surface escape at lower temperatures would be evaporation — and that requires a liquid surface. Here there was no liquid at any point. Look at the state before and after.",
+              "Particles gaining energy before melting first": "That is what you would expect — but look at what actually happened. The melting transition never fired. The threshold you passed was different.",
+              "Particles disappearing": "Count the particles before and after. The number is the same — they have not disappeared, they are just very far apart and moving very fast.",
+              "Particles slowly forming a liquid": "A liquid was never formed. Watch the particle arrangement — it went from the tight grid directly to the sparse fast-moving pattern of a gas."
+            },
+            "showConservationDrag": false
+          }
+        ]
+      }
+    },
+    {
+      "missionKey": "matter-lab-m6",
+      "title": "Explain the Puddle",
+      "difficulty": "HARD",
+      "sequenceIndex": 6,
+      "xpReward": 100,
+      "topicId": "nature-of-matter",
+      "subtopicId": "condensation-real-world",
+      "learningGoal": "Condensation can occur when ambient gas particles lose energy on contact with a cold surface — no prior liquid is needed.",
+      "estimatedMinutes": 5,
+      "payload": {
+        "startTemp": 80,
+        "substanceName": "water vapour (air moisture)",
+        "difficulty": "HARD",
+        "showGhostHand": false,
+        "narrateBeforePicker": false,
+        "transitions": [
+          {
+            "key": "condensation-cold-surface",
+            "threshold": 68,
+            "direction": "down",
+            "formalName": "Condensation",
+            "correctLabel": "Particles losing energy near the cold surface and becoming liquid",
+            "options": [
+              "Particles losing energy near the cold surface and becoming liquid",
+              "Particles disappearing when they touch the surface",
+              "Particles breaking free as they hit the cold surface",
+              "Particles freezing into solid on the surface",
+              "New water particles appearing from nowhere",
+              "Particles slowing throughout the whole container"
+            ],
+            "confirmationNarration": "Condensation from ambient vapour. The gas particles in the air lost energy when they contacted the cold surface — enough for attraction to pull them together into liquid droplets. That is the water on the outside of a cold bottle. The water was already in the air.",
+            "wrongFeedback": {
+              "Particles disappearing when they touch the surface": "They did not disappear. Look — the particle count stays the same. They are joining together on the surface as liquid, not vanishing.",
+              "Particles breaking free as they hit the cold surface": "Breaking free requires energy gain. The cold surface removes energy. Watch what happens to particle speed near the surface.",
+              "Particles freezing into solid on the surface": "Freezing would require much lower temperatures. At this threshold the particles are becoming liquid, not solid. The arrangement changes, but not into a rigid grid.",
+              "New water particles appearing from nowhere": "Matter cannot be created. The water droplets forming on the surface came from gas particles already present in the air — they did not appear from nothing.",
+              "Particles slowing throughout the whole container": "Only the particles near the cold surface slow enough to condense. The rest of the gas away from the surface continues moving freely. This is a surface effect, like evaporation."
+            },
+            "showConservationDrag": false
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -292,25 +292,34 @@
     overflow: hidden;
   }
 
-  /* Character: larger, positioned center of the scene panel */
+  /* Character: larger, vertically centred in the scene panel so it's
+     always fully visible without scrolling. bottom:0 put the feet at
+     the very base of the panel which worked on tall viewports but cut
+     off the head on shorter ones. Centering vertically keeps the full
+     figure on screen at every desktop viewport height. */
   .characterWrap {
-    width: min(360px, 44vw);
-    bottom: 0;
-    /* Re-center within the left panel */
+    width: min(340px, 40vw);
+    /* Vertically centre the figure in the scene panel */
+    bottom: auto;
+    top: 50%;
+    transform: translateX(-50%) translateY(-45%);
     left: 50%;
-    transform: translateX(-50%);
     animation: characterRiseDesktop 0.5s var(--eg-ease-pop, cubic-bezier(0.3, 1.6, 0.5, 1)) 0.1s both;
   }
 
   @keyframes characterRiseDesktop {
-    from { opacity: 0; transform: translateX(-50%) translateY(18px); }
-    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    from { opacity: 0; transform: translateX(-50%) translateY(calc(-45% + 18px)); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(-45%); }
   }
 
-  /* Name badge: centered in scene panel on desktop */
+  /* Name badge: positioned just below the character's head.
+     Character head centre ≈ top: 28% of scene at 50% translateY(-45%).
+     We nudge the badge to just below that to avoid overlapping the face. */
   .nameBadge {
-    bottom: 20px;
+    top: 46%;
+    bottom: auto;
     left: 50%;
+    transform: translateX(-50%);
   }
 
   /* Mission chip stays top-right of the SCENE panel */
@@ -385,7 +394,11 @@
 /* ── REDUCED MOTION ──────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  .characterWrap,
+  .characterWrap {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: translateX(-50%) !important;
+  }
   .nameBadge {
     animation: none !important;
     opacity: 1 !important;

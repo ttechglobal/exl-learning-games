@@ -51,6 +51,7 @@ const OBJECTIVES_BY_SLUG: Record<string, MissionObjectives> = {
       "The chemistry word appears after you identify the physical event."
     ]
   },
+  "element-hunter": {
     brief:
       "Every element on the Periodic Table has its own atomic number, electrons, and position. You need to know them fast.\n\nFind the right element from the clue before the timer runs out.",
     items: [
@@ -130,6 +131,7 @@ const OBJECTIVES_BY_ENGINE: Record<string, MissionObjectives> = {
       "The chemistry term appears after you name the event correctly."
     ]
   },
+  "ancient-formula": {
     brief:
       "Ancient formulae have been discovered in the Lost Worlds — but every hidden variable is buried under layers of mathematical obstacles.\n\nHelp Nova remove the obstacles one by one and uncover the variable.",
     items: [

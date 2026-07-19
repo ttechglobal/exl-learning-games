@@ -1,29 +1,41 @@
 /**
- * ParticleFieldEngine.module.css — Matter Lab v3
+ * ParticleFieldEngine.module.css — Matter Lab v6
+ *
+ * CANVAS STRETCHING FIX:
+ *   Previous: .canvasWrap { flex:1 } + .canvas { height:100% }
+ *   The flex:1 canvasWrap grew as the outer column received more space,
+ *   so canvas.offsetHeight changed every frame → canvas resized every frame
+ *   → canvas grew without bound.
+ *
+ *   Fix: .canvasWrap has a FIXED height (240px, grows to 280px on wide screens).
+ *   The canvas fills 100% of that fixed box. offsetHeight is now stable.
+ *   The .simRow still flex:1 but the canvas box inside it is anchored.
  *
  * LAYOUT:
- *  .layout      — flex row: sliderWrap | canvasWrap (fills remaining space)
- *  .canvasWrap  — position:relative; canvas fills it; overlays sit inside
- *  .adaobiStrip — absolute, bottom-left of canvas; avatar + speech bubble
- *  .pickerCard  — rendered below the layout row (not inside canvasWrap)
- *                 so it doesn't cover the canvas when the student is reading
- *
- * The canvas is sized by CSS (flex:1, min-height on .canvasWrap).
- * JS reads offsetWidth/offsetHeight each frame — never relies on
- * getBoundingClientRect or ResizeObserver so first-frame sizing is correct.
+ *   .outer    — flex column (GameplayShell content area)
+ *   .simRow   — flex row: sliderWrap (36px) | canvasWrap (fixed 240px height)
+ *   .pickerCard — below simRow, flexShrink:0
  */
 
-/* ── ROOT ─────────────────────────────────────────────────────────────────── */
+/* ── OUTER ────────────────────────────────────────────────────────────────── */
 
-.layout {
+.outer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  gap: 10px;
+}
+
+/* ── SIM ROW ─────────────────────────────────────────────────────────────── */
+
+.simRow {
   display: flex;
   flex-direction: row;
   gap: 8px;
-  width: 100%;
-  /* Give the layout most of the available vertical space */
-  flex: 1 1 0;
-  min-height: 220px;
-  max-height: 55vh;   /* cap so picker card is always visible below */
+  /* Use available space but don't expand canvas with it */
+  align-items: stretch;
 }
 
 /* ── SLIDER ──────────────────────────────────────────────────────────────── */
@@ -51,7 +63,7 @@
   position: relative;
   width: 26px;
   flex: 1;
-  min-height: 140px;
+  min-height: 160px;
   background: rgba(255,255,255,0.06);
   border: 1.5px solid rgba(255,255,255,0.13);
   border-radius: 18px;
@@ -59,10 +71,7 @@
   touch-action: none;
   user-select: none;
 }
-.sliderTrack.sliderOff {
-  opacity: 0.28;
-  pointer-events: none;
-}
+.sliderTrack.sliderOff { opacity: 0.28; pointer-events: none; }
 
 .sliderFill {
   position: absolute;
@@ -78,8 +87,8 @@
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  width: 36px;
-  height: 32px;
+  width: 38px;
+  height: 34px;
   background: #f5f0e4;
   border: 1.5px solid #c8ba96;
   border-bottom: 3px solid #a09070;
@@ -90,11 +99,11 @@
   justify-content: center;
   z-index: 4;
   cursor: ns-resize;
-  pointer-events: none;   /* parent track captures all pointer events */
+  pointer-events: none;
 }
 .thumbVal {
   font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-size: 0.58rem;
+  font-size: 0.6rem;
   font-weight: 700;
   color: #2a1a08;
 }
@@ -103,7 +112,7 @@
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  width: 9px; height: 9px;
+  width: 10px; height: 10px;
   background: rgba(255,200,80,0.65);
   border: 1.5px solid rgba(255,200,80,1);
   border-radius: 50%;
@@ -115,11 +124,9 @@
   border-color: rgba(72,215,110,1);
 }
 
-/* Ghost hand */
 .ghost {
   position: absolute;
-  left: 50%;
-  top: 50%;
+  left: 50%; top: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
   z-index: 10;
@@ -137,23 +144,27 @@
   text-align: center;
 }
 
-/* ── CANVAS WRAP ─────────────────────────────────────────────────────────── */
+/* ── CANVAS WRAP — FIXED HEIGHT, no flex:1 ───────────────────────────────── */
+/*
+ * This is the key fix for stretching.
+ * Height is fixed in px — canvas.offsetHeight will always return 240.
+ * The canvas element uses width:100%, height:100% inside this fixed box.
+ */
 
 .canvasWrap {
   position: relative;
   flex: 1;
   min-width: 0;
-  min-height: 220px;
+  height: 240px;           /* FIXED — not flex:1, not min-height */
   border-radius: 16px;
   overflow: hidden;
+  flex-shrink: 0;          /* do not shrink when picker card appears below */
 }
 
 .canvas {
-  /* CSS sets dimensions; JS reads offsetWidth/offsetHeight each frame */
   display: block;
   width: 100%;
-  height: 100%;
-  min-height: 220px;
+  height: 100%;            /* fills the fixed 240px box */
   border-radius: 16px;
   background: #030a14;
   border: 1.5px solid rgba(56,192,240,0.08);
@@ -162,23 +173,22 @@
 /* Phase badge */
 .phaseBadge {
   position: absolute;
-  top: 10px;
+  top: 9px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 5;
   font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-size: 0.68rem;
+  font-size: 0.6rem;
   font-weight: 700;
   color: rgba(255,255,255,0.9);
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.58);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 50px;
-  padding: 3px 14px;
+  padding: 3px 12px;
   pointer-events: none;
   white-space: nowrap;
 }
 
-/* Slow-motion ring */
 .slowRing {
   position: absolute;
   inset: 0;
@@ -188,12 +198,8 @@
   animation: slowPulse 0.7s ease-in-out infinite alternate;
   z-index: 6;
 }
-@keyframes slowPulse {
-  from { opacity: 0.4; }
-  to   { opacity: 1; }
-}
+@keyframes slowPulse { from { opacity: 0.4; } to { opacity: 1; } }
 
-/* Formal name flash */
 .formalFlash {
   position: absolute;
   inset: 0;
@@ -204,10 +210,7 @@
   z-index: 10;
   animation: flashPop 0.3s cubic-bezier(0.2,1.4,0.4,1) both;
 }
-@keyframes flashPop {
-  from { transform: scale(0.5); opacity: 0; }
-  to   { transform: scale(1);   opacity: 1; }
-}
+@keyframes flashPop { from { transform: scale(0.5); opacity:0; } to { transform: scale(1); opacity:1; } }
 .formalName {
   font-family: var(--eg-font-display, "Fredoka", sans-serif);
   font-size: clamp(1.4rem, 6vw, 2.4rem);
@@ -218,8 +221,7 @@
   padding: 0 14px;
 }
 
-/* ── DR. ADAOBI OVERLAY STRIP ───────────────────────────────────────────── */
-/* Sits inside canvasWrap, anchored bottom-left                              */
+/* ── DR. ADAOBI BUBBLE ───────────────────────────────────────────────────── */
 
 .adaobiStrip {
   position: absolute;
@@ -228,27 +230,24 @@
   right: 6px;
   z-index: 8;
   display: flex;
-  flex-direction: row;
   align-items: flex-end;
   gap: 6px;
-  /* semi-transparent backdrop so particles show through behind */
 }
 
 .adaobiAvatar {
   width: 44px;
   height: 56px;
   flex-shrink: 0;
-  /* slight drop shadow so character reads against dark canvas */
   filter: drop-shadow(0 2px 6px rgba(0,0,0,0.7));
 }
 
 .adaobiBubble {
   flex: 1;
   min-width: 0;
-  background: rgba(245,240,228,0.96);
+  background: rgba(245,240,228,0.97);
   border: 1.5px solid #c8ba96;
   border-bottom: 3px solid #a09070;
-  border-radius: 12px 12px 12px 4px;  /* pointed bottom-left toward avatar */
+  border-radius: 12px 12px 12px 4px;
   box-shadow: 0 3px 0 #a09070, 0 5px 16px rgba(0,0,0,0.5);
   padding: 7px 10px 8px;
 }
@@ -260,9 +259,9 @@
   color: #2a1a08;
   line-height: 1.45;
   margin: 0;
-  /* Clamp to 3 lines so it doesn't cover too much canvas */
+  white-space: pre-line;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -270,13 +269,13 @@
 .beginBtn {
   margin-top: 6px;
   width: 100%;
-  padding: 6px;
+  padding: 7px;
   background: #2e1258;
   border: 1.5px solid #6a3aab;
   border-bottom: 2.5px solid #150828;
   border-radius: 9px;
   font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   font-weight: 700;
   color: #e8d5ff;
   cursor: pointer;
@@ -284,11 +283,7 @@
   box-shadow: 0 2.5px 0 #150828;
   transition: transform 0.08s;
 }
-.beginBtn:active {
-  transform: translateY(2px);
-  border-bottom-width: 1px;
-  box-shadow: none;
-}
+.beginBtn:active { transform: translateY(2px); border-bottom-width: 1px; box-shadow: none; }
 
 .doneChip {
   margin-top: 6px;
@@ -304,29 +299,25 @@
 }
 
 /* ── PICKER CARD ─────────────────────────────────────────────────────────── */
-/* Rendered BELOW .layout so it doesn't cover the canvas */
 
 .pickerCard {
-  margin-top: 8px;
   background: #f5f0e4;
   border: 2px solid #c8ba96;
   border-bottom: 4px solid #a09070;
   border-radius: 18px;
   box-shadow: 0 5px 0 #8a7840, 0 8px 24px rgba(0,0,0,0.45);
-  padding: 11px 12px 13px;
+  padding: 13px 13px 14px;
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 10px;
+  flex-shrink: 0;
   animation: cardUp 0.22s cubic-bezier(0.2,1,0.4,1) both;
 }
-@keyframes cardUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
+@keyframes cardUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
 
 .pickerPrompt {
   font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: #2a1a08;
   text-align: center;
@@ -337,33 +328,30 @@
   background: #fff8e6;
   border: 1.5px solid #e0c060;
   border-radius: 10px;
-  padding: 6px 10px;
+  padding: 8px 10px;
   font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: #5a3a00;
   line-height: 1.4;
   animation: feedIn 0.18s ease both;
 }
-@keyframes feedIn {
-  from { opacity: 0; transform: scale(0.96); }
-  to   { opacity: 1; transform: scale(1); }
-}
+@keyframes feedIn { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
 
 .labelGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 7px;
+  gap: 8px;
 }
 
 .labelBtn {
   background: #2e1258;
   border: 2px solid #6a3aab;
   border-bottom: 3px solid #3d1870;
-  border-radius: 11px;
-  padding: 9px 8px;
+  border-radius: 12px;
+  padding: 11px 8px;
   font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-size: 0.67rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: #e8d5ff;
   line-height: 1.35;
@@ -371,6 +359,10 @@
   cursor: pointer;
   touch-action: manipulation;
   transition: transform 0.08s, background 0.1s;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .labelBtn:active { transform: scale(0.96) translateY(2px); border-bottom-width: 1px; }
 .labelBtn:hover:not(:disabled) { background: #3d1870; }
@@ -383,43 +375,58 @@
   color: #c8ffd8 !important;
   animation: correctPop 0.35s cubic-bezier(0.2,1.4,0.4,1) both;
 }
-@keyframes correctPop {
-  from { transform: scale(0.88); }
-  to   { transform: scale(1.04); }
-}
+@keyframes correctPop { from { transform:scale(0.88); } to { transform:scale(1.04); } }
 .labelFaded { opacity: 0.28; }
+
+/* Try again button — below the label grid */
+.tryAgainBtn {
+  background: transparent;
+  border: 1.5px solid rgba(42,26,8,0.2);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #7a5a30;
+  text-align: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.12s, border-color 0.12s;
+}
+.tryAgainBtn:hover { background: rgba(42,26,8,0.07); border-color: rgba(42,26,8,0.35); }
 
 /* ── CONSERVATION ────────────────────────────────────────────────────────── */
 
-.conservRow { display: flex; align-items: center; justify-content: center; gap: 18px; }
-.conservScale { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-.scaleLabel { font-size: 0.56rem; font-weight: 700; color: #5a3a00; text-transform: uppercase; letter-spacing: 0.07em; }
-.conservArrow { font-size: 1.1rem; color: #5a3a00; font-weight: 700; }
-.conservHint { font-family: var(--eg-font-display,"Fredoka",sans-serif); font-size: 0.68rem; color: #5a3a00; text-align: center; line-height: 1.4; margin: 0; }
+.conservRow { display:flex; align-items:center; justify-content:center; gap:18px; }
+.conservScale { display:flex; flex-direction:column; align-items:center; gap:3px; }
+.scaleLabel { font-size:0.56rem; font-weight:700; color:#5a3a00; text-transform:uppercase; letter-spacing:0.07em; }
+.conservArrow { font-size:1.1rem; color:#5a3a00; font-weight:700; }
+.conservHint { font-family:var(--eg-font-display,"Fredoka",sans-serif); font-size:0.68rem; color:#5a3a00; text-align:center; line-height:1.4; margin:0; }
 .conservBtn {
-  background: #1a5a30; border: 2px solid #4caf6e; border-bottom: 3px solid #2d7a48;
-  border-radius: 12px; padding: 10px; font-family: var(--eg-font-display,"Fredoka",sans-serif);
-  font-size: 0.76rem; font-weight: 700; color: #c8ffd8;
-  cursor: pointer; touch-action: manipulation; width: 100%;
-  transition: transform 0.08s;
+  background:#1a5a30; border:2px solid #4caf6e; border-bottom:3px solid #2d7a48;
+  border-radius:12px; padding:11px; font-family:var(--eg-font-display,"Fredoka",sans-serif);
+  font-size:0.78rem; font-weight:700; color:#c8ffd8;
+  cursor:pointer; touch-action:manipulation; width:100%; transition:transform 0.08s;
 }
-.conservBtn:active { transform: scale(0.97) translateY(2px); border-bottom-width: 1px; }
+.conservBtn:active { transform:scale(0.97) translateY(2px); border-bottom-width:1px; }
 
-/* ── RESPONSIVE ───────────────────────────────────────────────────────────── */
+/* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
 
 @media (max-width: 380px) {
-  .layout { max-height: 48vh; }
+  .canvasWrap { height: 200px; }
   .adaobiAvatar { width: 36px; height: 46px; }
-  .adaobiText { font-size: 0.6rem; -webkit-line-clamp: 2; }
+  .adaobiText { font-size: 0.6rem; -webkit-line-clamp: 3; }
   .labelGrid { grid-template-columns: 1fr; }
-  .labelBtn { font-size: 0.62rem; }
+  .labelBtn { font-size: 0.65rem; min-height: 44px; }
 }
 
 @media (min-width: 600px) {
-  .layout { max-height: 60vh; }
+  .canvasWrap { height: 280px; }
   .adaobiAvatar { width: 56px; height: 72px; }
   .adaobiText { font-size: 0.74rem; -webkit-line-clamp: 4; }
   .formalName { font-size: 2.2rem; }
+  .labelBtn { font-size: 0.75rem; padding: 12px 10px; }
+  .pickerPrompt { font-size: 0.95rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

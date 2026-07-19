@@ -26,7 +26,8 @@
   color: var(--eg-surface-text);
   font-family: var(--eg-font-body);
   position: relative;
-  overflow-x: hidden;
+  overflow-x: hidden;   /* prevent any child from causing horizontal scroll */
+  width: 100%;
 }
 
 .page :global(a) { text-decoration: none; color: inherit; }
@@ -75,11 +76,14 @@
   max-width: 1280px;
   margin: 0 auto;
   padding: 24px 24px 64px;
+  /* Prevent any child from causing horizontal scroll */
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .mainCol {
   flex: 1;
-  min-width: 0;
+  min-width: 0;          /* critical — allows flex child to shrink below content size */
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -324,7 +328,9 @@
 
 .cardGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  /* No minmax minimum — cards flex to fill whatever space is available.
+     On desktop this gives ~3-4 cols; on mobile it obeys the breakpoint overrides below. */
+  grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr));
   gap: 14px;
 }
 
@@ -480,6 +486,8 @@
   border-radius: 24px;
   overflow: hidden;
   box-shadow: var(--eg-surface-shadow-card);
+  display: flex;
+  flex-direction: column;
 }
 
 /* Featured art in side panel */
@@ -523,6 +531,7 @@
 
 /* Side panel meta section */
 .sideMeta {
+  flex: 1;
   padding: 18px 18px 20px;
   display: flex;
   flex-direction: column;
@@ -591,6 +600,7 @@
 
 /* Side game list */
 .sideGameList {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -683,16 +693,25 @@
     padding: 16px 16px 48px;
     gap: 20px;
   }
-  .mainCol { padding-right: 0; }
+  .mainCol {
+    padding-right: 0;
+    order: 2;         /* game sections go BELOW side panel on mobile */
+    min-width: 0;
+    width: 100%;
+  }
   .sidePanel {
     width: 100%;
     position: static;
     max-height: none;
-    order: -1;    /* panel appears above game sections on mobile */
+    order: 1;         /* side panel (big card) goes ABOVE on mobile */
+    min-width: 0;
   }
   .sidePanelInner { border-radius: 20px; }
   .sideHero { height: 130px; }
-  .cardGrid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .cardGrid {
+    grid-template-columns: 1fr 1fr;  /* explicit 2 cols, no minmax fighting */
+    gap: 10px;
+  }
 }
 
 @media (max-width: 560px) {
@@ -702,13 +721,19 @@
   .heroGlyph { font-size: 88px; }
   .chipsRow { gap: 6px; }
   .chip { padding: 7px 12px; font-size: 0.76rem; }
-  .cardGrid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .cardGrid {
+    grid-template-columns: 1fr 1fr;  /* keep 2 cols on phones */
+    gap: 8px;
+  }
   .cardArtWrap { height: 80px; }
   .cardBody { padding: 8px 10px 10px; }
+  .cardName { font-size: 0.8rem; }
+  .cardDesc { font-size: 0.65rem; }
+  .sideHero { height: 110px; }
 }
 
-@media (max-width: 380px) {
-  .cardGrid { grid-template-columns: 1fr; }
+@media (max-width: 360px) {
+  .cardGrid { grid-template-columns: 1fr; }  /* single col only on very small */
 }
 
 /* ── DARK MODE SPECIFIC OVERRIDES ─────────────────────────────────────────── */

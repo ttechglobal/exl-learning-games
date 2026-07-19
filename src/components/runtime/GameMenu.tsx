@@ -60,7 +60,7 @@ export function GameMenu({ onRestart, onChangeDifficulty, onReviewConcepts }: Ga
             )}
 
             <Link href="/worlds" className={`${styles.sheetButton} ${styles.exitButton}`}>
-              ✕ Exit to Worlds
+              ✕ Exit to Menu
             </Link>
 
             <hr className={styles.divider} />

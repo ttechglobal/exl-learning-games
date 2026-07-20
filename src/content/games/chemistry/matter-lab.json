@@ -1,328 +1,801 @@
 {
-  "slug": "matter-lab",
-  "title": "Matter Lab",
-  "engineType": "particle-field",
+  "slug": "matter-lab-questions",
+  "title": "Matter Lab — Questions",
+  "engineType": "question-bank",
   "subject": "chemistry",
   "topicId": "nature-of-matter",
   "sharedConfig": {
-    "particleCount": 40,
-    "transitionPauseMs": 1500,
-    "maxWrongBeforeReveal": 3,
-    "hintAfterWrongAttempts": 2,
-    "phases": {
-      "solid":  { "tempRange": [0,  34], "speedMult": 0.15, "fixedPositions": true,  "spacingFraction": 0.075 },
-      "liquid": { "tempRange": [35, 69], "speedMult": 0.55, "fixedPositions": false, "spacingFraction": 0.085 },
-      "gas":    { "tempRange": [70, 100], "speedMult": 2.2,  "fixedPositions": false, "spacingFraction": 0.22  }
-    },
-    "particleColors": {
-      "solid":  "#7b8fff",
-      "liquid": "#38c0f0",
-      "gas":    "#ff9d4a"
-    },
-    "curriculumVariants": {
-      "nigeria":   { "anchor": "an ice sachet melting in your hand",   "substanceName": "ice sachet" },
-      "cambridge": { "anchor": "ice melting in a beaker",               "substanceName": "ice"        },
-      "mixed":     { "anchor": "ice melting",                           "substanceName": "ice"        },
-      "us":        { "anchor": "an ice cube left out on the counter",   "substanceName": "ice cube"   }
-    },
-    "curriculumTopicCodes": {
-      "nigeria":   ["WAEC-CHM-SS1-T1-03"],
-      "cambridge": ["IGCSE-CHM-0620-1.2"],
-      "mixed":     ["WAEC-CHM-SS1-T1-03", "IGCSE-CHM-0620-1.2"],
-      "us":        ["NGSS-MS-PS1-4"]
-    }
-  },
-  "snapshot": {
-    "cards": [
+    "subject": "chemistry",
+    "maxWrongBeforeReveal": 2,
+    "showExplanation": "always",
+    "questions": [
+
       {
-        "title": "Particles never stop",
-        "body": "Even in solid ice, particles are vibrating. They slow down when cooled — but they never fully stop."
+        "key": "p1",
+        "type": "mcq",
+        "scenario": "The canvas shows 40 particle dots in a tight regular grid. Every dot is completely still. The temperature reads 0°C.",
+        "stem": "What state is this sample in, and how do you know from the particle arrangement?",
+        "options": [
+          { "key": "a", "text": "Solid — particles in a fixed regular grid, not moving past each other" },
+          { "key": "b", "text": "Liquid — particles close together and flowing freely", "misconception": "Misconception 8 — liquids have no definite arrangement" },
+          { "key": "c", "text": "Gas — particles spread out with lots of space between them", "misconception": "Misconception 5 — confusing spacing with state" }
+        ],
+        "correctKey": "a",
+        "hint": "Look at the arrangement — is it a regular grid or random? Can the particles move past each other?",
+        "explanation": "The tight regular grid with fixed positions is the defining feature of a solid. Liquid particles are close but disordered; gas particles are widely spaced. The grid = solid, always.",
+        "guidedMissionRef": "Mission 1: The Particles That Never Stop",
+        "curriculumObjective": "Foundational 4 — describe particle arrangement in each state",
+        "xpValue": 20
       },
+
       {
-        "title": "Heat = particle energy",
-        "body": "Adding heat makes particles move faster and push further apart. Remove heat — they slow down and pull closer."
+        "key": "p2",
+        "type": "mcq",
+        "scenario": "You drag the slider upward past 35°C on the water sample. The regular grid dissolves and the particles begin sliding past each other.",
+        "stem": "What change of state just occurred, and what caused it?",
+        "options": [
+          { "key": "a", "text": "Melting — particles gained enough energy to break free of fixed positions" },
+          { "key": "b", "text": "Evaporation — the fastest particles at the surface escaped", "misconception": "Misconception 4 — confusing evaporation with melting" },
+          { "key": "c", "text": "Boiling — all particles throughout the liquid became gas", "misconception": "Misconception 4 — confusing boiling with melting" }
+        ],
+        "correctKey": "a",
+        "hint": "Which change of state takes a solid to a liquid? What did the particles do — did they escape, or just start sliding past each other?",
+        "explanation": "Melting is the solid-to-liquid transition. The particles gained enough kinetic energy to overcome the forces holding them in fixed positions — they now slide past each other but remain close. No particles escaped the canvas; the total count is unchanged.",
+        "guidedMissionRef": "Mission 1: The Particles That Never Stop",
+        "curriculumObjective": "Foundational 8 — name and describe melting",
+        "xpValue": 20
       },
+
       {
-        "title": "How to Play",
-        "body": "Drag the temperature slider up to heat, down to cool. When particles change behaviour, tap the label that matches what you see."
+        "key": "p3",
+        "type": "mcq",
+        "scenario": "After the water sample melted, you count 40 particles. You then drag the slider back to 0°C and freeze the sample.",
+        "stem": "How many particles are on the canvas in the solid state?",
+        "options": [
+          { "key": "a", "text": "40 — the same number as in the liquid state" },
+          { "key": "b", "text": "Fewer than 40 — some energy escaped when it froze", "misconception": "Misconception 3 — changes of state destroy particles" },
+          { "key": "c", "text": "More than 40 — the particles packed more tightly, so more fit", "misconception": "Misconception 7 — confusing particle size with spacing" }
+        ],
+        "correctKey": "a",
+        "hint": "What does conservation of mass mean? Do any particles leave the canvas during a change of state?",
+        "explanation": "Mass is conserved during all changes of state. No particles are created or destroyed — only their arrangement and energy change. The count stays at 40 in solid, liquid, and gas phases.",
+        "guidedMissionRef": "Mission 3: Cooling Down",
+        "curriculumObjective": "Foundational 10 — state that mass is conserved",
+        "xpValue": 20
+      },
+
+      {
+        "key": "p4",
+        "type": "mcq",
+        "scenario": "The palm oil sample is at 55°C — well below its boiling threshold of 70°C. You notice a few individual particles drifting upward from the top edge of the canvas and disappearing.",
+        "stem": "What is happening, and why is this different from boiling?",
+        "options": [
+          { "key": "a", "text": "Evaporation — only the fastest surface particles have enough energy to escape, and this happens at any temperature" },
+          { "key": "b", "text": "Boiling — the liquid is converting to gas throughout", "misconception": "Misconception 4 — confusing boiling with evaporation" },
+          { "key": "c", "text": "Condensation — gas particles are becoming liquid at the surface", "misconception": "Wrong direction — condensation requires cooling" }
+        ],
+        "correctKey": "a",
+        "hint": "Look at where the particles are leaving — the surface, or the whole liquid? And check the slider — are you at the boiling threshold?",
+        "explanation": "Evaporation is a surface-only process that occurs at any temperature. In any liquid, the fastest-moving surface particles occasionally have enough energy to escape into the gas phase. Boiling requires reaching a specific threshold temperature and converts the whole liquid — not just the surface.",
+        "guidedMissionRef": "Mission 4: The Surface Mystery",
+        "curriculumObjective": "Intermediate 12 — distinguish evaporation from boiling",
+        "xpValue": 20
+      },
+
+      {
+        "key": "p5",
+        "type": "mcq",
+        "stem": "You drag the slider past 70°C on the water sample. ALL particles throughout the liquid simultaneously spread out across the canvas at high speed. What change of state is this?",
+        "options": [
+          { "key": "a", "text": "Boiling — all particles throughout the liquid gained enough energy to escape at once" },
+          { "key": "b", "text": "Evaporation — the fastest surface particles escaped", "misconception": "Misconception 4 — confusing evaporation with boiling" },
+          { "key": "c", "text": "Sublimation — the solid went directly to gas", "misconception": "Wrong state — the sample was liquid, not solid" }
+        ],
+        "correctKey": "a",
+        "hint": "Was this only at the surface, or did it happen throughout the whole liquid? What temperature did it begin at?",
+        "explanation": "Boiling is a bulk process — all particles throughout the liquid simultaneously gain enough energy to overcome attraction and become gas. This is distinct from evaporation (surface only, any temperature) and only occurs at a specific threshold temperature.",
+        "guidedMissionRef": "Mission 2: The Grid Breaks Free",
+        "curriculumObjective": "Intermediate 12 — distinguish boiling from evaporation",
+        "xpValue": 20
+      },
+
+      {
+        "key": "p6",
+        "type": "mcq",
+        "scenario": "The water vapour sample is at 85°C (gas state). You drag the slider downward past 70°C.",
+        "stem": "What change of state occurs, and what happens to the particles?",
+        "options": [
+          { "key": "a", "text": "Condensation — particles lose energy, slow down, and attraction pulls them together into liquid" },
+          { "key": "b", "text": "Freezing — particles lock into a fixed grid", "misconception": "Freezing comes later — the gas becomes liquid first, then liquid becomes solid" },
+          { "key": "c", "text": "Evaporation — particles escape from the surface", "misconception": "Wrong direction — evaporation converts liquid to gas; you are going the other way" }
+        ],
+        "correctKey": "a",
+        "hint": "You removed energy by cooling. What happens to particle speed? When particles slow down, which force dominates — kinetic energy or attraction?",
+        "explanation": "Condensation occurs when gas particles lose enough energy for the forces of attraction to pull them back together into a liquid. The particles slow, approach each other, and adopt the close, mobile arrangement of a liquid. This is the reverse of boiling.",
+        "guidedMissionRef": "Mission 3: Cooling Down",
+        "curriculumObjective": "Foundational 8 — describe condensation",
+        "xpValue": 20
+      },
+
+      {
+        "key": "p7",
+        "type": "mcq",
+        "stem": "A student says: 'When ice melts, the ice particles turn into water particles — they become a different substance.' What is wrong with this?",
+        "options": [
+          { "key": "a", "text": "The particles do not change — only their arrangement and energy change. Ice and liquid water contain identical H₂O molecules." },
+          { "key": "b", "text": "The student is correct — melting is a chemical change that produces new particles", "misconception": "Misconception 3 — melting destroys/creates particles" },
+          { "key": "c", "text": "The student is partly right — the molecules change shape when they melt", "misconception": "Misconception 3 variant — molecules deform during state change" }
+        ],
+        "correctKey": "a",
+        "hint": "After the water melted in Mission 2, how many particles were on the canvas? Did any disappear or appear? What does that tell you?",
+        "explanation": "Melting is a physical change, not a chemical one. The water molecules (H₂O) in ice are chemically identical to those in liquid water. Only their spatial arrangement changes — from fixed grid to freely sliding. No new substance is formed; no particles are created or destroyed.",
+        "guidedMissionRef": "Mission 2: The Grid Breaks Free",
+        "curriculumObjective": "Foundational 9 — changes of state are physical, not chemical",
+        "xpValue": 20
+      },
+
+      {
+        "key": "p8",
+        "type": "mcq",
+        "stem": "Which statement correctly explains why a solid keeps its shape?",
+        "options": [
+          { "key": "a", "text": "Particles are in fixed positions — they vibrate but cannot move past each other, so the arrangement stays constant" },
+          { "key": "b", "text": "Particles in a solid are completely still — nothing can move so the shape is fixed", "misconception": "Misconception 1 — solid particles do not move" },
+          { "key": "c", "text": "Solid particles are larger than liquid particles, so they cannot flow past each other", "misconception": "Misconception 7 — particle size changes between states" }
+        ],
+        "correctKey": "a",
+        "hint": "In Mission 1, were the particles still at 10°C, or were they vibrating? And did they move past each other?",
+        "explanation": "Solids keep their shape because particles occupy fixed positions. They vibrate continuously (as you saw in Mission 1), but they cannot move past their neighbours — the forces of attraction are too strong. Shape is a consequence of fixed positions, not stillness.",
+        "guidedMissionRef": "Mission 1: The Particles That Never Stop",
+        "curriculumObjective": "Foundational 5 — explain why solids keep their shape",
+        "xpValue": 20
+      },
+
+      {
+        "key": "p9",
+        "type": "mcq",
+        "stem": "In the Matter Lab, the particle dots are the same size in solid, liquid, and gas states. What principle does this correctly show?",
+        "options": [
+          { "key": "a", "text": "Particle size does not change between states — only the spacing and motion change" },
+          { "key": "b", "text": "The simulation is wrong — gas particles should be larger because they move faster", "misconception": "Misconception 7 — faster = larger" },
+          { "key": "c", "text": "The simulation is wrong — solid particles should be larger because they are denser", "misconception": "Misconception 7 — denser = larger particles" }
+        ],
+        "correctKey": "a",
+        "hint": "Did the dot size ever change on your canvas as you heated or cooled the sample? What did change?",
+        "explanation": "Particle size is constant across all states — what changes is the distance between particles (spacing) and how fast they move (kinetic energy). The canvas correctly shows this: same-sized dots, different spacing and movement patterns.",
+        "guidedMissionRef": "All missions",
+        "curriculumObjective": "Intermediate 18 — apply particle theory to properties",
+        "xpValue": 20
+      },
+
+      {
+        "key": "p10",
+        "type": "mcq",
+        "scenario": "You observe the naphthalene sample heating in the lab. At 62°C the tight grid of particles jumps directly to a widely-spaced, fast-moving arrangement — no liquid phase ever appears.",
+        "stem": "What is this process called?",
+        "options": [
+          { "key": "a", "text": "Sublimation — direct solid to gas transition with no liquid phase" },
+          { "key": "b", "text": "Boiling — the solid melted very fast and then immediately boiled", "misconception": "Misconception — assuming liquid always occurs" },
+          { "key": "c", "text": "Evaporation — the fastest surface particles escaped from the solid", "misconception": "Misconception 4 — evaporation requires a liquid surface" }
+        ],
+        "correctKey": "a",
+        "hint": "A liquid never appeared on the canvas. Which change of state skips the liquid phase entirely?",
+        "explanation": "Sublimation is the direct solid-to-gas transition. Some substances — including naphthalene (mothballs) and carbon dioxide (dry ice) — have inter-particle forces that allow this at normal atmospheric pressure. No liquid phase ever forms.",
+        "guidedMissionRef": "Mission 5: Mothballs",
+        "curriculumObjective": "Intermediate 16 — explain sublimation",
+        "xpValue": 20
+      },
+
+      {
+        "key": "p11",
+        "type": "mcq",
+        "stem": "The water vapour sample is cooled through condensation and then through freezing. After freezing, you look at the particle canvas. What do you see?",
+        "options": [
+          { "key": "a", "text": "The same regular grid from Mission 1 — same particles, same arrangement, same count" },
+          { "key": "b", "text": "A disordered arrangement — freezing locks particles wherever they happen to be", "misconception": "Misconception 3 variant — freezing changes the particles" },
+          { "key": "c", "text": "Fewer particles — some were lost as energy during condensation", "misconception": "Misconception 3 — changes of state destroy particles" }
+        ],
+        "correctKey": "a",
+        "hint": "Changes of state are physical and reversible. What did the solid look like at the start of Mission 1? What happened to the particle count?",
+        "explanation": "Because changes of state are physical and reversible, the solid that forms after freezing has exactly the same particles in the same regular grid arrangement as the original solid. No particles are lost, created, or altered in any way.",
+        "guidedMissionRef": "Mission 3: Cooling Down",
+        "curriculumObjective": "Foundational 9, Foundational 10",
+        "xpValue": 20
+      },
+
+      {
+        "key": "p12",
+        "type": "sequence",
+        "stem": "Put these changes of state in order, from the one that requires the most particle energy to the one that releases the most particle energy.",
+        "options": [
+          { "key": "boil",   "text": "Boiling (liquid → gas)" },
+          { "key": "melt",   "text": "Melting (solid → liquid)" },
+          { "key": "cond",   "text": "Condensation (gas → liquid)" },
+          { "key": "freeze", "text": "Freezing (liquid → solid)" }
+        ],
+        "correctOrder": ["boil", "melt", "cond", "freeze"],
+        "hint": "Which process requires particles to gain the most energy — escaping from liquid completely, or just breaking free from fixed positions? And which releases energy?",
+        "explanation": "Boiling requires the most energy (particles must overcome all attraction). Melting requires less (only breaking fixed positions). Condensation and freezing are the reverses — particles release energy. Boiling/condensation involve more energy than melting/freezing because gas particles are completely free of attraction.",
+        "curriculumObjective": "Foundational 8 — sequence changes of state",
+        "xpValue": 20
+      },
+
+      {
+        "key": "p13",
+        "type": "mcq",
+        "stem": "A student sees the white cloud above a boiling kettle and says: 'I can see the steam — water vapour is visible.' What is the accurate response?",
+        "options": [
+          { "key": "a", "text": "The white cloud is tiny liquid water droplets that condensed from the invisible vapour — actual water vapour (gas) is transparent" },
+          { "key": "b", "text": "The student is correct — steam and water vapour are the same thing and both are visible", "misconception": "Misconception 9 — steam is visible water vapour" },
+          { "key": "c", "text": "The white cloud is water vapour that has cooled but is still a gas", "misconception": "Misconception 9 variant" }
+        ],
+        "correctKey": "a",
+        "hint": "What happens to water vapour when it contacts cooler air above the kettle spout? Does it stay as gas?",
+        "explanation": "True water vapour (gas) is completely invisible — individual H₂O molecules cannot be seen. The white cloud above a kettle is the result of water vapour cooling as it rises and condensing into tiny liquid droplets. What is visible is liquid, not gas.",
+        "curriculumObjective": "Intermediate 12 — distinguish evaporation from boiling; misconception about steam",
+        "xpValue": 20
+      },
+
+      {
+        "key": "p14",
+        "type": "mcq",
+        "stem": "You melt, boil, condense, and freeze the water sample in the lab — completing a full cycle. What does this cycle demonstrate about changes of state?",
+        "options": [
+          { "key": "a", "text": "Changes of state are physical and reversible — the same water molecules are present throughout, and the changes can be undone" },
+          { "key": "b", "text": "Changes of state are chemical — new substances form at each stage", "misconception": "Misconception 3 — changes of state are chemical changes" },
+          { "key": "c", "text": "Changes of state are permanent — once water becomes gas, it cannot become solid again without a chemical reaction", "misconception": "Misconception 3 variant" }
+        ],
+        "correctKey": "a",
+        "hint": "In Mission 3, you cooled the gas back to solid and got the same grid back. What does it mean that the cycle is complete and the substance is the same?",
+        "explanation": "Physical changes are reversible — no new substance is formed and the original can always be recovered. The full heating and cooling cycle confirms this: the same 40 water molecules cycle through all three states, emerging identical from each change.",
+        "guidedMissionRef": "Mission 3: Cooling Down",
+        "curriculumObjective": "Foundational 9 — changes of state are physical",
+        "xpValue": 20
+      },
+
+      {
+        "key": "c1",
+        "type": "mcq",
+        "scenario": "You heated water from solid to gas in the lab, counting 40 particles throughout. A classmate says: 'Gas must have more particles than solid because it takes up more space.'",
+        "stem": "Which response most precisely identifies the error in the classmate's reasoning?",
+        "options": [
+          { "key": "a", "text": "The classmate confused particle spacing with particle count — more space between particles does not mean more particles. Conservation of matter: no particles are created during a physical change." },
+          { "key": "b", "text": "The classmate is correct — the gas expands because new particles form as energy is added", "misconception": "Misconception 5 — gas appears from nowhere" },
+          { "key": "c", "text": "The classmate is correct — gas particles are larger, so more fit in the same space", "misconception": "Misconception 7 — gas particles are larger" }
+        ],
+        "correctKey": "a",
+        "hint": "Did the particle count change on your canvas when the water boiled? What did change — the count, or the space between the particles?",
+        "explanation": "The error is conflating particle count with particle spacing. Volume increases in the gas phase because the same particles are now much further apart — not because more particles exist. Conservation of mass: a physical change cannot create particles.",
+        "curriculumObjective": "Foundational 10, Intermediate 11, Intermediate 18",
+        "xpValue": 40
+      },
+
+      {
+        "key": "c2",
+        "type": "mcq",
+        "stem": "Iron melts at 1538°C. Using only what you know about the particle model from the lab, predict what happens to iron particles when the temperature reaches 1538°C.",
+        "options": [
+          { "key": "a", "text": "Iron particles break free of their fixed grid positions and begin sliding past each other — the iron becomes liquid, just as water did at 35°C" },
+          { "key": "b", "text": "Iron particles become much larger and push each other apart", "misconception": "Misconception 7 — heating causes particles to grow" },
+          { "key": "c", "text": "Iron particles are destroyed by the extreme heat — iron cannot truly melt", "misconception": "Misconception 3 — high-energy changes destroy particles" },
+          { "key": "d", "text": "Iron particles slow down because they are too heavy to move fast", "misconception": "Wrong logic — mass does not reduce kinetic energy gain from heat" }
+        ],
+        "correctKey": "a",
+        "hint": "The particle model applies to all substances, not just water. What happened to the water grid at 35°C? The same principle applies to iron at 1538°C — only the threshold temperature differs.",
+        "explanation": "The particle model is universal. Every solid melts when particles gain enough energy to overcome the forces holding them in fixed positions. The threshold (melting point) differs per substance, but the mechanism is identical: fixed grid → sliding liquid. The same thing that happened to the water grid at 35°C happens to the iron grid at 1538°C.",
+        "curriculumObjective": "Intermediate 11, Intermediate 13",
+        "xpValue": 40
+      },
+
+      {
+        "key": "c3",
+        "type": "mcq",
+        "scenario": "A cooling curve for an unknown substance shows: temperature dropping from 120°C, then a flat horizontal section at 78°C, then dropping again, then a flat section at −114°C, then dropping further.",
+        "stem": "What do the flat horizontal sections represent, and why does temperature stop rising even though energy is still being removed?",
+        "options": [
+          { "key": "a", "text": "The flat sections are changes of state. Energy is being removed but temperature stays constant because all the energy is being used to form particle attractions, not to reduce kinetic energy." },
+          { "key": "b", "text": "The flat sections mean nothing is happening — the substance is in equilibrium and energy transfer has stopped", "misconception": "Plateau = nothing happening — wrong" },
+          { "key": "c", "text": "The flat sections show the substance reaching maximum density — particles are as close as possible at those temperatures", "misconception": "Confusing density with phase change" }
+        ],
+        "correctKey": "a",
+        "hint": "Energy is continuously being removed throughout the cooling curve. If temperature is not falling, where is the energy going?",
+        "explanation": "During a change of state, the energy removed is used to form inter-particle attractions (not to reduce particle speed), so temperature stays constant. The 78°C plateau is condensation, the −114°C plateau is freezing. The substance is ethanol. Each flat section represents a phase transition.",
+        "curriculumObjective": "Intermediate 15, Advanced 25",
+        "xpValue": 40
+      },
+
+      {
+        "key": "c4",
+        "type": "mcq",
+        "scenario": "A cold bottle is taken from a refrigerator (surface temperature: 4°C). Within minutes, water droplets appear on the outer surface. The bottle is completely sealed.",
+        "stem": "Using particle theory, explain the origin of the water droplets.",
+        "options": [
+          { "key": "a", "text": "Water vapour particles in the warm room air lost energy when they contacted the cold surface — attraction pulled them together as liquid droplets. This is condensation." },
+          { "key": "b", "text": "Water seeped through the glass from the liquid inside the sealed bottle", "misconception": "Glass is impermeable to water — physically impossible" },
+          { "key": "c", "text": "The cold surface attracted water molecules using static electricity", "misconception": "No electrical mechanism is involved in condensation" },
+          { "key": "d", "text": "New water molecules formed when oxygen and hydrogen in the air reacted on the cold surface", "misconception": "Misconception 3 extended — new particles cannot form in a physical change" }
+        ],
+        "correctKey": "a",
+        "hint": "The bottle is sealed — water cannot come through the glass. Where else is water present near the bottle?",
+        "explanation": "This is condensation from ambient water vapour. Air always contains water vapour. When these gas particles contact the cold bottle surface, they lose kinetic energy — enough for attraction to pull them together as liquid droplets. This is Mission 6 applied to a real scenario: the water was already in the room air.",
+        "guidedMissionRef": "Mission 6: The Cold Bottle",
+        "curriculumObjective": "Intermediate 12, Intermediate 14",
+        "xpValue": 40
+      },
+
+      {
+        "key": "c5",
+        "type": "mcq",
+        "stem": "A student writes: 'When I heated the water, the particles got bigger and filled more space — that is why it expanded into a gas.' Identify BOTH errors in this explanation.",
+        "options": [
+          { "key": "a", "text": "Error 1: Particle size does not change — only spacing changes. Error 2: Gas expansion is due to increased particle spacing and kinetic energy, not particle growth." },
+          { "key": "b", "text": "There is only one error — the particles do get slightly bigger, but not enough to matter", "misconception": "Misconception 7 — particles grow slightly when heated" },
+          { "key": "c", "text": "The explanation is correct — particles expand when heated", "misconception": "Misconception 7 — full acceptance" }
+        ],
+        "correctKey": "a",
+        "hint": "Did the dot size change on your canvas at any point? If particle size is constant, what is the correct explanation for gas taking up more space?",
+        "explanation": "Two distinct errors: first, particle size is constant in all states — this is fundamental to the particle model. Second, the gas occupies more space because the same-sized particles are much further apart and moving at high speed, not because they expanded. Both errors stem from Misconception 7.",
+        "curriculumObjective": "Intermediate 11, Intermediate 18",
+        "xpValue": 40
+      },
+
+      {
+        "key": "c6",
+        "type": "mcq",
+        "scenario": "A sealed rigid metal container holds a fixed amount of gas. It is placed on a hotplate and heated from 20°C to 80°C.",
+        "stem": "What happens to the gas pressure, and why?",
+        "options": [
+          { "key": "a", "text": "Pressure increases — heated particles move faster and collide with the container walls more frequently and with greater force" },
+          { "key": "b", "text": "Pressure stays the same — the container is rigid, so volume cannot change, which means pressure cannot change", "misconception": "Wrong logic: pressure depends on collision force/frequency, not volume change" },
+          { "key": "c", "text": "Pressure decreases — faster particles spread out more and hit the walls less often", "misconception": "Wrong: in a rigid container particles cannot spread out further" }
+        ],
+        "correctKey": "a",
+        "hint": "Gas pressure is caused by particle collisions with container walls. If the particles move faster, what happens to the force and frequency of those collisions?",
+        "explanation": "Pressure = force per unit area from particle collisions. Heating increases particle kinetic energy → particles move faster → they collide more frequently and with greater force → pressure increases. In a rigid container, volume is fixed so particles cannot spread out; they simply hit harder and more often.",
+        "curriculumObjective": "Advanced 19, Advanced 20",
+        "xpValue": 40
+      },
+
+      {
+        "key": "c7",
+        "type": "mcq",
+        "stem": "Water boils at 100°C at sea level. At the top of a mountain, a student finds water boils at 85°C. Using particle theory, explain why.",
+        "options": [
+          { "key": "a", "text": "At altitude, atmospheric pressure is lower — fewer air particles pressing down on the water surface. Liquid particles therefore need less energy to escape into the gas phase, so boiling occurs at a lower temperature." },
+          { "key": "b", "text": "The mountain is colder, so water needs less heat energy to reach boiling point", "misconception": "Confusing ambient temperature with the energy needed for phase change" },
+          { "key": "c", "text": "Mountain water contains fewer dissolved minerals, making it easier to boil", "misconception": "Irrelevant — mineral content has negligible effect at this scale" }
+        ],
+        "correctKey": "a",
+        "hint": "Boiling point is the temperature at which vapour pressure equals atmospheric pressure. What happens to atmospheric pressure at high altitude?",
+        "explanation": "Boiling occurs when vapour pressure equals external pressure. At altitude, atmospheric pressure is lower — there is less downward force from air particles on the water surface. Therefore, liquid particles need less kinetic energy to escape into the gas phase, and this balance (vapour pressure = atmospheric pressure) is achieved at a lower temperature.",
+        "curriculumObjective": "Advanced 22, Advanced 23",
+        "xpValue": 40
+      },
+
+      {
+        "key": "c8",
+        "type": "mcq",
+        "scenario": "In Mission 4, the palm oil sample lost surface particles at 55°C — below the boiling threshold. A student concludes: 'This proves that boiling point is not a fixed temperature — boiling can happen at any temperature.'",
+        "stem": "Identify and correct the student's error.",
+        "options": [
+          { "key": "a", "text": "The error is confusing evaporation with boiling. Boiling point is fixed for a given substance at a given pressure. What occurred at 55°C was surface evaporation — not boiling, which requires the entire liquid to convert at the threshold temperature." },
+          { "key": "b", "text": "The student is correct — if particles can escape at any temperature, boiling has no fixed point", "misconception": "Misconception 4 — boiling and evaporation are the same" },
+          { "key": "c", "text": "The student is partially right — boiling point varies slightly with temperature", "misconception": "Boiling point changes with pressure, not temperature" }
+        ],
+        "correctKey": "a",
+        "hint": "What exactly was happening at 55°C — did all the particles convert at once, or only a few from the surface? What is the definition of boiling?",
+        "explanation": "Boiling and evaporation are categorically different. Boiling is a bulk process that occurs throughout the liquid at a fixed threshold temperature. Evaporation is a surface process that occurs at any temperature. The student observed evaporation in Mission 4 and misidentified it as boiling. The boiling threshold is fixed for a given substance at a given pressure.",
+        "guidedMissionRef": "Mission 4: The Surface Mystery",
+        "curriculumObjective": "Intermediate 12",
+        "xpValue": 40
+      },
+
+      {
+        "key": "c9",
+        "type": "mcq",
+        "stem": "A gas occupies 4 litres at a pressure of 100 kPa. If the pressure doubles to 200 kPa at constant temperature, what is the new volume?",
+        "options": [
+          { "key": "a", "text": "2 litres — doubling pressure halves volume (P₁V₁ = P₂V₂: 100 × 4 = 200 × V₂)" },
+          { "key": "b", "text": "8 litres — doubling pressure doubles volume", "misconception": "Inverted relationship — higher pressure compresses, does not expand" },
+          { "key": "c", "text": "4 litres — pressure has no effect on volume", "misconception": "Ignoring Boyle's Law entirely" }
+        ],
+        "correctKey": "a",
+        "hint": "Boyle's Law: P₁V₁ = P₂V₂ at constant temperature. If pressure goes up, what must happen to volume?",
+        "explanation": "Boyle's Law: P₁V₁ = P₂V₂. 100 × 4 = 200 × V₂ → V₂ = 400/200 = 2 litres. Particle model: doubling pressure means halving the volume — the same particles are now in half the space, so they hit the walls twice as often, doubling the pressure.",
+        "curriculumObjective": "Advanced 21, Advanced 22",
+        "xpValue": 40
+      },
+
+      {
+        "key": "c10",
+        "type": "mcq",
+        "scenario": "The solid ice sample at 10°C shows particles vibrating in a regular grid. A classmate says: 'Those particles must be completely still — the substance is solid and not moving.'",
+        "stem": "How do you refute this, using evidence from the simulation?",
+        "options": [
+          { "key": "a", "text": "The particles are visibly vibrating on the canvas even at 10°C. In Mission 1, vibration began as soon as the slider moved above 0°C — solid particles always vibrate above absolute zero." },
+          { "key": "b", "text": "The classmate is right — solid particles do not move until they receive enough energy to melt", "misconception": "Misconception 1 — solid particles are still" },
+          { "key": "c", "text": "The classmate is right for ice specifically — other solids have moving particles but ice is unique", "misconception": "Misconception 1 variant — selectively applied" }
+        ],
+        "correctKey": "a",
+        "hint": "What did the particles do in Mission 1 when you dragged the slider from 0° to 8°? Were they still?",
+        "explanation": "Mission 1 directly showed that particles in a solid vibrate as soon as any heat is added. The classmate holds Misconception 1 — the belief that solid particles are completely still. The simulation is direct evidence: the dots move (vibrate in place) even at 10°C, while the grid remains intact.",
+        "guidedMissionRef": "Mission 1: The Particles That Never Stop",
+        "curriculumObjective": "Foundational 2, Intermediate 11",
+        "xpValue": 40
+      },
+
+      {
+        "key": "c11",
+        "type": "mcq",
+        "stem": "Dry ice is solid CO₂. At room temperature and normal atmospheric pressure, dry ice does not melt — it goes directly from solid to gas. What is this called, and why does CO₂ not form a liquid under these conditions?",
+        "options": [
+          { "key": "a", "text": "Sublimation. CO₂'s inter-particle forces allow direct solid-to-gas transition at normal atmospheric pressure — a liquid phase only exists at much higher pressures." },
+          { "key": "b", "text": "Very fast melting and boiling — the liquid forms but disappears before you can see it", "misconception": "The liquid phase is genuinely absent, not fast" },
+          { "key": "c", "text": "Evaporation from the solid surface — the same as evaporation from a liquid", "misconception": "Misconception 4 — evaporation requires a liquid" }
+        ],
+        "correctKey": "a",
+        "hint": "You saw sublimation in Mission 5 with naphthalene. What is the name of the process when a solid becomes a gas without becoming liquid first?",
+        "explanation": "Sublimation. CO₂ has specific inter-particle force characteristics that mean, at normal atmospheric pressure, it can only exist as solid or gas — not liquid. A liquid phase exists only under higher pressure (above 5.1 atm). At room temperature and 1 atm, solid CO₂ sublimes directly into gas.",
+        "guidedMissionRef": "Mission 5: Mothballs",
+        "curriculumObjective": "Intermediate 16",
+        "xpValue": 40
+      },
+
+      {
+        "key": "m1",
+        "type": "mcq",
+        "parts": [
+          {
+            "label": "(a)",
+            "stem": "State one distinguishing property of a liquid that a solid does not have.",
+            "options": [
+              { "key": "a1", "text": "A liquid has no fixed shape — it takes the shape of its container" },
+              { "key": "a2", "text": "A liquid has no fixed volume — it expands to fill its container", "misconception": "Misconception 8 — liquids have no definite volume" },
+              { "key": "a3", "text": "A liquid has no mass", "misconception": "Completely wrong — all matter has mass" }
+            ],
+            "correctKey": "a1",
+            "marks": 1,
+            "explanation": "A liquid has no fixed shape — it takes the shape of its container. A solid, by contrast, maintains its own shape. Both have definite volume."
+          },
+          {
+            "label": "(b)",
+            "stem": "Explain, using particle theory, why a liquid takes the shape of its container while a solid does not. [3 marks]",
+            "options": [
+              { "key": "b1", "text": "In a solid, particles are in fixed positions and cannot move past each other, so the arrangement (and shape) stays constant. In a liquid, particles have more energy and can slide past each other, so they rearrange to fill the container." },
+              { "key": "b2", "text": "Liquid particles are smaller, so they flow more easily into any shape", "misconception": "Misconception 7 — particle size changes between states" },
+              { "key": "b3", "text": "Liquid particles have no attraction between them, so they spread out freely", "misconception": "Wrong — liquids have inter-particle attraction; that is why they have definite volume" }
+            ],
+            "correctKey": "b1",
+            "marks": 3,
+            "explanation": "Three marks: 1 for fixed positions in solid; 1 for particles free to slide past each other in liquid; 1 for connecting this to shape change. The key distinction is whether particles can move past their neighbours."
+          },
+          {
+            "label": "(c)",
+            "stem": "When a liquid is poured from one container into another of different shape, its volume remains the same. Explain this using particle theory. [2 marks]",
+            "options": [
+              { "key": "c1", "text": "The number of particles does not change when the liquid is poured — the particles simply rearrange without any being added or removed, so volume is conserved." },
+              { "key": "c2", "text": "The volume stays the same because liquids are incompressible", "misconception": "Correct fact but not a particle-level explanation — no marks for this" },
+              { "key": "c3", "text": "Some particles escape when the liquid is poured, but exactly the same number enter from the air", "misconception": "Misconception 3 — particles are created/destroyed" }
+            ],
+            "correctKey": "c1",
+            "marks": 2,
+            "explanation": "Two marks: 1 for particle count unchanged; 1 for rearrangement explanation. This directly tests conservation of matter at the particle level."
+          }
+        ],
+        "stem": "This question is about the properties of liquids and solids.",
+        "hint": "Think about what is different between solid and liquid particle arrangements. Can particles in a solid move past each other?",
+        "explanation": "The key concept: solids have fixed positions (particles cannot pass neighbours), liquids have mobile particles (can slide past each other). Volume is conserved because particle count never changes in a physical change.",
+        "curriculumObjective": "Foundational 3-6; WAEC pattern: properties and structure using particle theory",
+        "xpValue": 100
+      },
+
+      {
+        "key": "m2",
+        "type": "mcq",
+        "parts": [
+          {
+            "label": "(a)",
+            "stem": "Name the change of state that occurs when: (i) a solid becomes a gas directly; (ii) a gas becomes a liquid.",
+            "options": [
+              { "key": "a1", "text": "(i) Sublimation (ii) Condensation — both correct" },
+              { "key": "a2", "text": "(i) Evaporation (ii) Freezing — both wrong", "misconception": "Misconception — confusing sublimation with evaporation; condensation with freezing" },
+              { "key": "a3", "text": "(i) Sublimation (ii) Freezing — first correct, second wrong", "misconception": "Misconception — condensation confused with freezing" }
+            ],
+            "correctKey": "a1",
+            "marks": 2,
+            "explanation": "Sublimation: direct solid-to-gas. Condensation: gas-to-liquid. These are the formal names for both changes and are directly tested in WAEC and IGCSE."
+          },
+          {
+            "label": "(b)",
+            "stem": "Explain, using particle theory, why the mass of a substance does not change when it undergoes a change of state. [3 marks]",
+            "options": [
+              { "key": "b1", "text": "No particles are created or destroyed during a change of state. The particles are rearranged — they change positions relative to each other — but the number of particles and the mass of each particle remain the same, so total mass is unchanged." },
+              { "key": "b2", "text": "Mass stays the same because the substance is the same substance throughout", "misconception": "Circular — does not use particle theory; scores zero at exam level" },
+              { "key": "b3", "text": "Some mass is lost as energy during a change of state", "misconception": "Misconception 3 — energy transfer is not mass loss" }
+            ],
+            "correctKey": "b1",
+            "marks": 3,
+            "explanation": "Three marks: 1 for no particles created or destroyed; 1 for rearrangement only; 1 for particle count and individual particle mass both constant. The circular answer ('same substance') scores zero at exam level — a particle-level explanation is required."
+          }
+        ],
+        "stem": "This question is about changes of state. (Adapted from WAEC pattern.)",
+        "hint": "What is the formal name for solid → gas directly? And gas → liquid? For the mass question: what happens to particle count during a change of state?",
+        "explanation": "WAEC consistently tests: naming changes of state (including sublimation and condensation) and conservation of mass with a particle-level justification. These are the two most common error points.",
+        "curriculumObjective": "Foundational 8, 10; Intermediate 11; WAEC direct pattern",
+        "xpValue": 100
+      },
+
+      {
+        "key": "m3",
+        "type": "mcq",
+        "parts": [
+          {
+            "label": "(a)",
+            "stem": "A pure substance starts as solid at −20°C and is heated at a constant rate. The graph shows temperature rising, then a flat section at 0°C, then rising again, then a flat section at 100°C. What substance is this?",
+            "options": [
+              { "key": "a1", "text": "Water — melting point 0°C, boiling point 100°C" },
+              { "key": "a2", "text": "Ethanol — boiling point 78°C", "misconception": "Wrong boiling point for the graph given" },
+              { "key": "a3", "text": "Iron — melting point 1538°C", "misconception": "Temperatures do not match" }
+            ],
+            "correctKey": "a1",
+            "marks": 1,
+            "explanation": "Water: melting point 0°C, boiling point 100°C. The two flat sections at exactly these temperatures uniquely identify water."
+          },
+          {
+            "label": "(b)",
+            "stem": "What is happening during the flat section at 0°C? Explain in terms of particles. [3 marks]",
+            "options": [
+              { "key": "b1", "text": "The substance is melting — solid becoming liquid. Particles are gaining energy and breaking free from fixed positions. This energy overcomes inter-particle attraction rather than increasing kinetic energy, so temperature stays constant." },
+              { "key": "b2", "text": "The heater stopped working at 0°C so the temperature paused", "misconception": "External cause — heater is constant throughout; the pause is internal to the substance" },
+              { "key": "b3", "text": "The substance reached its maximum temperature and cannot go higher", "misconception": "The plateau is temporary — temperature rises again after melting completes" }
+            ],
+            "correctKey": "b1",
+            "marks": 3,
+            "explanation": "Three marks: 1 for identifying melting; 1 for particles breaking free of fixed positions; 1 for energy used for attraction-overcoming not kinetic energy increase. This last point is the most commonly missed."
+          },
+          {
+            "label": "(c)",
+            "stem": "Why does temperature not rise during the flat sections even though heat is being continuously supplied? [2 marks]",
+            "options": [
+              { "key": "c1", "text": "The heat energy is being used to break the forces of attraction between particles rather than to increase their kinetic energy — so average particle speed (and therefore temperature) stays constant." },
+              { "key": "c2", "text": "The substance absorbs all the heat but does not warm up — heat cannot raise the temperature of a changing substance", "misconception": "Vague — does not explain where the energy goes" },
+              { "key": "c3", "text": "The heater runs out of energy at those temperatures", "misconception": "Wrong — heating is constant; the pause is the substance using energy for attraction" }
+            ],
+            "correctKey": "c1",
+            "marks": 2,
+            "explanation": "Two marks: 1 for energy used to break inter-particle attraction; 1 for this meaning kinetic energy (temperature) does not change. This is the most tested aspect of heating curves and the most commonly wrong answer."
+          }
+        ],
+        "stem": "The diagram shows a heating curve for a pure substance. (Adapted from IGCSE pattern.)",
+        "hint": "What are water's melting and boiling points? During a flat section, energy is still being added — where is it going if not into temperature rise?",
+        "explanation": "The heating curve is the most commonly tested diagram for this topic. The critical insight is the flat sections: energy is being supplied but temperature does not rise because energy is being used to break inter-particle attractions (for melting) or to completely overcome them (for boiling).",
+        "curriculumObjective": "Intermediate 15; Advanced 25; IGCSE extended pattern",
+        "xpValue": 100
+      },
+
+      {
+        "key": "m4",
+        "type": "mcq",
+        "parts": [
+          {
+            "label": "(a)",
+            "stem": "Explain, using particle theory, why a puddle of water disappears on a cool day (15°C) without ever reaching boiling point. [3 marks]",
+            "options": [
+              { "key": "a1", "text": "Evaporation. In any liquid at any temperature, particles have a range of speeds. The fastest particles at the surface occasionally have enough kinetic energy to overcome inter-particle attraction and escape into the gas phase. Over time, enough particles escape to empty the puddle — no particle needs to reach boiling point for this to occur." },
+              { "key": "a2", "text": "The water slowly boiled at a lower temperature because it was in a thin layer", "misconception": "Misconception 4 — evaporation confused with boiling" },
+              { "key": "a3", "text": "The water particles were absorbed into the ground", "misconception": "Wrong mechanism — evaporation into air, not absorption" }
+            ],
+            "correctKey": "a1",
+            "marks": 3,
+            "explanation": "Three marks: 1 for identifying evaporation; 1 for surface/fastest particles with sufficient energy; 1 for occurring below boiling point at any temperature. This is the defining exam question for distinguishing evaporation from boiling."
+          },
+          {
+            "label": "(b)",
+            "stem": "Water droplets form on the outside of a cold can in a warm room. Explain using particle theory. [3 marks]",
+            "options": [
+              { "key": "b1", "text": "Condensation. Water vapour particles in the warm room air contact the cold can surface and lose kinetic energy. The forces of attraction between particles then dominate, pulling them together into liquid droplets on the surface." },
+              { "key": "b2", "text": "Water seeps through the can from the liquid inside", "misconception": "The can is sealed and impermeable" },
+              { "key": "b3", "text": "Cold surfaces attract water molecules using magnetic force", "misconception": "No magnetic mechanism is involved in condensation" }
+            ],
+            "correctKey": "b1",
+            "marks": 3,
+            "explanation": "Three marks: 1 for condensation; 1 for vapour particles losing energy on cold surface; 1 for attraction then dominating, forming liquid. The source of the water (room air, not the can) is a commonly tested point."
+          }
+        ],
+        "stem": "This question applies particle theory to everyday observations. (Extended response — WAEC/IGCSE pattern.)",
+        "hint": "For the puddle: which particles escape, and from where? For the can: where does the water come from if the can is sealed?",
+        "explanation": "These are the two most commonly tested 'explain a real-world observation' questions for this topic in WAEC and IGCSE. Both require the student to identify the correct change of state and explain it mechanically using particle energy and attraction.",
+        "curriculumObjective": "Intermediate 12, 14; WAEC/IGCSE applied pattern",
+        "xpValue": 100
+      },
+
+      {
+        "key": "m5",
+        "type": "mcq",
+        "parts": [
+          {
+            "label": "(a)",
+            "stem": "A gas occupies 3 litres at a pressure of 150 kPa. If the pressure decreases to 50 kPa at constant temperature, what is the new volume? [2 marks]",
+            "options": [
+              { "key": "a1", "text": "9 litres — P₁V₁ = P₂V₂: 150 × 3 = 50 × V₂ → V₂ = 450/50 = 9 L" },
+              { "key": "a2", "text": "1 litre — volume decreases when pressure decreases", "misconception": "Inverse relationship inverted — lower pressure means higher volume" },
+              { "key": "a3", "text": "3 litres — pressure has no effect on volume", "misconception": "Ignoring Boyle's Law" }
+            ],
+            "correctKey": "a1",
+            "marks": 2,
+            "explanation": "Boyle's Law: P₁V₁ = P₂V₂. 150 × 3 = 50 × V₂ → V₂ = 9 litres. Pressure decreases by factor 3 → volume increases by factor 3. Particle model: same particles in more space → fewer collisions per second → lower pressure."
+          },
+          {
+            "label": "(b)",
+            "stem": "Evaluate this claim: 'A pressure cooker cooks food faster because the water inside boils at a higher temperature.' Is this claim correct? Explain using particle theory. [3 marks]",
+            "options": [
+              { "key": "b1", "text": "The claim is correct. In a sealed pressure cooker, pressure builds above atmospheric. Water particles need more kinetic energy to escape into the gas phase against this higher pressure, so boiling point rises above 100°C. The hotter water cooks food faster." },
+              { "key": "b2", "text": "The claim is wrong — water always boils at 100°C regardless of pressure", "misconception": "Wrong — boiling point changes with pressure" },
+              { "key": "b3", "text": "The claim is correct but for the wrong reason — higher pressure heats the food directly", "misconception": "Pressure does not directly heat food — the mechanism is the raised boiling point" }
+            ],
+            "correctKey": "b1",
+            "marks": 3,
+            "explanation": "Three marks: 1 for claim being correct; 1 for higher pressure meaning particles need more energy to escape; 1 for boiling point rising and hotter water cooking faster. This tests Concept 22 (pressure changes boiling point) at exam level."
+          }
+        ],
+        "stem": "This question is about gas pressure and the effects of pressure on changes of state. (JAMB/IGCSE extended pattern.)",
+        "hint": "For (a): use P₁V₁ = P₂V₂. For (b): what happens to boiling point when pressure increases?",
+        "explanation": "Gas laws and their particle-level explanations are tested in JAMB and IGCSE extended. The pressure cooker question is a favourite application question in both curricula.",
+        "curriculumObjective": "Advanced 21, 22, 23; JAMB/IGCSE extended pattern",
+        "xpValue": 100
+      },
+
+      {
+        "key": "m6",
+        "type": "mcq",
+        "parts": [
+          {
+            "label": "(a)",
+            "stem": "What is meant by the term 'change of state'? [2 marks]",
+            "options": [
+              { "key": "a1", "text": "A physical change in which a substance changes from one state of matter (solid, liquid, or gas) to another" },
+              { "key": "a2", "text": "A chemical change in which one substance becomes a different substance", "misconception": "Misconception 3 — changes of state confused with chemical changes" },
+              { "key": "a3", "text": "Any change that occurs when a substance is heated", "misconception": "Too vague — does not define the state change aspect" }
+            ],
+            "correctKey": "a1",
+            "marks": 2,
+            "explanation": "Two marks: 1 for 'physical change' (not chemical); 1 for 'between states of matter' (solid/liquid/gas). Both parts are needed for full credit."
+          },
+          {
+            "label": "(b)",
+            "stem": "A student says: 'When water evaporates from wet clothes, the water is destroyed.' Evaluate this statement. [4 marks]",
+            "options": [
+              { "key": "b1", "text": "The statement is incorrect. Evaporation is a physical change — no particles are destroyed. The fastest surface particles gain enough energy to escape from the liquid surface into the gas phase (water vapour). The water molecules are unchanged and remain in the air as invisible water vapour. Mass is conserved." },
+              { "key": "b2", "text": "The statement is correct — evaporation destroys water by converting it to nothing", "misconception": "Misconception 3 + Misconception 5 — particles destroyed and gas has no mass" },
+              { "key": "b3", "text": "The statement is partly right — some water is destroyed but some escapes as vapour", "misconception": "Partial Misconception 3" }
+            ],
+            "correctKey": "b1",
+            "marks": 4,
+            "explanation": "Four marks: 1 for statement incorrect; 1 for evaporation being a physical change; 1 for surface escape mechanism; 1 for mass conserved / water vapour in air. The 'evaluate' instruction requires identifying whether the claim is right or wrong — starting with 'incorrect' is essential.",
+            "marks": 4
+          }
+        ],
+        "stem": "This question is about changes of state and conservation of matter. (Adapted from WAEC pattern.)",
+        "hint": "For (a): is a change of state physical or chemical? For (b): where does the water go when clothes dry?",
+        "explanation": "Definition of change of state (physical, between states) and conservation of mass applied to evaporation are both WAEC standard questions. The evaluate question tests the highest level of understanding — identifying the error AND explaining the correct mechanism.",
+        "curriculumObjective": "Foundational 8, 9, 10; WAEC direct pattern",
+        "xpValue": 100
+      },
+
+      {
+        "key": "m7",
+        "type": "mcq",
+        "parts": [
+          {
+            "label": "(a)",
+            "stem": "Distinguish between boiling and evaporation. Refer to: (i) the temperature at which each occurs, (ii) where in the liquid each occurs, (iii) the rate at which particles escape. [4 marks]",
+            "options": [
+              { "key": "a1", "text": "Boiling occurs only at a specific temperature (the boiling point), throughout the whole liquid, with rapid conversion of all particles. Evaporation occurs at any temperature below the boiling point, only at the surface, involving only the fastest-moving particles at a slower rate." },
+              { "key": "a2", "text": "Boiling and evaporation are the same process at different speeds", "misconception": "Misconception 4 — they are the same thing" },
+              { "key": "a3", "text": "Evaporation only occurs in warm conditions; boiling requires very high heat", "misconception": "Misconception 4 variant — evaporation has a temperature requirement" }
+            ],
+            "correctKey": "a1",
+            "marks": 4,
+            "explanation": "Four marks (one per comparison point): temperature (specific vs any); location (throughout vs surface only); particle selection (all vs fastest only); rate (rapid, whole liquid vs slow, few at a time). Comparison must be explicit — stating only one process without contrasting scores half marks per point."
+          },
+          {
+            "label": "(b)",
+            "stem": "Explain, in terms of particles, why heating a liquid increases the rate of evaporation without necessarily causing boiling. [2 marks]",
+            "options": [
+              { "key": "b1", "text": "Heating increases average particle kinetic energy. More particles therefore have enough energy to escape from the surface — the rate of evaporation increases. But unless the threshold boiling temperature is reached, bulk conversion does not occur." },
+              { "key": "b2", "text": "Heating makes the particles bigger so more can escape", "misconception": "Misconception 7 — heating increases particle size" },
+              { "key": "b3", "text": "Heating causes boiling and evaporation simultaneously", "misconception": "Misconception 4 — conflating the two processes" }
+            ],
+            "correctKey": "b1",
+            "marks": 2,
+            "explanation": "Two marks: 1 for increased average kinetic energy → more particles above escape threshold; 1 for boiling threshold still required for bulk conversion. This is the bridge between evaporation and boiling — both involve the same mechanism, but boiling requires enough energy for ALL particles."
+          }
+        ],
+        "stem": "This question requires you to compare and contrast evaporation and boiling. (IGCSE/WAEC distinguish-type question.)",
+        "hint": "Think about three things that differ: when does each happen (what temperature?), where does it happen (surface or whole liquid?), and which particles are involved?",
+        "explanation": "Distinguishing evaporation from boiling is one of the most tested comparisons in WAEC and IGCSE for this topic. Both processes involve particles escaping from liquid, but they differ in temperature, location, and which particles are involved.",
+        "curriculumObjective": "Intermediate 12; WAEC/IGCSE compare-type pattern",
+        "xpValue": 100
+      },
+
+      {
+        "key": "m8",
+        "type": "mcq",
+        "parts": [
+          {
+            "label": "(a)",
+            "stem": "Using particle theory, explain what happens to the particles of water when it is heated from 20°C to 120°C. Include: the state at 20°C, what happens at 100°C, and the state at 120°C. [6 marks]",
+            "options": [
+              { "key": "a1", "text": "At 20°C water is liquid — particles close together, no fixed arrangement, sliding past each other, held together by attraction. As temperature rises particle kinetic energy increases. At 100°C (boiling point) particles throughout the whole liquid gain enough energy to overcome attraction completely. Boiling occurs throughout the bulk (not just surface). At 120°C water is gas — particles far apart, moving rapidly in all directions, negligible attraction." },
+              { "key": "a2", "text": "At 20°C water is liquid. At 100°C it starts to evaporate from the surface. At 120°C all the surface water has evaporated.", "misconception": "Misconception 4 — confusing boiling (bulk) with evaporation (surface)" },
+              { "key": "a3", "text": "At 20°C water is solid ice. At 100°C it melts. At 120°C it begins to evaporate.", "misconception": "Wrong states — water is liquid at 20°C at normal conditions" }
+            ],
+            "correctKey": "a1",
+            "marks": 6,
+            "explanation": "Six marks: liquid description at 20°C (1); attraction keeping particles together (1); kinetic energy increasing as temperature rises (1); boiling point identified as 100°C (1); bulk process noted, not just surface (1); gas description at 120°C (1). The most common error: describing boiling as surface evaporation — this scores zero for the boiling mechanism."
+          }
+        ],
+        "stem": "Extended explanation question. Write a full particle-theory account of heating water from 20°C to 120°C. (Adapted from IGCSE extended pattern — 6 marks.)",
+        "hint": "Describe the liquid state first, then explain what changes as temperature increases, then describe exactly what happens at 100°C (be specific about surface vs bulk), then describe the gas state.",
+        "explanation": "The 6-mark extended explanation is the highest-level version of this topic in IGCSE extended. The most common failure: students describe boiling as 'particles evaporating from the surface' — this conflates boiling with evaporation and scores zero for the mechanism. The bulk/throughout-the-liquid point is what separates partial from full credit.",
+        "curriculumObjective": "Intermediate 11-14; Advanced 25; IGCSE extended 6-mark pattern",
+        "xpValue": 100
       }
     ]
   },
   "missions": [
     {
-      "missionKey": "matter-lab-m1",
-      "title": "The Frozen Sample",
-      "difficulty": "EASY",
-      "sequenceIndex": 1,
-      "xpReward": 10,
-      "topicId": "nature-of-matter",
-      "subtopicId": "melting",
-      "learningGoal": "Particles in a solid vibrate in fixed positions; adding energy lets them slide past each other — that is melting.",
-      "estimatedMinutes": 3,
-      "payload": {
-        "startTemp": 5,
-        "substanceName": "water (ice)",
-        "difficulty": "EASY",
-        "showGhostHand": true,
-        "narrateBeforePicker": true,
-        "transitions": [
-          {
-            "key": "melting",
-            "threshold": 35,
-            "direction": "up",
-            "formalName": "Melting",
-            "correctLabel": "Particles breaking free of each other",
-            "options": [
-              "Particles breaking free of each other",
-              "Particles vibrating faster in place",
-              "Particles escaping from the surface",
-              "Particles locking into fixed positions",
-              "Particles disappearing into the air",
-              "Particles slowing down and pulling together"
-            ],
-            "confirmationNarration": "Exactly. They were already vibrating — you gave them enough energy to slide past each other. That is melting. The substance is still water. Nothing was destroyed.",
-            "wrongFeedback": {
-              "Particles vibrating faster in place": "They are moving faster — you noticed that. But watch the gaps between them. Are they still locked to the same spot, or are they starting to pass through each other?",
-              "Particles escaping from the surface": "Surface escape is a different event — that would be evaporation. Right now watch the entire group of particles, not just the edges.",
-              "Particles locking into fixed positions": "You would see that if you were cooling, not heating. Check the slider direction — you have been adding heat.",
-              "Particles disappearing into the air": "Look at the canvas and count — did any particles actually disappear? The number stays the same throughout every change of state.",
-              "Particles slowing down and pulling together": "Slowing down and pulling together happens when you remove heat. You are adding heat here. Watch which direction the particles are moving relative to each other."
-            },
-            "showConservationDrag": false
-          }
-        ]
-      }
-    },
-    {
-      "missionKey": "matter-lab-m2",
-      "title": "Steam Pressure",
-      "difficulty": "EASY",
-      "sequenceIndex": 2,
-      "xpReward": 10,
-      "topicId": "nature-of-matter",
-      "subtopicId": "condensation",
-      "learningGoal": "Removing energy from a gas causes particles to slow and pull together — that is condensation, the reverse of evaporation.",
-      "estimatedMinutes": 3,
-      "payload": {
-        "startTemp": 90,
-        "substanceName": "water vapour",
-        "difficulty": "EASY",
-        "showGhostHand": false,
-        "narrateBeforePicker": false,
-        "transitions": [
-          {
-            "key": "condensation",
-            "threshold": 69,
-            "direction": "down",
-            "formalName": "Condensation",
-            "correctLabel": "Particles slowing down and pulling together",
-            "options": [
-              "Particles slowing down and pulling together",
-              "Particles breaking free of each other",
-              "Particles disappearing",
-              "Particles locking into fixed positions",
-              "Particles escaping from the surface",
-              "Particles vibrating faster in place"
-            ],
-            "confirmationNarration": "Right. You removed energy — the particles slowed down enough for attraction to pull them together. Gas became liquid. This is condensation. The same particles, just closer and slower.",
-            "wrongFeedback": {
-              "Particles breaking free of each other": "Breaking free happens when you add energy, not remove it. You are cooling the sample — watch the slider direction.",
-              "Particles disappearing": "Count the dots. None of them vanished — they are just rearranging. Matter is conserved through every change of state.",
-              "Particles locking into fixed positions": "Locking into position would be freezing — a further cooling step. At this threshold, the particles are gaining enough attraction to move together, but they are not fixed yet.",
-              "Particles escaping from the surface": "Surface escape is evaporation, which happens when heating. Here you are cooling and the particles are coming together, not leaving.",
-              "Particles vibrating faster in place": "Faster vibration happens when you add heat. You are removing heat here — watch what the particles are doing to each other."
-            },
-            "showConservationDrag": false
-          }
-        ]
-      }
-    },
-    {
-      "missionKey": "matter-lab-m3",
-      "title": "Full Cycle",
+      "missionKey": "matter-lab-practice",
+      "title": "Matter Lab — Practice",
       "difficulty": "MEDIUM",
-      "sequenceIndex": 3,
-      "xpReward": 20,
+      "sequenceIndex": 7,
+      "xpReward": 200,
       "topicId": "nature-of-matter",
-      "subtopicId": "melting-and-boiling",
-      "learningGoal": "There are two distinct transition thresholds — one where solid becomes liquid, one where liquid becomes gas — and mass is conserved at both.",
-      "estimatedMinutes": 4,
+      "subtopicId": "practice",
+      "learningGoal": "Apply the particle model to predict and explain states, changes of state, and conservation of mass.",
+      "estimatedMinutes": 15,
       "payload": {
-        "startTemp": 5,
-        "substanceName": "water",
-        "difficulty": "MEDIUM",
-        "showGhostHand": false,
-        "narrateBeforePicker": false,
-        "transitions": [
-          {
-            "key": "melting-full",
-            "threshold": 35,
-            "direction": "up",
-            "formalName": "Melting",
-            "correctLabel": "Particles breaking free of each other",
-            "options": [
-              "Particles breaking free of each other",
-              "Particles vibrating faster in place",
-              "Particles escaping from the surface",
-              "Particles slowing down and pulling together"
-            ],
-            "confirmationNarration": "Melting — the particles gained enough energy to slide past each other. Keep heating to find the next change.",
-            "wrongFeedback": {
-              "Particles vibrating faster in place": "They are vibrating faster, yes — but are they still stuck to the same positions, or are they now passing through each other?",
-              "Particles escaping from the surface": "Surface escape would be evaporation. Look at all the particles, not just those on the outer edge.",
-              "Particles slowing down and pulling together": "That is the opposite direction. You are heating, not cooling."
-            },
-            "showConservationDrag": true
-          },
-          {
-            "key": "boiling-full",
-            "threshold": 70,
-            "direction": "up",
-            "formalName": "Boiling",
-            "correctLabel": "Particles throughout the liquid gaining enough energy to form gas",
-            "options": [
-              "Particles throughout the liquid gaining enough energy to form gas",
-              "Only the fastest surface particles leaving",
-              "Particles breaking free of each other",
-              "Particles disappearing"
-            ],
-            "confirmationNarration": "Boiling. The entire liquid — not just the surface — now has enough energy to become gas. Every particle eventually escapes. This is different from evaporation, which happens only at the surface.",
-            "wrongFeedback": {
-              "Only the fastest surface particles leaving": "That would be evaporation — a surface-only event that can happen at any temperature. Boiling is different. Watch — it is happening throughout the whole liquid, not just the top.",
-              "Particles breaking free of each other": "Breaking free of each other was melting — the first transition. Something bigger is happening now: the entire liquid is turning to gas, not just rearranging into a liquid.",
-              "Particles disappearing": "The particles are still there — they have just spread so far apart they are in the gas state. Count them before and after."
-            },
-            "showConservationDrag": true
-          }
-        ]
+        "stage": "practice",
+        "questionKeys": ["p1","p2","p3","p4","p5","p6","p7","p8","p9","p10","p11","p12","p13","p14"],
+        "sessionSize": 8,
+        "openingLine": "You have explored the particles in the lab. Now let us test whether you understood what you saw. I will ask you questions grounded in what happened on your canvas.",
+        "passMark": 0.7
       }
     },
     {
-      "missionKey": "matter-lab-m4",
-      "title": "The Surface Mystery",
-      "difficulty": "MEDIUM",
-      "sequenceIndex": 4,
-      "xpReward": 20,
-      "topicId": "nature-of-matter",
-      "subtopicId": "evaporation",
-      "learningGoal": "Evaporation happens only at the surface and only for the fastest-moving particles — it can occur at any temperature, not just at boiling point.",
-      "estimatedMinutes": 4,
-      "payload": {
-        "startTemp": 40,
-        "substanceName": "palm oil",
-        "difficulty": "MEDIUM",
-        "showGhostHand": false,
-        "narrateBeforePicker": false,
-        "transitions": [
-          {
-            "key": "evaporation",
-            "threshold": 55,
-            "direction": "up",
-            "formalName": "Evaporation",
-            "correctLabel": "Only the fastest surface particles escaping",
-            "options": [
-              "Only the fastest surface particles escaping",
-              "All particles gaining enough energy to become gas",
-              "Particles breaking free of each other throughout",
-              "Particles disappearing from the edges"
-            ],
-            "confirmationNarration": "That is evaporation. Only the fastest-moving particles near the surface have enough energy to escape. The rest of the liquid stays liquid. This is why wet clothes dry in the sun without boiling.",
-            "wrongFeedback": {
-              "All particles gaining enough energy to become gas": "That would be boiling — the whole liquid converting to gas at once. Here the temperature is well below boiling point. Look at where the escaping particles are coming from.",
-              "Particles breaking free of each other throughout": "Breaking free throughout was melting. The sample is already liquid. Only a small number of particles are leaving — and only from one place. Where exactly?",
-              "Particles disappearing from the edges": "They are not disappearing — they are escaping into the gas phase. And it is not the edges generally, but specifically the surface. What is special about the particles that leave?"
-            },
-            "showConservationDrag": false
-          }
-        ]
-      }
-    },
-    {
-      "missionKey": "matter-lab-m5",
-      "title": "Mothballs",
+      "missionKey": "matter-lab-challenge",
+      "title": "Matter Lab — Challenge",
       "difficulty": "HARD",
-      "sequenceIndex": 5,
-      "xpReward": 40,
+      "sequenceIndex": 8,
+      "xpReward": 400,
       "topicId": "nature-of-matter",
-      "subtopicId": "sublimation",
-      "learningGoal": "Some substances transition directly from solid to gas — the expected melting event never occurs, and no liquid phase appears.",
-      "estimatedMinutes": 4,
+      "subtopicId": "challenge",
+      "learningGoal": "Apply the particle model to unfamiliar scenarios, real-world problems, and multi-concept reasoning.",
+      "estimatedMinutes": 20,
       "payload": {
-        "startTemp": 5,
-        "substanceName": "naphthalene (mothballs)",
-        "difficulty": "HARD",
-        "showGhostHand": false,
-        "narrateBeforePicker": false,
-        "transitions": [
-          {
-            "key": "sublimation",
-            "threshold": 62,
-            "direction": "up",
-            "formalName": "Sublimation",
-            "correctLabel": "Particles going directly from solid to gas",
-            "options": [
-              "Particles going directly from solid to gas",
-              "Particles breaking free of each other",
-              "Particles escaping only from the surface",
-              "Particles gaining energy before melting first",
-              "Particles disappearing",
-              "Particles slowly forming a liquid"
-            ],
-            "confirmationNarration": "Sublimation. No liquid phase appeared at all. Some substances — like naphthalene in mothballs — have inter-particle forces that allow a direct solid-to-gas transition. The particles themselves are unchanged. Only their arrangement changed.",
-            "wrongFeedback": {
-              "Particles breaking free of each other": "Breaking free of each other is what happens in melting — but watch the canvas. Did a liquid phase appear? The particles went from fixed-position jitter straight to free movement with large gaps. That skipped the liquid entirely.",
-              "Particles escaping only from the surface": "Surface escape at lower temperatures would be evaporation — and that requires a liquid surface. Here there was no liquid at any point. Look at the state before and after.",
-              "Particles gaining energy before melting first": "That is what you would expect — but look at what actually happened. The melting transition never fired. The threshold you passed was different.",
-              "Particles disappearing": "Count the particles before and after. The number is the same — they have not disappeared, they are just very far apart and moving very fast.",
-              "Particles slowly forming a liquid": "A liquid was never formed. Watch the particle arrangement — it went from the tight grid directly to the sparse fast-moving pattern of a gas."
-            },
-            "showConservationDrag": false
-          }
-        ]
+        "stage": "challenge",
+        "questionKeys": ["c1","c2","c3","c4","c5","c6","c7","c8","c9","c10","c11"],
+        "sessionSize": 6,
+        "openingLine": "No hints. Unfamiliar scenarios. Apply everything you know from the lab — the same principles, different contexts.",
+        "passMark": 0.7
       }
     },
     {
-      "missionKey": "matter-lab-m6",
-      "title": "Explain the Puddle",
+      "missionKey": "matter-lab-mastery",
+      "title": "Matter Lab — Mastery",
       "difficulty": "HARD",
-      "sequenceIndex": 6,
-      "xpReward": 100,
+      "sequenceIndex": 9,
+      "xpReward": 800,
       "topicId": "nature-of-matter",
-      "subtopicId": "condensation-real-world",
-      "learningGoal": "Condensation can occur when ambient gas particles lose energy on contact with a cold surface — no prior liquid is needed.",
-      "estimatedMinutes": 5,
+      "subtopicId": "mastery",
+      "learningGoal": "Answer WAEC, JAMB, and IGCSE standard questions on states of matter, changes of state, conservation of mass, and gas pressure.",
+      "estimatedMinutes": 30,
       "payload": {
-        "startTemp": 80,
-        "substanceName": "water vapour (air moisture)",
-        "difficulty": "HARD",
-        "showGhostHand": false,
-        "narrateBeforePicker": false,
-        "transitions": [
-          {
-            "key": "condensation-cold-surface",
-            "threshold": 68,
-            "direction": "down",
-            "formalName": "Condensation",
-            "correctLabel": "Particles losing energy near the cold surface and becoming liquid",
-            "options": [
-              "Particles losing energy near the cold surface and becoming liquid",
-              "Particles disappearing when they touch the surface",
-              "Particles breaking free as they hit the cold surface",
-              "Particles freezing into solid on the surface",
-              "New water particles appearing from nowhere",
-              "Particles slowing throughout the whole container"
-            ],
-            "confirmationNarration": "Condensation from ambient vapour. The gas particles in the air lost energy when they contacted the cold surface — enough for attraction to pull them together into liquid droplets. That is the water on the outside of a cold bottle. The water was already in the air.",
-            "wrongFeedback": {
-              "Particles disappearing when they touch the surface": "They did not disappear. Look — the particle count stays the same. They are joining together on the surface as liquid, not vanishing.",
-              "Particles breaking free as they hit the cold surface": "Breaking free requires energy gain. The cold surface removes energy. Watch what happens to particle speed near the surface.",
-              "Particles freezing into solid on the surface": "Freezing would require much lower temperatures. At this threshold the particles are becoming liquid, not solid. The arrangement changes, but not into a rigid grid.",
-              "New water particles appearing from nowhere": "Matter cannot be created. The water droplets forming on the surface came from gas particles already present in the air — they did not appear from nothing.",
-              "Particles slowing throughout the whole container": "Only the particles near the cold surface slow enough to condense. The rest of the gas away from the surface continues moving freely. This is a surface effect, like evaporation."
-            },
-            "showConservationDrag": false
-          }
-        ]
+        "stage": "mastery",
+        "questionKeys": ["m1","m2","m3","m4","m5","m6","m7","m8"],
+        "sessionSize": 4,
+        "openingLine": "Exam conditions. These questions match WAEC, IGCSE, and JAMB question patterns exactly. Take your time and show your reasoning.",
+        "passMark": 0.8
       }
     }
   ]

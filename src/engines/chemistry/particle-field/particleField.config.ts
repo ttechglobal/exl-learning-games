@@ -1,136 +1,121 @@
 /**
- * engines/chemistry/particle-field/particleField.config.ts
+ * particleField.config.ts — Matter Lab engine config
  *
- * Config schema for the particle-field engine — Matter Lab.
+ * NEW IN THIS VERSION:
  *
- * MECHANIC:
- *   A bounded canvas renders N animated particle dots whose speed and
- *   spacing is driven by a temperature slider the student drags.
- *   At each phase-transition threshold the engine pauses particle motion
- *   and surfaces a label-picker: the student taps the physical-action
- *   label that describes what they see. The correct label reveals the
- *   formal chemistry term. No submit button — the label tap IS the answer.
+ * NarrationStop — a temperature waypoint where the slider auto-pauses and
+ *   Dr. Adaobi delivers a specific line BEFORE the student continues dragging.
+ *   This enables the Guided Learning interaction model from the content brief:
+ *   concept demonstrated at each stop, question only after all stops passed.
  *
- * WHY LABELS ARE PHYSICAL DESCRIPTIONS, NOT VOCABULARY WORDS:
- *   "Particles breaking free of each other" not "Melting".
- *   The student identifies the event before the word appears.
- *   Tapping a vocabulary word would be a quiz. Tapping a physical
- *   description is reading what the simulation is showing.
+ * SurfaceEscape — a separate visual layer for Mission 4 (evaporation).
+ *   Instead of triggering a full-canvas phase transition, individual particles
+ *   in the top 15% of the canvas drift upward and escape one at a time.
+ *   This makes the visual distinction between evaporation and boiling clear.
  *
- * CURRICULUM VARIANTS:
- *   Surface-text only (substance name, Dr. Adaobi anchor phrase).
- *   Particle behaviour and transition thresholds are curriculum-neutral.
+ * interactionMode:
+ *   "guided"  — narration stops active; slider auto-locks at each waypoint;
+ *               no question fires until all stops are passed. Guided Learning.
+ *   "free"    — original behaviour: student drags freely, transitions fire.
+ *               Practice, Challenge, Mastery missions.
+ *
+ * missionContext — the real-world anchor sentence shown above Dr. Adaobi's
+ *   bubble at mission start. Makes the science feel relevant before it begins.
  */
 
 import { z } from "zod";
 
-// ─── Transition definitions ───────────────────────────────────────────────────
+// ─── Narration stop ───────────────────────────────────────────────────────────
 
-/**
- * A single phase transition the engine can fire.
- * correctLabel must match one of the options[] entries exactly.
- */
+export const NarrationStopSchema = z.object({
+  /**
+   * Temperature at which the slider auto-pauses. The engine locks the slider,
+   * shows Dr. Adaobi's line, waits for the student to tap "Continue", then
+   * unlocks. Multiple stops can be defined per mission.
+   */
+  temp: z.number().min(0).max(100),
+  /** Dr. Adaobi's line at this stop. One sentence. Narrates what is visible. */
+  line: z.string(),
+  /**
+   * Optional system instruction shown below the line, e.g. "Drag the slider
+   * to 15° now". Not shown in free mode.
+   */
+  instruction: z.string().optional(),
+  /**
+   * If true, a visual highlight annotation appears on the canvas at this stop.
+   * E.g. an arrow pointing to the grid, or a circle around surface particles.
+   */
+  highlight: z.enum(["grid", "surface", "none"]).default("none"),
+});
+
+export type NarrationStop = z.infer<typeof NarrationStopSchema>;
+
+// ─── Surface escape config (evaporation mission) ──────────────────────────────
+
+export const SurfaceEscapeSchema = z.object({
+  /**
+   * Temperature at which surface escape begins. Below this, no escape occurs.
+   * Typically set 10° below the transition threshold.
+   */
+  startTemp: z.number(),
+  /**
+   * Fraction of canvas height (from top) that counts as the "surface layer".
+   * Default 0.18 = top 18% of canvas.
+   */
+  surfaceFraction: z.number().min(0.05).max(0.4).default(0.18),
+  /**
+   * How many particles per second can escape from the surface.
+   * Scales with temperature above startTemp.
+   */
+  escapeRateBase: z.number().positive().default(0.8),
+});
+
+export type SurfaceEscape = z.infer<typeof SurfaceEscapeSchema>;
+
+// ─── Transition ───────────────────────────────────────────────────────────────
+
 export const TransitionSchema = z.object({
-  /** Unique key — used to track which transitions the student has completed. */
   key: z.string(),
-  /**
-   * Temperature value (0–100 scale) at which this transition fires.
-   * The engine fires it when the slider crosses this value in the
-   * correct direction.
-   */
   threshold: z.number().min(0).max(100),
-  /**
-   * Direction the slider must be moving for this transition to fire.
-   * "up" = heating (solid→liquid, liquid→gas, solid→gas).
-   * "down" = cooling (gas→liquid, liquid→solid).
-   */
   direction: z.enum(["up", "down"]),
-  /**
-   * The formal chemistry name shown AFTER the student picks correctly.
-   * Never shown on the label buttons themselves.
-   */
   formalName: z.string(),
-  /**
-   * The physical description that is the CORRECT label.
-   * Must exactly match one entry in options[].
-   */
   correctLabel: z.string(),
-  /**
-   * All label options shown in the picker (correct + distractors).
-   * 3 on EASY, 4 on MEDIUM, 6 on HARD (difficulty modifier trims/extends).
-   */
   options: z.array(z.string()).min(2).max(6),
-  /**
-   * Dr. Adaobi line narrated AFTER correct label. Specific to this
-   * transition — not a generic "well done".
-   */
   confirmationNarration: z.string(),
-  /**
-   * Per-option wrong-answer feedback. Key = the wrong option text.
-   * If a wrong option has no entry here, a fallback generic hint fires.
-   */
   wrongFeedback: z.record(z.string(), z.string()).optional(),
-  /**
-   * Whether to show a conservation-of-mass drag-confirm after this
-   * transition resolves. Missions 3+ use this.
-   */
   showConservationDrag: z.boolean().default(false),
+  /**
+   * In guided mode: Dr. Adaobi's line shown BEFORE the label picker appears,
+   * after the slow-motion pause. Tells the student what just happened in plain
+   * language before they are asked to name it.
+   */
+  guidedPrePickerLine: z.string().optional(),
 });
 
 export type Transition = z.infer<typeof TransitionSchema>;
 
-// ─── Curriculum variants ─────────────────────────────────────────────────────
+// ─── Curriculum variants ──────────────────────────────────────────────────────
 
 export const CurriculumVariantSchema = z.object({
-  /** Short real-world anchor dropped into Dr. Adaobi's briefing line. */
   anchor: z.string(),
-  /** The substance's display name in this locale. */
   substanceName: z.string(),
 });
 
 export type CurriculumVariant = z.infer<typeof CurriculumVariantSchema>;
 
-// ─── Shared config (stored in game.shared_config) ────────────────────────────
+// ─── Shared config ────────────────────────────────────────────────────────────
 
 export const ParticleFieldSharedConfigSchema = z.object({
-  /**
-   * Number of particle dots rendered in the canvas.
-   * 40 is the default — stress-test on low-end Android before changing.
-   * Below 30 the solid→liquid transition looks unconvincing (grid too sparse).
-   * Above 50 risks frame-rate on Tecno Spark / Infinix Hot class devices.
-   */
   particleCount: z.number().int().min(20).max(60).default(40),
-
-  /**
-   * How long (ms) the slow-motion freeze lasts when a transition fires
-   * before the label picker appears.
-   */
   transitionPauseMs: z.number().int().positive().default(1500),
-
-  /**
-   * Max wrong attempts on a single transition label before the engine
-   * forces a reveal (shows the correct answer highlighted).
-   */
   maxWrongBeforeReveal: z.number().int().positive().default(3),
-
-  /**
-   * Wrong attempts before the hint unlocks on a given transition.
-   */
   hintAfterWrongAttempts: z.number().int().positive().default(2),
 
-  /**
-   * Phase regions define particle behaviour at each temperature range.
-   * The engine interpolates speed/spacing continuously between regions.
-   */
   phases: z.object({
     solid: z.object({
-      /** Temperature range this phase spans (0–100 scale). */
       tempRange: z.tuple([z.number(), z.number()]),
-      /** Particle speed multiplier (1 = base speed). */
       speedMult: z.number().positive().default(0.15),
-      /** Whether particles have fixed-position jitter (true) or free movement (false). */
       fixedPositions: z.boolean().default(true),
-      /** Approx spacing between particle centres as fraction of canvas size. */
       spacingFraction: z.number().positive().default(0.075),
     }),
     liquid: z.object({
@@ -146,19 +131,17 @@ export const ParticleFieldSharedConfigSchema = z.object({
       spacingFraction: z.number().positive().default(0.22),
     }),
   }).default({
-    solid:  { tempRange: [0,  35], speedMult: 0.15, fixedPositions: true,  spacingFraction: 0.075 },
-    liquid: { tempRange: [36, 70], speedMult: 0.55, fixedPositions: false, spacingFraction: 0.085 },
-    gas:    { tempRange: [71, 100], speedMult: 2.2,  fixedPositions: false, spacingFraction: 0.22  },
+    solid:  { tempRange: [0,  34], speedMult: 0.15, fixedPositions: true,  spacingFraction: 0.075 },
+    liquid: { tempRange: [35, 69], speedMult: 0.55, fixedPositions: false, spacingFraction: 0.085 },
+    gas:    { tempRange: [70, 100], speedMult: 2.2,  fixedPositions: false, spacingFraction: 0.22  },
   }),
 
-  /** Colour used for particle dots in each state. */
   particleColors: z.object({
     solid:  z.string().default("#7b8fff"),
     liquid: z.string().default("#38c0f0"),
     gas:    z.string().default("#ff9d4a"),
   }).default({ solid: "#7b8fff", liquid: "#38c0f0", gas: "#ff9d4a" }),
 
-  /** Curriculum variant map — resolved at render time from student profile. */
   curriculumVariants: z.object({
     nigeria:   CurriculumVariantSchema,
     cambridge: CurriculumVariantSchema,
@@ -166,7 +149,6 @@ export const ParticleFieldSharedConfigSchema = z.object({
     us:        CurriculumVariantSchema,
   }).optional(),
 
-  /** Topic codes per curriculum for mastery reporting. */
   curriculumTopicCodes: z.object({
     nigeria:   z.array(z.string()),
     cambridge: z.array(z.string()),
@@ -177,7 +159,7 @@ export const ParticleFieldSharedConfigSchema = z.object({
 
 export type ParticleFieldSharedConfig = z.infer<typeof ParticleFieldSharedConfigSchema>;
 
-// ─── Full engine config (what the engine component receives) ──────────────────
+// ─── Full engine config ───────────────────────────────────────────────────────
 
 export interface ParticleFieldConfig {
   shared: ParticleFieldSharedConfig;
@@ -186,53 +168,51 @@ export interface ParticleFieldConfig {
     title: string;
     xp_reward: number;
     payload: {
-      /**
-       * Starting temperature (0–100). Sets the slider's initial position
-       * and therefore the initial particle state.
-       * Mission 1: 0 (solid). Mission 2: 95 (gas). Mission 6: 75 (gas).
-       */
       startTemp: number;
-      /**
-       * Narrative substance name — overridable per curriculum via
-       * shared.curriculumVariants. Falls back to this value.
-       */
       substanceName: string;
       /**
-       * All transitions this mission expects the student to find and label,
-       * in the order they should appear (lowest threshold first for heating
-       * missions, highest first for cooling missions).
+       * Real-world anchor sentence shown in Dr. Adaobi's first card.
+       * E.g. "An ice sachet is sitting on the lab bench in the Lagos heat."
        */
+      missionContext?: string;
       transitions: Transition[];
-      /**
-       * Difficulty modifier — affects label count and narration timing.
-       * Resolved by the engine, not GameRuntime.
-       */
       difficulty?: "EASY" | "MEDIUM" | "HARD";
-      /**
-       * Whether the ghost-hand demonstration plays on first interaction.
-       * True only on Mission 1 EASY.
-       */
       showGhostHand?: boolean;
       /**
-       * Whether Dr. Adaobi narrates the transition BEFORE the label picker
-       * appears (EASY) or only after (MEDIUM/HARD).
+       * "guided"  — narration stops active, concept-first teaching.
+       *             Slider auto-locks at each NarrationStop.
+       *             Dr. Adaobi pre-explains every transition before the picker.
+       *             Used for Guided Learning missions.
+       *
+       * "free"    — student drags freely, transitions fire questions.
+       *             Used for Practice / Challenge / Mastery.
        */
-      narrateBeforePicker?: boolean;
+      interactionMode?: "guided" | "free";
+      /**
+       * Scripted waypoints for guided mode.
+       * The engine locks the slider at each temperature, shows the line,
+       * waits for "Continue" tap, then unlocks for the next segment.
+       * Ignored in free mode.
+       */
+      narrationStops?: NarrationStop[];
+      /**
+       * If present, enables the surface-escape visual for this mission.
+       * Used only in the evaporation mission.
+       * In guided mode: surface escape begins after all narration stops
+       * are passed. In free mode: escape begins when temp > startTemp.
+       */
+      surfaceEscape?: SurfaceEscape;
     };
   };
 }
 
-// ─── Outcome ─────────────────────────────────────────────────────────────────
+// ─── Outcome ──────────────────────────────────────────────────────────────────
 
 export interface ParticleFieldOutcome {
   success: true;
-  /** How many transitions the student encountered. */
   transitionsTotal: number;
-  /** How many were labelled correctly on first attempt. */
   transitionsFirstTry: number;
-  /** Total wrong label attempts across all transitions. */
   totalWrongAttempts: number;
-  /** Whether any transition required the forced reveal. */
   anyRevealed: boolean;
   timeSpentSec: number;
 }

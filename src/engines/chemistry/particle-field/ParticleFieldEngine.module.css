@@ -285,6 +285,40 @@
 }
 .beginBtn:active { transform: translateY(2px); border-bottom-width: 1px; box-shadow: none; }
 
+/* Narration stop: instruction line above Continue button */
+.stopInstruction {
+  margin-top: 5px;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: #7a5a30;
+  line-height: 1.35;
+  padding: 4px 6px;
+  background: rgba(255,178,60,0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(255,178,60,0.25);
+}
+
+/* Continue button — green, distinct from Begin */
+.continueBtn {
+  margin-top: 6px;
+  width: 100%;
+  padding: 7px;
+  background: #083828;
+  border: 1.5px solid #2a7a48;
+  border-bottom: 2.5px solid #052218;
+  border-radius: 9px;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: #a8ffd0;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 2.5px 0 #052218;
+  transition: transform 0.08s;
+}
+.continueBtn:active { transform: translateY(2px); border-bottom-width: 1px; box-shadow: none; }
+
 .doneChip {
   margin-top: 6px;
   padding: 5px;

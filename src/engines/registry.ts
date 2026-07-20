@@ -31,6 +31,8 @@ import { LayerPeelSharedConfigSchema }   from "@/engines/physics/layer-peel/laye
 // ─── Cross-subject (generic engines reusable across subjects) ─────────────────
 import { FormulaExcavationEngine }       from "@/engines/cross-subject/formula-excavation/FormulaExcavationEngine";
 import { FormulaExcavationSharedConfigSchema } from "@/engines/cross-subject/formula-excavation/formulaExcavation.config";
+import { QuestionBankEngine }            from "@/engines/cross-subject/question-bank/QuestionBankEngine";
+import { QuestionBankSharedConfigSchema } from "@/engines/cross-subject/question-bank/questionBank.config";
 
 /**
  * registry.ts — Single source of truth for all game engines.
@@ -132,6 +134,12 @@ const formulaExcavationDefinition: EngineDefinition = {
   Component: FormulaExcavationEngine as unknown as EngineDefinition["Component"],
 };
 
+const questionBankDefinition: EngineDefinition = {
+  engineType: "question-bank",
+  configSchema: QuestionBankSharedConfigSchema as unknown as z.ZodSchema<unknown>,
+  Component: QuestionBankEngine as unknown as EngineDefinition["Component"],
+};
+
 // ─── REGISTRY ─────────────────────────────────────────────────────────────────
 
 const registry: Record<string, EngineDefinition> = {
@@ -155,6 +163,7 @@ const registry: Record<string, EngineDefinition> = {
 
   // Cross-subject
   "formula-excavation":        formulaExcavationDefinition,
+  "question-bank":             questionBankDefinition,
 };
 
 export function getEngineDefinition(engineType: string): EngineDefinition | undefined {

@@ -1,0 +1,1027 @@
+/**
+ * PhaseChamberEngine.module.css — mobile-first
+ *
+ * Layout hierarchy (boundary-drag mode):
+ *   .outer  (flex-col, fills gameplayFrame)
+ *     .sliderArea         — COMPACT ←→ SPREAD slider, 52px tall
+ *     .canvasWrap         — particle canvas, flex:1, min-height 0
+ *     .adaobiStrip        — Dr. Adaobi narration panel
+ *     .identifyRow        — (identify-state mode only)
+ *     .completeBtn
+ *
+ * Everything is sized to fill the remaining height after the topbar.
+ * No fixed pixel heights on canvas — it takes what's left.
+ */
+
+/* ─── Outer layout ──────────────────────────────────────────────────────────── */
+
+.outer {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  box-sizing: border-box;
+  align-items: stretch;
+  /* Fill full height of gameplayFrame */
+  flex: 1;
+  min-height: 0;
+}
+
+/* ─── Wall slider (boundary-drag) ───────────────────────────────────────────── */
+
+.sliderArea {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* Matches prototype substance-bar padding */
+  padding: 0 2px;
+  height: 52px;
+  flex-shrink: 0;
+}
+
+.sliderLabel {
+  font-family: var(--eg-font-display);
+  font-size: 8.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.32);
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.sliderTrack {
+  position: relative;
+  flex: 1;
+  /* Taller track = easier touch target */
+  height: 14px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 7px;
+  cursor: pointer;
+  touch-action: none;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.sliderLocked {
+  opacity: 0.28;
+  pointer-events: none;
+}
+
+.sliderFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(
+    to right,
+    #b0c8f0,
+    var(--eg-subject-chemistry, #9b7ae0),
+    #c4aff0
+  );
+  border-radius: 7px;
+  transition: width 0.02s linear;
+}
+
+/* Thumb — 44×44 minimum touch target (WCAG 2.5.8) */
+.sliderThumb {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  background: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.5),
+    0 0 0 3px rgba(155, 122, 224, 0.22);
+  border: 2px solid var(--eg-subject-chemistry, #9b7ae0);
+  border-bottom: 3px solid rgba(0, 0, 0, 0.22);
+  transition: left 0.02s linear;
+  touch-action: none;
+}
+
+.thumbIcon {
+  font-size: 15px;
+  color: var(--eg-subject-chemistry, #9b7ae0);
+  user-select: none;
+}
+
+/* ─── Canvas ────────────────────────────────────────────────────────────────── */
+
+.canvasWrap {
+  position: relative;
+  /* Takes all remaining vertical space */
+  flex: 1 1 0;
+  min-height: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #020810;
+  border: 1.5px solid rgba(255, 255, 255, 0.07);
+}
+
+.canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+/* ─── Phase badge (top-left of canvas) ─────────────────────────────────────── */
+
+.stateLabel {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-family: var(--eg-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  pointer-events: none;
+  animation: fadeInDown 0.3s ease both;
+  background: rgba(176, 200, 240, 0.13);
+  color: #b0c8f0;
+  border: 1px solid rgba(176, 200, 240, 0.28);
+}
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.propertyBadge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  background: rgba(3, 8, 18, 0.82);
+  border: 1px solid rgba(255, 178, 60, 0.22);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-family: var(--eg-font-display);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.82);
+  text-align: center;
+  pointer-events: none;
+  animation: slideUp 0.3s ease both;
+  letter-spacing: 0.3px;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.bondResult {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(3, 8, 18, 0.85);
+  border: 1px solid rgba(255, 178, 60, 0.32);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-family: var(--eg-font-display);
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 150px;
+  pointer-events: none;
+  animation: fadeIn 0.15s ease both;
+  line-height: 1.4;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.densityLabel {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  font-family: var(--eg-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.48);
+  pointer-events: none;
+  letter-spacing: 0.5px;
+}
+
+.dragHint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--eg-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--eg-gold, #ffb23c);
+  pointer-events: none;
+  letter-spacing: 1px;
+  animation: pulse 2s ease-in-out infinite;
+  white-space: nowrap;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.45; }
+  50%       { opacity: 0.95; }
+}
+
+/* ─── Dr. Adaobi in-game narration strip ─────────────────────────────────────
+   Design principles from the narration prototype (Screen B):
+   - Strip anchors at the bottom of .outer, BELOW the canvas
+   - Subject-colour accent bar at top signals "this is the guide"
+   - Avatar is small, breathing — present without dominating
+   - Name as uppercase eyebrow with extending line
+   - Speech text is the primary content — sized to be read in one glance
+   - Action pill: the most important affordance. Tells student exactly what
+     to DO next in the game — reinforces the instruction visually
+   - Progress dots: student knows where they are in the mission
+   - Step badge floating above the strip
+   - Minimise handle: never blocks when student doesn't need it
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.adaobiStrip {
+  position: relative;
+  flex-shrink: 0;
+  /* Deep background — distinct from the canvas, clearly "guide zone" */
+  background: #0c1828;
+  /* Subject-colour top border — chemistry green from prototype */
+  border-top: 1.5px solid rgba(62, 207, 142, 0.22);
+  padding: 10px 14px 13px;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45);
+  /* Animate in */
+  animation: stripIn 0.35s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+@keyframes stripIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Subject-colour gradient accent bar — top of the strip */
+.adaobiStrip::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--eg-subject-chemistry, #3ecf8e),
+    rgba(62, 207, 142, 0.08)
+  );
+  border-radius: 2px 2px 0 0;
+}
+
+/* Step badge — floats above the strip */
+.adaobiStepBadge {
+  position: absolute;
+  top: -10px;
+  right: 14px;
+  background: #0c1828;
+  border: 1px solid rgba(62, 207, 142, 0.28);
+  border-radius: 10px;
+  padding: 2px 9px;
+  font-family: var(--eg-font-display);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(62, 207, 142, 0.7);
+  line-height: 1;
+}
+
+/* Minimise handle — centred above strip */
+.adaobiMinimise {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 18px;
+  border-radius: 9px;
+  background: #0c1828;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  /* Touch target */
+  padding: 0 8px;
+}
+.adaobiMinimise::after {
+  content: '— ';
+  font-size: 7px;
+  color: rgba(255, 255, 255, 0.28);
+  letter-spacing: -1px;
+}
+
+/* Minimised state — just a sliver with a peek */
+.adaobiStripMinimised {
+  padding: 7px 14px;
+}
+.adaobiStripMinimised .adaobiInner,
+.adaobiStripMinimised .adaobiFooter {
+  display: none;
+}
+.adaobiStripMinimised .adaobiMinimisedPeek {
+  display: flex;
+}
+
+/* Minimised peek row */
+.adaobiMinimisedPeek {
+  display: none;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+}
+.adaobiMinimisedIcon {
+  font-size: 14px;
+  opacity: 0.7;
+}
+.adaobiMinimisedText {
+  flex: 1;
+  font-family: var(--eg-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(62, 207, 142, 0.7);
+}
+.adaobiMinimisedExpand {
+  font-family: var(--eg-font-display);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+/* Content row: avatar + text column */
+.adaobiInner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+/* Avatar — small, present, breathing */
+.adaobiAvatar {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(62, 207, 142, 0.35);
+  border-bottom: 3px solid rgba(0, 0, 0, 0.3);
+  background: #0d1f0d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Breathing animation — alive, not static */
+  animation: avatarBreathe 3s ease-in-out infinite;
+}
+@keyframes avatarBreathe {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(62, 207, 142, 0.25); }
+  50%       { box-shadow: 0 0 0 4px rgba(62, 207, 142, 0.08); }
+}
+
+/* Text column */
+.adaobiBubble {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* Name eyebrow — "DR. ADAOBI ────────────" */
+.adaobiName {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--eg-font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--eg-subject-chemistry, #3ecf8e);
+  margin-bottom: 1px;
+}
+.adaobiName::after {
+  content: '';
+  display: block;
+  flex: 1;
+  height: 1px;
+  background: rgba(62, 207, 142, 0.15);
+}
+
+/* Speech — the primary content */
+.adaobiText {
+  font-family: var(--eg-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.92);
+  margin: 0;
+  word-break: break-word;
+}
+
+/* ─── Footer: progress dots + action pill ──────────────────────────── */
+
+.adaobiFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 9px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Progress dots */
+.adaobiDots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.adaobiDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  transition: all 0.25s ease;
+}
+.adaobiDotDone {
+  background: rgba(62, 207, 142, 0.55);
+}
+.adaobiDotNow {
+  width: 14px;
+  border-radius: 3px;
+  background: var(--eg-subject-chemistry, #3ecf8e);
+  box-shadow: 0 0 5px rgba(62, 207, 142, 0.5);
+}
+
+/* Action pill — the most important affordance.
+   Tells the student exactly what to DO in the game right now.
+   Pings gently to draw the eye without being annoying. */
+.adaobiActionPill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(62, 207, 142, 0.08);
+  border: 1px solid rgba(62, 207, 142, 0.22);
+  border-radius: 20px;
+  padding: 5px 11px;
+  font-family: var(--eg-font-display);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: rgba(62, 207, 142, 0.85);
+  animation: actionPing 2.2s ease-in-out infinite;
+  cursor: default;
+}
+@keyframes actionPing {
+  0%, 100% { border-color: rgba(62, 207, 142, 0.22); }
+  50%       { border-color: rgba(62, 207, 142, 0.48); }
+}
+.adaobiActionIcon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* ─── Begin / Next buttons ─────────────────────────────────────────── */
+
+.beginBtn,
+.nextBtn {
+  align-self: flex-start;
+  min-height: 38px;
+  padding: 0 18px;
+  border-radius: 22px;
+  border: none;
+  border-bottom: 3px solid #7a3d00;
+  font-family: var(--eg-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(135deg, #f5a623, #e08010);
+  color: #1a0800;
+  transition: transform 0.1s ease;
+  touch-action: manipulation;
+  display: flex;
+  align-items: center;
+  letter-spacing: 0.3px;
+}
+.beginBtn:active,
+.nextBtn:active {
+  transform: translateY(2px);
+  border-bottom-width: 1px;
+}
+
+.doneChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--eg-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: #24c96e;
+  padding: 5px 12px;
+  background: rgba(36, 201, 110, 0.12);
+  border: 1.5px solid rgba(36, 201, 110, 0.32);
+  border-radius: 20px;
+}
+
+/* ─── State identification chips ─────────────────────────────────────────────
+   Three equal-width buttons below the canvas.
+   min-height: 52px gives a generous touch target on small phones.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.identifyRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.identifyPrompt {
+  font-family: var(--eg-font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  text-align: center;
+}
+
+.chipsRow {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.stateChip {
+  flex: 1;
+  min-height: 52px;
+  padding: 10px 8px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(155, 122, 224, 0.4);
+  background: rgba(155, 122, 224, 0.09);
+  font-family: var(--eg-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.88);
+  cursor: pointer;
+  transition: transform 0.1s, background 0.15s;
+  touch-action: manipulation;
+  border-bottom: 3px solid rgba(0, 0, 0, 0.22);
+}
+.stateChip:active {
+  transform: translateY(2px);
+  border-bottom-width: 1px;
+}
+.chipCorrect {
+  background: rgba(36, 201, 110, 0.18);
+  border-color: #24c96e;
+  border-bottom-color: #16a05a;
+  color: #24c96e;
+}
+.chipFaded {
+  opacity: 0.3;
+  pointer-events: none;
+}
+.feedbackText {
+  font-family: var(--eg-font-display);
+  font-size: 11.5px;
+  color: rgba(255, 178, 60, 0.85);
+  margin: 0;
+  text-align: center;
+}
+
+/* ─── Complete button ───────────────────────────────────────────────────────── */
+
+.completeBtn {
+  align-self: center;
+  padding: 0 30px;
+  min-height: 52px;
+  border-radius: 26px;
+  border: none;
+  border-bottom: 3px solid rgba(0, 0, 0, 0.22);
+  font-family: var(--eg-font-display);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(135deg, #9b7ae0, #7b5ab0);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(155, 122, 224, 0.32);
+  touch-action: manipulation;
+  flex-shrink: 0;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+}
+.completeBtn:active {
+  transform: translateY(2px);
+  border-bottom-width: 1px;
+}
+
+/* ─── Heat-control layout ────────────────────────────────────────────────────
+   Side-by-side: [heat slider] [centre: particle + curve] [energy meter]
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.heatLayout {
+  display: flex;
+  flex-direction: row;
+  gap: 7px;
+  flex: 1 1 0;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.heatCentreCol {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  gap: 6px;
+  min-height: 0;
+}
+
+.heatParticleWrap {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #020810;
+  border: 1.5px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Heating curve — slightly taller on tall phones */
+.heatCurveWrap {
+  position: relative;
+  flex: 0 0 100px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.heatStateLabel {
+  position: absolute;
+  top: 9px;
+  left: 11px;
+  font-family: var(--eg-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--eg-gold, #ffb23c);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.plateauCallout {
+  position: absolute;
+  bottom: 5px;
+  left: 6px;
+  right: 6px;
+  background: rgba(3, 8, 18, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 5px 9px;
+  font-family: var(--eg-font-display);
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.82);
+  text-align: center;
+  pointer-events: none;
+  animation: slideUp 0.3s ease both;
+  z-index: 5;
+}
+
+/* ─── Vertical heat slider ───────────────────────────────────────────────────── */
+
+.heatSliderWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  width: 42px;
+}
+
+.heatSliderLabel {
+  font-family: var(--eg-font-display);
+  font-size: 8px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.32);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.heatSliderTrack {
+  position: relative;
+  flex: 1;
+  width: 12px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 6px;
+  cursor: pointer;
+  touch-action: none;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.heatSliderFill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, #b0c8f0, var(--eg-subject-chemistry, #9b7ae0), #ffb23c);
+  border-radius: 6px;
+  transition: height 0.04s linear;
+}
+
+/* 44px wide thumb for touch */
+.heatSliderThumb {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 44px;
+  height: 44px;
+  background: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45), 0 0 0 3px rgba(155, 122, 224, 0.18);
+  border: 2px solid var(--eg-subject-chemistry, #9b7ae0);
+  border-bottom: 3px solid rgba(0, 0, 0, 0.2);
+  touch-action: none;
+  transition: bottom 0.04s linear;
+}
+
+/* ─── Energy-view meter ──────────────────────────────────────────────────────── */
+
+.energyMeter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  width: 34px;
+}
+
+.energyBar {
+  flex: 1;
+  width: 13px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.energyBarFill {
+  width: 100%;
+  border-radius: 6px;
+  transition: height 0.4s ease;
+  min-height: 2px;
+}
+
+.energyLabel {
+  font-family: var(--eg-font-display);
+  font-size: 7.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.energyQuestion {
+  font-family: var(--eg-font-display);
+  font-size: 7.5px;
+  color: rgba(255, 255, 255, 0.25);
+  text-align: center;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  margin-top: 4px;
+  letter-spacing: 0.2px;
+}
+
+/* ─── Flag picker ────────────────────────────────────────────────────────────── */
+
+.flagPicker {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  right: 4px;
+  background: rgba(3, 10, 20, 0.97);
+  border: 1px solid rgba(155, 122, 224, 0.35);
+  border-radius: 10px;
+  padding: 9px;
+  z-index: 10;
+}
+
+.flagPickerPrompt {
+  font-family: var(--eg-font-display);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0 0 6px;
+}
+
+.flagPickerChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.flagChip {
+  padding: 6px 10px;
+  min-height: 36px;
+  border-radius: 12px;
+  border: 1px solid rgba(36, 201, 110, 0.42);
+  background: rgba(36, 201, 110, 0.08);
+  font-family: var(--eg-font-display);
+  font-size: 10.5px;
+  color: #24c96e;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.flagChipCancel {
+  padding: 6px 10px;
+  min-height: 36px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+  font-family: var(--eg-font-display);
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+}
+
+/* ─── Pressure / seal toggle (future) ───────────────────────────────────────── */
+
+.sealToggle {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0 18px;
+  min-height: 44px;
+  min-width: 104px;
+  border-radius: 22px;
+  border: 2px solid rgba(155, 122, 224, 0.42);
+  background: rgba(155, 122, 224, 0.12);
+  font-family: var(--eg-font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.88);
+  cursor: pointer;
+  touch-action: manipulation;
+  z-index: 4;
+  transition: background 0.2s, border-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sealToggleOpen {
+  background: rgba(255, 178, 60, 0.12);
+  border-color: rgba(255, 178, 60, 0.52);
+  color: #ffb23c;
+}
+.sealToggleLocked { opacity: 0.28; pointer-events: none; }
+
+.warningLabel {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--eg-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: #ff4040;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: warnPulse 0.4s ease-in-out infinite alternate;
+  z-index: 5;
+  text-shadow: 0 0 10px rgba(255, 40, 40, 0.52);
+}
+@keyframes warnPulse {
+  from { opacity: 0.65; }
+  to   { opacity: 1; }
+}
+
+.ruptureLabel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--eg-font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.72);
+  text-align: center;
+  padding: 20px;
+  z-index: 10;
+}
+.ruptureShake {
+  animation: ruptureShake 0.3s ease both;
+}
+@keyframes ruptureShake {
+  0%   { transform: translateX(0); }
+  15%  { transform: translateX(-8px); }
+  30%  { transform: translateX(8px); }
+  45%  { transform: translateX(-6px); }
+  60%  { transform: translateX(6px); }
+  75%  { transform: translateX(-3px); }
+  90%  { transform: translateX(3px); }
+  100% { transform: translateX(0); }
+}
+
+.replayLabel {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--eg-font-display);
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.52);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 5;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 3px 10px;
+  border-radius: 10px;
+}
+
+/* ─── Pressure gauge ─────────────────────────────────────────────────────────── */
+
+.pressureGaugeWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  width: 42px;
+}
+
+.pressureGaugeBar {
+  flex: 1;
+  width: 14px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 7px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.pressureGaugeFill {
+  width: 100%;
+  border-radius: 7px;
+  min-height: 2px;
+  transition: height 0.3s ease, background 0.3s ease;
+}
+
+.pressureReadout {
+  font-family: var(--eg-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.88);
+}
+.pressureUnit {
+  font-family: var(--eg-font-display);
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: -2px;
+}
+.pressureLabel {
+  font-family: var(--eg-font-display);
+  font-size: 8px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.collisionTally {
+  font-family: var(--eg-font-display);
+  font-size: 8px;
+  color: rgba(255, 178, 60, 0.52);
+  text-align: center;
+  line-height: 1.3;
+}
+.pressureFeedback {
+  font-family: var(--eg-font-display);
+  font-size: 12px;
+  color: rgba(255, 178, 60, 0.82);
+  text-align: center;
+  padding: 6px 12px;
+}

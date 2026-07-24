@@ -1,0 +1,415 @@
+.outer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  padding: 8px 12px 12px;
+  box-sizing: border-box;
+}
+
+.scenarioTitle {
+  font-family: var(--eg-font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.7);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* ── Scenario frame ────────────────────────────────────────────────────────── */
+
+.sceneWrap {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 180px;
+  max-height: 300px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0d1a2e;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── Scan counter ─────────────────────────────────────────────────────────── */
+
+.scanCounter {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-family: var(--eg-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--eg-gold, #ffb23c);
+  background: rgba(0,0,0,0.6);
+  padding: 3px 8px;
+  border-radius: 10px;
+  z-index: 4;
+}
+
+.scanCounterRed {
+  color: #ff4040;
+}
+
+/* ── Evidence icons ────────────────────────────────────────────────────────── */
+
+.evidenceRow {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  display: flex;
+  gap: 6px;
+  font-size: 16px;
+  z-index: 4;
+}
+
+/* ── Post-answer overlay ───────────────────────────────────────────────────── */
+
+.postAnswerOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(3,10,20,0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 8;
+}
+
+.postAnswerOverlay p {
+  font-family: var(--eg-font-display);
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(255,255,255,0.9);
+  text-align: center;
+  margin: 0;
+}
+
+/* ── Scrub bar ─────────────────────────────────────────────────────────────── */
+
+.scrubWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.scrubLabel {
+  font-family: var(--eg-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.scrubTrack {
+  position: relative;
+  flex: 1;
+  height: 8px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+  cursor: pointer;
+  touch-action: none;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.scrubFill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: linear-gradient(to right, var(--eg-subject-chemistry,#9b7ae0), var(--eg-gold,#ffb23c));
+  border-radius: 4px;
+  transition: width 0.02s linear;
+}
+
+.scrubThumb {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--eg-gold, #ffb23c);
+  font-size: 14px;
+  cursor: grab;
+  touch-action: none;
+}
+
+/* ── SCAN button ───────────────────────────────────────────────────────────── */
+
+.scanBtn {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 12px;
+  border: none;
+  background: var(--eg-gold, #ffb23c);
+  color: #1a0e00;
+  font-family: var(--eg-font-display);
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  letter-spacing: 2px;
+  flex-shrink: 0;
+  touch-action: manipulation;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.scanBtn:active { transform: scale(0.97); }
+
+.scanBtnDisabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* ── Fingerprint scanner panel ─────────────────────────────────────────────── */
+
+.scannerPanel {
+  background: rgba(3,10,20,0.96);
+  border: 1px solid rgba(155,122,224,0.4);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-shrink: 0;
+  animation: slideUp 0.3s ease both;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.scannerCols {
+  display: flex;
+  gap: 0;
+  align-items: flex-start;
+}
+
+.scannerCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.scannerColHeader {
+  font-family: var(--eg-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.scannerDivider {
+  width: 1px;
+  background: rgba(255,255,255,0.12);
+  margin: 0 12px;
+  align-self: stretch;
+}
+
+.scannerResult {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.scanMatch {
+  font-family: var(--eg-font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: #24c96e;
+}
+
+.scanMismatch {
+  font-family: var(--eg-font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: #f56565;
+}
+
+.scanResultText {
+  font-family: var(--eg-font-display);
+  font-size: 12px;
+  color: rgba(255,255,255,0.65);
+}
+
+.closeScanner {
+  align-self: flex-end;
+  padding: 8px 18px;
+  min-height: 44px;
+  border-radius: 22px;
+  border: 1px solid rgba(155,122,224,0.5);
+  background: rgba(155,122,224,0.15);
+  color: #9b7ae0;
+  font-family: var(--eg-font-display);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+/* ── Classification buttons ────────────────────────────────────────────────── */
+
+.classRow {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.classBtn {
+  flex: 1;
+  min-height: 52px;
+  border-radius: 12px;
+  border: 2px solid rgba(155,122,224,0.4);
+  background: rgba(155,122,224,0.1);
+  color: rgba(255,255,255,0.9);
+  font-family: var(--eg-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.1s, background 0.15s;
+  line-height: 1.3;
+}
+
+.classBtn:active { transform: scale(0.96); }
+
+.classBtnCorrect {
+  background: rgba(36,201,110,0.2);
+  border-color: #24c96e;
+  color: #24c96e;
+}
+
+.classBtnWrong {
+  background: rgba(245,101,101,0.2);
+  border-color: #f56565;
+  color: #f56565;
+  animation: shake 0.35s ease both;
+}
+
+@keyframes shake {
+  0%  { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+  100%{ transform: translateX(0); }
+}
+
+/* ── Dr. Adaobi strip ──────────────────────────────────────────────────────── */
+
+.adaobiStrip {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(3,8,18,0.92);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.adaobiAvatar { width: 44px; height: 55px; flex-shrink: 0; }
+
+.adaobiBubble {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.adaobiText {
+  font-family: var(--eg-font-display);
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255,255,255,0.95);
+  margin: 0;
+}
+
+.beginBtn, .nextBtn {
+  align-self: flex-start;
+  padding: 7px 16px;
+  min-height: 44px;
+  border-radius: 20px;
+  border: none;
+  background: var(--eg-gold, #ffb23c);
+  color: #1a0e00;
+  font-family: var(--eg-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.doneChip {
+  font-family: var(--eg-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: #24c96e;
+  padding: 4px 10px;
+  background: rgba(36,201,110,0.12);
+  border: 1px solid rgba(36,201,110,0.35);
+  border-radius: 12px;
+  align-self: flex-start;
+}
+
+/* ── Diffusion engine additions (shared with PhaseChamberEngine styles) ────── */
+
+.diffControlRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  padding: 4px 0;
+}
+
+.diffTempWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.diffTempLabel {
+  font-family: var(--eg-font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--eg-gold, #ffb23c);
+}
+
+.diffTempHint {
+  font-family: var(--eg-font-display);
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+}
+
+.releaseBtn {
+  min-width: 100px;
+  min-height: 48px;
+  border-radius: 12px;
+  border: none;
+  background: var(--eg-subject-chemistry, #9b7ae0);
+  color: #fff;
+  font-family: var(--eg-font-display);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  touch-action: manipulation;
+}

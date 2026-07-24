@@ -244,7 +244,7 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
       engineType={game.engine_type}
       sharedConfig={{
         ...game.shared_config,
-        ...(game.engine_type === "change-of-subject" ? {
+        ...(game.engine_type === "stepwise-solver" ? {
           _allMissions: sortedMissions.map(m => ({
             id:            m.id,
             missionKey:    m.mission_key,

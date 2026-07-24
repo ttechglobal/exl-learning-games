@@ -160,33 +160,41 @@ export function GameplayShell({
       <div className={styles.menuSlot}>
         <div className={styles.menuTitleGroup}>
           {menu}
-          {gameTitle && <div className={styles.gameTitleLabel}>{gameTitle}</div>}
+          {gameTitle && (
+            <div className={styles.gameTitleLabel}>
+              <span className={styles.titleMain}>{gameTitle}</span>
+            </div>
+          )}
         </div>
         {stats.length > 0 && (
           <div className={styles.statsRow}>
             {stats.map((stat, i) => (
               <div key={i} className={styles.statCard}>
-                <div className={styles.statLabel}>{stat.label}</div>
-                <div className={[styles.statValue, TONE_CLASS[stat.tone ?? "default"], stat.urgent ? styles.urgent : ""].filter(Boolean).join(" ")}>
-                  {stat.value}
-                </div>
-                {stat.caption && <div className={styles.statCaption}>{stat.caption}</div>}
+                {/* First gold stat = XP pill: show ⚡ icon + value inline,
+                    hide label. All other stats: label over value as before. */}
+                {i === 0 && stat.tone === "gold" ? (
+                  <>
+                    <span className={styles.statLabel} aria-hidden="true">⚡</span>
+                    <div className={[styles.statValue, TONE_CLASS["gold"]].join(" ")}>
+                      {stat.value}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className={styles.statLabel}>{stat.label}</div>
+                    <div className={[styles.statValue, TONE_CLASS[stat.tone ?? "default"], stat.urgent ? styles.urgent : ""].filter(Boolean).join(" ")}>
+                      {stat.value}
+                    </div>
+                    {stat.caption && <div className={styles.statCaption}>{stat.caption}</div>}
+                  </>
+                )}
               </div>
             ))}
           </div>
         )}
       </div>
 
-      <div className={styles.topZone}>
-        {missionPrompt && (
-          <div className={styles.missionBanner}>
-            <div className={styles.missionLabel}>{missionPrompt.label}</div>
-            <div className={styles.missionText}>{missionPrompt.text}</div>
-          </div>
-        )}
-      </div>
-
-      <div className={styles.gameplayFrame}>{children}</div>
+      <div className={styles.gameplayFrame} style={{ flex: 1, minHeight: 0 }}>{children}</div>
     </div>
   );
 }

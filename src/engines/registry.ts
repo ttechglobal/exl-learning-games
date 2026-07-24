@@ -2,25 +2,19 @@ import { z } from "zod";
 import type { EngineDefinition } from "@/engines/engine-types";
 
 // ─── Mathematics ──────────────────────────────────────────────────────────────
-import { ChangeOfSubjectEngine }         from "@/engines/mathematics/change-of-subject/ChangeOfSubjectEngine";
-import { ChangeOfSubjectSharedConfigSchema } from "@/engines/mathematics/change-of-subject/changeOfSubject.config";
-import { SimultaneousEquationsEngine }   from "@/engines/mathematics/simultaneous-equations/SimultaneousEquationsEngine";
-import { StepwiseEquationSolverEngine }  from "@/engines/mathematics/stepwise-equation-solver/StepwiseEquationSolverEngine";
-import { StepwiseEquationSolverSharedConfigSchema } from "@/engines/mathematics/stepwise-equation-solver/stepwiseEquationSolver.config";
+import StepwiseSolverEngine from "@/engines/mathematics/stepwise-solver/StepwiseSolverEngine";
 
 // ─── Chemistry ────────────────────────────────────────────────────────────────
-import { MatterSortEngine }              from "@/engines/chemistry/matter-sort/MatterSortEngine";
-import { MatterSortSharedConfigSchema }  from "@/engines/chemistry/matter-sort/matterSort.config";
-import { ParticleFieldEngine }           from "@/engines/chemistry/particle-field/ParticleFieldEngine";
-import { ParticleFieldSharedConfigSchema } from "@/engines/chemistry/particle-field/particleField.config";
+import { PhaseChamberEngine }            from "@/engines/chemistry/phase-chamber/PhaseChamberEngine";
+import { PhaseChamberSharedConfigSchemaFull } from "@/engines/chemistry/phase-chamber/phaseChamber.config";
 import { TileMatchEngine }               from "@/engines/chemistry/tile-match/TileMatchEngine";
 import { TileMatchSharedConfigSchema }   from "@/engines/chemistry/tile-match/tileMatch.config";
 import { BondMatchEngine }               from "@/engines/chemistry/bond-match/BondMatchEngine";
 import { BondMatchSharedConfigSchema }   from "@/engines/chemistry/bond-match/bondMatch.config";
 import { MoleculeBuilderEngine }         from "@/engines/chemistry/molecule-builder/MoleculeBuilderEngine";
 import { MoleculeBuilderSharedConfigSchema } from "@/engines/chemistry/molecule-builder/moleculeBuilder.config";
-import { ParticleAssemblyEngine }        from "@/engines/chemistry/particle-assembly/ParticleAssemblyEngine";
-import { ParticleAssemblySharedConfigSchema } from "@/engines/chemistry/particle-assembly/particleAssembly.config";
+import { ScenarioScannerEngine }           from "@/engines/chemistry/scenario-scanner/ScenarioScannerEngine";
+import { ScenarioScannerSharedConfigSchemaFull } from "@/engines/chemistry/scenario-scanner/scenarioScanner.config";
 
 // ─── Physics ──────────────────────────────────────────────────────────────────
 import { OpticsExperimentEngine }        from "@/engines/physics/optics-experiment/OpticsExperimentEngine";
@@ -56,25 +50,21 @@ import { QuestionBankSharedConfigSchema } from "@/engines/cross-subject/question
 
 // ─── MATHEMATICS ─────────────────────────────────────────────────────────────
 
-const changeOfSubjectDefinition: EngineDefinition = {
-  engineType: "change-of-subject",
-  configSchema: ChangeOfSubjectSharedConfigSchema as unknown as z.ZodSchema<unknown>,
-  Component: ChangeOfSubjectEngine as unknown as EngineDefinition["Component"],
-};
-
-const simultaneousEquationsDefinition: EngineDefinition = {
-  engineType: "simultaneous-equations",
+const stepwiseSolverDefinition: EngineDefinition = {
+  engineType: "stepwise-solver",
   configSchema: z.object({}).passthrough() as z.ZodSchema<unknown>,
-  Component: SimultaneousEquationsEngine as unknown as EngineDefinition["Component"],
+  Component: StepwiseSolverEngine as unknown as EngineDefinition["Component"],
 };
 
-const stepwiseEquationSolverDefinition: EngineDefinition = {
-  engineType: "stepwise-equation-solver",
-  configSchema: StepwiseEquationSolverSharedConfigSchema as unknown as z.ZodSchema<unknown>,
-  Component: StepwiseEquationSolverEngine as unknown as EngineDefinition["Component"],
-};
+
 
 // ─── CHEMISTRY ────────────────────────────────────────────────────────────────
+
+const phaseChamberDefinition: EngineDefinition = {
+  engineType: "phase-chamber",
+  configSchema: PhaseChamberSharedConfigSchemaFull as unknown as z.ZodSchema<unknown>,
+  Component: PhaseChamberEngine as unknown as EngineDefinition["Component"],
+};
 
 const tileMatchDefinition: EngineDefinition = {
   engineType: "tile-match",
@@ -88,28 +78,16 @@ const bondMatchDefinition: EngineDefinition = {
   Component: BondMatchEngine as unknown as EngineDefinition["Component"],
 };
 
+const scenarioScannerDefinition: EngineDefinition = {
+  engineType: "scenario-scanner",
+  configSchema: ScenarioScannerSharedConfigSchemaFull as unknown as z.ZodSchema<unknown>,
+  Component: ScenarioScannerEngine as unknown as EngineDefinition["Component"],
+};
+
 const moleculeBuilderDefinition: EngineDefinition = {
   engineType: "molecule-builder",
   configSchema: MoleculeBuilderSharedConfigSchema as unknown as z.ZodSchema<unknown>,
   Component: MoleculeBuilderEngine as unknown as EngineDefinition["Component"],
-};
-
-const particleAssemblyDefinition: EngineDefinition = {
-  engineType: "particle-assembly",
-  configSchema: ParticleAssemblySharedConfigSchema as unknown as z.ZodSchema<unknown>,
-  Component: ParticleAssemblyEngine as unknown as EngineDefinition["Component"],
-};
-
-const matterSortDefinition: EngineDefinition = {
-  engineType: "matter-sort",
-  configSchema: MatterSortSharedConfigSchema as unknown as z.ZodSchema<unknown>,
-  Component: MatterSortEngine as unknown as EngineDefinition["Component"],
-};
-
-const particleFieldDefinition: EngineDefinition = {
-  engineType: "particle-field",
-  configSchema: ParticleFieldSharedConfigSchema as unknown as z.ZodSchema<unknown>,
-  Component: ParticleFieldEngine as unknown as EngineDefinition["Component"],
 };
 
 // ─── PHYSICS ──────────────────────────────────────────────────────────────────
@@ -144,18 +122,16 @@ const questionBankDefinition: EngineDefinition = {
 
 const registry: Record<string, EngineDefinition> = {
   // Mathematics
-  "change-of-subject":         changeOfSubjectDefinition,
-  "simultaneous-equations":    simultaneousEquationsDefinition,
-  "stepwise-equation-solver":  stepwiseEquationSolverDefinition,
+    // Mathematics — Stepwise Solver (Change of Subject, Simultaneous Equations,
+  // Equations of Motion, Quadratic Equations, any calculation topic)
+  "stepwise-solver": stepwiseSolverDefinition,
 
   // Chemistry
+  "phase-chamber":             phaseChamberDefinition,
   "tile-match":                tileMatchDefinition,
   "bond-match":                bondMatchDefinition,
   "molecule-builder":          moleculeBuilderDefinition,
-  "particle-assembly":         particleAssemblyDefinition,
-
-  "matter-sort":               matterSortDefinition,
-  "particle-field":            particleFieldDefinition,
+  "scenario-scanner": scenarioScannerDefinition,
 
   // Physics
   "optics-experiment":         opticsExperimentDefinition,

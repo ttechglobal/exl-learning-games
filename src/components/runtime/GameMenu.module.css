@@ -12,27 +12,28 @@
   position: relative;
   flex-shrink: 0;
   z-index: 50;
-  width: 42px;
-  height: 42px;
+  /* Match prototype tb-back: 36×36, radius 12px */
+  width: 36px;
+  height: 36px;
   border-radius: 12px;
-  border: 1.5px solid #6a3aab;
-  border-bottom: 3px solid #150828;
-  background: #2e1258;
-  box-shadow: 0 3px 0 #150828, 0 5px 14px rgba(0,0,0,0.4);
-  font-size: 1.1rem;
-  color: #e8d5ff;
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.55);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.1s ease, border-bottom-width 0.1s ease, box-shadow 0.1s ease;
+  transition: background 0.15s ease;
+  /* Minimum touch target via padding without growing the visual */
+  padding: 0;
+  /* Extend hit area without changing visual size */
+  margin: -4px;
+  padding: 4px;
+  touch-action: manipulation;
 }
-.menuButton:hover  { background: #3d1a70; }
-.menuButton:active {
-  transform: translateY(2px);
-  border-bottom-width: 1px;
-  box-shadow: 0 1px 0 #150828, 0 2px 6px rgba(0,0,0,0.3);
-}
+.menuButton:hover  { background: rgba(255, 255, 255, 0.10); color: rgba(255,255,255,0.85); }
+.menuButton:active { background: rgba(255, 255, 255, 0.14); }
 
 /* ── OVERLAY — dark scrim with blur ─────────────────────────────────────── */
 .overlay {

@@ -1,36 +1,32 @@
 /**
- * GameplayShell.module.css
+ * GameplayShell.module.css — mobile-first
  *
- * HUD layout: menu button + stat cards share ONE flex row (.menuSlot).
- * Stat cards are ALWAYS horizontal (row direction) — never column-stacked.
- *
- * Problem in screenshot: at >=600px the old CSS set statCard to
- * flex-direction:column + flex:0 1 140px. With flex-wrap:wrap on the
- * parent, two 140px-min cards in a ~270px container both wrapped to new
- * lines, stacking vertically. The menu button then had nothing to align
- * with, so it floated separately to the left.
- *
- * Fix: statCards stay flex-direction:row at all sizes. On desktop they
- * grow slightly wider but never reflow into columns. The label/value
- * pair reads left-to-right (label · value) on mobile and stacks
- * label-over-value only inside the card's OWN column — which is achieved
- * by keeping the card as flex-direction:column (internal) but fixing
- * the card's OWN width so it doesn't try to reflow in the outer row.
- *
- * Visual treatment: dark push-shadow (#2e1258) matching NarrationScreen /
- * BackButton palette throughout. Parchment mission banner.
+ * Designed to fill the phone screen cleanly with no wasted space:
+ * - Shell = 100dvh (dynamic viewport, avoids iOS address bar gap)
+ * - Topbar: 3-zone row matching prototype (menu ← | title centre | XP →)
+ * - No horizontal padding bleed, no scrollbars
+ * - Stat card XP pill: gold gradient, compact
+ * - Mission prompt: slim dark pill, not parchment banner
  */
 
+/* ── SHELL ───────────────────────────────────────────────────────── */
 .shell {
   position: relative;
-  min-height: 100vh;
+  /* dvh falls back to svh then vh — each better than plain vh on mobile */
+  height: 100dvh;
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
   font-family: var(--eg-font-body);
   color: var(--eg-text-bright);
   overflow: hidden;
   background: var(--fallback-gradient);
-  padding: 14px 14px 28px;
+  /* Horizontal padding matches prototype's 14–18px side margins */
+  padding: 0 14px;
+  /* Safe-area insets: notch/home bar on iOS */
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
+  box-sizing: border-box;
 }
 
 /* ── PAUSED OVERLAY ─────────────────────────────────────────────── */
@@ -38,199 +34,183 @@
   position: absolute;
   inset: 0;
   z-index: 40;
-  background: rgba(10, 12, 20, 0.55);
+  background: rgba(3, 8, 18, 0.72);
   display: flex;
   align-items: center;
   justify-content: center;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 .pausedLabel {
   font-family: var(--eg-font-display);
   font-weight: 800;
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   color: #fff;
-  background: rgba(0, 0, 0, 0.35);
-  padding: 14px 28px;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 12px 26px;
   border-radius: 20px;
+  letter-spacing: 0.06em;
 }
 
-/* ── MENU SLOT — menu + stats always in ONE horizontal row ────────── */
+/* ── TOPBAR — three-zone flex row ────────────────────────────────── */
 .menuSlot {
   position: relative;
   z-index: 50;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  min-height: 42px;
-  margin-bottom: 10px;
-  flex-wrap: nowrap; /* prevent any wrapping in this row */
+  /* Fixed height matches prototype's topbar */
+  height: 52px;
+  flex-shrink: 0;
+  margin-bottom: 8px;
 }
 
+/* Left: menu/back button */
 .menuTitleGroup {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 0;
+  gap: 0;
+  flex-shrink: 0;
+  /* Same width as XP pill zone so centre title stays truly centred */
+  min-width: 36px;
+}
+
+/* Centre: game title — no subject/class eyebrow inside the game */
+.gameTitleLabel {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  max-width: calc(100% - 160px);
+}
+.gameTitleLabel .titleMain {
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: #fff;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Right: stats row (XP pill) */
+.statsRow {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
   flex-shrink: 0;
 }
 
-/* Game title chip — matches NarrationScreen's .missionChip language */
-.gameTitleLabel {
-  background: #2e1258;
-  border: 1.5px solid #6a3aab;
-  border-bottom: 3px solid #150828;
-  border-radius: 10px;
-  padding: 5px 14px;
-  font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-weight: 700;
-  font-size: 0.82rem;
-  color: #e8d5ff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-  box-shadow: 0 3px 0 #150828;
-}
-
-/* ── STATS ROW — always horizontal, never wraps ─────────────────── */
-.statsRow {
-  display: flex;
-  flex-direction: row;      /* ALWAYS row — never column */
-  flex-wrap: nowrap;        /* NEVER wrap — prevent vertical stacking */
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 1;
-  min-width: 0;
-}
-
-/* ── STAT CARD — compact pill on mobile, slightly wider on desktop ── */
+/* ── XP PILL (first gold stat) ───────────────────────────────────── */
 .statCard {
-  flex: 0 0 auto;           /* don't grow OR shrink below content size */
+  flex: 0 0 auto;
   display: flex;
-  flex-direction: column;   /* label over value INSIDE the card */
+  flex-direction: row;
   align-items: center;
-  gap: 0;
-
-  background: #2e1258;
-  border: 1.5px solid #6a3aab;
-  border-bottom: 3px solid #150828;
-  border-radius: 12px;
-  padding: 6px 12px;
-  min-width: 64px;
-  text-align: center;
-
-  box-shadow: 0 3px 0 #150828, 0 5px 12px rgba(0, 0, 0, 0.35);
+  gap: 5px;
+  /* Gold gradient pill — prototype exact values */
+  background: linear-gradient(135deg, #f5a623, #e08010);
+  border: none;
+  border-bottom: 3px solid #7a3d00;
+  border-radius: 20px;
+  padding: 5px 13px;
+  box-shadow: 0 3px 0 #7a3d00;
+  transition: transform 0.15s ease;
 }
 
+/* Non-XP stat cards (Temp/State in heat-control) */
+.statCard + .statCard {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.25);
+  box-shadow: none;
+  border-radius: 12px;
+  padding: 4px 10px;
+}
+.statCard + .statCard .statLabel {
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 1px;
+  line-height: 1;
+}
+.statCard + .statCard .statValue {
+  font-size: 0.95rem;
+  color: #e8d5ff;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* XP pill text */
 .statLabel {
   font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-size: 0.58rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(200, 168, 255, 0.75);
-  line-height: 1.2;
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
 }
-
 .statValue {
   font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-weight: 700;
-  font-size: 1.1rem;
-  color: #e8d5ff;
-  line-height: 1.15;
+  font-weight: 900;
+  font-size: 0.75rem;
+  color: #fff;
+  line-height: 1;
 }
 
-.statDanger  { color: #ff8070; }
-.statSuccess { color: #7de8a0; }
-.statGold    { color: var(--eg-gold, #ffb23c); }
+.statDanger  { color: #ff8070 !important; }
+.statSuccess { color: #7de8a0 !important; }
+.statGold    { color: #fff !important; }
 
 .statValue.urgent {
   animation: statPulse 0.5s ease-in-out infinite;
 }
 @keyframes statPulse {
   0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.18); }
+  50%       { transform: scale(1.2); }
 }
 
-/* Caption — shown on desktop only */
-.statCaption {
-  display: none;
-  font-size: 0.62rem;
-  color: var(--eg-gold, #ffb23c);
-  font-weight: 700;
-  margin-top: 2px;
-  min-height: 12px;
-  line-height: 1;
-}
+.statCaption { display: none; }
 
-/* ── DESKTOP UPGRADES ≥600px ─────────────────────────────────────── */
-@media (min-width: 600px) {
-  .menuSlot {
-    justify-content: flex-start;
-    gap: 14px;
-  }
-
-  .statCard {
-    padding: 8px 18px;
-    min-width: 80px;
-    border-radius: 14px;
-    border-bottom-width: 4px;
-    box-shadow: 0 4px 0 #150828, 0 8px 16px rgba(0, 0, 0, 0.35);
-  }
-
-  .statLabel {
-    font-size: 0.64rem;
-  }
-
-  .statValue {
-    font-size: 1.45rem;
-  }
-
-  .statCaption {
-    display: block;
-  }
-}
-
-/* ── TOP ZONE (mission prompt) ───────────────────────────────────── */
+/* ── MISSION PROMPT — slim dark chip ─────────────────────────────── */
 .topZone {
   position: relative;
   z-index: 5;
   display: flex;
   justify-content: center;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
-/* ── MISSION BANNER — parchment style ───────────────────────────── */
 .missionBanner {
-  box-sizing: border-box;
-  width: 100%;
-  max-width: min(520px, 92vw);
-
-  background: #f5f0e4;
-  border: 2px solid #c8ba96;
-  border-bottom: 3px solid #c0b080;
-  border-radius: 18px;
-  padding: 10px 18px;
-  text-align: center;
-
-  box-shadow:
-    0 4px 0 #c0b080,
-    0 6px 16px rgba(43, 28, 74, 0.2);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 13px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(255, 255, 255, 0.09);
+  border-radius: 20px;
 }
-
 .missionLabel {
   font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-size: 0.65rem;
-  letter-spacing: 0.1em;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #8a7555;
-  margin-bottom: 3px;
+  color: rgba(255, 255, 255, 0.35);
+  line-height: 1;
 }
-
 .missionText {
   font-family: var(--eg-font-display, "Fredoka", sans-serif);
   font-weight: 700;
-  font-size: 1.02rem;
-  color: #2a1a08;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1;
 }
 
 /* ── GAMEPLAY FRAME ──────────────────────────────────────────────── */
@@ -240,52 +220,57 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   justify-content: flex-start;
   width: 100%;
-  padding-top: 8px;
+  min-height: 0;
+}
+
+/* ── DESKTOP ≥600px ──────────────────────────────────────────────── */
+@media (min-width: 600px) {
+  .shell {
+    padding: 0 20px;
+    padding-top: max(20px, env(safe-area-inset-top));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+
+  .menuSlot { height: 56px; margin-bottom: 10px; }
+
+  .gameTitleLabel .titleMain { font-size: 1.12rem; }
+
+  .statCaption {
+    display: block;
+    font-size: 0.6rem;
+    color: var(--eg-gold, #ffb23c);
+    font-weight: 700;
+    margin-top: 2px;
+    line-height: 1;
+  }
 }
 
 /* ── LARGE DESKTOP ≥1024px ───────────────────────────────────────── */
 @media (min-width: 1024px) {
   .shell {
-    padding: 20px 32px 40px;
+    padding: 0 32px;
+    padding-top: 20px;
+    padding-bottom: 32px;
   }
 
   .menuSlot,
   .topZone {
     width: 100%;
-    max-width: 920px;
+    max-width: 860px;
     margin-left: auto;
     margin-right: auto;
   }
 
   .gameplayFrame {
-    max-width: 920px;
+    max-width: 860px;
     margin: 0 auto;
-  }
-
-  .statCard {
-    padding: 10px 22px;
-    min-width: 90px;
-  }
-
-  .statValue {
-    font-size: 1.65rem;
-  }
-
-  .missionBanner {
-    padding: 12px 28px;
-  }
-
-  .missionText {
-    font-size: 1.15rem;
+    align-items: stretch;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .statValue.urgent {
-    animation: none !important;
-    transform: none !important;
-  }
+  .statValue.urgent { animation: none !important; }
 }

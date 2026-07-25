@@ -34,9 +34,9 @@ export interface PlayClientProps {
  * LevelSelect:     title → entry → difficulty → levelSelect → runtime
  * TrackMap:        title → entry → difficulty → missionSelect → runtime
  *
- * The narration (entry) is ALWAYS second — the student sees Dr. Adaobi's
- * briefing before any stage/mission picker. This replaces the old pattern
- * where trackMap games showed pickers before narration.
+ * stepwise-solver: title → entry (narration) → runtime
+ *   The engine's own hub handles mode selection — no separate difficulty screen.
+ *   The hub has its own back button that returns to this title screen.
  */
 type Screen = "title" | "entry" | "difficulty" | "levelSelect" | "missionSelect" | "runtime";
 
@@ -46,6 +46,9 @@ const SUBJECT_FALLBACK_ACCENT: Record<string, string> = {
   physics:     "var(--eg-subject-physics)",
   mathematics: "var(--eg-subject-mathematics)"
 };
+
+/** Engine types that handle their own mode/difficulty selection internally */
+const SELF_SELECTING_ENGINES = ["stepwise-solver", "change-of-subject"];
 
 export function PlayClient({ studentId, game, missions, initialMissionId, completedMissionIds }: PlayClientProps) {
   const router = useRouter();
@@ -60,9 +63,12 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
   const isLevelBased = progressionMode === "levelSelect";
   const isTrackMap   = progressionMode === "trackMap";
   const supportsDifficultyChoice = engineSupportsDifficultyChoice(game.engine_type);
-  const skipPreGameScreens = game.engine_type === "change-of-subject";
 
-  const [screen,               setScreen]             = useState<Screen>(skipPreGameScreens ? "runtime" : "title");
+  // stepwise-solver handles its own mode selection — skip difficulty screen,
+  // show title + narration, then go straight to runtime (engine hub).
+  const isSelfSelecting = SELF_SELECTING_ENGINES.includes(game.engine_type);
+
+  const [screen,               setScreen]             = useState<Screen>("title");
   const [activeMissionId,      setActiveMissionId]    = useState(initialMissionId);
   const [playerDifficulty,     setPlayerDifficulty]   = useState<PlayerDifficulty | null>(null);
   const [locallyCompletedIds,  setLocallyCompletedIds] = useState(completedMissionIds);
@@ -102,7 +108,9 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
   function handleRestart() {
     setPlayerDifficulty(null);
     setRuntimeResetKey((k) => k + 1);
-    setScreen(skipPreGameScreens ? "runtime" : "entry");
+    // Self-selecting engines: back button in hub triggers RESTART action,
+    // which resets to hub — not to title screen. So restart goes to runtime.
+    setScreen(isSelfSelecting ? "runtime" : "entry");
   }
 
   function handleChangeDifficulty() {
@@ -118,9 +126,14 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
     router.push("/worlds");
   }
 
-  /** What screen comes after the narration briefing — always the stage picker */
+  /** What screen comes after the narration briefing */
   function afterNarration() {
-    setScreen("difficulty");
+    if (isSelfSelecting) {
+      // Skip difficulty picker — engine handles mode selection in its own hub
+      setScreen("runtime");
+    } else {
+      setScreen("difficulty");
+    }
   }
 
   /** What screen comes after the stage (difficulty) picker */
@@ -153,7 +166,14 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
         missionTitle={activeMission.title}
         missionCount={sortedMissions.length}
         xpReward={totalXp}
-        onPlay={() => setScreen("entry")}
+        onPlay={() => {
+          // stepwise-solver: skip narration — hub is the welcome + mode selector
+          if (isSelfSelecting) {
+            setScreen("runtime");
+          } else {
+            setScreen("entry");
+          }
+        }}
         onBack={() => router.push("/worlds")}
       />
     );
@@ -186,7 +206,7 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
     );
   }
 
-  // ── LEVEL SELECT (Atom Forge style — free-choice, all unlocked) ───────────
+  // ── LEVEL SELECT ──────────────────────────────────────────────────────────
   if (screen === "levelSelect") {
     return (
       <PrePlayShell
@@ -209,7 +229,7 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
     );
   }
 
-  // ── MISSION SELECT (trackMap — ordered locked list, no swiping) ───────────
+  // ── MISSION SELECT ────────────────────────────────────────────────────────
   if (screen === "missionSelect") {
     return (
       <PrePlayShell
@@ -244,20 +264,21 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
       engineType={game.engine_type}
       sharedConfig={{
         ...game.shared_config,
-        ...(game.engine_type === "stepwise-solver" ? {
-          _allMissions: sortedMissions.map(m => ({
-            id:            m.id,
-            missionKey:    m.mission_key,
-            title:         m.title,
-            difficulty:    m.difficulty,
-            sequenceIndex: m.sequence_index,
-            xpReward:      m.xp_reward,
-            payload:       m.payload,
-          })),
-          _studentId: studentId,
-          _gameId:    game.id,
-          _topicId:   activeMission.topic_id,
-        } : {}),
+        // Inject _allMissions for ALL games — engines that don't need it ignore it.
+        // This removes the need for per-engine-type conditionals here.
+        _allMissions: sortedMissions.map(m => ({
+          id:            m.id,
+          missionKey:    m.mission_key,
+          title:         m.title,
+          difficulty:    m.difficulty,
+          sequenceIndex: m.sequence_index,
+          xpReward:      m.xp_reward,
+          payload:       m.payload,
+        })),
+        _studentId:   studentId,
+        _gameId:      game.id,
+        _topicId:     activeMission.topic_id,
+        _onBack:      () => setScreen("title"),
       }}
       snapshot={game.snapshot}
       mission={{

@@ -5,13 +5,11 @@
  * (EntryScreen), per the product brief's example: "Welcome, Scientist. The
  * laboratory's element database has become disorganised..." — excitement,
  * not explanation. This is the one piece of mission-flow content that's
- * genuinely PER-GAME, not per-engine: Atom Forge's "laboratory" framing
- * wouldn't make sense reused verbatim for a different chemistry game, the
- * way bond-match's controls legitimately are identical across missions.
+ * genuinely PER-GAME, not per-engine.
  *
- * Falls back to a generic-but-still-narrative line for any game that
- * doesn't have custom copy yet, rather than showing nothing — every game
- * gets SOME briefing line, just not always a bespoke one.
+ * NOTE: stepwise-solver games (Change of Subject, Simultaneous Equations)
+ * skip the narration screen entirely — the engine hub acts as the welcome
+ * and mode selector. These entries are kept here for reference only.
  */
 
 const BRIEFING_BY_SLUG: Record<string, string> = {
@@ -26,7 +24,12 @@ const BRIEFING_BY_SLUG: Record<string, string> = {
   "matter-lab":
     "Welcome, Lab Technician. The temperature control system has failed — every sample is stuck in the wrong state. Take manual control of the heat, and tell Dr. Adaobi exactly what you observe happening to the particles.",
   "lost-worlds":
-    "Welcome, Explorer. Ancient formulae have been discovered in the Lost Worlds — but their variables are buried under layers of mathematical obstacles. Help Nova excavate the hidden variables and restore knowledge to the Archive."
+    "Welcome, Explorer. Ancient formulae have been discovered in the Lost Worlds — but their variables are buried under layers of mathematical obstacles. Help Nova excavate the hidden variables and restore knowledge to the Archive.",
+  // Maths — stepwise-solver games (narration skipped, hub is the entry point)
+  "change-of-subject-formula":
+    "Welcome. You're about to rearrange formulae step by step. Ms. Chidera will guide you through every move.",
+  "simultaneous-equations-detective":
+    "Welcome. Solve systems of two equations step by step. Ms. Chidera walks you through the elimination method.",
 };
 
 const FALLBACK_BRIEFING = "Welcome back. Your next challenge is ready — complete it to earn XP and keep climbing.";

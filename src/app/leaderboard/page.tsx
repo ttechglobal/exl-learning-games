@@ -2,33 +2,25 @@ import { getLeaderboard, getStudentRank, type LeaderboardPeriod } from "@/lib/db
 import { resolveCurrentStudent } from "@/lib/identity/deviceId";
 import { LeaderboardClient } from "@/app/leaderboard/LeaderboardClient";
 
-// Needs a live DB connection + the request's own identity cookie; not statically prerenderable.
+// force-dynamic is needed because resolveCurrentStudent reads a cookie.
+// The DB query is still fast — this just prevents full static export.
 export const dynamic = "force-dynamic";
 
 const FULL_LEADERBOARD_SIZE = 20;
 const DEFAULT_PERIOD: LeaderboardPeriod = "weekly";
 
-/**
- * app/leaderboard/page.tsx
- *
- * NEW route — the "See full leaderboard" destination from HomePage.tsx's
- * top-5 preview. Per direct decision: top 20 (not just the homepage's 5),
- * plus the viewing student's own rank even when they're outside that
- * top 20 — "where do I actually stand" matters just as much as "who's
- * winning" for a board that's meant to keep students coming back.
- *
- * Only the DEFAULT period's data is fetched server-side; switching tabs
- * (Weekly/Monthly/All-Time) re-fetches client-side via /api/leaderboard
- * — see LeaderboardClient.tsx. This keeps the initial page load to one
- * query pair (leaderboard + rank) instead of three, and means tab
- * switches don't need a full page navigation.
- */
 export default async function LeaderboardPage() {
+  // Resolve student identity first — if no cookie, null student means
+  // we skip the rank query entirely (saves one DB round-trip on first visit).
   const student = await resolveCurrentStudent();
 
+  // Run both queries in parallel when we have a student, otherwise
+  // only fetch the leaderboard list.
   const [entries, myRank] = await Promise.all([
     getLeaderboard(DEFAULT_PERIOD, FULL_LEADERBOARD_SIZE).catch(() => []),
-    student ? getStudentRank(student.id, DEFAULT_PERIOD).catch(() => null) : Promise.resolve(null)
+    student
+      ? getStudentRank(student.id, DEFAULT_PERIOD).catch(() => null)
+      : Promise.resolve(null),
   ]);
 
   return (

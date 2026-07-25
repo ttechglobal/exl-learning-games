@@ -1,25 +1,22 @@
 "use client";
 
 /**
- * WorldsClient.tsx — EXL Learning World Dashboard
+ * WorldsClient.tsx — EXL Learning World (Redesigned v2)
  *
- * REDESIGN: Inspired by the Moze reference dashboard.
- * Structure:
- *   Hero banner    — featured world with character art + tagline + CTA
- *   World chips    — horizontal filter pills (All + 4 subjects)
- *   Game grid      — 3-column card grid (character floats above card)
- *   Featured panel — right column on desktop; stacks below on mobile
- *
- * Light/dark: built entirely on CSS custom properties from tokens.css.
- * No hardcoded colours in JSX — every value is a token or derived from --wc.
+ * Layout (single column, mobile-first):
+ *   search bar
+ *   subject tabs
+ *   subject identity card  ← just tells you "this is Chemistry" — no game inside
+ *   game list              ← ALL games for the subject, each with topic tag
  */
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { subjectMeta } from "@/lib/content/subjects";
 import { GAME_CARD_DESC } from "@/lib/content/gameCardMeta";
+import { topicLabel } from "@/lib/content/gameTopics";
 import { GameCardArt } from "@/components/ui/GameCardArt";
 import type { GameRow, Difficulty } from "@/types/db";
 import styles from "@/app/(player)/worlds/WorldsClient.module.css";
@@ -48,43 +45,43 @@ export interface WorldsClientProps {
 const WORLD_META: Record<string, {
   name: string;
   tagline: string;
-  heroLine: string;   // bolder, shorter hero headline
+  blurb: string;       // short 1-line shown in identity card
   glyph: string;
   color: string;
-  colorRgb: string;   // raw rgb for rgba() constructions
-  gradient: string;   // hero banner gradient
+  colorRgb: string;
+  gradient: string;
 }> = {
   chemistry: {
-    name: "Chemistry World",
+    name: "Chemistry",
     tagline: "Build atoms, break bonds, see matter behave.",
-    heroLine: "Where matter reveals its secrets.",
+    blurb: "Explore chemical reactions, atomic structure, and the periodic table through hands-on lab games.",
     glyph: "⚗️",
     color: "var(--eg-subject-chemistry)",
     colorRgb: "123,79,203",
     gradient: "linear-gradient(135deg, #1a0840 0%, #2d1260 50%, #180638 100%)",
   },
   mathematics: {
-    name: "Mathematics World",
+    name: "Mathematics",
     tagline: "Solve equations, construct proofs, own the numbers.",
-    heroLine: "Numbers behave. Learn to speak their language.",
+    blurb: "Master algebra, geometry, and more — one equation, proof, or puzzle at a time.",
     glyph: "📐",
     color: "var(--eg-subject-mathematics)",
     colorRgb: "47,155,214",
     gradient: "linear-gradient(135deg, #031828 0%, #062848 50%, #041020 100%)",
   },
   physics: {
-    name: "Physics World",
+    name: "Physics",
     tagline: "Apply forces, trace light, move through space.",
-    heroLine: "Every force tells a story. Find it.",
+    blurb: "Experiment with forces, waves, and optics — see the laws of physics play out in real time.",
     glyph: "⚡",
     color: "var(--eg-subject-physics)",
     colorRgb: "255,111,145",
     gradient: "linear-gradient(135deg, #200818 0%, #380820 50%, #1a0412 100%)",
   },
   biology: {
-    name: "Biology World",
+    name: "Biology",
     tagline: "Study cells, map ecosystems, decode life.",
-    heroLine: "Life is the most complex system ever built.",
+    blurb: "Dive into cells, genetics, and ecology — the living world is more complex than you think.",
     glyph: "🧬",
     color: "var(--eg-subject-biology)",
     colorRgb: "76,175,110",
@@ -99,29 +96,36 @@ const ALL_SUBJECTS = ["chemistry", "mathematics", "physics", "biology"];
 export function WorldsClient({
   bySubject,
   currentStudentXp,
-  currentStudentRank,
-  studentName,
 }: WorldsClientProps) {
   const { theme, toggleTheme } = useTheme();
-  const [activeWorld, setActiveWorld] = useState<string | null>(null);
 
-  // Pick the featured world: first live subject, or first subject overall
-  const featuredSubject = activeWorld
-    ?? ALL_SUBJECTS.find(s => (bySubject[s]?.length ?? 0) > 0)
-    ?? ALL_SUBJECTS[0];
+  const defaultSubject = ALL_SUBJECTS.find(s => (bySubject[s]?.length ?? 0) > 0) ?? "chemistry";
+  const [activeSubject, setActiveSubject] = useState<string>(defaultSubject);
+  const [query, setQuery]                 = useState("");
 
-  const featuredMeta   = WORLD_META[featuredSubject];
-  const featuredGames  = bySubject[featuredSubject] ?? [];
-  const featuredFirst  = featuredGames[0] ?? null;
-  const subMeta        = subjectMeta(featuredSubject);
+  const wm     = WORLD_META[activeSubject] ?? WORLD_META.chemistry;
+  const sm     = subjectMeta(activeSubject);
+  const games  = bySubject[activeSubject] ?? [];
+  const isLive = games.length > 0;
 
-  const visibleSubjects = activeWorld ? [activeWorld] : ALL_SUBJECTS;
-  const totalGames = Object.values(bySubject).reduce((s, g) => s + g.length, 0);
+  // Search filters all games by title, description, or topic label
+  const filtered = useMemo(() => {
+    if (!query.trim()) return games;
+    const q = query.toLowerCase();
+    return games.filter(({ game }) =>
+      game.title.toLowerCase().includes(q) ||
+      (GAME_CARD_DESC[game.slug] ?? "").toLowerCase().includes(q) ||
+      topicLabel(game.topic_id).toLowerCase().includes(q)
+    );
+  }, [games, query]);
 
   return (
-    <div className={styles.page} data-theme={theme}>
-
-      {/* ── AMBIENT GLOW LAYER ──────────────────────────────────────────── */}
+    <div
+      className={styles.page}
+      data-theme={theme}
+      style={{ "--wc": wm.color, "--wrgb": wm.colorRgb } as React.CSSProperties}
+    >
+      {/* ── AMBIENT GLOW ── */}
       <div className={styles.ambient} aria-hidden="true">
         <div className={styles.ambientBlob1} />
         <div className={styles.ambientBlob2} />
@@ -136,212 +140,132 @@ export function WorldsClient({
 
       <div className={styles.shell}>
 
-        {/* ── LEFT COLUMN — main content ────────────────────────────────── */}
-        <div className={styles.mainCol}>
-
-          {/* ── HERO BANNER ───────────────────────────────────────────────── */}
-          <div
-            className={styles.hero}
-            style={{
-              background: featuredMeta?.gradient ?? "linear-gradient(135deg,#0a0820,#1a1040)",
-              "--wrgb": featuredMeta?.colorRgb ?? "123,79,203",
-              "--wc": featuredMeta?.color ?? "var(--eg-subject-chemistry)",
-            } as React.CSSProperties}
-          >
-            {/* Decorative floating glyph */}
-            <div className={styles.heroGlyph} aria-hidden="true">
-              {featuredMeta?.glyph}
-            </div>
-
-            {/* Text content */}
-            <div className={styles.heroBody}>
-              <div className={styles.heroEyebrow}>
-                {subMeta.emoji} {featuredMeta?.name ?? "Learning World"}
-              </div>
-              <h1 className={styles.heroTitle}>
-                {featuredMeta?.heroLine ?? "Enter a world of learning."}
-              </h1>
-              <p className={styles.heroSub}>{featuredMeta?.tagline}</p>
-              {featuredFirst && (
-                <Link
-                  href={`/play/${featuredFirst.game.slug}`}
-                  className={styles.heroCta}
-                >
-                  ▶ Start Exploring
-                </Link>
-              )}
-            </div>
-
-            {/* Stats strip inside hero — rank only, no XP duplicate */}
-            <div className={styles.heroStats}>
-              {currentStudentRank && (
-                <div className={styles.heroStat}>
-                  <span className={styles.heroStatVal}>#{currentStudentRank}</span>
-                  <span className={styles.heroStatLabel}>Your Rank</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* ── WORLD CHIPS ───────────────────────────────────────────────── */}
-          <div className={styles.chipsRow}>
-            <button
-              className={[styles.chip, activeWorld === null ? styles.chipActive : ""].filter(Boolean).join(" ")}
-              onClick={() => setActiveWorld(null)}
-            >
-              🌍 All Worlds
-            </button>
-            {ALL_SUBJECTS.map(s => {
-              const wm  = WORLD_META[s];
-              const sm  = subjectMeta(s);
-              const cnt = (bySubject[s] ?? []).length;
-              return (
-                <button
-                  key={s}
-                  className={[styles.chip, activeWorld === s ? styles.chipActive : ""].filter(Boolean).join(" ")}
-                  style={{ "--wc": wm?.color, "--wrgb": wm?.colorRgb } as React.CSSProperties}
-                  onClick={() => setActiveWorld(activeWorld === s ? null : s)}
-                >
-                  {sm.emoji} {sm.name}
-                  {cnt > 0 && <span className={styles.chipCount}>{cnt}</span>}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* ── GAME SECTIONS ─────────────────────────────────────────────── */}
-          <main className={styles.sections}>
-            {visibleSubjects.map(subject => {
-              const summaries = bySubject[subject] ?? [];
-              const wm  = WORLD_META[subject] ?? { name: `${subject} World`, glyph: "○", color: "var(--eg-brand)", colorRgb: "11,19,48", gradient: "" };
-              const sm  = subjectMeta(subject);
-              const isLive = summaries.length > 0;
-
-              return (
-                <section
-                  key={subject}
-                  className={styles.worldSection}
-                  style={{ "--wc": wm.color, "--wrgb": wm.colorRgb } as React.CSSProperties}
-                >
-                  {/* Section header */}
-                  <div className={styles.secHead}>
-                    <span className={styles.secGlyph}>{wm.glyph}</span>
-                    <div className={styles.secBody}>
-                      <h2 className={styles.secName}>{wm.name}</h2>
-                      <p className={styles.secTag}>{WORLD_META[subject]?.tagline}</p>
-                    </div>
-                    {isLive && (
-                      <span className={styles.secCount}>
-                        {summaries.length} experience{summaries.length !== 1 ? "s" : ""}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Card grid */}
-                  {isLive ? (
-                    <div className={styles.cardGrid}>
-                      {summaries.map(({ game, missionCount, xpMin, xpMax }) => {
-                        const desc = GAME_CARD_DESC[game.slug] ?? game.title;
-                        return (
-                          <Link
-                            key={game.id}
-                            href={`/play/${game.slug}`}
-                            className={styles.card}
-                          >
-                            {/* Art — sits inside card, no floating offset */}
-                            <div className={styles.cardArtWrap}>
-                              <div className={styles.cardArt}>
-                                <GameCardArt
-                                  gameSlug={game.slug}
-                                  emoji={sm.emoji}
-                                  color={sm.color}
-                                  tint={sm.tint}
-                                />
-                              </div>
-                            </div>
-
-                            {/* Card body */}
-                            <div className={styles.cardBody}>
-                              <div className={styles.cardName}>{game.title}</div>
-                              <div className={styles.cardDesc}>{desc}</div>
-                              <div className={styles.cardMeta}>
-                                <span className={styles.cardXp}>+{xpMin === xpMax ? xpMin : `${xpMin}–${xpMax}`} XP</span>
-                                <span className={styles.cardMissions}>{missionCount} mission{missionCount !== 1 ? "s" : ""}</span>
-                              </div>
-                            </div>
-                            <div className={styles.cardCta}>Explore →</div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className={styles.comingSoon}>
-                      <span className={styles.csGlyph}>{wm.glyph}</span>
-                      <div>
-                        <div className={styles.csTitle}>{wm.name} — Coming Soon</div>
-                        <div className={styles.csSub}>Experiences for this world are in development. Check back soon.</div>
-                      </div>
-                    </div>
-                  )}
-                </section>
-              );
-            })}
-          </main>
+        {/* ── SEARCH BAR ── */}
+        <div className={styles.searchWrap}>
+          <span className={styles.searchIcon} aria-hidden="true">🔍</span>
+          <input
+            className={styles.searchInput}
+            type="search"
+            placeholder="What do you want to learn?"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            aria-label="Search games and topics"
+          />
+          {query && (
+            <button className={styles.searchClear} onClick={() => setQuery("")} aria-label="Clear search">✕</button>
+          )}
         </div>
 
-        {/* ── RIGHT PANEL — featured world detail ───────────────────────── */}
-        <aside className={styles.sidePanel}>
-          <div className={styles.sidePanelInner}>
+        {/* ── SUBJECT TABS ── */}
+        <div className={styles.tabs} role="tablist" aria-label="Subject worlds">
+          {ALL_SUBJECTS.map(s => {
+            const sm2  = subjectMeta(s);
+            const wm2  = WORLD_META[s];
+            const live = (bySubject[s]?.length ?? 0) > 0;
+            return (
+              <button
+                key={s}
+                role="tab"
+                aria-selected={s === activeSubject}
+                className={[styles.tab, s === activeSubject ? styles.tabActive : ""].filter(Boolean).join(" ")}
+                style={{ "--twc": wm2?.color, "--twrgb": wm2?.colorRgb } as React.CSSProperties}
+                onClick={() => { setActiveSubject(s); setQuery(""); }}
+              >
+                <span className={styles.tabGlyph}>{wm2?.glyph}</span>
+                <span className={styles.tabName}>{sm2.name}</span>
+                {!live && <span className={styles.tabSoon}>Soon</span>}
+              </button>
+            );
+          })}
+        </div>
 
-            {/* Featured world art */}
-            <div
-              className={styles.sideHero}
-              style={{
-                background: featuredMeta?.gradient ?? "linear-gradient(135deg,#0a0820,#1a1040)",
-                "--wc": featuredMeta?.color,
-                "--wrgb": featuredMeta?.colorRgb,
-              } as React.CSSProperties}
-            >
-              <div className={styles.sideHeroGlyph} aria-hidden="true">
-                {featuredMeta?.glyph}
-              </div>
-              <div className={styles.sideHeroLabel}>{featuredMeta?.name}</div>
+        {/* ── SUBJECT IDENTITY CARD ── */}
+        {!query && (
+          <div
+            className={styles.identityCard}
+            style={{ background: wm.gradient } as React.CSSProperties}
+          >
+            <div className={styles.idGlyph} aria-hidden="true">{wm.glyph}</div>
+            <div className={styles.idBody}>
+              <div className={styles.idEyebrow}>{sm.emoji} {wm.name} World</div>
+              <h2 className={styles.idTitle}>Start learning {wm.name}</h2>
+              <p className={styles.idBlurb}>{wm.blurb}</p>
             </div>
+            {/* Scroll-down invitation — sends eye to the game list */}
+            <div className={styles.idCta}>Explore games ↓</div>
+          </div>
+        )}
 
-            {/* Featured world info */}
-            <div className={styles.sideMeta}>
-              <div className={styles.sideSubject}>{subMeta.emoji} {subMeta.name}</div>
-              <h3 className={styles.sideName}>{featuredMeta?.heroLine}</h3>
-              <p className={styles.sideDesc}>{featuredMeta?.tagline}</p>
-
-              {/* Games list in side panel */}
-              <div className={styles.sideGameList}>
-                {featuredGames.slice(0, 4).map(({ game, missionCount, xpMax }) => (
-                  <Link key={game.id} href={`/play/${game.slug}`} className={styles.sideGameRow}>
-                    <div className={styles.sideGameArt}>
-                      <GameCardArt gameSlug={game.slug} emoji={subMeta.emoji} color={subMeta.color} tint={subMeta.tint} />
-                    </div>
-                    <div className={styles.sideGameInfo}>
-                      <div className={styles.sideGameName}>{game.title}</div>
-                      <div className={styles.sideGameMeta}>{missionCount} missions · +{xpMax} XP</div>
-                    </div>
-                    <div className={styles.sideGameCta}>Play</div>
-                  </Link>
-                ))}
+        {/* ── GAME LIST ── */}
+        <main className={styles.content}>
+          {isLive ? (
+            <div className={styles.gameList}>
+              <div className={styles.gameListHeader}>
+                {query
+                  ? `${filtered.length} result${filtered.length !== 1 ? "s" : ""} for "${query}"`
+                  : `${games.length} game${games.length !== 1 ? "s" : ""} in ${wm.name}`
+                }
               </div>
 
-              {featuredGames.length > 0 && (
-                <Link
-                  href={`/play/${featuredGames[0].game.slug}`}
-                  className={styles.sideEnterBtn}
-                  style={{ "--wc": featuredMeta?.color, "--wrgb": featuredMeta?.colorRgb } as React.CSSProperties}
-                >
-                  Enter {featuredMeta?.name}
-                </Link>
+              {filtered.length === 0 && query ? (
+                <div className={styles.emptySearch}>
+                  <span className={styles.emptyGlyph}>🔍</span>
+                  <p>No games match <strong>"{query}"</strong></p>
+                  <button className={styles.emptyClear} onClick={() => setQuery("")}>Clear search</button>
+                </div>
+              ) : (
+                filtered.map(({ game, missionCount, xpMax }) => (
+                  <Link key={game.id} href={`/play/${game.slug}`} className={styles.gameRow}>
+
+                    {/* Art thumbnail */}
+                    <div className={styles.gameRowArt}>
+                      <GameCardArt
+                        gameSlug={game.slug}
+                        emoji={sm.emoji}
+                        color={sm.color}
+                        tint={sm.tint}
+                      />
+                    </div>
+
+                    {/* Info */}
+                    <div className={styles.gameRowInfo}>
+                      <div className={styles.gameRowName}>{game.title}</div>
+                      <div className={styles.gameRowDesc}>
+                        {GAME_CARD_DESC[game.slug] ?? ""}
+                      </div>
+                      {/* Topic · XP · missions */}
+                      <div className={styles.gameRowMeta}>
+                        <span className={styles.gameRowTopic}>
+                          {topicLabel(game.topic_id)}
+                        </span>
+                        <span className={styles.gameRowXp}>
+                          +{xpMax} XP
+                        </span>
+                        <span className={styles.gameRowMissions}>
+                          {missionCount} mission{missionCount !== 1 ? "s" : ""}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Play CTA */}
+                    <div className={styles.gameRowCta}>Play →</div>
+                  </Link>
+                ))
               )}
             </div>
-          </div>
-        </aside>
+          ) : (
+            <div className={styles.comingSoon}>
+              <div className={styles.csGlyph}>{wm.glyph}</div>
+              <h2 className={styles.csTitle}>{wm.name} World — Coming Soon</h2>
+              <p className={styles.csSub}>
+                Games for this world are in development. Chemistry is live now — start there while we build the rest.
+              </p>
+              <button className={styles.csSwitchBtn} onClick={() => setActiveSubject("chemistry")}>
+                ⚗️ Go to Chemistry World
+              </button>
+            </div>
+          )}
+        </main>
 
       </div>
     </div>

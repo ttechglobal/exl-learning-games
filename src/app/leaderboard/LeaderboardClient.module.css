@@ -5,19 +5,29 @@
   color: var(--eg-surface-text);
   transition: background 0.25s ease, color 0.25s ease;
 }
-/* ── Grid ambient background (matches Worlds + Profile) ─────────────────── */
-.gridBg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(var(--eg-grid-line, rgba(0,0,0,0.04)) 1px, transparent 1px),
-    linear-gradient(90deg, var(--eg-grid-line, rgba(0,0,0,0.04)) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
 
 /* ── Weekly champion card ─────────────────────────────────────────────────── */
+
+/* ── Ambient glow blobs — matches worlds page, no grid ──────────────────── */
+.ambient {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none; overflow: hidden;
+}
+.ambientBlob1 {
+  position: absolute;
+  width: 500px; height: 500px; top: -10%; right: -6%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245,158,11,0.06) 0%, transparent 70%);
+  filter: blur(60px);
+}
+.ambientBlob2 {
+  position: absolute;
+  width: 380px; height: 380px; bottom: 10%; left: -5%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245,158,11,0.04) 0%, transparent 70%);
+  filter: blur(60px);
+}
+
 .championCard {
   position: relative;
   z-index: 1;

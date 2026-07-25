@@ -618,6 +618,24 @@ const HEAT_PHASE_LABEL: Record<HeatPhaseLabel, string> = {
 const HEAT_RATE = 18;   // °C/sec at full slider
 const COOL_RATE = 3;    // °C/sec ambient cooling
 
+/** Emoji shown inside the state badge in the particle window */
+const HC_STATE_EMOJI: Record<HeatPhaseLabel, string> = {
+  solid:   "❄️",
+  melting: "🔥",
+  liquid:  "💧",
+  boiling: "♨️",
+  gas:     "💨",
+};
+
+/** One-sentence plain-language description shown in the fact strip */
+const HC_FACT_STRIP: Record<HeatPhaseLabel, string> = {
+  solid:   "Particles are locked in a regular lattice — they vibrate but cannot move past each other. That's why solids keep their shape.",
+  melting: "Particles are absorbing energy to break their bonds. Temperature stays flat until all bonds break — this is the melting point.",
+  liquid:  "Particles can now slide past each other freely. Liquids flow and take the shape of their container, but particles are still close together.",
+  boiling: "The fastest particles escape the surface. Temperature holds steady at the boiling point until enough bonds break for full evaporation.",
+  gas:     "Particles move fast and spread out to fill all available space. There is lots of empty space between them — that's why gases are compressible.",
+};
+
 function HeatControlEngine({
   config: rawConfig, onComplete, menu, isPaused, gameTitle,
 }: EngineRuntimeProps) {
@@ -663,11 +681,14 @@ function HeatControlEngine({
   const [adaobiLine,     setAdaobiLine]     = useState(
     payload.missionContext ?? "Drag the heat slider upward to start warming the sample."
   );
-  const [showNext,       setShowNext]       = useState(false);
-  const [plateauCallout, setPlateauCallout] = useState(false);
-  const [energySplit,    setEnergySplit]    = useState({ tempFraction: 0, bondsFraction: 0 });
-  const [pendingFlag,    setPendingFlag]    = useState(false);
-  const [placedFlags,    setPlacedFlags]    = useState<Array<{ tempC: number; label: string }>>([]);
+  const [showNext,         setShowNext]         = useState(false);
+  const [plateauCallout,   setPlateauCallout]   = useState(false);
+  const [energySplit,      setEnergySplit]       = useState({ tempFraction: 0, bondsFraction: 0 });
+  const [pendingFlag,      setPendingFlag]       = useState(false);
+  const [placedFlags,      setPlacedFlags]       = useState<Array<{ tempC: number; label: string }>>([]);
+  const [hcAdaobiMinimised, setHcAdaobiMinimised] = useState(false);
+  const [flashColor,       setFlashColor]        = useState<string | null>(null);
+  const prevHeatLabelRef = useRef<HeatPhaseLabel>("solid");
 
   function setEP(p: HCPhase) { epRef.current = p; setEnginePhase(p); }
 
@@ -737,7 +758,20 @@ function HeatControlEngine({
 
         setEnergySplit(getEnergyViewSplit(heat, onPlat));
         setTemperature(Math.round(tempRef.current));
-        setHeatPhaseLabel(getHeatPhaseLabel(tempRef.current, meltC, boilC));
+        const newLabel = getHeatPhaseLabel(tempRef.current, meltC, boilC);
+        if (newLabel !== prevHeatLabelRef.current) {
+          const FLASH_COLORS: Record<HeatPhaseLabel, string> = {
+            solid:   "rgba(80,140,255,0.28)",
+            melting: "rgba(0,200,120,0.28)",
+            liquid:  "rgba(0,200,120,0.28)",
+            boiling: "rgba(255,140,0,0.28)",
+            gas:     "rgba(255,140,0,0.28)",
+          };
+          setFlashColor(FLASH_COLORS[newLabel] ?? "rgba(255,255,255,0.18)");
+          setTimeout(() => setFlashColor(null), 350);
+          prevHeatLabelRef.current = newLabel;
+        }
+        setHeatPhaseLabel(newLabel);
 
         if (isGuided && onPlat && epRef.current === "playing" && !plateauCallout) {
           setPlateauCallout(true);
@@ -834,18 +868,9 @@ function HeatControlEngine({
     return () => cancelAnimationFrame(rafRef.current);
   }, [shared, meltC, boilC, startC, maxC, isGuided, guidedSteps, isPaused, plateauCallout, payload.surfaceEscapeEnabled]); // eslint-disable-line
 
-  // ── Heat slider ───────────────────────────────────────────────────────────
-  const sliderRef = useRef<HTMLDivElement>(null);
-  const dragging  = useRef(false);
-  function heatFromY(clientY: number) {
-    const el=sliderRef.current; if(!el) return heatInputRef.current;
-    const r=el.getBoundingClientRect();
-    return Math.round((1-Math.max(0,Math.min(1,(clientY-r.top)/r.height)))*100);
-  }
+  // ── Heat slider — native horizontal range, matches prototype ─────────────
+  const sliderRef = useRef<HTMLInputElement>(null);
   function handleHeat(v: number) { if(epRef.current!=="playing") return; heatInputRef.current=v; setHeatInput(v); }
-  function onSliderDown(e: React.PointerEvent) { if(epRef.current!=="playing") return; dragging.current=true; (e.target as HTMLElement).setPointerCapture(e.pointerId); handleHeat(heatFromY(e.clientY)); }
-  function onSliderMove(e: React.PointerEvent) { if(dragging.current) handleHeat(heatFromY(e.clientY)); }
-  function onSliderUp() { dragging.current=false; }
 
   // ── Flag placement ────────────────────────────────────────────────────────
   const FLAG_OPTIONS = ["Melting begins", "Melting ends", "Boiling begins", "Boiling ends"];
@@ -907,6 +932,15 @@ function HeatControlEngine({
   // ── Render ────────────────────────────────────────────────────────────────
   const currentStep = isGuided ? guidedSteps[stepRef.current] ?? null : null;
   const onPlat = isOnPlateau(temperature, meltC, boilC);
+
+  const HC_BADGE_CLASS: Record<HeatPhaseLabel, string> = {
+    solid:   styles.heatStateBadge__solid   ?? "",
+    melting: styles.heatStateBadge__melting ?? "",
+    liquid:  styles.heatStateBadge__liquid  ?? "",
+    boiling: styles.heatStateBadge__boiling ?? "",
+    gas:     styles.heatStateBadge__gas     ?? "",
+  };
+
   const stats = [
     { label: "Temp",  value: `${temperature}°C`,              tone: "gold" as const },
     { label: "State", value: HEAT_PHASE_LABEL[heatPhaseLabel], tone: onPlat ? "success" as const : "default" as const },
@@ -920,141 +954,191 @@ function HeatControlEngine({
       menu={menu!}
       isPaused={isPaused}
       gameTitle={gameTitle ?? "Matter Lab"}
-      // missionPrompt removed — substance is shown in canvas phase badge, cleaner header
     >
-      <div className={styles.outer}>
-        <div className={styles.heatLayout}>
+      {/* ── Prototype layout: canvas fills top, controls panel at bottom ── */}
+      <div className={styles.hcOuter}>
 
-          {/* Vertical heat slider */}
-          <div className={styles.heatSliderWrap}>
-            <span className={styles.heatSliderLabel}>HOT</span>
+        {/* ── Full-width particle canvas area ── */}
+        <div className={styles.hcCanvasWrap}>
+          <canvas ref={canvasRef} className={styles.canvas} />
+
+          {/* State badge — centred at top, matches prototype .state-overlay */}
+          <div className={styles.hcStateOverlay}>
             <div
-              ref={sliderRef}
-              className={[styles.heatSliderTrack, enginePhase==="playing"?"":styles.sliderLocked].join(" ")}
-              onPointerDown={onSliderDown} onPointerMove={onSliderMove}
-              onPointerUp={onSliderUp}     onPointerLeave={onSliderUp}
+              className={[
+                styles.hcStateBadge,
+                HC_BADGE_CLASS[heatPhaseLabel],
+                enginePhase === "intro" ? styles.hcStateBadgeHidden : "",
+              ].filter(Boolean).join(" ")}
+              aria-live="polite"
             >
-              <div className={styles.heatSliderFill} style={{ height: `${heatInput}%` }} />
-              <div className={styles.heatSliderThumb} style={{ bottom: `calc(${heatInput}% - 20px)` }}>
-                <span className={styles.thumbIcon}>↕</span>
-              </div>
-            </div>
-            <span className={styles.heatSliderLabel}>COOL</span>
-          </div>
-
-          {/* Centre: particle canvas + curve canvas */}
-          <div className={styles.heatCentreCol}>
-            <div className={styles.heatParticleWrap}>
-              <div className={styles.heatStateLabel} style={{ opacity: enginePhase==="intro"?0:1 }}>
-                {HEAT_PHASE_LABEL[heatPhaseLabel]}
-              </div>
-              <canvas ref={canvasRef} className={styles.canvas} />
-            </div>
-
-            {/* Heating curve */}
-            <div className={styles.heatCurveWrap}>
-              {isGuided && plateauCallout && (
-                <div className={styles.plateauCallout}>
-                  Temperature has stopped rising — watch the energy meter
-                </div>
-              )}
-              <canvas
-                ref={curveCanvasRef}
-                className={styles.canvas}
-                onClick={handleCurveTap}
-                style={{ cursor: payload.flagPlacementEnabled ? "crosshair" : "default" }}
-              />
-              {pendingFlag && (
-                <div className={styles.flagPicker}>
-                  <p className={styles.flagPickerPrompt}>Mark this point as:</p>
-                  <div className={styles.flagPickerChips}>
-                    {FLAG_OPTIONS.map(opt => (
-                      <button key={opt} className={styles.flagChip} onClick={() => placeFlag(opt)}>{opt}</button>
-                    ))}
-                    <button className={styles.flagChipCancel} onClick={() => setPendingFlag(false)}>Cancel</button>
-                  </div>
-                </div>
-              )}
+              {HC_STATE_EMOJI[heatPhaseLabel]}&nbsp;{HEAT_PHASE_LABEL[heatPhaseLabel]}
             </div>
           </div>
 
-          {/* Energy-view meter */}
-          <div className={styles.energyMeter}>
-            <div className={styles.energyBar}>
-              <div className={styles.energyBarFill} style={{ height:`${energySplit.tempFraction*100}%`, background:"#ffb23c" }} />
+          {/* Temperature display — top right, matches prototype .temp-display */}
+          <div className={styles.hcTempDisplay} style={{ opacity: enginePhase === "intro" ? 0 : 1 }}>
+            <div className={styles.hcTempVal}>
+              {temperature > 0 ? `+${temperature}` : temperature}
             </div>
-            <span className={styles.energyLabel}>TEMP</span>
-            <div className={styles.energyBar}>
-              <div className={styles.energyBarFill} style={{ height:`${energySplit.bondsFraction*100}%`, background:"var(--eg-subject-chemistry,#9b7ae0)" }} />
-            </div>
-            <span className={styles.energyLabel}>BONDS</span>
-            <span className={styles.energyQuestion}>Where is the energy going?</span>
+            <div className={styles.hcTempUnit}>°C</div>
           </div>
-        </div>
 
-        {/* Dr. Adaobi — in-game guided narration strip */}
-        <div className={[styles.adaobiStrip, hcAdaobiMinimised ? styles.adaobiStripMinimised : ""].filter(Boolean).join(" ")}>
-
-          {isGuided && guidedSteps.length > 0 && (
-            <div className={styles.adaobiStepBadge}>
-              Step {Math.min(stepRef.current + 1, guidedSteps.length)} / {guidedSteps.length}
-            </div>
+          {/* State-transition flash overlay */}
+          {flashColor && (
+            <div
+              className={styles.hcFlashOverlay}
+              style={{ background: flashColor }}
+              aria-hidden="true"
+            />
           )}
 
-          <div className={styles.adaobiMinimise} onClick={() => setHcAdaobiMinimised(v => !v)} />
-
-          <div className={styles.adaobiMinimisedPeek} onClick={() => setHcAdaobiMinimised(false)}>
-            <span className={styles.adaobiMinimisedIcon}>🔬</span>
-            <span className={styles.adaobiMinimisedText}>Dr. Adaobi has a tip — tap to see</span>
-            <span className={styles.adaobiMinimisedExpand}>↑ expand</span>
-          </div>
-
-          <div className={styles.adaobiInner}>
-            <div className={styles.adaobiAvatar}><DrAdaobiSvg /></div>
-            <div className={styles.adaobiBubble}>
-              <div className={styles.adaobiName}>Dr. Adaobi</div>
-              <p className={styles.adaobiText}>{adaobiLine}</p>
-              {enginePhase==="intro" && (
-                <button className={styles.beginBtn} onClick={beginMission}>
-                  {isGuided?"Let\'s begin →":"Start →"}
+          {/* Dr. Adaobi tip — floating at bottom of canvas, like prototype .adaobi-tip */}
+          {enginePhase === "intro" && (
+            <div className={styles.hcAdaobiTip} style={{ display: "flex" }}>
+              <span className={styles.hcTipAvatar}>👩🏾‍🔬</span>
+              <div className={styles.hcTipContent}>
+                <div className={styles.hcTipName}>Dr. Adaobi</div>
+                <p className={styles.hcTipText}>{adaobiLine}</p>
+                <button className={styles.hcBeginBtn} onClick={beginMission}>
+                  {isGuided ? "Let's begin →" : "Start →"}
                 </button>
-              )}
-              {enginePhase==="done"&&<div className={styles.doneChip}>✓ Mission complete</div>}
-            </div>
-          </div>
-
-          {(isGuided && guidedSteps.length > 0) && (
-            <div className={styles.adaobiFooter}>
-              <div className={styles.adaobiDots}>
-                {guidedSteps.map((_, i) => (
-                  <div
-                    key={i}
-                    className={[
-                      styles.adaobiDot,
-                      i < stepRef.current ? styles.adaobiDotDone : "",
-                      i === stepRef.current ? styles.adaobiDotNow : "",
-                    ].filter(Boolean).join(" ")}
-                  />
-                ))}
               </div>
-              {showNext && !pendingFlag && enginePhase === "playing" ? (
-                <button className={styles.nextBtn} onClick={advanceStep}>Next →</button>
-              ) : enginePhase === "playing" && currentStep?.instruction ? (
-                <div className={styles.adaobiActionPill}>
-                  <span className={styles.adaobiActionIcon}>→</span>
-                  <span>{currentStep.instruction}</span>
-                </div>
-              ) : null}
+            </div>
+          )}
+
+          {enginePhase === "playing" && (
+            <div className={[styles.hcAdaobiTip, hcAdaobiMinimised ? styles.hcAdaobiTipHidden : ""].filter(Boolean).join(" ")} style={{ display: "flex" }}>
+              <span className={styles.hcTipAvatar}>👩🏾‍🔬</span>
+              <div className={styles.hcTipContent}>
+                {isGuided && guidedSteps.length > 0 && (
+                  <div className={styles.hcStepBadge}>
+                    Step {Math.min(stepRef.current + 1, guidedSteps.length)}/{guidedSteps.length}
+                  </div>
+                )}
+                <p className={styles.hcTipText}>{adaobiLine}</p>
+                {isGuided && guidedSteps.length > 0 && (
+                  <div className={styles.hcTipFooter}>
+                    <div className={styles.hcDots}>
+                      {guidedSteps.map((_, i) => (
+                        <div
+                          key={i}
+                          className={[
+                            styles.hcDot,
+                            i < stepRef.current ? styles.hcDotDone : "",
+                            i === stepRef.current ? styles.hcDotNow : "",
+                          ].filter(Boolean).join(" ")}
+                        />
+                      ))}
+                    </div>
+                    {showNext && !pendingFlag ? (
+                      <button className={styles.hcNextBtn} onClick={advanceStep}>Next →</button>
+                    ) : currentStep?.instruction ? (
+                      <span className={styles.hcInstruction}>→ {currentStep.instruction}</span>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+              <button
+                className={styles.hcTipDismiss}
+                onClick={() => setHcAdaobiMinimised(v => !v)}
+                aria-label={hcAdaobiMinimised ? "Expand tip" : "Minimise tip"}
+              >
+                {hcAdaobiMinimised ? "▲" : "▼"}
+              </button>
+            </div>
+          )}
+
+          {enginePhase === "done" && (
+            <div className={styles.hcAdaobiTip} style={{ display: "flex" }}>
+              <span className={styles.hcTipAvatar}>👩🏾‍🔬</span>
+              <div className={styles.hcTipContent}>
+                <p className={styles.hcTipText}>{adaobiLine}</p>
+                <div className={styles.hcDoneChip}>✓ Mission complete</div>
+              </div>
+            </div>
+          )}
+
+          {/* Plateau callout */}
+          {isGuided && plateauCallout && enginePhase === "playing" && (
+            <div className={styles.hcPlateauCallout}>
+              Temperature has stopped rising — energy is breaking bonds, not raising temp
+            </div>
+          )}
+
+          {/* Pending flag picker — overlaid on canvas */}
+          {pendingFlag && (
+            <div className={styles.hcFlagPicker}>
+              <p className={styles.hcFlagPrompt}>Mark this point as:</p>
+              <div className={styles.hcFlagChips}>
+                {FLAG_OPTIONS.map(opt => (
+                  <button key={opt} className={styles.flagChip} onClick={() => placeFlag(opt)}>{opt}</button>
+                ))}
+                <button className={styles.flagChipCancel} onClick={() => setPendingFlag(false)}>Cancel</button>
+              </div>
             </div>
           )}
         </div>
 
-        {enginePhase==="playing"&&isGuided&&stepRef.current>=guidedSteps.length&&(
-          <button className={styles.completeBtn} onClick={finishMission}>Complete Mission</button>
-        )}
-        {!isGuided&&enginePhase==="playing"&&(
-          <button className={styles.completeBtn} onClick={finishMission}>Complete Mission</button>
-        )}
+        {/* ── Heating curve (sits between canvas and controls) ── */}
+        <div className={styles.hcCurveWrap}>
+          <canvas
+            ref={curveCanvasRef}
+            className={styles.canvas}
+            onClick={handleCurveTap}
+            style={{ cursor: payload.flagPlacementEnabled ? "crosshair" : "default" }}
+          />
+        </div>
+
+        {/* ── Controls panel — matches prototype .controls-panel ── */}
+        <div className={styles.hcControlsPanel}>
+
+          {/* Slider row: 🧊 ── range ── 🔥 */}
+          <div className={styles.hcSliderRow}>
+            <span className={styles.hcHeatIcon}>🧊</span>
+            <div className={styles.hcSliderWrap}>
+              <input
+                type="range"
+                ref={sliderRef}
+                className={styles.hcSliderInput}
+                min={0}
+                max={100}
+                value={heatInput}
+                disabled={enginePhase !== "playing"}
+                onChange={e => handleHeat(Number(e.target.value))}
+                onInput={e => handleHeat(Number((e.target as HTMLInputElement).value))}
+                aria-label="Heat level"
+                style={{
+                  background: `linear-gradient(to right, #5577ff 0%, #5577ff ${heatInput}%, rgba(255,255,255,0.08) ${heatInput}%, rgba(255,255,255,0.08) 100%)`
+                }}
+              />
+            </div>
+            <span className={styles.hcHeatIcon}>🔥</span>
+          </div>
+
+          {/* State labels beneath slider */}
+          <div className={styles.hcStateLabels}>
+            <span className={[styles.hcStateLabelItem, heatPhaseLabel === "solid" ? styles.hcStateLabelActive : ""].filter(Boolean).join(" ")}>Solid</span>
+            <span className={[styles.hcStateLabelItem, (heatPhaseLabel === "melting" || heatPhaseLabel === "liquid") ? styles.hcStateLabelActive : ""].filter(Boolean).join(" ")}>Liquid</span>
+            <span className={[styles.hcStateLabelItem, (heatPhaseLabel === "boiling" || heatPhaseLabel === "gas") ? styles.hcStateLabelActive : ""].filter(Boolean).join(" ")}>Gas</span>
+          </div>
+
+          {/* Fact strip */}
+          <div className={styles.hcFactStrip} aria-live="polite">
+            {enginePhase === "intro"
+              ? "Drag the slider to add heat. Watch what happens to the particles."
+              : HC_FACT_STRIP[heatPhaseLabel]
+            }
+          </div>
+
+          {/* Complete mission button */}
+          {((enginePhase === "playing" && isGuided && stepRef.current >= guidedSteps.length) ||
+            (!isGuided && enginePhase === "playing")) && (
+            <button className={styles.completeBtn} onClick={finishMission}>
+              Complete Mission
+            </button>
+          )}
+        </div>
       </div>
     </GameplayShell>
   );

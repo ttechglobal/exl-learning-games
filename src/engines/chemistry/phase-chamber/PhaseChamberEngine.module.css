@@ -628,189 +628,473 @@
   border-bottom-width: 1px;
 }
 
-/* ─── Heat-control layout ────────────────────────────────────────────────────
-   Side-by-side: [heat slider] [centre: particle + curve] [energy meter]
+/* ─── Heat-control layout (prototype-matched) ────────────────────────────────
+   Vertical stack:
+     [full-width canvas with overlays]
+     [heating curve strip]
+     [controls panel: horizontal slider + state labels + fact strip]
    ─────────────────────────────────────────────────────────────────────────── */
 
-.heatLayout {
-  display: flex;
-  flex-direction: row;
-  gap: 7px;
-  flex: 1 1 0;
-  min-height: 0;
-  align-items: stretch;
-}
-
-.heatCentreCol {
+.hcOuter {
   display: flex;
   flex-direction: column;
   flex: 1 1 0;
-  gap: 6px;
   min-height: 0;
+  overflow: hidden;
 }
 
-.heatParticleWrap {
+/* ─── Particle canvas area ─────────────────────────────────────────────────── */
+
+.hcCanvasWrap {
   position: relative;
   flex: 1 1 0;
   min-height: 0;
-  border-radius: 18px;
   overflow: hidden;
-  background: #020810;
-  border: 1.5px solid rgba(255, 255, 255, 0.07);
+  background: #080c18;
 }
 
-/* Heating curve — slightly taller on tall phones */
-.heatCurveWrap {
-  position: relative;
-  flex: 0 0 100px;
-  border-radius: 10px;
-  overflow: hidden;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-}
+/* ─── State overlay — centred at top of canvas ─────────────────────────────── */
 
-.heatStateLabel {
+.hcStateOverlay {
   position: absolute;
-  top: 9px;
-  left: 11px;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.hcStateBadge {
+  border-radius: 20px;
+  padding: 5px 14px;
   font-family: var(--eg-font-display);
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--eg-gold, #ffb23c);
-  letter-spacing: 2.5px;
+  font-size: 12px;
+  font-weight: 900;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  transition: background 0.4s ease, color 0.4s ease, border-color 0.4s ease, opacity 0.3s ease;
+  /* default: solid */
+  background: #1a3a6e;
+  color: #88ccff;
+  border: 2px solid #2a5aaa;
+}
+
+.hcStateBadgeHidden { opacity: 0; }
+
+/* These match the prototype's .state-badge.solid / .liquid / .gas colour scheme */
+.hcStateBadge__solid   { background: #1a3a6e; color: #88ccff; border-color: #2a5aaa; }
+.hcStateBadge__melting { background: #0e3a2e; color: #44ffaa; border-color: #1a6a4e; }
+.hcStateBadge__liquid  { background: #0e3a2e; color: #44ffaa; border-color: #1a6a4e; }
+.hcStateBadge__boiling { background: #3a1a0e; color: #ffaa44; border-color: #7a3a0e; }
+.hcStateBadge__gas     { background: #3a1a0e; color: #ffaa44; border-color: #7a3a0e; }
+
+/* ─── Temperature display — top right ─────────────────────────────────────── */
+
+.hcTempDisplay {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 6px 10px;
+  text-align: center;
   pointer-events: none;
   transition: opacity 0.3s ease;
 }
 
-.plateauCallout {
+.hcTempVal {
+  font-family: var(--eg-font-display);
+  font-size: 18px;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+}
+
+.hcTempUnit {
+  font-family: var(--eg-font-display);
+  font-size: 9px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ─── State-transition flash ───────────────────────────────────────────────── */
+
+.hcFlashOverlay {
   position: absolute;
-  bottom: 5px;
-  left: 6px;
-  right: 6px;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+  animation: hcFlashFade 0.3s ease-out forwards;
+}
+
+@keyframes hcFlashFade {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ─── Dr. Adaobi tip — floating at bottom of canvas ──────────────────────── */
+/* Matches prototype .adaobi-tip exactly */
+
+.hcAdaobiTip {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 20;
+  background: rgba(15, 20, 50, 0.92);
+  border: 1.5px solid rgba(80, 120, 255, 0.4);
+  border-radius: 14px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.hcAdaobiTipHidden {
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+}
+
+.hcTipAvatar {
+  font-size: 22px;
+  flex-shrink: 0;
+  line-height: 1;
+  margin-top: 1px;
+}
+
+.hcTipContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.hcTipName {
+  font-family: var(--eg-font-display);
+  font-size: 9px;
+  font-weight: 800;
+  color: rgba(180, 200, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 3px;
+}
+
+.hcTipText {
+  font-family: var(--eg-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: #c8d8ff;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.hcStepBadge {
+  display: inline-block;
+  font-family: var(--eg-font-display);
+  font-size: 9px;
+  font-weight: 800;
+  color: rgba(180, 200, 255, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 3px;
+}
+
+.hcTipFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  gap: 8px;
+}
+
+.hcDots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.hcDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+.hcDotDone {
+  background: rgba(100, 180, 255, 0.45);
+}
+
+.hcDotNow {
+  background: #88aaff;
+  width: 20px;
+  border-radius: 4px;
+}
+
+.hcNextBtn {
+  background: #3d1a70;
+  border: none;
+  border-radius: 50px;
+  padding: 7px 18px;
+  font-family: var(--eg-font-display);
+  font-size: 12px;
+  font-weight: 900;
+  color: #fff;
+  cursor: pointer;
+  border-bottom: 2px solid #1a0838;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  transition: transform 0.1s, border-bottom 0.1s;
+  flex-shrink: 0;
+}
+
+.hcNextBtn:active { transform: translateY(1px); border-bottom: 1px solid #1a0838; }
+
+.hcInstruction {
+  font-family: var(--eg-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(180, 200, 255, 0.65);
+}
+
+.hcBeginBtn {
+  display: inline-block;
+  margin-top: 8px;
+  background: #3d1a70;
+  border: none;
+  border-radius: 50px;
+  padding: 8px 20px;
+  font-family: var(--eg-font-display);
+  font-size: 12px;
+  font-weight: 900;
+  color: #fff;
+  cursor: pointer;
+  border-bottom: 2px solid #1a0838;
+  transition: transform 0.1s, border-bottom 0.1s;
+}
+
+.hcBeginBtn:active { transform: translateY(1px); border-bottom: 1px solid #1a0838; }
+
+.hcTipDismiss {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 10px;
+  cursor: pointer;
+  padding: 2px 4px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  line-height: 1;
+}
+
+.hcDoneChip {
+  display: inline-block;
+  margin-top: 6px;
+  background: rgba(36, 201, 110, 0.15);
+  border: 1px solid rgba(36, 201, 110, 0.35);
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-family: var(--eg-font-display);
+  font-size: 11px;
+  font-weight: 800;
+  color: #24c96e;
+}
+
+/* Plateau callout inside canvas */
+.hcPlateauCallout {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  right: 12px;
+  transform: translateY(-50%);
   background: rgba(3, 8, 18, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 8px;
-  padding: 5px 9px;
+  border-radius: 10px;
+  padding: 8px 12px;
   font-family: var(--eg-font-display);
-  font-size: 10.5px;
-  color: rgba(255, 255, 255, 0.82);
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
   text-align: center;
   pointer-events: none;
+  z-index: 12;
   animation: slideUp 0.3s ease both;
-  z-index: 5;
 }
 
-/* ─── Vertical heat slider ───────────────────────────────────────────────────── */
-
-.heatSliderWrap {
+/* Flag picker inside canvas */
+.hcFlagPicker {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 10, 20, 0.95);
+  border-radius: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  flex-shrink: 0;
-  width: 42px;
-}
-
-.heatSliderLabel {
-  font-family: var(--eg-font-display);
-  font-size: 8px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.32);
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.heatSliderTrack {
-  position: relative;
-  flex: 1;
-  width: 12px;
-  background: rgba(255, 255, 255, 0.07);
-  border-radius: 6px;
-  cursor: pointer;
-  touch-action: none;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-}
-
-.heatSliderFill {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(to top, #b0c8f0, var(--eg-subject-chemistry, #9b7ae0), #ffb23c);
-  border-radius: 6px;
-  transition: height 0.04s linear;
-}
-
-/* 44px wide thumb for touch */
-.heatSliderThumb {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 44px;
-  height: 44px;
-  background: #ffffff;
-  border-radius: 50%;
-  display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45), 0 0 0 3px rgba(155, 122, 224, 0.18);
-  border: 2px solid var(--eg-subject-chemistry, #9b7ae0);
-  border-bottom: 3px solid rgba(0, 0, 0, 0.2);
-  touch-action: none;
-  transition: bottom 0.04s linear;
+  gap: 12px;
+  z-index: 30;
+  padding: 20px;
 }
 
-/* ─── Energy-view meter ──────────────────────────────────────────────────────── */
-
-.energyMeter {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-  width: 34px;
-}
-
-.energyBar {
-  flex: 1;
-  width: 13px;
-  background: rgba(255, 255, 255, 0.07);
-  border-radius: 6px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-}
-
-.energyBarFill {
-  width: 100%;
-  border-radius: 6px;
-  transition: height 0.4s ease;
-  min-height: 2px;
-}
-
-.energyLabel {
+.hcFlagPrompt {
   font-family: var(--eg-font-display);
-  font-size: 7.5px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.4);
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-}
-
-.energyQuestion {
-  font-family: var(--eg-font-display);
-  font-size: 7.5px;
-  color: rgba(255, 255, 255, 0.25);
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.85);
   text-align: center;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  margin-top: 4px;
-  letter-spacing: 0.2px;
 }
+
+.hcFlagChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* ─── Heating curve strip ──────────────────────────────────────────────────── */
+
+.hcCurveWrap {
+  position: relative;
+  flex: 0 0 90px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ─── Controls panel — matches prototype .controls-panel ──────────────────── */
+
+.hcControlsPanel {
+  background: #0d1228;
+  border-top: 2px solid #1a2040;
+  padding: 14px 16px 16px;
+  flex-shrink: 0;
+}
+
+/* Slider row: 🧊 ── range ── 🔥 */
+.hcSliderRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.hcHeatIcon {
+  font-size: 20px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.hcSliderWrap {
+  flex: 1;
+  position: relative;
+}
+
+/* Native range input — styled to match prototype exactly */
+.hcSliderInput {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s;
+}
+
+.hcSliderInput:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.hcSliderInput::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #5577ff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+.hcSliderInput::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #5577ff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+/* State labels row beneath slider — matches prototype .state-labels */
+.hcStateLabels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.hcStateLabelItem {
+  font-family: var(--eg-font-display);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.3);
+  text-align: center;
+  width: 33.33%;
+  transition: color 0.3s ease;
+}
+
+.hcStateLabelActive {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* Fact strip — matches prototype .fact-strip exactly */
+.hcFactStrip {
+  background: #141c38;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-family: var(--eg-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: #8899cc;
+  line-height: 1.45;
+  min-height: 40px;
+  transition: color 0.3s ease;
+}
+
+/* Legacy placeholders for BoundaryDrag / other modes */
+.heatLayout { display: flex; flex-direction: row; gap: 7px; flex: 1 1 0; min-height: 0; align-items: stretch; }
+.heatCentreCol { display: flex; flex-direction: column; flex: 1 1 0; gap: 6px; min-height: 0; }
+.heatParticleWrap { position: relative; flex: 1 1 0; min-height: 0; border-radius: 18px; overflow: hidden; background: #020810; border: 1.5px solid rgba(255,255,255,0.07); }
+.heatCurveWrap { position: relative; flex: 0 0 100px; border-radius: 10px; overflow: hidden; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.07); }
+.heatStateLabel { position: absolute; top: 9px; left: 11px; font-family: var(--eg-font-display); font-size: 10px; font-weight: 700; color: var(--eg-gold,#ffb23c); letter-spacing: 2.5px; text-transform: uppercase; pointer-events: none; }
+.heatStateBadge { display: none; }
+.heatStateBadgeHidden { opacity: 0; }
+.heatStateBadge__solid, .heatStateBadge__melting, .heatStateBadge__liquid, .heatStateBadge__boiling, .heatStateBadge__gas {}
+.heatFlashOverlay { display: none; }
+.heatFactStrip { display: none; }
+.plateauCallout { position: absolute; bottom: 5px; left: 6px; right: 6px; background: rgba(3,8,18,0.9); border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; padding: 5px 9px; font-family: var(--eg-font-display); font-size: 10.5px; color: rgba(255,255,255,0.82); text-align: center; pointer-events: none; animation: slideUp 0.3s ease both; z-index: 5; }
+.heatSliderWrap { display: none; }
+.heatSliderLabel { display: none; }
+.heatSliderTrack { display: none; }
+.heatSliderFill { display: none; }
+.heatSliderThumb { display: none; }
+.energyMeter { display: none; }
+.energyBar { display: none; }
+.energyBarFill { display: none; }
+.energyLabel { display: none; }
+.energyQuestion { display: none; }
+
 
 /* ─── Flag picker ────────────────────────────────────────────────────────────── */
 

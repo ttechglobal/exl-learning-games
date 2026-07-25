@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { ShareInvite } from "@/components/ui/ShareInvite";
-import { DepthBackdrop } from "@/motion/DepthBackdrop";
 import { getRank } from "@/lib/content/ranks";
 import type { LeaderboardEntry, LeaderboardPeriod } from "@/lib/db/queries/leaderboard";
 import styles from "@/app/leaderboard/LeaderboardClient.module.css";
@@ -61,31 +60,6 @@ export function LeaderboardClient({ initialPeriod, initialEntries, initialMyRank
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
 
-  /**
-   * Fetch the viewer's own rank client-side on mount. The server page no
-   * longer sends it (see page.tsx's CACHING STRATEGY comment) — the
-   * leaderboard data itself is served from ISR cache for instant load,
-   * and "your rank" (which varies per device) is fetched separately here
-   * so it doesn't bust that cache. The viewer sees the full top-20 list
-   * immediately from cache, and their own rank row fills in one beat
-   * later once this resolves. If the fetch fails, we just don't show
-   * the pinned row — the rest of the page is unaffected.
-   */
-  useEffect(() => {
-    if (!currentStudentId) return;
-    fetch(`/api/leaderboard?period=${period}&limit=20`)
-      .then((res) => {
-        if (!res.ok) throw new Error("rank fetch failed");
-        return res.json() as Promise<{ entries: LeaderboardEntry[]; myRank: StudentRankInfo | null }>;
-      })
-      .then((body) => {
-        setMyRank(body.myRank ?? null);
-      })
-      .catch(() => {
-        // Quiet failure — rank just won't show, which is fine
-      });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStudentId]);
 
   async function handleTabChange(next: LeaderboardPeriod) {
     if (next === period) return;
@@ -114,13 +88,10 @@ export function LeaderboardClient({ initialPeriod, initialEntries, initialMyRank
 
   return (
     <div className={styles.page} data-theme={theme}>
-      {/* Grid ambient background — matches Worlds and Profile pages */}
-      <div className={styles.gridBg} aria-hidden="true" />
-
+      <div className={styles.ambient} aria-hidden="true"><div className={styles.ambientBlob1} /><div className={styles.ambientBlob2} /></div>
       <SiteHeader theme={theme} onToggleTheme={toggleTheme} active="leaderboard" currentStudentXp={currentStudentXp} />
 
       <div className={styles.titleRow}>
-        <DepthBackdrop accentColor="var(--eg-gold)" />
         <div className={styles.container}>
           <div className={styles.headRow}>
             <h1 className={styles.title}>🏆 Leaderboard</h1>

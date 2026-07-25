@@ -1,21 +1,8 @@
 /**
- * WorldsClient.module.css — EXL Learning World Dashboard
+ * WorldsClient.module.css — EXL Learning World v2
  *
- * LAYOUT (desktop):
- *   .shell        — two-column: mainCol (flex:1) | sidePanel (320px)
- *   .mainCol      — hero banner / chips row / game sections
- *   .sidePanel    — sticky featured world panel
- *
- * LAYOUT (mobile <900px):
- *   Single column; sidePanel moves below mainCol
- *
- * DESIGN TOKENS used:
- *   --eg-surface-*  light/dark surface system (tokens.css)
- *   --wc            per-section subject colour (set inline)
- *   --wrgb          raw r,g,b of --wc for rgba() constructions
- *
- * LIGHT/DARK: every colour is a token reference or rgba(var(--wrgb),α).
- * No hardcoded hex values in this file.
+ * --wc / --wrgb   active subject colour (set on .page, swaps on tab change)
+ * --twc / --twrgb per-tab colour (set inline on each .tab)
  */
 
 /* ── PAGE ─────────────────────────────────────────────────────────────────── */
@@ -26,741 +13,412 @@
   color: var(--eg-surface-text);
   font-family: var(--eg-font-body);
   position: relative;
-  overflow-x: hidden;   /* prevent any child from causing horizontal scroll */
-  width: 100%;
+  overflow-x: hidden;
 }
-
 .page :global(a) { text-decoration: none; color: inherit; }
 
 /* ── AMBIENT BLOBS ────────────────────────────────────────────────────────── */
 
-.ambient {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
+.ambient { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+
 .ambientBlob1 {
   position: absolute;
-  width: 700px; height: 700px;
-  top: -20%; right: -10%;
+  width: 600px; height: 600px; top: -15%; right: -8%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(123,79,203,0.07) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--wrgb, 123,79,203), 0.08) 0%, transparent 70%);
   filter: blur(60px);
+  transition: background 0.5s ease;
 }
 .ambientBlob2 {
   position: absolute;
-  width: 500px; height: 500px;
-  bottom: 5%; left: -8%;
+  width: 400px; height: 400px; bottom: 5%; left: -6%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(47,155,214,0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--wrgb, 123,79,203), 0.05) 0%, transparent 70%);
   filter: blur(60px);
-}
-[data-theme="dark"] .ambientBlob1 {
-  background: radial-gradient(circle, rgba(155,122,224,0.1) 0%, transparent 70%);
-}
-[data-theme="dark"] .ambientBlob2 {
-  background: radial-gradient(circle, rgba(92,184,234,0.08) 0%, transparent 70%);
+  transition: background 0.5s ease;
 }
 
-/* ── SHELL — two-column at desktop ───────────────────────────────────────── */
+/* ── SHELL ────────────────────────────────────────────────────────────────── */
 
 .shell {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 0;
-  max-width: 1280px;
+  position: relative; z-index: 1;
+  max-width: 680px;
   margin: 0 auto;
-  padding: 24px 24px 64px;
-  /* Prevent any child from causing horizontal scroll */
-  min-width: 0;
-  overflow-x: hidden;
+  padding: 20px 16px 64px;
+  display: flex; flex-direction: column; gap: 14px;
 }
 
-.mainCol {
-  flex: 1;
-  min-width: 0;          /* critical — allows flex child to shrink below content size */
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding-right: 24px;
+/* ── SEARCH BAR ───────────────────────────────────────────────────────────── */
+
+.searchWrap { position: relative; display: flex; align-items: center; }
+
+.searchIcon {
+  position: absolute; left: 14px;
+  font-size: 15px; pointer-events: none; opacity: 0.5; z-index: 1;
 }
 
-/* ── HERO BANNER ─────────────────────────────────────────────────────────── */
+.searchInput {
+  width: 100%;
+  padding: 13px 44px 13px 42px;
+  background: var(--eg-surface-card);
+  border: 1.5px solid var(--eg-surface-border);
+  border-radius: 14px;
+  font-family: var(--eg-font-body);
+  font-size: 0.92rem; font-weight: 600;
+  color: var(--eg-surface-text);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-shadow: var(--eg-surface-shadow-card);
+  -webkit-appearance: none; appearance: none;
+}
+.searchInput::placeholder { color: var(--eg-surface-text-faint); font-weight: 500; }
+.searchInput:focus {
+  border-color: rgba(var(--wrgb, 123,79,203), 0.55);
+  box-shadow: 0 0 0 3px rgba(var(--wrgb, 123,79,203), 0.1);
+}
+.searchInput::-webkit-search-cancel-button { display: none; }
 
-.hero {
+.searchClear {
+  position: absolute; right: 12px;
+  background: none; border: none; cursor: pointer;
+  font-size: 12px; color: var(--eg-surface-text-faint);
+  padding: 4px 6px; border-radius: 6px;
+  transition: background 0.1s, color 0.1s; line-height: 1;
+}
+.searchClear:hover { background: var(--eg-surface-card-2); color: var(--eg-surface-text); }
+
+/* ── SUBJECT TABS ─────────────────────────────────────────────────────────── */
+
+.tabs {
+  display: flex; gap: 8px;
+  overflow-x: auto; scrollbar-width: none;
+  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1.5px solid var(--eg-surface-border);
+  background: var(--eg-surface-card);
+  cursor: pointer;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.85rem; font-weight: 700;
+  color: var(--eg-surface-text-dim);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  box-shadow: var(--eg-surface-shadow-card);
+}
+.tab:hover { border-color: rgba(var(--twrgb, 123,79,203), 0.35); color: var(--eg-surface-text); }
+
+.tabActive {
+  background: rgba(var(--twrgb, 123,79,203), 0.12);
+  border-color: rgba(var(--twrgb, 123,79,203), 0.5);
+  color: var(--twc, var(--eg-brand));
+  box-shadow: 0 0 0 1px rgba(var(--twrgb, 123,79,203), 0.15), var(--eg-surface-shadow-card);
+}
+
+.tabGlyph { font-size: 16px; line-height: 1; }
+.tabName  { white-space: nowrap; }
+
+.tabSoon {
+  font-size: 0.6rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--eg-surface-text-faint);
+  background: var(--eg-surface-card-2);
+  border: 1px solid var(--eg-surface-border);
+  border-radius: 4px; padding: 1px 5px;
+}
+
+/* ── SUBJECT IDENTITY CARD ────────────────────────────────────────────────────
+   Purely descriptive — tells you "this is Chemistry".
+   No game data, no thumbnail, no XP. Clean, atmospheric.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.identityCard {
   position: relative;
-  border-radius: 24px;
-  padding: 32px 36px 28px;
+  border-radius: 20px;
+  padding: 20px 20px 0;
   overflow: hidden;
-  /* background set inline — subject gradient */
   box-shadow:
     0 0 0 1px rgba(var(--wrgb, 123,79,203), 0.25),
-    0 16px 48px rgba(0,0,0,0.4);
-  min-height: 200px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 20px;
+    0 10px 32px rgba(0,0,0,0.35);
+  /* background set inline — subject gradient */
 }
 
-/* Big decorative glyph floats in the background-right */
-.heroGlyph {
+/* Big decorative glyph floats in the background */
+.idGlyph {
   position: absolute;
-  right: -16px;
-  top: -16px;
-  font-size: 160px;
-  line-height: 1;
-  opacity: 0.12;
-  pointer-events: none;
-  user-select: none;
-  filter: drop-shadow(0 0 40px rgba(var(--wrgb,123,79,203),0.5));
-  transition: opacity 0.3s;
+  right: -14px; top: -14px;
+  font-size: 100px; line-height: 1;
+  opacity: 0.1; pointer-events: none; user-select: none;
+  filter: drop-shadow(0 0 24px rgba(var(--wrgb, 123,79,203), 0.4));
+  transition: opacity 0.2s;
 }
-.hero:hover .heroGlyph { opacity: 0.18; }
+.identityCard:hover .idGlyph { opacity: 0.14; }
 
-.heroBody { position: relative; z-index: 1; max-width: 520px; }
+.idBody { position: relative; z-index: 1; padding-bottom: 16px; }
 
-.heroEyebrow {
+.idEyebrow {
   font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-size: 0.72rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: rgba(var(--wrgb,123,79,203),1);
-  /* Lifted to be visible on dark hero background */
-  filter: brightness(1.6) saturate(0.8);
-  margin-bottom: 8px;
+  font-size: 0.65rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 4px;
 }
 
-.heroTitle {
+.idTitle {
   font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-size: clamp(1.5rem, 3.5vw, 2.1rem);
+  font-size: clamp(1.2rem, 4.5vw, 1.5rem);
   font-weight: 900;
   color: #ffffff;
-  line-height: 1.2;
+  line-height: 1.15;
   letter-spacing: -0.02em;
-  margin: 0 0 8px;
-  text-shadow: 0 2px 20px rgba(0,0,0,0.4);
+  margin: 0 0 6px;
 }
 
-.heroSub {
-  font-size: 0.85rem;
-  color: rgba(255,255,255,0.7);
-  line-height: 1.55;
-  margin: 0 0 18px;
+.idBlurb {
+  font-size: 0.76rem;
+  color: rgba(255,255,255,0.52);
+  line-height: 1.45;
+  margin: 0;
+  max-width: 380px;
 }
 
-.heroCta {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 24px;
-  background: #ffffff;
-  color: #13162a;
-  border-radius: 50px;
+/* Begin CTA — sits in its own strip at the card bottom */
+.idCta {
+  display: block;
+  margin-top: 14px;
+  padding: 11px 16px;
+  background: rgba(255,255,255,0.1);
+  border-top: 1px solid rgba(255,255,255,0.08);
   font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-size: 0.88rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-  transition: transform 0.12s, box-shadow 0.12s;
+  font-size: 0.85rem; font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.04em;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.12s;
+  text-decoration: none;
+  position: relative; z-index: 1;
 }
-.heroCta:hover {
-  transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 8px 28px rgba(0,0,0,0.4);
-  color: #13162a;
+.identityCard:hover .idCta { background: rgba(255,255,255,0.16); }
+
+/* ── CONTENT / GAME LIST ──────────────────────────────────────────────────── */
+
+.content { display: flex; flex-direction: column; }
+
+.gameList {
+  display: flex; flex-direction: column;
+  background: var(--eg-surface-card);
+  border: 1.5px solid var(--eg-surface-border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--eg-surface-shadow-card);
 }
 
-/* Stats row at bottom of hero */
-.heroStats {
-  display: flex;
-  gap: 20px;
+.gameListHeader {
+  padding: 11px 16px 10px;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.68rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--eg-surface-text-faint);
+  border-bottom: 1px solid var(--eg-surface-border);
+  background: var(--eg-surface-card-2);
+}
+
+.gameRow {
+  display: flex; align-items: center; gap: 13px;
+  padding: 13px 14px 13px 16px;
+  border-bottom: 1px solid var(--eg-surface-border);
+  transition: background 0.14s;
+  cursor: pointer;
   position: relative;
-  z-index: 1;
+}
+.gameRow:last-child { border-bottom: none; }
+
+/* Left accent stripe — appears on hover, gives game-world energy */
+.gameRow::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--wc, var(--eg-brand));
+  border-radius: 0 2px 2px 0;
+  opacity: 0;
+  transition: opacity 0.14s;
+}
+.gameRow:hover::before { opacity: 1; }
+.gameRow:hover { background: rgba(var(--wrgb, 123,79,203), 0.05); }
+.gameRow:active { background: rgba(var(--wrgb, 123,79,203), 0.1); }
+
+/* Art thumbnail — slightly larger for presence */
+.gameRowArt {
+  width: 60px; height: 60px;
+  border-radius: 13px; overflow: hidden; flex-shrink: 0;
+  background: rgba(var(--wrgb, 123,79,203), 0.1);
+  border: 1.5px solid rgba(var(--wrgb, 123,79,203), 0.18);
+  transition: transform 0.14s, box-shadow 0.14s;
+}
+.gameRow:hover .gameRowArt {
+  transform: scale(1.05);
+  box-shadow: 0 4px 14px rgba(var(--wrgb, 123,79,203), 0.3);
+}
+
+/* Info */
+.gameRowInfo {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; gap: 3px;
+}
+
+.gameRowName {
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.93rem; font-weight: 800;
+  color: var(--eg-surface-text);
+  letter-spacing: -0.01em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.gameRowDesc {
+  font-size: 0.74rem;
+  color: var(--eg-surface-text-dim);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 1; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Meta row: topic · XP · missions — stacked info at a glance */
+.gameRowMeta {
+  display: flex; align-items: center; gap: 6px; margin-top: 3px;
   flex-wrap: wrap;
 }
 
-.heroStat {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.heroStatVal {
-  font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-size: 1.3rem;
-  font-weight: 900;
-  color: #ffffff;
-  line-height: 1;
-}
-
-.heroStatLabel {
-  font-size: 0.64rem;
-  font-weight: 600;
-  color: rgba(255,255,255,0.55);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-/* ── CHIPS ROW ───────────────────────────────────────────────────────────── */
-
-.chipsRow {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  flex-wrap: nowrap;
-  padding-bottom: 2px;
-}
-.chipsRow::-webkit-scrollbar { display: none; }
-
-.chip {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 16px;
-  background: var(--eg-surface-card);
-  border: 1.5px solid var(--eg-surface-border);
-  border-radius: 50px;
-  font-family: var(--eg-font-body);
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--eg-surface-text-dim);
-  cursor: pointer;
-  transition: all 0.14s;
+/* Topic pill — curriculum topic, primary signal */
+.gameRowTopic {
+  font-size: 0.62rem; font-weight: 800;
+  color: var(--wc, var(--eg-brand));
+  background: rgba(var(--wrgb, 123,79,203), 0.1);
+  border: 1px solid rgba(var(--wrgb, 123,79,203), 0.22);
+  padding: 2px 7px; border-radius: 20px;
   white-space: nowrap;
-  box-shadow: var(--eg-surface-shadow-soft);
-}
-.chip:hover {
-  border-color: rgba(var(--wrgb,123,79,203),0.4);
-  color: var(--eg-surface-text);
-  background: var(--eg-surface-card-2);
-}
-.chipActive {
-  background: rgba(var(--wrgb,123,79,203),0.12);
-  border-color: rgba(var(--wrgb,123,79,203),0.45);
-  color: var(--wc, var(--eg-surface-text));
-  font-weight: 700;
-}
-[data-theme="dark"] .chip {
-  background: var(--eg-surface-card);
-  border-color: var(--eg-surface-border);
-}
-[data-theme="dark"] .chipActive {
-  background: rgba(var(--wrgb,123,79,203),0.18);
-  border-color: rgba(var(--wrgb,123,79,203),0.5);
+  text-transform: uppercase; letter-spacing: 0.05em;
 }
 
-.chipCount {
-  background: rgba(var(--wrgb,123,79,203),0.18);
-  color: var(--wc);
-  border-radius: 20px;
-  font-size: 0.7rem;
-  font-weight: 800;
-  padding: 1px 7px;
-  min-width: 20px;
-  text-align: center;
+/* XP badge — gold, feels like a reward */
+.gameRowXp {
+  font-size: 0.62rem; font-weight: 800;
+  color: var(--eg-gold, #ffb23c);
+  background: rgba(255,178,60,0.1);
+  border: 1px solid rgba(255,178,60,0.25);
+  padding: 2px 7px; border-radius: 20px;
+  white-space: nowrap;
 }
 
-/* ── WORLD SECTIONS ──────────────────────────────────────────────────────── */
-
-.sections {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-}
-
-.worldSection {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-/* Section header */
-.secHead {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.secGlyph {
-  font-size: 2rem;
-  line-height: 1;
-  flex-shrink: 0;
-  filter: drop-shadow(0 2px 6px rgba(var(--wrgb,123,79,203),0.25));
-}
-
-.secBody { flex: 1; min-width: 0; }
-
-.secName {
-  font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: var(--eg-surface-text);
-  letter-spacing: -0.01em;
-  margin: 0 0 2px;
-}
-
-.secTag {
-  font-size: 0.78rem;
-  color: var(--eg-surface-text-dim);
-  margin: 0;
-}
-
-.secCount {
-  flex-shrink: 0;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--wc);
-  background: rgba(var(--wrgb,123,79,203),0.1);
-  border: 1px solid rgba(var(--wrgb,123,79,203),0.25);
-  padding: 3px 12px;
-  border-radius: 20px;
-}
-
-/* ── CARD GRID ───────────────────────────────────────────────────────────── */
-
-.cardGrid {
-  display: grid;
-  /* No minmax minimum — cards flex to fill whatever space is available.
-     On desktop this gives ~3-4 cols; on mobile it obeys the breakpoint overrides below. */
-  grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr));
-  gap: 14px;
-}
-
-/* ── GAME CARD ─────────────────────────────────────────────────────────────  */
-/* Art sits INSIDE the card — no floating offset. The previous top:-44px      */
-/* approach caused cards to visually overlap each other in the grid.           */
-
-.card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  border-radius: 18px;
-  background: var(--eg-surface-card);
-  border: 1.5px solid var(--eg-surface-border);
-  box-shadow: var(--eg-surface-shadow-soft);
-  text-decoration: none;
-  color: inherit;
-  overflow: hidden;      /* art is now inside — overflow hidden is correct */
-  transition: transform 0.16s cubic-bezier(0.2,0.8,0.4,1), box-shadow 0.16s;
-}
-.card:hover {
-  transform: translateY(-5px) scale(1.012);
-  box-shadow: var(--eg-surface-shadow-card);
-  border-color: rgba(var(--wrgb,123,79,203),0.35);
-}
-
-/* Art area — fixed height gradient with large centred emoji, inside the card */
-.cardArtWrap {
-  width: 100%;
-  height: 100px;
-  flex-shrink: 0;
-  background: linear-gradient(
-    145deg,
-    rgba(var(--wrgb,123,79,203),0.18) 0%,
-    rgba(var(--wrgb,123,79,203),0.08) 100%
-  );
-  border-bottom: 1px solid rgba(var(--wrgb,123,79,203),0.12);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.16s;
-  overflow: hidden;
-}
-.card:hover .cardArtWrap {
-  transform: scale(1.04);
-}
-
-.cardArt {
-  width: 100%;
-  height: 100%;
-}
-
-/* Card body */
-.cardBody {
-  padding: 12px 14px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  flex: 1;
-}
-
-.cardName {
-  font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-size: 0.92rem;
-  font-weight: 800;
-  color: var(--eg-surface-text);
-  text-align: center;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-}
-
-.cardDesc {
-  font-size: 0.71rem;
-  color: var(--eg-surface-text-dim);
-  line-height: 1.5;
-  text-align: center;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  flex: 1;
-}
-
-.cardMeta {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.cardXp {
-  font-size: 0.66rem;
-  font-weight: 800;
-  color: var(--eg-gold);
-  background: rgba(255,178,60,0.12);
-  border: 1px solid rgba(255,178,60,0.3);
-  padding: 2px 7px;
-  border-radius: 20px;
-}
-
-.cardMissions {
-  font-size: 0.66rem;
+.gameRowMissions {
+  font-size: 0.62rem;
   color: var(--eg-surface-text-faint);
+  white-space: nowrap;
 }
 
-.cardCta {
-  padding: 9px;
-  background: rgba(var(--wrgb,123,79,203),0.1);
-  border: 1.5px solid rgba(var(--wrgb,123,79,203),0.18);
-  border-radius: 0 0 16px 16px;
+/* Play → — feels like a game button now */
+.gameRowCta {
+  flex-shrink: 0;
   font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: var(--wc);
-  text-align: center;
-  transition: background 0.12s;
+  font-size: 0.8rem; font-weight: 800;
+  color: #fff;
+  background: rgba(var(--wrgb, 123,79,203), 0.75);
+  border: none;
+  border-radius: 9px;
+  padding: 7px 13px;
+  border-bottom: 2px solid rgba(var(--wrgb, 123,79,203), 0.4);
+  transition: background 0.12s, transform 0.1s, border-bottom 0.1s;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
 }
-.card:hover .cardCta {
-  background: rgba(var(--wrgb,123,79,203),0.18);
+.gameRow:hover .gameRowCta {
+  background: rgba(var(--wrgb, 123,79,203), 1);
+  transform: translateY(-1px);
+}
+.gameRow:active .gameRowCta {
+  transform: translateY(1px);
+  border-bottom-width: 0;
 }
 
-/* ── COMING SOON ─────────────────────────────────────────────────────────── */
+/* ── EMPTY SEARCH ─────────────────────────────────────────────────────────── */
+
+.emptySearch {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 32px 20px; text-align: center;
+}
+.emptyGlyph { font-size: 2rem; opacity: 0.4; }
+.emptySearch p { font-size: 0.88rem; color: var(--eg-surface-text-dim); line-height: 1.5; margin: 0; }
+.emptyClear {
+  background: none; border: 1.5px solid var(--eg-surface-border);
+  border-radius: 8px; padding: 7px 16px;
+  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-size: 0.82rem; font-weight: 700;
+  color: var(--eg-surface-text-dim); cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.emptyClear:hover { background: var(--eg-surface-card-2); color: var(--eg-surface-text); }
+
+/* ── COMING SOON ──────────────────────────────────────────────────────────── */
 
 .comingSoon {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 22px 20px;
-  background: var(--eg-surface-card-2);
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding: 48px 24px;
+  background: var(--eg-surface-card);
   border: 1.5px dashed var(--eg-surface-border);
-  border-radius: 16px;
+  border-radius: 20px; text-align: center;
 }
-.csGlyph { font-size: 2rem; opacity: 0.35; flex-shrink: 0; }
-.csTitle { font-size: 0.88rem; font-weight: 700; color: var(--eg-surface-text); margin-bottom: 3px; }
-.csSub { font-size: 0.76rem; color: var(--eg-surface-text-dim); line-height: 1.5; }
-
-/* ── SIDE PANEL ──────────────────────────────────────────────────────────── */
-
-.sidePanel {
-  width: 300px;
-  flex-shrink: 0;
-  position: sticky;
-  top: 88px;           /* below the fixed header */
-  max-height: calc(100vh - 108px);
-  overflow-y: auto;
-  scrollbar-width: none;
-}
-.sidePanel::-webkit-scrollbar { display: none; }
-
-.sidePanelInner {
-  background: var(--eg-surface-card);
-  border: 1.5px solid var(--eg-surface-border);
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: var(--eg-surface-shadow-card);
-  display: flex;
-  flex-direction: column;
-}
-
-/* Featured art in side panel */
-.sideHero {
-  position: relative;
-  height: 160px;
-  overflow: hidden;
-  display: flex;
-  align-items: flex-end;
-  padding: 16px;
-}
-
-.sideHeroGlyph {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 100px;
-  opacity: 0.2;
-  pointer-events: none;
-  user-select: none;
-  filter: drop-shadow(0 0 30px rgba(var(--wrgb,123,79,203),0.6));
-}
-
-.sideHeroLabel {
-  position: relative;
-  z-index: 1;
+.csGlyph { font-size: 3rem; opacity: 0.3; }
+.csTitle {
   font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-size: 0.7rem;
-  font-weight: 800;
-  color: rgba(255,255,255,0.8);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  background: rgba(0,0,0,0.35);
-  padding: 4px 12px;
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.15);
-  backdrop-filter: blur(4px);
+  font-size: 1.1rem; font-weight: 800;
+  color: var(--eg-surface-text); margin: 0; letter-spacing: -0.01em;
 }
-
-/* Side panel meta section */
-.sideMeta {
-  flex: 1;
-  padding: 18px 18px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.csSub {
+  font-size: 0.84rem; color: var(--eg-surface-text-dim);
+  line-height: 1.55; margin: 0; max-width: 340px;
 }
-
-.sideSubject {
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--wc);
-}
-
-.sideName {
-  font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-size: 1rem;
-  font-weight: 800;
-  color: var(--eg-surface-text);
-  letter-spacing: -0.01em;
-  line-height: 1.25;
-  margin: 0;
-}
-
-.sideDesc {
-  font-size: 0.76rem;
-  color: var(--eg-surface-text-dim);
-  line-height: 1.5;
-  margin: 0;
-}
-
-/* Side panel stats */
-.sideStats {
-  display: flex;
-  gap: 0;
-  border: 1px solid var(--eg-surface-border);
-  border-radius: 14px;
-  overflow: hidden;
-}
-.sideStat {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 10px 8px;
-  border-right: 1px solid var(--eg-surface-border);
-}
-.sideStat:last-child { border-right: none; }
-
-.sideStatVal {
-  font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-size: 1.05rem;
-  font-weight: 900;
-  color: var(--eg-surface-text);
-  line-height: 1;
-}
-.sideStatLabel {
-  font-size: 0.58rem;
-  font-weight: 600;
-  color: var(--eg-surface-text-faint);
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  text-align: center;
-}
-
-/* Side game list */
-.sideGameList {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.sideGameRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
+.csSwitchBtn {
+  padding: 11px 24px;
+  background: rgba(123,79,203,0.12);
+  border: 1.5px solid rgba(123,79,203,0.3);
   border-radius: 12px;
-  transition: background 0.12s;
-  cursor: pointer;
-}
-.sideGameRow:hover {
-  background: var(--eg-surface-card-2);
-}
-
-.sideGameArt {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  overflow: hidden;
-  flex-shrink: 0;
-  border: 1px solid var(--eg-surface-border);
-  background: rgba(var(--wrgb,123,79,203),0.08);
-}
-
-.sideGameInfo { flex: 1; min-width: 0; }
-.sideGameName {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--eg-surface-text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.sideGameMeta {
-  font-size: 0.66rem;
-  color: var(--eg-surface-text-faint);
-  margin-top: 1px;
-}
-
-.sideGameCta {
-  flex-shrink: 0;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--wc);
-  background: rgba(var(--wrgb,123,79,203),0.1);
-  border: 1px solid rgba(var(--wrgb,123,79,203),0.25);
-  border-radius: 8px;
-  padding: 4px 10px;
-}
-
-/* Primary CTA button */
-.sideEnterBtn {
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 15px;
-  margin-top: 4px;   /* breathing room from game list above */
-  background: rgba(var(--wrgb,123,79,203),1);
-  color: #ffffff;
-  border-radius: 14px;
-  border-bottom: 4px solid rgba(var(--wrgb,123,79,203),0.5);
   font-family: var(--eg-font-display, "Fredoka", sans-serif);
-  font-size: 0.95rem;
-  font-weight: 800;
-  text-align: center;
-  letter-spacing: 0.02em;
-  box-shadow: 0 6px 20px rgba(var(--wrgb,123,79,203),0.35);
-  transition: transform 0.12s, box-shadow 0.12s, filter 0.12s;
+  font-size: 0.88rem; font-weight: 800;
+  color: var(--eg-subject-chemistry, #7b4fcb); cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
 }
-.sideEnterBtn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(var(--wrgb,123,79,203),0.45);
-  filter: brightness(1.1);
-  color: #ffffff;
+.csSwitchBtn:hover { background: rgba(123,79,203,0.2); border-color: rgba(123,79,203,0.5); }
+
+/* ── RESPONSIVE ───────────────────────────────────────────────────────────── */
+
+@media (min-width: 600px) {
+  .shell { padding: 24px 24px 64px; }
 }
-.sideEnterBtn:active {
-  transform: translateY(2px);
-  border-bottom-width: 1px;
+@media (min-width: 900px) {
+  .shell { max-width: 760px; }
 }
 
-/* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
+/* ── DARK MODE ────────────────────────────────────────────────────────────── */
 
-@media (max-width: 900px) {
-  .shell {
-    flex-direction: column;
-    padding: 16px 16px 48px;
-    gap: 20px;
-  }
-  .mainCol {
-    padding-right: 0;
-    order: 2;         /* game sections go BELOW side panel on mobile */
-    min-width: 0;
-    width: 100%;
-  }
-  .sidePanel {
-    width: 100%;
-    position: static;
-    max-height: none;
-    order: 1;         /* side panel (big card) goes ABOVE on mobile */
-    min-width: 0;
-  }
-  .sidePanelInner { border-radius: 20px; }
-  .sideHero { height: 130px; }
-  .cardGrid {
-    grid-template-columns: 1fr 1fr;  /* explicit 2 cols, no minmax fighting */
-    gap: 10px;
-  }
-}
-
-@media (max-width: 560px) {
-  .shell { padding: 12px 12px 40px; }
-  .hero { padding: 22px 18px 20px; border-radius: 18px; min-height: auto; }
-  .heroTitle { font-size: 1.25rem; }
-  .heroGlyph { font-size: 88px; }
-  .chipsRow { gap: 6px; }
-  .chip { padding: 7px 12px; font-size: 0.76rem; }
-  .cardGrid {
-    grid-template-columns: 1fr 1fr;  /* keep 2 cols on phones */
-    gap: 8px;
-  }
-  .cardArtWrap { height: 80px; }
-  .cardBody { padding: 8px 10px 10px; }
-  .cardName { font-size: 0.8rem; }
-  .cardDesc { font-size: 0.65rem; }
-  .sideHero { height: 110px; }
-}
-
-@media (max-width: 360px) {
-  .cardGrid { grid-template-columns: 1fr; }  /* single col only on very small */
-}
-
-/* ── DARK MODE SPECIFIC OVERRIDES ─────────────────────────────────────────── */
-[data-theme="dark"] .card {
+[data-theme="dark"] .gameList {
   background: var(--eg-surface-card);
   border-color: var(--eg-surface-border);
 }
-[data-theme="dark"] .card:hover {
-  border-color: rgba(var(--wrgb,123,79,203),0.4);
-}
-[data-theme="dark"] .sidePanelInner {
+[data-theme="dark"] .searchInput {
   background: var(--eg-surface-card);
   border-color: var(--eg-surface-border);
 }
-[data-theme="dark"] .heroCta {
-  background: rgba(255,255,255,0.12);
-  color: #ffffff;
-  backdrop-filter: blur(4px);
-  border: 1.5px solid rgba(255,255,255,0.2);
-}
-[data-theme="dark"] .heroCta:hover {
-  background: rgba(255,255,255,0.2);
-  color: #ffffff;
-}
 
-/* ── REDUCED MOTION ──────────────────────────────────────────────────────── */
+/* ── REDUCED MOTION ───────────────────────────────────────────────────────── */
+
 @media (prefers-reduced-motion: reduce) {
-  .card, .heroCta, .sideEnterBtn { transition: none !important; }
-  .card:hover, .heroCta:hover { transform: none !important; }
+  .identityCard, .gameRow, .tab { transition: none !important; }
+  .gameRow:hover .gameRowArt { transform: none !important; }
 }

@@ -124,14 +124,14 @@ const registry: Record<string, EngineDefinition> = {
   // Mathematics
     // Mathematics — Stepwise Solver (Change of Subject, Simultaneous Equations,
   // Equations of Motion, Quadratic Equations, any calculation topic)
-  "stepwise-solver": stepwiseSolverDefinition,
-
+  "stepwise-solver":          stepwiseSolverDefinition,
+  
   // Chemistry
   "phase-chamber":             phaseChamberDefinition,
   "tile-match":                tileMatchDefinition,
   "bond-match":                bondMatchDefinition,
   "molecule-builder":          moleculeBuilderDefinition,
-  "scenario-scanner": scenarioScannerDefinition,
+  "scenario-scanner":          scenarioScannerDefinition,
 
   // Physics
   "optics-experiment":         opticsExperimentDefinition,

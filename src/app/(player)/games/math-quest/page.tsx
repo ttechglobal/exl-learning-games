@@ -17,9 +17,23 @@ import { useRouter } from "next/navigation";
 import { useState, useCallback, useRef } from "react";
 import { MiniGolfEngine } from "@/games/math-quest/MathQuestEngine";
 import type { HeartRefillResult, RoundResult } from "@/games/math-quest/MathQuestEngine";
-import { ChangeOfSubjectEngine } from "@/engines/mathematics/change-of-subject/ChangeOfSubjectEngine";
-import type { ChangeOfSubjectOutcome } from "@/engines/mathematics/change-of-subject/changeOfSubject.config";
-import { randomMissionForTier } from "@/engines/mathematics/change-of-subject/changeOfSubjectQuestions";
+// Change-of-Subject engine not yet built — stubs keep this page compilable
+type ChangeOfSubjectOutcome = { success: boolean; xpEarned?: number };
+function ChangeOfSubjectEngine({ onComplete }: { config: unknown; onComplete: (o: ChangeOfSubjectOutcome) => void; autoStartTier?: string }) {
+  return (
+    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:32, gap:16, textAlign:"center" }}>
+      <div style={{ fontSize:32 }}>🚧</div>
+      <div style={{ fontFamily:"sans-serif", fontWeight:700, fontSize:16 }}>Change of Subject — Coming Soon</div>
+      <button onClick={() => onComplete({ success: false, xpEarned: 0 })}
+        style={{ padding:"10px 24px", borderRadius:100, border:"none", background:"#1A4010", color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer" }}>
+        Return to Golf ⛳
+      </button>
+    </div>
+  );
+}
+function randomMissionForTier(_tier: string) {
+  return [{ qLabel:"Make x the subject", formula:"y = mx + c", finalAnswer:"x = (y - c) / m", steps: [] }];
+}
 
 // ── Build a minimal config — one question, learn tier ────────────────────────
 function buildLearningConfig() {

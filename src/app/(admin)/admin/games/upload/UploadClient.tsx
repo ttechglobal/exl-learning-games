@@ -34,10 +34,11 @@ const SUBJECTS   = ["Mathematics", "Chemistry", "Physics", "Biology"];
 const GRADES     = ["JSS1","JSS2","JSS3","SS1","SS2","SS3","WAEC Year","JAMB Year"];
 const TERMS      = ["First Term","Second Term","Third Term","All Year"];
 const DIFFICULTIES = [
-  { value: "EASY",   label: "Easy (Guided)",        sub: "Scaffolded, narrated, 1–2 steps" },
-  { value: "MEDIUM", label: "Medium (Assisted)",     sub: "Student-led, hints available, 2–3 steps" },
-  { value: "HARD",   label: "Hard (Independent)",    sub: "Exam-level, no scaffolding, 3–5 steps" },
-  { value: "MIX",    label: "Mixed (all levels)",    sub: "Balanced progression across all three" },
+  { value: "EASY",    label: "Guided Learning",  sub: "Ms. Chidera explains every step. Full working shown. No blanks to fill.", colour: "#f5a623" },
+  { value: "MEDIUM",  label: "Practice",         sub: "Coach gives a nudge, not the answer. Blanks to fill in working. Hearts.", colour: "#6c28e0" },
+  { value: "HARD",    label: "Challenge",         sub: "Solve on paper first, then pick your answer. Blanks + MCQ final answer.", colour: "#e03c28" },
+  { value: "MASTERY", label: "Mastery",           sub: "Exam-level. Application questions. No scaffolding at all.", colour: "#1a7a4a" },
+  { value: "MIX",     label: "Mixed (all modes)", sub: "Balanced spread across Guided, Practice, Challenge, and Mastery.", colour: "#2563eb" },
 ];
 
 const SUBJECT_META: Record<string, { colour: string; emoji: string }> = {
@@ -606,28 +607,45 @@ function buildMissionIdeaPrompt(f: MissionForm, game?: { id: string; slug: strin
 
   const diffLabel = DIFFICULTIES.find(d => d.value === f.difficulty)?.label ?? f.difficulty;
   const diffInstructions = f.difficulty === "MIX"
-    ? `Generate a BALANCED MIX across all three tiers:
-- Practice (${Math.round(count * 0.35)} missions): stage "practice" — fully guided, system narrates steps, student confirms
-- Challenge (${Math.round(count * 0.35)} missions): stage "challenge" — student-led, hints/assist on request only, 2–3 steps
-- Master (${Math.round(count * 0.30)} missions): stage "master" — student alone, 3–5 steps, genuinely hard content`
+    ? `Generate a BALANCED MIX across all four learning modes (EASY/MEDIUM/HARD/MASTERY):
+- Guided Learning (~${Math.round(count * 0.30)} missions, EASY): Ms. Chidera explains every step. Full intermediate working shown inline. No popup blanks to fill.
+- Practice (~${Math.round(count * 0.30)} missions, MEDIUM): Coach gives a nudge question only. Student fills in blanks in working popup. Hearts shown. 2–3 steps.
+- Challenge (~${Math.round(count * 0.25)} missions, HARD): Student solves on paper first, then picks final answer from 4 MCQ options. Must include answerChoices[]. Fallback to practice-style stepwise if 2 wrong picks. 3–4 steps.
+- Mastery (~${Math.round(count * 0.15)} missions, MASTERY): Exam-level. Application questions. No scaffolding. 4–5 steps.`
     : f.difficulty === "EASY"
-    ? `All missions are PRACTICE tier:
-- stage: "practice" — system is fully guided, narrates each step, student confirms or attempts first
-- Scaffolding: full — every decision is prompted, student always feels supported
-- Complexity: 1–2 steps, clear starting formulas, one technique at a time
-- Goal: build confidence and understanding of the core interaction`
+    ? `All missions are GUIDED LEARNING (difficulty: "EASY"):
+- Ms. Chidera explains each step with full coach text
+- Intermediate working lines shown inline in the solution trail after every step
+- NO popup blanks for the first 2 questions — student just observes
+- From question 3 onward: popup appears with blanks for the student to fill in
+- workingLines: author 4–6 lines per step showing the full arithmetic
+- Complexity: 2–3 steps. Clear starting equations. One technique at a time.
+- Goal: build understanding. The student should be able to follow every line.`
     : f.difficulty === "MEDIUM"
-    ? `All missions are CHALLENGE tier:
-- stage: "challenge" — student works independently, hints and assist available on request only
-- Nothing auto-surfaces — student must ask for help
-- Complexity: 2–3 steps, some requiring recognition of which technique applies
-- Goal: student practises independent thinking with a safety net available`
-    : `All missions are MASTER tier:
-- stage: "master" — student works completely alone, no assist shown
-- Hints available on request only — not prompted in any way
-- Complexity: 3–5 steps, multi-technique problems
-- Content difficulty: genuinely hard — reflect the level of difficulty expected in actual exams
-- Goal: exam readiness`;
+    ? `All missions are PRACTICE (difficulty: "MEDIUM"):
+- Coach shows choiceQuestion as a nudge — NOT the full answer
+- Popup appears immediately after correct pick, showing all working lines
+- Student must fill in blanks (1–2 per step) before continuing
+- Wrong blank picks show feedback then re-enable buttons for retry
+- Hearts: 3 per question. Wrong operation pick = lose 1 heart.
+- workingLines: author 4–6 lines per step. 1–2 lines should have blank: {answer, options:[3 choices]}
+- Complexity: 2–3 steps. Requires recognising which technique to apply.
+- answerChoices: NOT required for practice mode.`
+    : f.difficulty === "HARD"
+    ? `All missions are CHALLENGE (difficulty: "HARD"):
+- Student sees the equations and has 10 seconds to solve on paper
+- Then picks the final answer from 4 MCQ options (answerChoices[] — REQUIRED)
+- 2 wrong MCQ picks → fallback to practice-style stepwise with popup blanks
+- workingLines: author 4–6 lines per step. 1–2 should have blank: {answer, options:[3 choices]}
+- Complexity: 3–4 steps. May require multiplying equations before eliminating.
+- REQUIRED: include answerChoices[] with exactly 4 options, one correct: true`
+    : f.difficulty === "MASTERY"
+    ? `All missions are MASTERY (difficulty: "MASTERY"):
+- Exam-level application questions. No scaffolding. No popup. No coach hints.
+- workingLines still authored but shown inline only — no blanks
+- Complexity: 4–5 steps. Multi-technique problems. Word-problem contexts.
+- Goal: exam readiness — student should not need any help`
+    : `All missions are GUIDED LEARNING (EASY) by default.`;
 
   return `You are a Senior Curriculum Designer and Educator for EXL Games.
 
@@ -798,22 +816,107 @@ RULES:
 5. difficulty: "EASY" | "MEDIUM" | "HARD"
 6. sequenceIndex: integers, no gaps, continuing from last mission
 ` : `
-OTHER ENGINE — output this exact structure:
+STEPWISE-SOLVER ENGINE — use this EXACT structure for simultaneous equations and similar maths topics:
 {
   "slug": "${gameSlug}",
   "missions": [
     {
-      "missionKey": "w1-001",
-      "title": "World 1 - Mission 1 — ...",
-      "difficulty": "EASY",
+      "missionKey":    "gl-001",
+      "title":         "Case 001 — [Descriptive Name]",
+      "difficulty":    "EASY",
       "sequenceIndex": 1,
-      "xpReward": 20,
-      "topicId": "...",
-      "learningGoal": "...",
-      "payload": { /* match existing game payload structure exactly */ }
+      "xpReward":      20,
+      "topicId":       "simultaneous-linear-equations",
+      "subtopicId":    "elimination-method",
+      "learningGoal":  "Student can identify which operation eliminates a variable.",
+      "payload": {
+        "equations": [
+          {"id": "eq1", "display": "x + y = 7"},
+          {"id": "eq2", "display": "x - y = 3"}
+        ],
+        "solutionSteps": [
+          {
+            "description":     "Add the two equations to cancel y",
+            "operation":       "add",
+            "resultDisplay":   ["2x = 10"],
+            "targetVariable":  "y",
+            "isFinal":         false,
+            "workingLines": [
+              {"text": "  x + y = 7"},
+              {"text": "+ x − y = 3"},
+              {"text": "─────────────"},
+              {"text": "x + x = 2x,  y + (−y) = 0,  7 + 3 = ?",
+               "blank": {"answer": "10", "options": ["8", "10", "12"]}}
+            ]
+          },
+          {
+            "description":    "Divide both sides by 2",
+            "operation":      "solve",
+            "resultDisplay":  ["x = 5"],
+            "targetVariable": "x",
+            "isFinal":        false,
+            "workingLines": [
+              {"text": "  2x = 10  →  x = 10 ÷ 2 = ?",
+               "blank": {"answer": "5", "options": ["4", "5", "6"]}}
+            ]
+          },
+          {
+            "description":    "Substitute x = 5 into equation 1",
+            "operation":      "substitute",
+            "resultDisplay":  ["5 + y = 7", "y = 2"],
+            "targetVariable": "y",
+            "isFinal":        true,
+            "workingLines": [
+              {"text": "  x + y = 7,  put x = 5:"},
+              {"text": "  5 + y = 7  →  y = 7 − 5 = ?",
+               "blank": {"answer": "2", "options": ["1", "2", "3"]}}
+            ]
+          }
+        ],
+        "solution": {"variables": {"x": 5, "y": 2}},
+        "caseHints": [
+          "y terms are +y and −y — opposite signs. What happens when you add them?",
+          "2x = 10 — divide both sides by 2.",
+          "Substitute x = 5 into equation 1 to find y."
+        ],
+        "answerChoices": [
+          {"label": "x = 5, y = 2", "correct": true},
+          {"label": "x = 3, y = 4", "correct": false},
+          {"label": "x = 4, y = 3", "correct": false},
+          {"label": "x = 2, y = 5", "correct": false}
+        ]
+      }
     }
   ]
 }
+
+OPERATION VALUES (use exactly these strings):
+  "add"          — add both equations together
+  "subtract"     — subtract one equation from the other
+  "multiply_eq1" — multiply equation 1 by a factor (add multiplyFactor: N)
+  "multiply_eq2" — multiply equation 2 by a factor (add multiplyFactor: N)
+  "solve"        — divide/isolate a single variable
+  "substitute"   — substitute a known value back in
+
+WORKING LINES RULES:
+- Author 3–6 lines per step showing the full arithmetic
+- For blanks: the "?" in text marks where the answer goes
+- blank.options: exactly 3 plausible options including the correct one
+- Guided (EASY): all blanks included but popup only fires from question 3 onward
+- Practice (MEDIUM): 1–2 blanks per step — student fills them in the popup
+- Challenge (HARD): same as practice + must include answerChoices[]
+- Mastery (MASTERY): workingLines present, blank field OMITTED (no popup)
+
+ANSWER CHOICES (required for HARD/Challenge only):
+- Exactly 4 options
+- Exactly one has "correct": true
+- Include realistic distractors (swapped x/y, sign errors, off-by-one)
+
+SEQUENCE INDEX:
+- gl-001, gl-002… = Guided (EASY), sequenceIndex 1, 2, 3…
+- pr-001, pr-002… = Practice (MEDIUM), sequenceIndex 5, 6, 7… (continuing after guided)
+- ch-001, ch-002… = Challenge (HARD), sequenceIndex 9, 10, 11…
+- ms-001, ms-002… = Mastery (MASTERY), sequenceIndex 13, 14, 15…
 `}
 
 UNIVERSAL RULES:
@@ -979,10 +1082,14 @@ function UploadArea({ existingGames }: { existingGames: Array<{ id: string; slug
                 </div>
                 {Object.keys(byDiff).length > 0 && (
                   <div className={styles.previewDiffs}>
-                    {["EASY","MEDIUM","HARD"].map(d => byDiff[d] ? (
-                      <span key={d} className={styles.previewDiff}
-                        style={{ color: d === "EASY" ? "#16a34a" : d === "MEDIUM" ? "#b45309" : "#dc2626" }}>
-                        {byDiff[d]} {d.toLowerCase()}
+                    {[
+                      {key:"EASY",    label:"guided",    colour:"#f5a623"},
+                      {key:"MEDIUM",  label:"practice",  colour:"#6c28e0"},
+                      {key:"HARD",    label:"challenge",  colour:"#e03c28"},
+                      {key:"MASTERY", label:"mastery",   colour:"#1a7a4a"},
+                    ].map(({key,label,colour}) => byDiff[key] ? (
+                      <span key={key} className={styles.previewDiff} style={{ color: colour }}>
+                        {byDiff[key]} {label}
                       </span>
                     ) : null)}
                   </div>
@@ -1287,6 +1394,7 @@ export default function UploadClient({ existingGames }: { existingGames: Array<{
                       key={d.value}
                       type="button"
                       className={`${styles.diffOption} ${mf.difficulty === d.value ? styles.diffOptionActive : ""}`}
+                      style={mf.difficulty === d.value ? { borderColor: (d as {colour?: string}).colour ?? "#7c3aed", boxShadow: `0 0 0 2px ${(d as {colour?: string}).colour ?? "#7c3aed"}33` } : {}}
                       onClick={() => setMf(f => ({ ...f, difficulty: d.value }))}
                     >
                       <div className={styles.diffOptionLabel}>{d.label}</div>

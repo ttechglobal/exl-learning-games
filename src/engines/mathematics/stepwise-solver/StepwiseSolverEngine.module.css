@@ -222,17 +222,34 @@
 .mcFormula .katex,
 .mcFormula .katex-html { color: #1a0e02 !important; }
 
-/* Multi-line formula (simultaneous equations) */
+/* Multi-line formula (simultaneous equations) — shown side by side with { brace */
 .mcFormulaMulti {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
   margin-bottom: 6px;
+  position: relative;
+}
+.mcFormulaMulti::before {
+  content: "{";
+  font-size: 32px;
+  font-weight: 300;
+  color: #1a0e02;
+  margin-right: 8px;
+  line-height: 1;
+  align-self: center;
+}
+.mcFormulaLines {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 .mcFormulaLine {
   display: block;
-  font-size: 18px;
+  font-size: 17px;
   color: #1a0e02;
+  white-space: nowrap;
 }
 .mcFormulaLine .katex,
 .mcFormulaLine .katex-html { color: #1a0e02 !important; }
@@ -880,6 +897,16 @@
   flex-shrink: 0;
 }
 
+.coachAvatarSvg {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(200,150,255,0.5);
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  display: block;
+}
+
 .coachName {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 11px;
@@ -939,4 +966,799 @@
   color: rgba(255,255,255,0.7);
   margin-bottom: 12px;
   text-align: center;
+}
+/* ─── Celebration banner (inline, replaces mission complete page) ──────────── */
+.celebrationBanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(40,25,80,0.95), rgba(25,15,55,0.95));
+  border: 1.5px solid rgba(245,166,35,0.4);
+  border-radius: 16px;
+  margin: 0 0 12px;
+}
+.celebrationText {
+  flex: 1;
+}
+.celebrationTitle {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: #f5a623;
+  margin-bottom: 3px;
+}
+.celebrationSub {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.5;
+}
+
+/* ─── All-done block (stage complete) ───────────────────────────────────────── */
+.allDoneBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  margin-top: 8px;
+}
+.allDoneBadge {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: #f5a623;
+  letter-spacing: 0.3px;
+}
+.nextModeBtn {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #f5a623, #e07b10);
+  color: #1a0a00;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+}
+.hubBtn {
+  width: 100%;
+  padding: 11px 20px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  background: transparent;
+  color: rgba(255,255,255,0.6);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ─── Practice hearts in topbar ─────────────────────────────────────────────── */
+.heartFull  { font-size: 15px; line-height: 1; }
+.heartLost  { font-size: 15px; line-height: 1; opacity: 0.35; }
+
+/* ─── XP badge in topbar ─────────────────────────────────────────────────────── */
+.xpBadge {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  color: #f5a623;
+  background: rgba(245,166,35,0.12);
+  border: 1px solid rgba(245,166,35,0.3);
+  border-radius: 20px;
+  padding: 3px 9px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+/* ─── 0 hearts — out of hearts screen ───────────────────────────────────────── */
+.heartOutZone {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 32px 24px;
+  text-align: center;
+}
+.heartOutIcon {
+  font-size: 48px;
+  line-height: 1;
+}
+.heartOutTitle {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #e03c28;
+}
+.heartOutSub {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.5;
+  max-width: 260px;
+}
+.heartOutBtn {
+  margin-top: 8px;
+  padding: 14px 32px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #f5a623, #e07b10);
+  color: #1a0a00;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* ─── Challenge stepwise mode banner ─────────────────────────────────────────── */
+.chalStepwiseBanner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(224,60,40,0.12);
+  border-bottom: 1px solid rgba(224,60,40,0.2);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ff7a6a;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+}
+
+/* ─── Multi-line step equation (e.g. simultaneous equations) ─────────────────── */
+.stepEqMulti {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 4px;
+}
+.stepEqLine {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: rgba(255,255,255,0.9);
+  line-height: 1.4;
+}
+
+/* ─── Wrong-pick feedback toast ──────────────────────────────────────────────── */
+.wrongFeedbackToast {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: rgba(220, 60, 60, 0.12);
+  border: 1px solid rgba(220, 60, 60, 0.3);
+  border-radius: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 180, 180, 0.9);
+  line-height: 1.5;
+  animation: fadeSlideIn 0.2s ease;
+}
+.wrongFeedbackIcon {
+  font-size: 13px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Working popup overlay ──────────────────────────────────────────────────── */
+.workingOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 3, 20, 0.80);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 24px 16px;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.workingSheet {
+  width: 100%;
+  max-width: 420px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: linear-gradient(160deg, #1a1040 0%, #120830 100%);
+  border: 1.5px solid rgba(155, 89, 182, 0.45);
+  border-radius: 20px;
+  padding: 24px 20px 28px;
+  animation: popIn 0.22s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+@keyframes popIn {
+  from { transform: scale(0.92); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+.workingTitle {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: #f5a623;
+  margin-bottom: 16px;
+  letter-spacing: 0.3px;
+}
+
+.workingLines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+  min-height: 60px;
+}
+
+.workingLine {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  line-height: 1.6;
+  border-radius: 8px;
+  padding: 6px 10px;
+  transition: background 0.2s;
+}
+
+.workingLinePast {
+  color: rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.03);
+}
+
+.workingLineCurrent {
+  color: rgba(255,255,255,0.92);
+  background: rgba(155, 89, 182, 0.12);
+  border: 1px solid rgba(155, 89, 182, 0.25);
+}
+
+.workingNextBtn {
+  width: 100%;
+  padding: 13px;
+  border-radius: 14px;
+  border: none;
+  background: rgba(155, 89, 182, 0.25);
+  border: 1.5px solid rgba(155, 89, 182, 0.4);
+  color: #e4d0ff;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.workingDoneBtn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #f5a623, #e07b10);
+  color: #1a0a00;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* ─── Blank fill-in micro-quiz inside working popup ──────────────────────────── */
+.blankRow {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.blankPrompt {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: rgba(255,255,255,0.85);
+  line-height: 1.5;
+}
+
+.blankOptions {
+  display: flex;
+  gap: 8px;
+}
+
+.blankBtn {
+  flex: 1;
+  padding: 10px 6px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.06);
+  color: white;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.blankCorrect {
+  background: #0f3a1f !important;
+  border-color: rgba(60, 207, 100, 0.5) !important;
+  color: #4cde80 !important;
+}
+
+.blankWrong {
+  background: #3a0f0f !important;
+  border-color: rgba(220, 60, 60, 0.4) !important;
+  color: #de4c4c !important;
+  animation: shake 0.3s ease;
+}
+
+.blankFeedback {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: rgba(255, 180, 180, 0.85);
+  padding: 4px 0;
+}
+
+/* ─── Trail working lines — intermediate arithmetic shown in solution trail ───── */
+.trailWorking {
+  margin: 6px 0 8px;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.035);
+  border-left: 2px solid rgba(155, 89, 182, 0.3);
+  border-radius: 0 8px 8px 0;
+}
+
+.trailWorkingLine {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.7;
+  white-space: pre;
+}
+
+/* ─── Working popup extra states ─────────────────────────────────────────────── */
+.blankSolved {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  color: #4cde80;
+  line-height: 1.6;
+}
+.blankFuture {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  color: rgba(255,255,255,0.3);
+  line-height: 1.6;
+}
+.workingHint {
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  padding: 8px 0 0;
+  font-style: italic;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   WORKING POPUP — redesigned
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Header */
+.wpHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.wpHeaderIcon {
+  font-size: 22px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.wpHeaderTitle {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: #f5a623;
+  line-height: 1.2;
+}
+.wpHeaderSub {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  margin-top: 2px;
+}
+
+/* Working line list */
+.wpLines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 18px;
+}
+
+/* Plain context line */
+.wpLine {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.75);
+  padding: 4px 10px;
+  line-height: 1.5;
+}
+
+/* Separator line (─────) */
+.wpSeparator {
+  height: 1px;
+  background: rgba(255,255,255,0.12);
+  margin: 4px 10px;
+}
+
+/* Answered blank — green with checkmark */
+.wpLineAnswered {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4cde80;
+  padding: 6px 10px;
+  background: rgba(76,222,128,0.08);
+  border-radius: 8px;
+}
+.wpAnsweredCheck {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* Active blank block */
+.wpBlankBlock {
+  background: rgba(155,89,182,0.12);
+  border: 1.5px solid rgba(155,89,182,0.35);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Context label with blank slot */
+.wpBlankContext {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  line-height: 1.5;
+}
+.wpBlankSlot {
+  display: inline-block;
+  min-width: 36px;
+  border-bottom: 2px solid #f5a623;
+  color: #f5a623;
+  font-weight: 800;
+  text-align: center;
+  margin: 0 4px;
+  padding: 0 4px;
+}
+
+/* Option buttons — 3 across */
+.wpOptions {
+  display: flex;
+  gap: 8px;
+}
+.wpOptionBtn {
+  flex: 1;
+  padding: 11px 6px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.07);
+  color: white;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s;
+}
+.wpOptionBtn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.3);
+}
+.wpOptionCorrect {
+  background: rgba(76,222,128,0.15) !important;
+  border-color: rgba(76,222,128,0.5) !important;
+  color: #4cde80 !important;
+}
+.wpOptionWrong {
+  background: rgba(220,60,60,0.12) !important;
+  border-color: rgba(220,60,60,0.35) !important;
+  color: #ff8080 !important;
+  animation: shake 0.25s ease;
+}
+.wpWrong {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: #ff9999;
+  text-align: center;
+}
+
+/* Footer */
+.wpHint {
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+  padding: 4px 0;
+  font-style: italic;
+}
+.wpNextBtn {
+  width: 100%;
+  padding: 13px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(155,89,182,0.5);
+  background: rgba(155,89,182,0.2);
+  color: #e4d0ff;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 4px;
+}
+.wpDoneBtn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #f5a623, #e07b10);
+  color: #1a0a00;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25%       { transform: translateX(-4px); }
+  75%       { transform: translateX(4px); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   MISSIONS OVERVIEW PANEL
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.missionsRoot {
+  position: relative;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #0f0820;
+  overflow: hidden;
+}
+
+.missionsContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 0 0 32px;
+}
+
+.missionsHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.missionsBackBtn {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  color: rgba(255,255,255,0.7);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.missionsTitle {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  flex: 1;
+}
+
+.missionsProg {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: #f5a623;
+  background: rgba(245,166,35,0.12);
+  border: 1px solid rgba(245,166,35,0.25);
+  border-radius: 20px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+
+/* Progress bar */
+.missionsBar {
+  height: 3px;
+  background: rgba(255,255,255,0.07);
+  margin: 0 20px 20px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.missionsBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #f5a623, #e07b10);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+/* Question list */
+.missionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 16px;
+}
+
+.missionsEmpty {
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: rgba(255,255,255,0.3);
+  padding: 40px 20px;
+}
+
+.missionItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1.5px solid transparent;
+}
+
+.missionItemDone {
+  background: rgba(76,222,128,0.06);
+  border-color: rgba(76,222,128,0.2);
+}
+
+.missionItemCurrent {
+  background: rgba(245,166,35,0.08);
+  border-color: rgba(245,166,35,0.35);
+}
+
+.missionItemLocked {
+  background: rgba(255,255,255,0.03);
+  border-color: rgba(255,255,255,0.06);
+  opacity: 0.5;
+}
+
+.missionItemNumber {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.6);
+}
+
+.missionItemDone .missionItemNumber {
+  background: rgba(76,222,128,0.15);
+  color: #4cde80;
+}
+
+.missionItemCurrent .missionItemNumber {
+  background: rgba(245,166,35,0.2);
+  color: #f5a623;
+}
+
+.missionItemText {
+  flex: 1;
+  min-width: 0;
+}
+
+.missionItemTitle {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.missionItemSub {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  margin-top: 2px;
+}
+
+.missionItemDone .missionItemSub { color: rgba(76,222,128,0.6); }
+.missionItemCurrent .missionItemSub { color: rgba(245,166,35,0.7); }
+
+.missionItemStart {
+  background: linear-gradient(135deg, #f5a623, #e07b10);
+  border: none;
+  border-radius: 20px;
+  color: #1a0a00;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Hub mode card meta (progress fraction) */
+.modeMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.modeProg {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 2px 7px;
+}
+
+/* Hub bottom actions */
+.hubActions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.viewMissionsBtn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(255,255,255,0.12);
+  background: transparent;
+  color: rgba(255,255,255,0.55);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.2px;
 }

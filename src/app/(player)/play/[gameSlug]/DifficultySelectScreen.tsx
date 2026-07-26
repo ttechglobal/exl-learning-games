@@ -1,7 +1,7 @@
 "use client";
 
 import { DIFFICULTY_INFO, type PlayerDifficulty } from "@/lib/content/difficultyModifiers";
-import { CharacterFigure, SceneBackground } from "@/app/(player)/play/[gameSlug]/NarrationScene";
+import { CharacterFigure, SceneBackground, CHARACTERS, FALLBACK_CHARACTER } from "@/app/(player)/play/[gameSlug]/NarrationScene";
 import styles from "@/app/(player)/play/[gameSlug]/DifficultySelectScreen.module.css";
 
 export interface DifficultySelectScreenProps {
@@ -9,6 +9,7 @@ export interface DifficultySelectScreenProps {
   accentColor: string;
   onSelect: (difficulty: PlayerDifficulty) => void;
   onBack?: () => void;
+  playerName?: string;
 }
 
 const ORDER: PlayerDifficulty[] = ["EASY", "MEDIUM", "HARD"];
@@ -27,7 +28,16 @@ const TIER_CLASS: Record<PlayerDifficulty, string> = {
  * - Parchment card at the bottom / right column contains the tier choices
  * - Desktop: side-by-side layout matching NarrationScreen exactly
  */
-export function DifficultySelectScreen({ subject, accentColor: _accentColor, onSelect, onBack }: DifficultySelectScreenProps) {
+const SUBJECT_WELCOME: Record<string, string> = {
+  mathematics: "Let's sharpen those maths skills today!",
+  chemistry:   "Time to explore the world of chemistry!",
+  physics:     "Ready to unlock the laws of physics?",
+  biology:     "Let's dive into the living world today!",
+};
+
+export function DifficultySelectScreen({ subject, accentColor: _accentColor, onSelect, onBack, playerName }: DifficultySelectScreenProps) {
+  const character = CHARACTERS[subject] ?? FALLBACK_CHARACTER;
+  const welcomeLine = SUBJECT_WELCOME[subject] ?? "Ready to learn something new?";
   return (
     <div className={styles.screen}>
 
@@ -43,6 +53,18 @@ export function DifficultySelectScreen({ subject, accentColor: _accentColor, onS
 
         <div className={styles.characterWrap} aria-hidden="true">
           <CharacterFigure subject={subject} />
+        </div>
+
+        {/* Teacher welcome speech bubble — anchored near character's head */}
+        <div className={styles.teacherWelcome} aria-live="polite">
+          <div className={styles.teacherGreeting}>
+            {playerName
+              ? <>Welcome, <strong>{playerName}</strong>!</>
+              : <>Welcome to class!</>
+            }
+          </div>
+          <div className={styles.teacherLine}>{welcomeLine}</div>
+          <div className={styles.teacherTail} />
         </div>
 
         <div className={styles.sceneBadge}>

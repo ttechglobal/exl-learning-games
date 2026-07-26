@@ -769,12 +769,45 @@
 }
 .hubBackBtn:hover { color: rgba(255,255,255,0.75); }
 
+/* ── Hub avatar row — Ms. Chidera + greeting bubble side by side ── */
+.hubAvatarRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.hubGreetingBubble {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px 14px 14px 14px;
+  padding: 10px 14px;
+}
+
 .hubWelcome {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 4px;
+}
+
+.hubWelcome strong {
+  color: #f5a623;
+}
+
+.hubTeacherLine {
   font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.4);
-  margin-bottom: 8px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 14px;
+  line-height: 1.4;
+}
+
+.hubTeacherLine em {
+  color: rgba(255,255,255,0.65);
+  font-style: italic;
 }
 
 .hubTitle {

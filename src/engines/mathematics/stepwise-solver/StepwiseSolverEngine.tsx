@@ -27,6 +27,9 @@ import React, {
   useState,
 } from "react";
 import type { EngineRuntimeProps } from "@/engines/engine-types";
+import { ChideraAvatar } from "./ChideraAvatar";
+import { StepwiseHub } from "./StepwiseHub";
+import { StepwiseMissionComplete } from "./StepwiseMissionComplete";
 import styles from "./StepwiseSolverEngine.module.css";
 
 // ─── KaTeX ────────────────────────────────────────────────────────────────────
@@ -106,6 +109,11 @@ export interface StepwiseQuestion {
   finalAnswer: string;
   steps: QuestionStep[];
   answerChoices?: { label: string; correct: boolean }[];
+  // mission metadata — used for per-question XP saving
+  missionId?: string;
+  topicId?: string;
+  subtopicId?: string;
+  xpReward?: number;
 }
 
 interface MissionEntry {
@@ -115,6 +123,8 @@ interface MissionEntry {
   difficulty: "EASY" | "MEDIUM" | "HARD";
   sequenceIndex: number;
   xpReward: number;
+  topicId?: string;
+  subtopicId?: string;
   payload: Record<string, unknown>;
 }
 
@@ -132,6 +142,10 @@ function payloadToQuestion(m: MissionEntry): StepwiseQuestion | null {
     finalAnswer:   (p.finalAnswer as string) ?? "",
     steps,
     answerChoices: p.answerChoices as { label: string; correct: boolean }[] | undefined,
+    missionId:   m.id,
+    topicId:     m.topicId,
+    subtopicId:  m.subtopicId,
+    xpReward:    m.xpReward,
   };
 }
 
@@ -289,12 +303,21 @@ function payloadToDetectiveQuestion(m: MissionEntry): StepwiseQuestion | null {
     .map(([k, v]) => `${k} = ${v}`)
     .join(",\\quad ");
 
+  // answerChoices lives on the payload root for HARD missions — must be
+  // forwarded here or the challenge pick phase always shows "not set up".
+  const answerChoices = p.answerChoices as { label: string; correct: boolean }[] | undefined;
+
   return {
     goal: `Solve the simultaneous equations`,
     formula,
     topic: "Simultaneous Equations",
     finalAnswer,
     steps,
+    answerChoices,
+    missionId:  m.id,
+    topicId:    m.topicId,
+    subtopicId: m.subtopicId,
+    xpReward:   m.xpReward,
   };
 }
 
@@ -375,7 +398,7 @@ function StepEq({ tex }: { tex: string }) {
 
 
 
-type Screen = "hub" | "playing";
+type Screen = "hub" | "playing" | "missionComplete";
 
 interface EngineState {
   screen: Screen;
@@ -405,6 +428,7 @@ type Action =
   | { type: "RESET_LIVES" }
   | { type: "NEXT_QUESTION"; nextIdx: number }
   | { type: "GO_TO_MODE"; mode: StepMode; resumeIdx?: number }
+  | { type: "GO_TO_MISSION_COMPLETE" }
   | { type: "RESTART" };
 
 function reduce(state: EngineState, action: Action): EngineState {
@@ -418,88 +442,12 @@ function reduce(state: EngineState, action: Action): EngineState {
       return { ...state, questionIdx: action.nextIdx, questionsCompleted: state.questionsCompleted + 1, lives: 3 };
     case "GO_TO_MODE":
       return { ...state, mode: action.mode, questionIdx: action.resumeIdx ?? 0, lives: 3, screen: "playing" };
+    case "GO_TO_MISSION_COMPLETE":
+      return { ...state, screen: "missionComplete" };
     case "RESTART":
       return { ...INITIAL_STATE, mode: state.mode, seenFormulas: state.seenFormulas, questionsCompleted: state.questionsCompleted };
     default: return state;
   }
-}
-
-// ─── Ms. Chidera Avatar ───────────────────────────────────────────────────────
-
-function ChideraAvatar() {
-  return (
-    <svg
-      width="44" height="44" viewBox="0 0 44 44"
-      xmlns="http://www.w3.org/2000/svg"
-      className={styles.coachAvatarSvg}
-      aria-label="Ms. Chidera"
-    >
-      {/* Background — warm gold circle */}
-      <circle cx="22" cy="22" r="22" fill="#f5a623" />
-
-      {/* Body — blazer with book */}
-      <path d="M8 44 Q10 30 22 29 Q34 30 36 44Z" fill="#2a5298" />
-      {/* Lapels */}
-      <path d="M22 29 L17 33 L15 44" fill="none" stroke="#1a3a7a" strokeWidth="1.2" />
-      <path d="M22 29 L27 33 L29 44" fill="none" stroke="#1a3a7a" strokeWidth="1.2" />
-      {/* White shirt */}
-      <path d="M20 29 L22 32 L24 29" fill="white" />
-      {/* Book in left hand */}
-      <rect x="9" y="30" width="8" height="10" rx="1.5" fill="#1a3a7a" />
-      <rect x="10" y="30" width="6" height="10" rx="1" fill="#e8f0fe" />
-      <line x1="11" y1="32" x2="15" y2="32" stroke="#9ab" strokeWidth="0.7" />
-      <line x1="11" y1="34" x2="15" y2="34" stroke="#9ab" strokeWidth="0.7" />
-      <line x1="11" y1="36" x2="13" y2="36" stroke="#9ab" strokeWidth="0.7" />
-
-      {/* Neck */}
-      <rect x="19.5" y="26" width="5" height="5" rx="2" fill="#b87045" />
-
-      {/* Head */}
-      <ellipse cx="22" cy="17" rx="10" ry="11" fill="#b87045" />
-
-      {/* Natural hair — full, shaped, proud */}
-      <ellipse cx="22" cy="9" rx="11" ry="8.5" fill="#1a0800" />
-      <ellipse cx="12" cy="14" rx="3" ry="6" fill="#1a0800" />
-      <ellipse cx="32" cy="14" rx="3" ry="6" fill="#1a0800" />
-      <ellipse cx="22" cy="6" rx="8" ry="5" fill="#1a0800" />
-      {/* Hair volume highlights */}
-      <ellipse cx="16" cy="8" rx="3" ry="1.5" fill="#2d0e00" opacity="0.5" />
-      <ellipse cx="28" cy="7.5" rx="2.5" ry="1.2" fill="#2d0e00" opacity="0.4" />
-
-      {/* Ears */}
-      <ellipse cx="12" cy="18" rx="2" ry="2.5" fill="#a86035" />
-      <ellipse cx="32" cy="18" rx="2" ry="2.5" fill="#a86035" />
-
-      {/* Glasses — thick dark frames, teacher-style */}
-      <rect x="13" y="15" width="6.5" height="4.5" rx="2.2" fill="none" stroke="#1a0800" strokeWidth="1.4" />
-      <rect x="21" y="15" width="6.5" height="4.5" rx="2.2" fill="none" stroke="#1a0800" strokeWidth="1.4" />
-      <line x1="19.5" y1="17.2" x2="21" y2="17.2" stroke="#1a0800" strokeWidth="1.4" />
-      {/* Arms */}
-      <line x1="13" y1="17.2" x2="11" y2="17.2" stroke="#1a0800" strokeWidth="1.4" />
-      <line x1="27.5" y1="17.2" x2="29.5" y2="17.2" stroke="#1a0800" strokeWidth="1.4" />
-
-      {/* Eyes behind glasses */}
-      <ellipse cx="16.2" cy="17.2" rx="1.5" ry="1.6" fill="#0f0500" />
-      <ellipse cx="24.2" cy="17.2" rx="1.5" ry="1.6" fill="#0f0500" />
-      <circle cx="16.8" cy="16.6" r="0.5" fill="white" />
-      <circle cx="24.8" cy="16.6" r="0.5" fill="white" />
-
-      {/* Eyebrows */}
-      <path d="M14 14.5 Q16.2 13.5 18.5 14.5" fill="none" stroke="#0f0500" strokeWidth="1" />
-      <path d="M22 14.5 Q24.2 13.5 26.5 14.5" fill="none" stroke="#0f0500" strokeWidth="1" />
-
-      {/* Nose */}
-      <ellipse cx="22" cy="20.5" rx="1.3" ry="0.7" fill="#9a5030" opacity="0.6" />
-
-      {/* Smile — warm and confident */}
-      <path d="M17.5 23 Q22 26.5 26.5 23" fill="none" stroke="#7a3520" strokeWidth="1.4" strokeLinecap="round" />
-
-      {/* Right arm raised — pointing up (inspired by reference) */}
-      <path d="M32 31 Q36 25 34 19" fill="none" stroke="#b87045" strokeWidth="3.5" strokeLinecap="round" />
-      {/* Pointing finger */}
-      <ellipse cx="33.5" cy="17.5" rx="1.2" ry="2.5" fill="#b87045" transform="rotate(-20 33.5 17.5)" />
-    </svg>
-  );
 }
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
@@ -512,23 +460,38 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
   const onBack             = (shared._onBack as (() => void) | undefined) ?? (() => {});
   const studentId          = (shared._studentId as string | undefined) ?? "anon";
   const gameId             = (shared._gameId    as string | undefined) ?? "game";
+  // Read the locally-stored player display name for the hub welcome message.
+  // Avoid importing localPlayerName at module level (SSR-safe; this component
+  // is "use client" so window is available when this executes).
+  const playerName = typeof window !== "undefined"
+    ? (window.localStorage.getItem("exl:playerName") ?? undefined)
+    : undefined;
 
   // ── Resume: read per-student progress from localStorage ──
   // Key: "exl_progress_{studentId}_{gameId}_{mode}"
   // Value: index of the next question to show (0-based)
   const progressKey = (mode: StepMode) => `exl_progress_${studentId}_${gameId}_${mode}`;
+  // Sentinel stored when a mode is fully completed — value is intentionally
+  // very large so getResume(mode, total) returns exactly `total` regardless
+  // of how many questions exist (all questions show as done in the hub).
+  const DONE_SENTINEL = 9999;
   const getResume = (mode: StepMode, total: number): number => {
     if (typeof window === "undefined") return 0;
     const saved = parseInt(localStorage.getItem(progressKey(mode)) ?? "0", 10);
-    return isNaN(saved) ? 0 : Math.min(saved, Math.max(0, total - 1));
+    if (isNaN(saved)) return 0;
+    // Clamp to total (not total-1) so a completed mode returns exactly `total`,
+    // making every question's `done: i < resumeI` check true in makeHubQ.
+    return Math.min(saved, total);
   };
   const saveProgress = (mode: StepMode, idx: number) => {
     if (typeof window === "undefined") return;
     localStorage.setItem(progressKey(mode), String(idx));
   };
-  const clearProgress = (mode: StepMode) => {
+  // FIX: was clearProgress (removed the key → reset to 0 on return).
+  // Now marks the mode as fully done so completed questions stay shown.
+  const markModeDone = (mode: StepMode) => {
     if (typeof window === "undefined") return;
-    localStorage.removeItem(progressKey(mode));
+    localStorage.setItem(progressKey(mode), String(DONE_SENTINEL));
   };
 
   const guidedQ    = missionsToQuestions(allMissions.filter(m => m.difficulty === "EASY"));
@@ -569,6 +532,7 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
   const timerRef   = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTime  = useRef(Date.now());
   const totalTries = useRef(0);
+  const completedReported = useRef(false);
 
   const currentQ   = questions.length
     ? questions[Math.min(state.questionIdx, questions.length - 1)]
@@ -666,8 +630,33 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
     completedReported.current = false;
   }, [state.mode]);
 
-  // Track whether onComplete has been reported (so we only fire it once per question)
-  const completedReported = useRef(false);
+  // ── Per-question XP: fire-and-forget POST immediately when a question
+  // completes. This means the student sees their XP grow even if they
+  // never finish the full mode. The final onComplete() call at mode end
+  // sends the session total xpEarned too, but the server's LocalDbAdapter
+  // uses the first recorded xpEarned (the per-question posts) as an
+  // additive tally — duplicate prevention is handled by only posting the
+  // delta for THAT question, not the running total.
+  const saveQuestionXp = useCallback((q: StepwiseQuestion, xpAmount: number) => {
+    if (!q.missionId || !q.topicId) return; // can't save without identifiers
+    const body = {
+      studentId,
+      gameId,
+      missionId: q.missionId,
+      topicId: q.topicId,
+      subtopicId: q.subtopicId,
+      success: true,
+      rawOutcome: { xpEarned: xpAmount, perQuestion: true },
+      completedAt: new Date().toISOString(),
+    };
+    fetch("/api/attempts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }).catch(() => {
+      // Offline — the main onComplete() will handle it at mode end via attemptQueue
+    });
+  }, [studentId, gameId]);
 
   // ── Stepwise pick handler (guided / practice / challenge stepwise) ──
   // Shared step-advance logic (called from handlePick directly, or after working popup closes)
@@ -681,13 +670,14 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
       setFeedback({});
       const xpAmount = state.mode === "guided" ? 10 : state.mode === "practice" ? 20 : 20;
       dispatch({ type: "EARN_XP", amount: xpAmount });
+      saveQuestionXp(currentQ, xpAmount);
     } else {
       setCompletedSteps(prev => [...prev, newStep]);
       setStepIdx(prev => prev + 1);
       setLocked(false);
       setFeedback({});
     }
-  }, [currentQ, state]); // eslint-disable-line
+  }, [currentQ, state, saveQuestionXp]); // eslint-disable-line
 
   // Called when working popup "Got it →" / "Continue →" is tapped
   const advanceAfterWorking = useCallback(() => {
@@ -770,6 +760,7 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
       setChalFeedback(prev => ({ ...prev, [idx]: "correct" }));
       setChalFullXp(true);
       dispatch({ type: "EARN_XP", amount: 40 });
+      saveQuestionXp(currentQ, 40);
       // Build trail so user can review the working on the next screen
       const trail = currentQ.steps.map(s => ({ label: s.trailLabel, eq: s.resultEq }));
       setReviewTrail(trail);
@@ -787,15 +778,16 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
         setTimeout(() => setChalLocked(false), 1200);
       }
     }
-  }, [chalLocked, currentQ, chalWrong]);
+  }, [chalLocked, currentQ, chalWrong, saveQuestionXp]);
 
   // ── Hub ──
   if (state.screen === "hub") {
     const modeQ = state.mode === "guided" ? guidedQ : state.mode === "practice" ? practiceQ : challengeQ;
-    const resumeIdx = getResume(state.mode, modeQ.length);
-    const resumeLabel = resumeIdx > 0 ? `Continue from Q${resumeIdx + 1} →` : undefined;
+    const rawResumeIdx = getResume(state.mode, modeQ.length);
+    const isModeDone = rawResumeIdx >= modeQ.length;
+    const resumeIdx = isModeDone ? 0 : rawResumeIdx;
+    const resumeLabel = !isModeDone && resumeIdx > 0 ? `Continue from Q${resumeIdx + 1} →` : undefined;
     const handleStart = () => dispatch({ type: "START_PLAY", resumeIdx });
-    // Build question lists for the missions panel — include done status from localStorage
     const makeHubQ = (qs: StepwiseQuestion[], mode: StepMode) => {
       const resumeI = getResume(mode, qs.length);
       return qs.map((q, i) => ({
@@ -805,17 +797,55 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
       }));
     };
     return (
-      <HubScreen
-        state={state}
-        dispatch={dispatch}
+      <StepwiseHub
+        currentMode={state.mode}
+        onSelectMode={(mode) => dispatch({ type: "SELECT_MODE", mode })}
         hasPractice={practiceQ.length > 0}
         hasChallenge={challengeQ.length > 0}
         onBack={onBack}
         onStart={handleStart}
         resumeLabel={resumeLabel}
+        studentName={playerName}
         guidedQuestions={makeHubQ(guidedQ, "guided")}
         practiceQuestions={makeHubQ(practiceQ, "practice")}
         challengeQuestions={makeHubQ(challengeQ, "challenge")}
+      />
+    );
+  }
+
+  // ── Mission Complete (stage finished) ──
+  if (state.screen === "missionComplete") {
+    const makeHubQ = (qs: StepwiseQuestion[], mode: StepMode) => {
+      const resumeI = getResume(mode, qs.length);
+      return qs.map((q, i) => ({
+        title: q.goal || q.formula,
+        missionKey: `${mode}-${i}`,
+        done: i < resumeI,
+      }));
+    };
+    const nextMode: StepMode | null =
+      state.mode === "guided" ? (practiceQ.length > 0 ? "practice" : null) :
+      state.mode === "practice" ? (challengeQ.length > 0 ? "challenge" : null) : null;
+
+    return (
+      <StepwiseMissionComplete
+        completedMode={state.mode}
+        xpEarned={state.xp}
+        guidedQuestions={makeHubQ(guidedQ, "guided")}
+        practiceQuestions={makeHubQ(practiceQ, "practice")}
+        challengeQuestions={makeHubQ(challengeQ, "challenge")}
+        nextMode={nextMode}
+        onNextMode={() => {
+          if (!nextMode) return;
+          const targetTotal = nextMode === "practice" ? practiceQ.length : challengeQ.length;
+          const rawIdx = getResume(nextMode, targetTotal);
+          const resumeIdx = rawIdx >= targetTotal ? 0 : rawIdx;
+          dispatch({ type: "GO_TO_MODE", mode: nextMode, resumeIdx });
+        }}
+        onReplay={() => {
+          dispatch({ type: "START_PLAY", resumeIdx: 0 });
+        }}
+        onBackToHub={() => dispatch({ type: "RESTART" })}
       />
     );
   }
@@ -917,13 +947,19 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
           score: 100,
           timeSpentSec: Math.round((Date.now() - startTime.current) / 1000),
           attemptsBeforeSuccess: totalTries.current,
+          xpEarned: state.xp,
         });
       }
       if (goToMode) {
-        const resumeIdx = getResume(goToMode, goToMode === "practice" ? practiceQ.length : goToMode === "challenge" ? challengeQ.length : guidedQ.length);
+        const targetTotal = goToMode === "practice" ? practiceQ.length : goToMode === "challenge" ? challengeQ.length : guidedQ.length;
+        const rawIdx = getResume(goToMode, targetTotal);
+        const resumeIdx = rawIdx >= targetTotal ? 0 : rawIdx;
         dispatch({ type: "GO_TO_MODE", mode: goToMode, resumeIdx });
+      } else {
+        // Show the maths-specific mission complete screen
+        markModeDone(state.mode);
+        dispatch({ type: "GO_TO_MISSION_COMPLETE" });
       }
-      else dispatch({ type: "RESTART" });
     };
 
     return (
@@ -948,21 +984,12 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
             Next question →
           </button>
         ) : (
-          <div className={styles.allDoneBlock}>
-            <div className={styles.allDoneBadge}>🏆 Stage complete!</div>
-            {nextMode && (
-              <button className={styles.nextModeBtn} onClick={() => {
-                clearProgress(state.mode); // reset this mode so it starts fresh next time
-                finish(nextMode);
-              }}>
-                Move to {nextMode === "practice" ? "⚡ Practice" : "🔥 Challenge"} →
-              </button>
-            )}
-            <button className={styles.hubBtn} onClick={() => {
-              clearProgress(state.mode);
-              finish();
-            }}>← Choose mode</button>
-          </div>
+          <button className={styles.nextBtn} onClick={() => {
+            markModeDone(state.mode);
+            finish();
+          }}>
+            🏆 Stage complete! →
+          </button>
         )}
       </div>
     );
@@ -1347,7 +1374,7 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
                   <div className={styles.wpQuestion}>
                     {/* Question equation */}
                     <div className={styles.wpQuestionEq}>
-                      {question} = <span className={styles.wpQuestionSlot}>
+                      {question}{question.trimEnd().endsWith("=") ? " " : " = "}<span className={styles.wpQuestionSlot}>
                         {blankDone ? activeLine.blank.answer : "?"}
                       </span>
                     </div>
@@ -1413,137 +1440,6 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
       })()}
 
       <div className={styles.bottomSpacer} />
-    </div>
-  );
-}
-
-// ─── Hub ──────────────────────────────────────────────────────────────────────
-
-interface HubQuestion { title: string; missionKey: string; done: boolean; }
-
-function HubScreen({ state, dispatch, hasPractice, hasChallenge, onBack, onStart, resumeLabel,
-  guidedQuestions, practiceQuestions, challengeQuestions }: {
-  state: EngineState; dispatch: React.Dispatch<Action>;
-  hasPractice: boolean; hasChallenge: boolean; onBack: () => void;
-  onStart: () => void; resumeLabel?: string;
-  guidedQuestions: HubQuestion[];
-  practiceQuestions: HubQuestion[];
-  challengeQuestions: HubQuestion[];
-}) {
-  const [showMissions, setShowMissions] = React.useState(false);
-
-  const modes: { id: StepMode; icon: string; name: string; desc: string; color: string; locked: boolean }[] = [
-    { id: "guided",    icon: "📖", name: "Guided Learning", color: "#f5a623", locked: false,         desc: "Ms. Chidera walks you through every step. Learn the why, not just the how." },
-    { id: "practice",  icon: "⚡", name: "Practice",         color: "#6c28e0", locked: !hasPractice,  desc: "Work it out yourself. Ms. Chidera gives you a nudge, not the answer." },
-    { id: "challenge", icon: "🔥", name: "Challenge",         color: "#e03c28", locked: !hasChallenge, desc: "Solve on paper first, then pick your answer. Full marks for first-try correct." },
-    { id: "mastery",   icon: "🏅", name: "Mastery",           color: "#1a7a4a", locked: true,          desc: "Exam-level. Application questions. No scaffolding." },
-  ];
-
-  const questionsFor: Record<StepMode, HubQuestion[]> = {
-    guided: guidedQuestions, practice: practiceQuestions, challenge: challengeQuestions, mastery: [],
-  };
-  const activeQuestions = questionsFor[state.mode] ?? [];
-  const doneCount = activeQuestions.filter(q => q.done).length;
-
-  if (showMissions) {
-    return (
-      <div className={styles.missionsRoot}>
-        <div className={styles.hubBg} />
-        <div className={styles.missionsContent}>
-          <div className={styles.missionsHeader}>
-            <button className={styles.missionsBackBtn} onClick={() => setShowMissions(false)}>← Back</button>
-            <div className={styles.missionsTitle}>
-              {state.mode === "guided" ? "📖" : state.mode === "practice" ? "⚡" : "🔥"}{" "}
-              {state.mode === "guided" ? "Guided Learning" : state.mode === "practice" ? "Practice" : "Challenge"}
-            </div>
-            <div className={styles.missionsProg}>
-              {doneCount}/{activeQuestions.length} done
-            </div>
-          </div>
-
-          {/* Progress bar */}
-          <div className={styles.missionsBar}>
-            <div className={styles.missionsBarFill}
-              style={{ width: activeQuestions.length ? `${(doneCount / activeQuestions.length) * 100}%` : "0%" }} />
-          </div>
-
-          {/* Question list */}
-          <div className={styles.missionsList}>
-            {activeQuestions.length === 0 ? (
-              <div className={styles.missionsEmpty}>No questions available yet.</div>
-            ) : activeQuestions.map((q, i) => {
-              const isCurrent = !q.done && i === doneCount;
-              return (
-                <div key={q.missionKey} className={[
-                  styles.missionItem,
-                  q.done ? styles.missionItemDone : isCurrent ? styles.missionItemCurrent : styles.missionItemLocked,
-                ].join(" ")}>
-                  <div className={styles.missionItemNumber}>
-                    {q.done ? "✓" : isCurrent ? String(i + 1) : "–"}
-                  </div>
-                  <div className={styles.missionItemText}>
-                    <div className={styles.missionItemTitle}>{q.title}</div>
-                    <div className={styles.missionItemSub}>
-                      {q.done ? "Completed" : isCurrent ? "Up next" : "Locked"}
-                    </div>
-                  </div>
-                  {isCurrent && (
-                    <button className={styles.missionItemStart} onClick={() => {
-                      setShowMissions(false);
-                      onStart();
-                    }}>
-                      Start →
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={styles.hubRoot}>
-      <div className={styles.hubBg} />
-      <div className={styles.hubContent}>
-        <button className={styles.hubBackBtn} onClick={onBack}>← Back</button>
-        <div className={styles.hubWelcome}>👋 Welcome</div>
-        <h1 className={styles.hubTitle}>Choose your <span className={styles.hubTitleAccent}>learning mode</span></h1>
-        <p className={styles.hubDesc}>Work through each solution step by step. Every correct move builds the trail.</p>
-        <div className={styles.modeList}>
-          {modes.map(m => {
-            const mq = questionsFor[m.id] ?? [];
-            const md = mq.filter(q => q.done).length;
-            return (
-              <button key={m.id}
-                className={[styles.modeBtn, state.mode === m.id ? styles.modeBtnActive : "", m.locked ? styles.modeBtnLocked : ""].join(" ")}
-                style={state.mode === m.id ? ({ "--mode-color": m.color } as React.CSSProperties) : undefined}
-                onClick={() => { if (!m.locked) dispatch({ type: "SELECT_MODE", mode: m.id }); }}
-              >
-                <span className={styles.modeIcon}>{m.icon}</span>
-                <div className={styles.modeText}>
-                  <div className={styles.modeName}>{m.name}{m.locked && <span className={styles.comingSoon}> · Coming soon</span>}</div>
-                  <div className={styles.modeDesc}>{m.desc}</div>
-                </div>
-                <div className={styles.modeMeta}>
-                  {!m.locked && mq.length > 0 && (
-                    <div className={styles.modeProg}>{md}/{mq.length}</div>
-                  )}
-                  <span className={styles.modeArrow}>{m.locked ? "🔒" : "→"}</span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-        <div className={styles.hubActions}>
-          <button className={styles.startBtn} onClick={onStart}>{resumeLabel ?? "Begin →"}</button>
-          <button className={styles.viewMissionsBtn} onClick={() => setShowMissions(true)}>
-            View all questions
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

@@ -29,6 +29,7 @@ import { MissionSelectScreen } from "@/app/(player)/play/[gameSlug]/MissionSelec
 import { DifficultySelectScreen } from "@/app/(player)/play/[gameSlug]/DifficultySelectScreen";
 import { NarrationScreen } from "@/components/exl/NarrationScreen";
 import { resetConceptsSeen } from "@/lib/content/contentPrefs";
+import { getLocalPlayerName } from "@/lib/content/localPlayerName";
 import { engineSupportsDifficultyChoice, type PlayerDifficulty } from "@/lib/content/difficultyModifiers";
 import { getElementByAtomicNumber, CATEGORY_COLORS } from "@/motion/periodicTableData";
 import { track } from "@/lib/analytics/track";
@@ -175,6 +176,7 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
           }
         }}
         onBack={handleBack}
+        playerName={getLocalPlayerName() ?? undefined}
       />
     );
   }

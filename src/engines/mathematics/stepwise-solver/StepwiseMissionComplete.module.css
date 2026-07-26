@@ -1,0 +1,308 @@
+/*
+ * StepwiseMissionComplete.module.css
+ * Full-screen stage/topic complete screen for the Stepwise Solver (maths).
+ */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: #0c0e14;
+  position: relative;
+  overflow-x: hidden;
+  max-width: 480px;
+  margin: 0 auto;
+  font-family: 'Inter', sans-serif;
+}
+
+.bg {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -5%, #1f1a44 0%, transparent 70%),
+    linear-gradient(180deg, #0c0e14 0%, #080a12 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.content {
+  position: relative;
+  z-index: 5;
+  padding: 48px 20px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Header ── */
+
+.header {
+  text-align: center;
+}
+
+.badge {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #f5a623;
+  margin-bottom: 4px;
+  animation: badgePop 0.5s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+
+@keyframes badgePop {
+  from { transform: scale(0.7); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+.modeName {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.5px;
+}
+
+/* ── Ms. Chidera card ── */
+
+.teacherCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: linear-gradient(135deg, rgba(30,20,60,0.95), rgba(20,15,45,0.95));
+  border: 1.5px solid rgba(155,89,182,0.35);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  animation: slideUp 0.4s ease both;
+  animation-delay: 0.1s;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.teacherBubble {
+  flex: 1;
+  min-width: 0;
+}
+
+.teacherName {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(200,150,255,0.8);
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.teacherLine {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.9);
+  line-height: 1.55;
+}
+
+/* ── XP card ── */
+
+.xpCard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(245,166,35,0.08);
+  border: 1.5px solid rgba(245,166,35,0.3);
+  border-radius: 16px;
+  padding: 16px 20px;
+  animation: slideUp 0.4s ease both;
+  animation-delay: 0.2s;
+}
+
+.xpStar {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.xpAmount {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: #f5a623;
+  line-height: 1;
+}
+
+.xpLabel {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: rgba(255,255,255,0.45);
+}
+
+/* ── Progress section ── */
+
+.progressSection {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: slideUp 0.4s ease both;
+  animation-delay: 0.3s;
+}
+
+.progressTitle {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+}
+
+.progressRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progressRowLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 130px;
+  flex-shrink: 0;
+}
+
+.progressIcon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.progressLabel {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+}
+
+.progressBarWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.progressBar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  background: rgba(245,166,35,0.6);
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.progressBarComplete {
+  background: #4cde80;
+}
+
+.progressFraction {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.4);
+  white-space: nowrap;
+}
+
+.progressCheck {
+  color: #4cde80;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ── Actions ── */
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: slideUp 0.4s ease both;
+  animation-delay: 0.4s;
+}
+
+.allDoneMessage {
+  text-align: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #4cde80;
+  padding: 12px;
+  background: rgba(76,222,128,0.08);
+  border: 1px solid rgba(76,222,128,0.25);
+  border-radius: 12px;
+}
+
+.btnPrimary {
+  width: 100%;
+  background: linear-gradient(135deg, #f5a623, #e07b10);
+  border: none;
+  border-radius: 14px;
+  border-bottom: 5px solid #a05a08;
+  padding: 16px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: #1a0800;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: transform 0.08s, border-bottom-width 0.08s;
+}
+.btnPrimary:active { transform: translateY(4px); border-bottom-width: 1px; }
+
+.btnSecondary {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.14);
+  border-radius: 14px;
+  padding: 14px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.75);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.btnSecondary:hover { background: rgba(255,255,255,0.1); }
+
+.btnGhost {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.35);
+  cursor: pointer;
+  transition: color 0.12s;
+}
+.btnGhost:hover { color: rgba(255,255,255,0.6); }
+
+@media (prefers-reduced-motion: reduce) {
+  .badge,
+  .teacherCard,
+  .xpCard,
+  .progressSection,
+  .actions {
+    animation: none;
+    opacity: 1;
+  }
+}

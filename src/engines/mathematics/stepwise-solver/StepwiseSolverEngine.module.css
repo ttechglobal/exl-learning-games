@@ -1427,34 +1427,7 @@
 }
 
 /* Active blank block */
-.wpBlankBlock {
-  background: rgba(155,89,182,0.12);
-  border: 1.5px solid rgba(155,89,182,0.35);
-  border-radius: 12px;
-  padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* Context label with blank slot */
-.wpBlankContext {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.9);
-  line-height: 1.5;
-}
-.wpBlankSlot {
-  display: inline-block;
-  min-width: 36px;
-  border-bottom: 2px solid #f5a623;
-  color: #f5a623;
-  font-weight: 800;
-  text-align: center;
-  margin: 0 4px;
-  padding: 0 4px;
-}
+/* wpBlankBlock / wpBlankContext / wpBlankSlot — removed (popup redesigned) */
 
 /* Option buttons — 3 across */
 .wpOptions {
@@ -1761,4 +1734,92 @@
   font-weight: 600;
   cursor: pointer;
   letter-spacing: 0.2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   POPUP — v2 redesign (clear question separation)
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Context section — what we've solved so far */
+.wpContext {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+}
+
+.wpContextLine {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wpContextCheck {
+  color: #4cde80;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+/* Question section — what the student must answer NOW */
+.wpQuestion {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  background: rgba(155,89,182,0.1);
+  border: 1.5px solid rgba(155,89,182,0.35);
+  border-radius: 14px;
+  margin-bottom: 14px;
+}
+
+/* The equation with the blank — large, clear */
+.wpQuestionEq {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.95);
+  line-height: 1.4;
+  text-align: center;
+  letter-spacing: 0.2px;
+}
+
+/* The blank slot — prominent underline */
+.wpQuestionSlot {
+  display: inline-block;
+  min-width: 40px;
+  border-bottom: 2.5px solid #f5a623;
+  color: #f5a623;
+  font-weight: 800;
+  text-align: center;
+  padding: 0 6px;
+  margin: 0 4px;
+}
+
+/* All done confirmation */
+.wpAllDone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(76,222,128,0.1);
+  border: 1.5px solid rgba(76,222,128,0.3);
+  border-radius: 12px;
+  margin-bottom: 14px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #4cde80;
+}
+
+.wpAllDoneIcon {
+  font-size: 16px;
 }

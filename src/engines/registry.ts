@@ -23,8 +23,6 @@ import { LayerPeelEngine }               from "@/engines/physics/layer-peel/Laye
 import { LayerPeelSharedConfigSchema }   from "@/engines/physics/layer-peel/layer-peel.config";
 
 // ─── Cross-subject (generic engines reusable across subjects) ─────────────────
-import { FormulaExcavationEngine }       from "@/engines/cross-subject/formula-excavation/FormulaExcavationEngine";
-import { FormulaExcavationSharedConfigSchema } from "@/engines/cross-subject/formula-excavation/formulaExcavation.config";
 import { QuestionBankEngine }            from "@/engines/cross-subject/question-bank/QuestionBankEngine";
 import { QuestionBankSharedConfigSchema } from "@/engines/cross-subject/question-bank/questionBank.config";
 
@@ -106,11 +104,6 @@ const layerPeelDefinition: EngineDefinition = {
 
 // ─── CROSS-SUBJECT ────────────────────────────────────────────────────────────
 
-const formulaExcavationDefinition: EngineDefinition = {
-  engineType: "formula-excavation",
-  configSchema: FormulaExcavationSharedConfigSchema as unknown as z.ZodSchema<unknown>,
-  Component: FormulaExcavationEngine as unknown as EngineDefinition["Component"],
-};
 
 const questionBankDefinition: EngineDefinition = {
   engineType: "question-bank",
@@ -138,7 +131,6 @@ const registry: Record<string, EngineDefinition> = {
   "layer-peel":                layerPeelDefinition,
 
   // Cross-subject
-  "formula-excavation":        formulaExcavationDefinition,
   "question-bank":             questionBankDefinition,
 };
 

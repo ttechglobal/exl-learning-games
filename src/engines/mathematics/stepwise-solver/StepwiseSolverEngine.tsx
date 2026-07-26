@@ -434,33 +434,70 @@ function ChideraAvatar() {
       className={styles.coachAvatarSvg}
       aria-label="Ms. Chidera"
     >
+      {/* Background — warm gold circle */}
       <circle cx="22" cy="22" r="22" fill="#f5a623" />
-      <rect x="19" y="27" width="6" height="5" rx="2" fill="#c8845a" />
-      <ellipse cx="22" cy="17" rx="10" ry="11" fill="#c8845a" />
-      <ellipse cx="22" cy="10" rx="12" ry="9.5" fill="#1a0800" />
-      <ellipse cx="11" cy="15" rx="3.5" ry="6.5" fill="#1a0800" />
-      <ellipse cx="33" cy="15" rx="3.5" ry="6.5" fill="#1a0800" />
-      <ellipse cx="22" cy="6"  rx="9"   ry="5"   fill="#1a0800" />
-      <ellipse cx="16" cy="8"  rx="3.5" ry="1.5" fill="#3d1500" opacity="0.55" />
-      <ellipse cx="27" cy="7"  rx="2.5" ry="1"   fill="#3d1500" opacity="0.4"  />
-      <ellipse cx="12" cy="18" rx="2"   ry="2.5" fill="#b87045" />
-      <ellipse cx="32" cy="18" rx="2"   ry="2.5" fill="#b87045" />
-      <ellipse cx="17.5" cy="17" rx="2.1" ry="2.3" fill="#0f0500" />
-      <ellipse cx="26.5" cy="17" rx="2.1" ry="2.3" fill="#0f0500" />
-      <ellipse cx="17.5" cy="17.3" rx="1.2" ry="1.4" fill="#4a2800" />
-      <ellipse cx="26.5" cy="17.3" rx="1.2" ry="1.4" fill="#4a2800" />
-      <circle cx="18.3" cy="16.2" r="0.65" fill="white" />
-      <circle cx="27.3" cy="16.2" r="0.65" fill="white" />
-      <path d="M15.5 15.5 Q17.5 14.2 19.5 15.5" fill="none" stroke="#0f0500" strokeWidth="0.9" />
-      <path d="M24.5 15.5 Q26.5 14.2 28.5 15.5" fill="none" stroke="#0f0500" strokeWidth="0.9" />
-      <ellipse cx="22" cy="21" rx="1.4" ry="0.8" fill="#a0623a" opacity="0.7" />
-      <path d="M18 23.5 Q22 27 26 23.5" fill="none" stroke="#8b4c2a" strokeWidth="1.5" strokeLinecap="round" />
-      <ellipse cx="14" cy="22.5" rx="2.8" ry="1.4" fill="#e06040" opacity="0.25" />
-      <ellipse cx="30" cy="22.5" rx="2.8" ry="1.4" fill="#e06040" opacity="0.25" />
-      <path d="M9 44 Q10 32 22 30 Q34 32 35 44Z" fill="#1a6e6e" />
-      <path d="M19 30 L22 34 L25 30 L22 32Z" fill="white" />
-      <path d="M22 30 L15 35 L13 44" fill="none" stroke="#135555" strokeWidth="1.1" />
-      <path d="M22 30 L29 35 L31 44" fill="none" stroke="#135555" strokeWidth="1.1" />
+
+      {/* Body — blazer with book */}
+      <path d="M8 44 Q10 30 22 29 Q34 30 36 44Z" fill="#2a5298" />
+      {/* Lapels */}
+      <path d="M22 29 L17 33 L15 44" fill="none" stroke="#1a3a7a" strokeWidth="1.2" />
+      <path d="M22 29 L27 33 L29 44" fill="none" stroke="#1a3a7a" strokeWidth="1.2" />
+      {/* White shirt */}
+      <path d="M20 29 L22 32 L24 29" fill="white" />
+      {/* Book in left hand */}
+      <rect x="9" y="30" width="8" height="10" rx="1.5" fill="#1a3a7a" />
+      <rect x="10" y="30" width="6" height="10" rx="1" fill="#e8f0fe" />
+      <line x1="11" y1="32" x2="15" y2="32" stroke="#9ab" strokeWidth="0.7" />
+      <line x1="11" y1="34" x2="15" y2="34" stroke="#9ab" strokeWidth="0.7" />
+      <line x1="11" y1="36" x2="13" y2="36" stroke="#9ab" strokeWidth="0.7" />
+
+      {/* Neck */}
+      <rect x="19.5" y="26" width="5" height="5" rx="2" fill="#b87045" />
+
+      {/* Head */}
+      <ellipse cx="22" cy="17" rx="10" ry="11" fill="#b87045" />
+
+      {/* Natural hair — full, shaped, proud */}
+      <ellipse cx="22" cy="9" rx="11" ry="8.5" fill="#1a0800" />
+      <ellipse cx="12" cy="14" rx="3" ry="6" fill="#1a0800" />
+      <ellipse cx="32" cy="14" rx="3" ry="6" fill="#1a0800" />
+      <ellipse cx="22" cy="6" rx="8" ry="5" fill="#1a0800" />
+      {/* Hair volume highlights */}
+      <ellipse cx="16" cy="8" rx="3" ry="1.5" fill="#2d0e00" opacity="0.5" />
+      <ellipse cx="28" cy="7.5" rx="2.5" ry="1.2" fill="#2d0e00" opacity="0.4" />
+
+      {/* Ears */}
+      <ellipse cx="12" cy="18" rx="2" ry="2.5" fill="#a86035" />
+      <ellipse cx="32" cy="18" rx="2" ry="2.5" fill="#a86035" />
+
+      {/* Glasses — thick dark frames, teacher-style */}
+      <rect x="13" y="15" width="6.5" height="4.5" rx="2.2" fill="none" stroke="#1a0800" strokeWidth="1.4" />
+      <rect x="21" y="15" width="6.5" height="4.5" rx="2.2" fill="none" stroke="#1a0800" strokeWidth="1.4" />
+      <line x1="19.5" y1="17.2" x2="21" y2="17.2" stroke="#1a0800" strokeWidth="1.4" />
+      {/* Arms */}
+      <line x1="13" y1="17.2" x2="11" y2="17.2" stroke="#1a0800" strokeWidth="1.4" />
+      <line x1="27.5" y1="17.2" x2="29.5" y2="17.2" stroke="#1a0800" strokeWidth="1.4" />
+
+      {/* Eyes behind glasses */}
+      <ellipse cx="16.2" cy="17.2" rx="1.5" ry="1.6" fill="#0f0500" />
+      <ellipse cx="24.2" cy="17.2" rx="1.5" ry="1.6" fill="#0f0500" />
+      <circle cx="16.8" cy="16.6" r="0.5" fill="white" />
+      <circle cx="24.8" cy="16.6" r="0.5" fill="white" />
+
+      {/* Eyebrows */}
+      <path d="M14 14.5 Q16.2 13.5 18.5 14.5" fill="none" stroke="#0f0500" strokeWidth="1" />
+      <path d="M22 14.5 Q24.2 13.5 26.5 14.5" fill="none" stroke="#0f0500" strokeWidth="1" />
+
+      {/* Nose */}
+      <ellipse cx="22" cy="20.5" rx="1.3" ry="0.7" fill="#9a5030" opacity="0.6" />
+
+      {/* Smile — warm and confident */}
+      <path d="M17.5 23 Q22 26.5 26.5 23" fill="none" stroke="#7a3520" strokeWidth="1.4" strokeLinecap="round" />
+
+      {/* Right arm raised — pointing up (inspired by reference) */}
+      <path d="M32 31 Q36 25 34 19" fill="none" stroke="#b87045" strokeWidth="3.5" strokeLinecap="round" />
+      {/* Pointing finger */}
+      <ellipse cx="33.5" cy="17.5" rx="1.2" ry="2.5" fill="#b87045" transform="rotate(-20 33.5 17.5)" />
     </svg>
   );
 }
@@ -975,12 +1012,37 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
   if (state.mode === "challenge" && chalPhase === "pick") {
     const choices = currentQ.answerChoices ?? [];
 
-    // No answer choices authored — silently drop into stepwise (practice-style)
-    // This handles old DB content without answerChoices gracefully
+    // No answer choices authored — show clear message with option to work through stepwise
+    // Kept visible so content gaps are obvious (not silently swallowed)
     if (choices.length === 0) {
-      dispatch({ type: "RESET_LIVES" });
-      setChalPhase("stepwise");
-      return null;
+      return (
+        <div className={styles.challengeRoot}>
+          <div className={styles.playBg} />
+          <Topbar />
+          <div className={styles.scroll}>
+            <MissionCard />
+            <div className={styles.coachCard}>
+              <div className={styles.coachHeader}>
+                <ChideraAvatar />
+                <span className={styles.coachName}>Ms. Chidera</span>
+              </div>
+              <div className={styles.coachText}>
+                Answer options aren&apos;t set up for this question yet.
+                Let&apos;s work through it step by step instead — you&apos;ll still earn XP!
+              </div>
+            </div>
+            <div className={styles.thinkZone}>
+              <button
+                className={styles.thinkReadyBtn}
+                onClick={() => { dispatch({ type: "RESET_LIVES" }); setChalPhase("stepwise"); }}
+              >
+                Work through it →
+              </button>
+            </div>
+          </div>
+          <div className={styles.bottomSpacer} />
+        </div>
+      );
     }
 
     return (
@@ -1163,12 +1225,7 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
               <div className={styles.coachText}
                 dangerouslySetInnerHTML={{ __html: coachText || activeStep.coach }}
               />
-              {isTellMode && correctIdx >= 0 && (
-                <div className={styles.coachTip}>
-                  <span className={styles.coachTipIcon}>💡</span>
-                  <span>Try: <strong>{activeStep.choices[correctIdx]?.label}</strong></span>
-                </div>
-              )}
+              {/* coachTip ("Try: ...") removed — coach explanation is already sufficient */}
             </>
           ) : (
             /* Practice & challenge stepwise — just the nudge question */
@@ -1207,21 +1264,34 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
         </div>
       )}
 
-      {/* Working popup — student completes the arithmetic before the result is revealed */}
+      {/* Working popup — student completes the arithmetic before the result is revealed.
+          Design principle: the question being asked must be visually unmistakable.
+          Context lines (what we've done so far) sit above a clear divider.
+          The question line shows ONLY what the student needs to answer — nothing after ?.
+          Options sit immediately below the question, large and tappable. */}
       {workingPopup && (() => {
         const blankLineIndices = workingPopup
           .map((l, i) => l.blank ? i : -1)
           .filter(i => i >= 0);
         const currentBlankLineIdx = blankLineIndices[workingLineIdx] ?? -1;
         const allBlanksDone = workingLineIdx >= blankLineIndices.length;
-        const isGuidedMode = state.mode === "guided";
-        const doneLabel = isGuidedMode ? "Got it →" : "Continue →";
+        const doneLabel = state.mode === "guided" ? "Got it →" : "Continue →";
+
+        // Split a blank line text at "?" into: the question part (before ?) and
+        // any trailing annotation (after ?). We show ONLY the question part.
+        // The trailing part (if any) was extra context authored for fallback display —
+        // hiding it keeps the question clean and unambiguous.
+        const splitBlankText = (text: string) => {
+          const idx = text.indexOf("?");
+          if (idx < 0) return { question: text, trailing: "" };
+          return { question: text.slice(0, idx).trimEnd(), trailing: text.slice(idx + 1).trimStart() };
+        };
 
         return (
           <div className={styles.workingOverlay}>
             <div className={styles.workingSheet}>
 
-              {/* Header — clear framing */}
+              {/* Header — restored: user likes this framing */}
               <div className={styles.wpHeader}>
                 <div className={styles.wpHeaderIcon}>✏️</div>
                 <div className={styles.wpHeaderText}>
@@ -1230,108 +1300,108 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
                   </div>
                   <div className={styles.wpHeaderSub}>
                     {allBlanksDone
-                      ? "All steps correct. See the result below."
+                      ? "All steps correct — see the result below."
                       : "Fill in the missing value to continue."}
                   </div>
                 </div>
               </div>
 
-              {/* Working lines — lines AFTER the current blank are hidden */}
-              <div className={styles.wpLines}>
-                {workingPopup.map((line, i) => {
-                  const isBlankLine  = line.blank !== undefined;
-                  const blankPos     = blankLineIndices.indexOf(i);
-                  const isActiveLine = i === currentBlankLineIdx;
-                  const isAnswered   = blankPos >= 0 && blankPos < workingLineIdx;
-                  const isFutureLine = isBlankLine && blankPos > workingLineIdx;
-
-                  // Hide plain-text lines that come AFTER the current unanswered blank
-                  // so the answer is never visible before the student earns it
-                  const hiddenAfterBlank = !isBlankLine && !allBlanksDone && i > currentBlankLineIdx && currentBlankLineIdx >= 0;
-                  if (hiddenAfterBlank) return null;
-                  if (isFutureLine) return null; // future blanks hidden too
-
-                  if (isBlankLine && isActiveLine) {
-                    // Active blank — split text at ? to show context clearly
-                    const parts = line.text.split("?");
-                    const before = parts[0] ?? line.text;
-                    const after  = parts[1] ?? "";
-
-                    return (
-                      <div key={i} className={styles.wpBlankBlock}>
-                        {/* Context label */}
-                        <div className={styles.wpBlankContext}>
-                          {before}<span className={styles.wpBlankSlot}>{blankDone ? line.blank!.answer : "___"}</span>{after}
-                        </div>
-                        {/* Options */}
-                        {!blankDone && (
-                          <div className={styles.wpOptions}>
-                            {line.blank!.options.map((opt, oi) => (
-                              <button
-                                key={oi}
-                                className={[
-                                  styles.wpOptionBtn,
-                                  blankAnswer === opt && opt === line.blank!.answer ? styles.wpOptionCorrect : "",
-                                  blankAnswer === opt && opt !== line.blank!.answer ? styles.wpOptionWrong  : "",
-                                ].join(" ")}
-                                onClick={() => {
-                                  if (blankDone) return;
-                                  setBlankAnswer(opt);
-                                  if (opt === line.blank!.answer) {
-                                    setBlankDone(true);
-                                  } else {
-                                    setTimeout(() => setBlankAnswer(null), 800);
-                                  }
-                                }}
-                                disabled={blankDone}
-                              >
-                                {opt}
-                              </button>
-                            ))}
+              {/* Context section — everything we've established so far */}
+              {(() => {
+                const contextLines = workingPopup
+                  .slice(0, currentBlankLineIdx < 0 ? undefined : currentBlankLineIdx)
+                  .filter((_, i) => {
+                    const isBlank = workingPopup[i]?.blank !== undefined;
+                    const blankPos = blankLineIndices.indexOf(i);
+                    return !isBlank || blankPos < workingLineIdx; // show answered blanks as context
+                  });
+                const hasContext = contextLines.some(l => !l.text.trim().startsWith("─"));
+                if (!hasContext && !allBlanksDone) return null;
+                return (
+                  <div className={styles.wpContext}>
+                    {contextLines.map((line, i) => {
+                      const isSep = line.text.trim().startsWith("─");
+                      if (isSep) return <div key={i} className={styles.wpSeparator} />;
+                      const isAnsweredBlank = line.blank !== undefined;
+                      if (isAnsweredBlank) {
+                        return (
+                          <div key={i} className={styles.wpContextLine}>
+                            <span className={styles.wpContextCheck}>✓</span>
+                            <span>{line.text.replace("?", line.blank!.answer)}</span>
                           </div>
-                        )}
-                        {blankAnswer && !blankDone && (
-                          <div className={styles.wpWrong}>Not quite — try again</div>
-                        )}
-                      </div>
-                    );
-                  }
+                        );
+                      }
+                      return <div key={i} className={styles.wpContextLine}>{line.text}</div>;
+                    })}
+                  </div>
+                );
+              })()}
 
-                  if (isBlankLine && isAnswered) {
-                    return (
-                      <div key={i} className={styles.wpLineAnswered}>
-                        <span className={styles.wpAnsweredCheck}>✓</span>
-                        <span>{line.text.replace("?", line.blank!.answer)}</span>
-                      </div>
-                    );
-                  }
+              {/* Question section — what the student must answer RIGHT NOW */}
+              {!allBlanksDone && currentBlankLineIdx >= 0 && (() => {
+                const activeLine = workingPopup[currentBlankLineIdx];
+                if (!activeLine?.blank) return null;
+                const { question } = splitBlankText(activeLine.text);
 
-                  // Plain context line — visible
-                  const isSeparator = line.text.trim().startsWith("─");
-                  return (
-                    <div key={i} className={isSeparator ? styles.wpSeparator : styles.wpLine}>
-                      {isSeparator ? null : line.text}
+                return (
+                  <div className={styles.wpQuestion}>
+                    {/* Question equation */}
+                    <div className={styles.wpQuestionEq}>
+                      {question} = <span className={styles.wpQuestionSlot}>
+                        {blankDone ? activeLine.blank.answer : "?"}
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
+                    {/* Options */}
+                    <div className={styles.wpOptions}>
+                      {activeLine.blank.options.map((opt, oi) => (
+                        <button
+                          key={oi}
+                          className={[
+                            styles.wpOptionBtn,
+                            blankAnswer === opt && opt === activeLine.blank!.answer ? styles.wpOptionCorrect : "",
+                            blankAnswer === opt && opt !== activeLine.blank!.answer ? styles.wpOptionWrong  : "",
+                          ].join(" ")}
+                          onClick={() => {
+                            if (blankDone) return;
+                            setBlankAnswer(opt);
+                            if (opt === activeLine.blank!.answer) {
+                              setBlankDone(true);
+                            } else {
+                              setTimeout(() => setBlankAnswer(null), 700);
+                            }
+                          }}
+                          disabled={blankDone}
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                    {blankAnswer && !blankDone && (
+                      <div className={styles.wpWrong}>Not quite — try again</div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* All done — result revealed message */}
+              {allBlanksDone && (
+                <div className={styles.wpAllDone}>
+                  <span className={styles.wpAllDoneIcon}>✓</span>
+                  <span>Correct! The working is complete.</span>
+                </div>
+              )}
 
               {/* Footer */}
               {!allBlanksDone ? (
                 blankDone ? (
-                  <button
-                    className={styles.wpNextBtn}
-                    onClick={() => {
-                      setBlankAnswer(null);
-                      setBlankDone(false);
-                      setWorkingLineIdx(prev => prev + 1);
-                    }}
-                  >
-                    Next step →
+                  <button className={styles.wpNextBtn} onClick={() => {
+                    setBlankAnswer(null);
+                    setBlankDone(false);
+                    setWorkingLineIdx(prev => prev + 1);
+                  }}>
+                    Next →
                   </button>
-                ) : (
-                  <div className={styles.wpHint}>Pick the correct value above ↑</div>
-                )
+                ) : null
               ) : (
                 <button className={styles.wpDoneBtn} onClick={advanceAfterWorking}>
                   {doneLabel}

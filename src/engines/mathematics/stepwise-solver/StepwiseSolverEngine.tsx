@@ -109,6 +109,7 @@ export interface StepwiseQuestion {
   finalAnswer: string;
   steps: QuestionStep[];
   answerChoices?: { label: string; correct: boolean }[];
+  caseHints?: string[];
   // mission metadata — used for per-question XP saving
   missionId?: string;
   topicId?: string;
@@ -134,7 +135,10 @@ function payloadToQuestion(m: MissionEntry): StepwiseQuestion | null {
   const p = m.payload;
   const formula = p.formula as string | undefined;
   const steps   = p.steps   as QuestionStep[] | undefined;
+  // Only match the legacy format where steps already have `choices` built in.
+  // CoSoF steps have `operation` instead — those are handled by payloadToFormulaQuestion.
   if (!formula || !steps || steps.length === 0) return null;
+  if (!steps[0].choices) return null; // not the legacy format — let next translator handle it
   return {
     goal:          (p.goal        as string) ?? "Solve",
     formula,
@@ -149,19 +153,147 @@ function payloadToQuestion(m: MissionEntry): StepwiseQuestion | null {
   };
 }
 
-// ─── Detective payload translator ─────────────────────────────────────────────
+// ─── Formula/Steps payload translator ─────────────────────────────────────────
+// Reads the Change-of-Subject JSON format:
+//   { formula, goal, topic, finalAnswer, steps: [{label, eq, operation, isFinal, workingLines}] }
+// and converts each step into a full QuestionStep with choices, coach text, etc.
+
+function payloadToFormulaQuestion(m: MissionEntry): StepwiseQuestion | null {
+  const p = m.payload;
+  const formula     = p.formula as string | undefined;
+  const goal        = p.goal    as string | undefined;
+  const finalAnswer = p.finalAnswer as string | undefined;
+  const rawSteps    = p.steps as Array<{
+    label: string;
+    eq: string;
+    operation: string;
+    isFinal?: boolean;
+    workingLines?: WorkingLine[];
+  }> | undefined;
+
+  if (!formula) return null;
+  // Challenge/Mastery missions have no steps — student solves on paper.
+  // Still return a valid question so the MCQ pick phase works.
+  if (!rawSteps || rawSteps.length === 0) {
+    if (!p.answerChoices) return null; // nothing to show at all
+    return {
+      goal:        goal ?? "Make the subject",
+      formula,
+      topic:       (p.topic as string) ?? "Change of Subject",
+      finalAnswer: finalAnswer ?? "",
+      steps:       [],
+      answerChoices: p.answerChoices as { label: string; correct: boolean }[],
+      caseHints:   p.caseHints as string[] | undefined,
+      missionId:   m.id,
+      topicId:     m.topicId,
+      subtopicId:  m.subtopicId,
+      xpReward:    m.xpReward,
+    };
+  }
+  // Only match if steps have the `operation` field — that's the CoSoF format.
+  if (!(rawSteps[0] as Record<string, unknown>).operation) return null;
+
+  const opDef = (op: string) =>
+    OPERATION_DEFS[op] ?? { icon: "🔢", label: op, sub: "" };
+
+  const steps: QuestionStep[] = rawSteps.map((s) => {
+    // Build a specific label for this exact step, not the generic operation name
+    const specificLabel = s.label; // e.g. "Subtract at from both sides"
+    const specificIcon = (OPERATION_DEFS[s.operation] ?? { icon: "🔢" }).icon;
+
+    // Wrong options: use the same operation category but with wrong-direction labels
+    const wrongLabels: Record<string, string[]> = {
+      subtract: ["Add to both sides", "Multiply both sides"],
+      add:      ["Subtract from both sides", "Divide both sides"],
+      divide:   ["Multiply both sides", "Add to both sides"],
+      multiply: ["Divide both sides", "Subtract from both sides"],
+      square:   ["Square root both sides", "Multiply both sides"],
+      sqrt:     ["Square both sides", "Divide both sides"],
+      rewrite:  ["Divide both sides", "Subtract from both sides"],
+      solve:    ["Substitute back", "Add to both sides"],
+    };
+    const wrongIconMap: Record<string, string[]> = {
+      subtract: ["➕","✖️"], add: ["➖","➗"], divide: ["✖️","➕"],
+      multiply: ["➗","➖"], square: ["√","✖️"], sqrt: ["²","➗"],
+      rewrite: ["➗","➖"], solve: ["🔄","➕"],
+    };
+    const wLabels = wrongLabels[s.operation] ?? ["Add to both sides", "Divide both sides"];
+    const wIcons  = wrongIconMap[s.operation] ?? ["➕","➗"];
+
+    const choices: StepChoice[] = shuffle([
+      { label: specificLabel, sub: `Use this to isolate the target`, icon: specificIcon, correct: true, operation: s.operation },
+      { label: wLabels[0], sub: `This would move things the wrong way`, icon: wIcons[0], correct: false, operation: "" },
+      { label: wLabels[1], sub: `This is not the right inverse here`, icon: wIcons[1], correct: false, operation: "" },
+    ]);
+
+    const coachLines: Record<string, string> = {
+      subtract: "We need to move things away from our target. Subtraction undoes addition — use it on both sides.",
+      add:      "Something has been subtracted from our target. Add it to both sides to cancel it out.",
+      divide:   "Our target is being multiplied by something. Divide both sides to undo that multiplication.",
+      multiply: "Our target is being divided. Multiply both sides to clear that denominator.",
+      square:   "There's a square root wrapping our target. Squaring both sides removes it — the root and the square cancel.",
+      sqrt:     "Our target is squared. Take the square root of both sides — that undoes the square.",
+      rewrite:  "The subject is isolated — just write it on the left to make it clear.",
+      solve:    "We can now divide to find the value of our target variable.",
+      substitute: "We know one variable — substitute it back into an equation to find the other.",
+    };
+    const coachWrongLines: Record<string, string> = {
+      subtract: "Not quite. Look at what's connected to your target — is something being added to it? Undo that first.",
+      add:      "Not quite. Something is being taken away from your target — what undoes subtraction?",
+      divide:   "Not quite. Your target is being multiplied. What operation cancels multiplication?",
+      multiply: "Not quite. Your target is in a denominator. Multiply both sides to bring it up.",
+      square:   "Not quite. There's a square root here. What undoes a square root?",
+      sqrt:     "Not quite. Your target is squared. What undoes squaring?",
+      rewrite:  "Nearly there — just swap the sides so the subject is on the left.",
+      solve:    "Not quite — we have one variable times a number. What undoes multiplication?",
+      substitute: "Not quite — we know one variable already. Put it into the equation.",
+    };
+
+    return {
+      trailLabel:     s.label,
+      resultEq:       s.eq,
+      coach:          coachLines[s.operation] ?? `${specificIcon} ${s.label}`,
+      coachWrong:     coachWrongLines[s.operation] ?? "Not quite — think about the inverse of what's happening to the subject.",
+      hint:           `Try: ${specificLabel}`,
+      choiceQuestion: `${goal ?? "Make the subject"} — what's the next step?`,
+      choices,
+      workingLines:   s.workingLines,
+    };
+  });
+
+  return {
+    goal:        goal ?? "Make the subject",
+    formula,
+    topic:       (p.topic as string) ?? "Change of Subject",
+    finalAnswer: finalAnswer ?? "",
+    steps,
+    answerChoices: p.answerChoices as { label: string; correct: boolean }[] | undefined,
+    missionId:   m.id,
+    topicId:     m.topicId,
+    subtopicId:  m.subtopicId,
+    xpReward:    m.xpReward,
+  };
+}
+
 // Reads the simultaneous-equations-detective.json format (equations + solutionSteps)
 // and converts it into the StepwiseQuestion shape the engine expects.
 // This is completely additive — the original payloadToQuestion still handles
 // content authored in the formula/steps format.
 
 const OPERATION_DEFS: Record<string, { icon: string; label: string; sub: string }> = {
+  // Simultaneous equations operations
   add:          { icon: "➕", label: "Add the equations",         sub: "Adds both equations together" },
   subtract:     { icon: "➖", label: "Subtract the equations",    sub: "Subtracts one equation from the other" },
   multiply_eq1: { icon: "✖️",  label: "Multiply equation 1",       sub: "Scales equation 1 by a factor" },
   multiply_eq2: { icon: "✖️",  label: "Multiply equation 2",       sub: "Scales equation 2 by a factor" },
   solve:        { icon: "🔢", label: "Divide to solve",            sub: "Isolates the variable" },
   substitute:   { icon: "🔄", label: "Substitute back",           sub: "Replaces a known value" },
+  // Change of subject operations
+  divide:       { icon: "➗", label: "Divide both sides",         sub: "Divides the whole expression on both sides" },
+  multiply:     { icon: "✖️",  label: "Multiply both sides",       sub: "Multiplies the whole expression on both sides" },
+  square:       { icon: "²",  label: "Square both sides",         sub: "Removes a square root by squaring" },
+  sqrt:         { icon: "√",  label: "Square root both sides",    sub: "Removes a square by taking the root" },
+  rewrite:      { icon: "✏️", label: "Rewrite with subject first", sub: "Swaps sides so the subject is on the left" },
 };
 
 // Wrong operation distractors per correct operation
@@ -172,6 +304,11 @@ const WRONG_OPS: Record<string, string[]> = {
   multiply_eq2: ["multiply_eq1", "subtract", "add"],
   solve:        ["substitute", "add", "subtract"],
   substitute:   ["solve", "add", "subtract"],
+  divide:       ["multiply", "subtract", "add"],
+  multiply:     ["divide", "subtract", "add"],
+  square:       ["sqrt", "multiply", "divide"],
+  sqrt:         ["square", "divide", "multiply"],
+  rewrite:      ["divide", "subtract", "add"],
 };
 
 function buildWorkingLines(
@@ -335,7 +472,7 @@ function missionsToQuestions(missions: MissionEntry[]): StepwiseQuestion[] {
       if (seen.has(m.missionKey)) return acc;
       seen.add(m.missionKey);
       // Try the formula/steps format first, then the detective (equations/solutionSteps) format
-      const q = payloadToQuestion(m) ?? payloadToDetectiveQuestion(m);
+      const q = payloadToQuestion(m) ?? payloadToFormulaQuestion(m) ?? payloadToDetectiveQuestion(m);
       if (q) acc.push(q);
       return acc;
     }, []);
@@ -348,6 +485,27 @@ function shuffle<T>(arr: T[]): T[] {
     [out[i], out[j]] = [out[j], out[i]];
   }
   return out;
+}
+
+// ─── Working-line renderer — converts plain text fractions to KaTeX ───────────
+// Converts "a / b" → \frac{a}{b}, ² → ^{2}, × → \times etc.
+function toKaTeX(text: string): string {
+  if (text.includes("\\")) return text; // already LaTeX
+  let t = text
+    .replace(/×/g, "\\times ")
+    .replace(/÷/g, "\\div ")
+    .replace(/([A-Za-z])\²/g, "$1^{2}")
+    .replace(/([A-Za-z])\³/g, "$1^{3}");
+  // Convert simple a / b patterns to \frac{a}{b}
+  // Match: word(s)/word(s) but not ─── separators
+  t = t.replace(/([A-Za-z0-9()π]+)\s*\/\s*([A-Za-z0-9()π]+)/g, (_, n, d) => `\\frac{${n}}{${d}}`);
+  return t;
+}
+
+function WorkingLineText({ text }: { text: string }) {
+  const hasMath = /[/×÷²³]|[A-Za-z]\d/.test(text) && !text.trim().startsWith("─");
+  if (hasMath) return <KaTeX tex={toKaTeX(text)} />;
+  return <span>{text}</span>;
 }
 
 // ─── Formula display ──────────────────────────────────────────────────────────
@@ -530,18 +688,33 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
   const [reviewTrail, setReviewTrail]       = useState<{ label: string; eq: string }[]>([]);
 
   const timerRef   = useRef<ReturnType<typeof setInterval> | null>(null);
+  const wrongPickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startTime  = useRef(Date.now());
   const totalTries = useRef(0);
   const completedReported = useRef(false);
+  // Holds generated fallback steps for challenge questions that have no authored steps.
+  // Populated when student gets 2 wrong picks — shows case hints as tap-through reveal.
+  const fallbackStepsRef = useRef<QuestionStep[]>([]);
 
   const currentQ   = questions.length
     ? questions[Math.min(state.questionIdx, questions.length - 1)]
     : undefined;
-  const activeStep = currentQ?.steps[stepIdx];
+  // Use fallback steps if the question has none (challenge/mastery MCQ format)
+  const effectiveSteps = (currentQ?.steps.length ?? 0) > 0
+    ? (currentQ?.steps ?? [])
+    : fallbackStepsRef.current;
+  const activeStep = effectiveSteps[stepIdx];
   const isFirstVisit = !state.seenFormulas.has(currentQ?.formula ?? "");
   const isTellMode   = state.mode === "guided" && isFirstVisit;
-  const correctIdx   = activeStep?.choices.findIndex(c => c.correct) ?? -1;
+  const correctIdx   = activeStep?.choices?.findIndex(c => c.correct) ?? -1;
   const hasMore      = state.questionIdx + 1 < questions.length;
+
+  // Challenge MCQ choices — shuffled once per question, stable across re-renders.
+  // Must be declared here (not inside the conditional block below) so hook order is always the same.
+  const challengeChoices = React.useMemo(
+    () => shuffle([...(currentQ?.answerChoices ?? [])]),
+    [state.questionIdx] // eslint-disable-line
+  );
 
   const nextMode: StepMode | null =
     state.mode === "guided"   ? (practiceQ.length  > 0 ? "practice"  : null) :
@@ -553,8 +726,9 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
   // Shuffle choices per step for practice + challenge stepwise
   useEffect(() => {
     if (!activeStep) return;
+    const choices = activeStep.choices ?? [];
     const shouldShuffle = state.mode === "practice" || isChallengeStepwise;
-    setShuffledChoices(shouldShuffle ? shuffle(activeStep.choices) : activeStep.choices);
+    setShuffledChoices(shouldShuffle ? shuffle(choices) : choices);
   }, [state.questionIdx, stepIdx, state.mode, isChallengeStepwise]); // eslint-disable-line
 
   // Reset all step state when question or screen changes
@@ -606,11 +780,24 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
   const [showHeartOut, setShowHeartOut] = useState(false);
   useEffect(() => {
     if (showHearts && state.lives === 0 && !questionDone) {
+      // Cancel any pending wrong-pick unlock timeout — it would corrupt state
+      // if it fired while the heart-out screen is showing, causing the black freeze.
+      if (wrongPickTimeoutRef.current) {
+        clearTimeout(wrongPickTimeoutRef.current);
+        wrongPickTimeoutRef.current = null;
+      }
+      setLocked(false);
+      setFeedback({});
       setShowHeartOut(true);
     }
   }, [state.lives, showHearts, questionDone]);
 
   const restartQuestion = useCallback(() => {
+    if (wrongPickTimeoutRef.current) {
+      clearTimeout(wrongPickTimeoutRef.current);
+      wrongPickTimeoutRef.current = null;
+    }
+    fallbackStepsRef.current = [];
     setStepIdx(0);
     setCompletedSteps([]);
     setQuestionDone(false);
@@ -704,7 +891,7 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
 
       setTimeout(() => {
         const newStep = { label: activeStep.trailLabel, eq: activeStep.resultEq, workingLines: activeStep.workingLines };
-        const isLast  = stepIdx >= currentQ.steps.length - 1;
+        const isLast  = stepIdx >= effectiveSteps.length - 1;
 
         const hasWorking    = !!(activeStep.workingLines && activeStep.workingLines.length > 0);
         const hasBlanks     = hasWorking && activeStep.workingLines!.some(l => l.blank);
@@ -746,7 +933,7 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
       // Show the sub text as feedback toast (what this wrong option would have done)
       if (choice.sub) setWrongFeedback(choice.sub);
       setCoachText(activeStep.coachWrong);
-      setTimeout(() => { setFeedback({}); setLocked(false); }, 1400);
+      wrongPickTimeoutRef.current = setTimeout(() => { setFeedback({}); setLocked(false); }, 1400);
     }
   }, [locked, activeStep, currentQ, stepIdx, questionDone, state]); // eslint-disable-line
 
@@ -761,10 +948,8 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
       setChalFullXp(true);
       dispatch({ type: "EARN_XP", amount: 40 });
       saveQuestionXp(currentQ, 40);
-      // Build trail so user can review the working on the next screen
-      const trail = currentQ.steps.map(s => ({ label: s.trailLabel, eq: s.resultEq }));
+      const trail = effectiveSteps.map(s => ({ label: s.trailLabel, eq: s.resultEq }));
       setReviewTrail(trail);
-      // Go to review screen — onComplete fires when user taps Next, not here
       setTimeout(() => { setChalPhase("review_pick"); setChalLocked(false); }, 600);
     } else {
       setChalFeedback(prev => ({ ...prev, [idx]: "wrong" }));
@@ -773,7 +958,34 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
       setChalWrong(newWrong);
       if (newWrong >= 2) {
         dispatch({ type: "RESET_LIVES" });
-        setTimeout(() => { setChalPhase("stepwise"); setChalLocked(false); }, 1000);
+        if (effectiveSteps.length === 0) {
+          // Challenge mission has no authored steps — build a reveal-only walkthrough
+          // from caseHints + finalAnswer so the student sees the solution method.
+          const hints = currentQ.caseHints ?? [];
+          fallbackStepsRef.current = [
+            ...hints.map((hint, i) => ({
+              trailLabel:     `Step ${i + 1}`,
+              resultEq:       hint,
+              coach:          hint,
+              coachWrong:     "",
+              hint:           "",
+              choiceQuestion: "Tap to continue",
+              choices:        [{ icon: "→", label: "Continue", sub: "", correct: true, operation: "next" }],
+              workingLines:   undefined,
+            })),
+            {
+              trailLabel:     "Final answer",
+              resultEq:       currentQ.finalAnswer,
+              coach:          `The correct answer is: ${currentQ.finalAnswer}`,
+              coachWrong:     "",
+              hint:           "",
+              choiceQuestion: "Tap to confirm",
+              choices:        [{ icon: "✓", label: "Got it", sub: "", correct: true, operation: "next" }],
+              workingLines:   undefined,
+            },
+          ];
+        }
+        setTimeout(() => { setChalPhase("stepwise"); setChalLocked(false); setStepIdx(0); }, 1000);
       } else {
         setTimeout(() => setChalLocked(false), 1200);
       }
@@ -931,10 +1143,7 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
   // step resolves. This ensures the student always sees their completed work first.
   const NavBlock = ({ xpLabel }: { xpLabel: string }) => {
     const advance = () => {
-      // Internal flow only — do NOT call onComplete here.
-      // onComplete fires only once, when the whole mode is exhausted (in finish()).
-      // Calling it per-question causes the platform shell to show ReflectionScreen
-      // after every question, breaking the in-engine flow.
+      fallbackStepsRef.current = [];
       const nextIdx = state.questionIdx + 1;
       saveProgress(state.mode, nextIdx);
       dispatch({ type: "NEXT_QUESTION", nextIdx });
@@ -1037,7 +1246,7 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
   // CHALLENGE: pick final answer (MCQ)
   // ─────────────────────────────────────────────────────────────────────────────
   if (state.mode === "challenge" && chalPhase === "pick") {
-    const choices = currentQ.answerChoices ?? [];
+    const choices = challengeChoices;
 
     // No answer choices authored — show clear message with option to work through stepwise
     // Kept visible so content gaps are obvious (not silently swallowed)
@@ -1174,7 +1383,7 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
       <Topbar extra={
         !showHearts ? (
           <div className={styles.stepCounter}>
-            Step <strong>{questionDone ? currentQ.steps.length : stepIdx + 1}/{currentQ.steps.length}</strong>
+            Step <strong>{questionDone ? effectiveSteps.length : stepIdx + 1}/{effectiveSteps.length}</strong>
           </div>
         ) : undefined
       } />
@@ -1265,7 +1474,7 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
       {!questionDone && activeStep && (
         <div className={styles.choicesZone}>
           <div className={styles.choicesGrid}>
-            {shuffledChoices.map((ch, i) => (
+            {(shuffledChoices ?? []).map((ch, i) => (
               <button key={i}
                 className={[
                   styles.choiceBtn,
@@ -1328,7 +1537,7 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
                   <div className={styles.wpHeaderSub}>
                     {allBlanksDone
                       ? "All steps correct — see the result below."
-                      : "Fill in the missing value to continue."}
+                      : `Complete the missing value — ${activeStep?.trailLabel?.toLowerCase() ?? "fill in the step"}`}
                   </div>
                 </div>
               </div>
@@ -1354,11 +1563,11 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
                         return (
                           <div key={i} className={styles.wpContextLine}>
                             <span className={styles.wpContextCheck}>✓</span>
-                            <span>{line.text.replace("?", line.blank!.answer)}</span>
+                            <WorkingLineText text={line.text.replace("?", line.blank!.answer)} />
                           </div>
                         );
                       }
-                      return <div key={i} className={styles.wpContextLine}>{line.text}</div>;
+                      return <div key={i} className={styles.wpContextLine}><WorkingLineText text={line.text} /></div>;
                     })}
                   </div>
                 );
@@ -1374,13 +1583,13 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
                   <div className={styles.wpQuestion}>
                     {/* Question equation */}
                     <div className={styles.wpQuestionEq}>
-                      {question}{question.trimEnd().endsWith("=") ? " " : " = "}<span className={styles.wpQuestionSlot}>
+                      <WorkingLineText text={question} />{question.trimEnd().endsWith("=") ? " " : " = "}<span className={styles.wpQuestionSlot}>
                         {blankDone ? activeLine.blank.answer : "?"}
                       </span>
                     </div>
-                    {/* Options */}
+                    {/* Options — shuffled so correct answer isn't always first */}
                     <div className={styles.wpOptions}>
-                      {activeLine.blank.options.map((opt, oi) => (
+                      {shuffle([...activeLine.blank.options]).map((opt, oi) => (
                         <button
                           key={oi}
                           className={[
@@ -1404,7 +1613,7 @@ export default function StepwiseSolverEngine({ config, onComplete }: EngineRunti
                       ))}
                     </div>
                     {blankAnswer && !blankDone && (
-                      <div className={styles.wpWrong}>Not quite — try again</div>
+                      <div className={styles.wpWrong}>Not quite — look at both sides carefully</div>
                     )}
                   </div>
                 );

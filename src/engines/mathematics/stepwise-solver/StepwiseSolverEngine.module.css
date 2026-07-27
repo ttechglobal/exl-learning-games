@@ -255,11 +255,12 @@
 .mcFormulaLine .katex-html { color: #1a0e02 !important; }
 
 .mcGoal {
-  font-family: 'Inter', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  color: rgba(60,40,10,0.6);
-  margin-top: 2px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: rgba(60,40,10,0.85);
+  margin-top: 6px;
+  letter-spacing: -0.01em;
 }
 
 .mcStamp {

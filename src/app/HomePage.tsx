@@ -9,6 +9,7 @@ import styles from "@/app/HomePage.module.css";
 interface LeaderboardEntry {
   studentId: string;
   displayName?: string | null;
+  school?: string | null;
   xpTotal: number;
   rank: number;
 }
@@ -16,17 +17,16 @@ interface LeaderboardEntry {
 interface HomePageProps {
   gamesBySubject: Record<string, GameRow[]>;
   currentStudentXp?: number;
-  /** Provided by page.tsx but not used in this version of the homepage */
   featuredGames?: GameRow[];
   leaderboard?: LeaderboardEntry[];
   previousChampion?: LeaderboardEntry | null;
 }
 
 const WORLDS = [
-  { key:"chemistry",   name:"Chemistry World",   headline:"Build atoms. Break bonds.",         tagline:"See what matter is made of.",           icon:"⚗️", glyph:"⚗", rgb:"123,79,203",  color:"var(--eg-subject-chemistry)",   gradient:"linear-gradient(145deg,#1a0840,#2d1260 60%,#0e0420)" },
-  { key:"mathematics", name:"Mathematics World", headline:"Solve equations.",                  tagline:"Own the numbers. Build the proofs.",     icon:"📐", glyph:"∑", rgb:"47,155,214",   color:"var(--eg-subject-mathematics)", gradient:"linear-gradient(145deg,#031828,#062848 60%,#020e18)" },
-  { key:"physics",     name:"Physics World",     headline:"Apply forces. Trace light.",        tagline:"Move through space — for real.",         icon:"⚡", glyph:"⚡",rgb:"255,111,145",  color:"var(--eg-subject-physics)",     gradient:"linear-gradient(145deg,#200818,#380820 60%,#120410)" },
-  { key:"biology",     name:"Biology World",     headline:"Study cells. Map life.",            tagline:"Decode the most complex system ever.",   icon:"🧬", glyph:"⬡", rgb:"76,175,110",   color:"var(--eg-subject-biology)",     gradient:"linear-gradient(145deg,#021408,#082814 60%,#010a04)" },
+  { key:"chemistry",   name:"Chemistry World",   headline:"Build atoms. Break bonds.",     tagline:"See what matter is made of.",         icon:"⚗️", glyph:"⚗", rgb:"123,79,203",  color:"var(--eg-subject-chemistry)",   gradient:"linear-gradient(145deg,#1a0840,#2d1260 60%,#0e0420)" },
+  { key:"mathematics", name:"Mathematics World", headline:"Solve equations. Own numbers.", tagline:"Build the proofs. Step by step.",     icon:"📐", glyph:"∑", rgb:"47,155,214",   color:"var(--eg-subject-mathematics)", gradient:"linear-gradient(145deg,#031828,#062848 60%,#020e18)" },
+  { key:"physics",     name:"Physics World",     headline:"Apply forces. Trace light.",    tagline:"Move through space — for real.",       icon:"⚡", glyph:"⚡",rgb:"255,111,145",  color:"var(--eg-subject-physics)",     gradient:"linear-gradient(145deg,#200818,#380820 60%,#120410)" },
+  { key:"biology",     name:"Biology World",     headline:"Study cells. Map life.",        tagline:"Decode the most complex system ever.", icon:"🧬", glyph:"⬡", rgb:"76,175,110",   color:"var(--eg-subject-biology)",     gradient:"linear-gradient(145deg,#021408,#082814 60%,#010a04)" },
 ];
 
 const FLOATERS = [
@@ -40,27 +40,40 @@ const FLOATER_RGB: Record<string,string>   = { chemistry:"123,79,203", mathemati
 const FLOATER_GLYPH: Record<string,string> = { chemistry:"⚗", mathematics:"∑", physics:"⚡", biology:"⬡" };
 
 const STEPS = [
-  { icon:"🎯", title:"Enter a World",        body:"Choose a subject — Chemistry, Maths, Physics, Biology. Each maps directly to the curriculum you're studying." },
+  { icon:"🎯", title:"Enter a World",          body:"Choose a subject — Chemistry, Maths, Physics, Biology. Each maps directly to the curriculum you're studying." },
   { icon:"🔬", title:"Interact with concepts", body:"Build atoms. Drag particles. Solve equations on a live canvas. The interaction IS the lesson — not a description of it." },
-  { icon:"📈", title:"Build mastery",         body:"EXL tracks every topic you've understood. Real progress — not streaks, not points, just knowledge." },
+  { icon:"📈", title:"Build mastery",          body:"EXL tracks every topic you've understood. Real progress — not streaks, not points, just knowledge." },
 ];
 
-export function HomePage({ gamesBySubject, currentStudentXp }: HomePageProps) {
+const CURRICULA = [
+  { name:"WAEC",  full:"West African Senior School Certificate" },
+  { name:"JAMB",  full:"Joint Admissions & Matriculation Board" },
+  { name:"IGCSE", full:"Cambridge International" },
+  { name:"JSS",   full:"Junior Secondary School" },
+  { name:"SS1–3", full:"Senior Secondary" },
+];
+
+function rankIcon(i: number): string {
+  return i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`;
+}
+
+function displayName(entry: LeaderboardEntry): string {
+  return entry.displayName?.trim() || `Player ${entry.studentId.slice(0, 6)}`;
+}
+
+export function HomePage({ gamesBySubject, currentStudentXp, leaderboard, previousChampion }: HomePageProps) {
   const { theme, toggleTheme } = useTheme();
-  const totalGames = Object.values(gamesBySubject).reduce((s,g) => s + g.length, 0);
+  const topFive = (leaderboard ?? []).slice(0, 5);
+  const hasLeaderboard = topFive.length > 0 || previousChampion;
 
   return (
     <div className={styles.page} data-theme={theme}>
 
-      {/* Grid texture */}
       <div className={styles.gridTexture} aria-hidden="true" />
 
-      {/* Floating subject atoms */}
       <div className={styles.floaters} aria-hidden="true">
         {FLOATERS.map((f, i) => (
-          <div
-            key={i}
-            className={styles.floater}
+          <div key={i} className={styles.floater}
             style={{
               top: f.top,
               left: "left" in f ? (f as {left:string}).left : undefined,
@@ -77,14 +90,13 @@ export function HomePage({ gamesBySubject, currentStudentXp }: HomePageProps) {
 
       <SiteHeader theme={theme} onToggleTheme={toggleTheme} active="games" currentStudentXp={currentStudentXp} />
 
-      {/* ── HERO BANNER — centred, no mascots ────────────────────────────── */}
+      {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
       <section className={styles.hero}>
         <div className={styles.heroContent}>
           <div className={styles.eyebrow}>
             <span className={styles.eyebrowDot} />
             EXL Learning World
           </div>
-
           <h1 className={styles.heroTitle}>
             <span className={styles.titleLine1}>Let the</span>
             <span className={styles.titleTray}>
@@ -92,26 +104,17 @@ export function HomePage({ gamesBySubject, currentStudentXp }: HomePageProps) {
             </span>
             <span className={styles.titleLine3}>Begin.</span>
           </h1>
-
           <p className={styles.heroSub}>
-            Chemistry. Mathematics. Physics. Biology.
-            Four interactive worlds that build real understanding —
-            not passive reading or multiple-choice quizzes.
+            Interactive worlds that build real understanding.
+            Not passive reading. Not quizzes.
           </p>
-
           <div className={styles.heroCtas}>
             <Link href="/worlds" className={styles.ctaMain}>Enter a World →</Link>
-            <span className={styles.ctaNote}>{totalGames} experience{totalGames !== 1 ? "s" : ""} live</span>
           </div>
-
-          {/* Subject colour pills */}
           <div className={styles.subjectPills}>
             {WORLDS.map(w => (
-              <span
-                key={w.key}
-                className={styles.subjectPill}
-                style={{ "--prgb": w.rgb } as React.CSSProperties}
-              >
+              <span key={w.key} className={styles.subjectPill}
+                style={{ "--prgb": w.rgb } as React.CSSProperties}>
                 {w.icon} {w.key.charAt(0).toUpperCase() + w.key.slice(1)}
               </span>
             ))}
@@ -119,24 +122,19 @@ export function HomePage({ gamesBySubject, currentStudentXp }: HomePageProps) {
         </div>
       </section>
 
-      {/* ── WORLD TRAY ───────────────────────────────────────────────────── */}
+      {/* ── 2. WORLD TRAY ──────────────────────────────────────────────────── */}
       <section className={styles.traySection}>
         <div className={styles.container}>
           <div className={styles.trayHeader}>
             <span className={styles.trayLabel}>🌍 Choose your world</span>
             <Link href="/worlds" className={styles.seeAll}>See all →</Link>
           </div>
-
           <div className={styles.worldTray}>
             {WORLDS.map((w, i) => {
               const games = gamesBySubject[w.key] ?? [];
               return (
-                <Link
-                  key={w.key}
-                  href="/worlds"
-                  className={styles.worldCard}
-                  style={{ "--wrgb": w.rgb, "--wc": w.color, animationDelay: `${i * 0.08}s` } as React.CSSProperties}
-                >
+                <Link key={w.key} href="/worlds" className={styles.worldCard}
+                  style={{ "--wrgb": w.rgb, "--wc": w.color, animationDelay: `${i * 0.08}s` } as React.CSSProperties}>
                   <div className={styles.wcArt} style={{ background: w.gradient }}>
                     <span className={styles.wcArtGlyph} aria-hidden="true">{w.glyph}</span>
                     <div className={styles.wcArtBadge}>{w.icon} {w.name}</div>
@@ -158,7 +156,7 @@ export function HomePage({ gamesBySubject, currentStudentXp }: HomePageProps) {
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ─────────────────────────────────────────────────── */}
+      {/* ── 3. HOW IT WORKS ────────────────────────────────────────────────── */}
       <section className={styles.how}>
         <div className={styles.container}>
           <div className={styles.howEyebrow}>How it works</div>
@@ -176,7 +174,126 @@ export function HomePage({ gamesBySubject, currentStudentXp }: HomePageProps) {
         </div>
       </section>
 
-      {/* ── STATEMENT ────────────────────────────────────────────────────── */}
+      {/* ── 4. CURRICULUM ──────────────────────────────────────────────────── */}
+      <section className={styles.curriculumSection}>
+        <div className={styles.container}>
+          <div className={styles.curriculumInner}>
+            <div className={styles.curriculumEyebrow}>Works with your curriculum</div>
+            <h2 className={styles.curriculumTitle}>
+              Built for Nigerian &amp; British syllabuses
+            </h2>
+            <p className={styles.curriculumSub}>
+              Every topic, question, and interaction is aligned to the exams and
+              curricula you actually sit. Whether you&apos;re in JSS or SS3,
+              preparing for WAEC, JAMB, or IGCSE — EXL fits your path.
+            </p>
+            <div className={styles.curriculumRight}>
+              {CURRICULA.map(c => (
+                <div key={c.name} className={styles.curriculumCard}>
+                  <div className={styles.curriculumName}>{c.name}</div>
+                  <div className={styles.curriculumFull}>{c.full}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 5. LEADERBOARD ─────────────────────────────────────────────────── */}
+      {hasLeaderboard && (
+        <section className={styles.leaderSection}>
+          <div className={styles.container}>
+            <div className={styles.leaderTop}>
+              <div className={styles.leaderEyebrow}>🏆 Hall of Fame</div>
+              <h2 className={styles.leaderTitle}>Who&apos;s dominating this week?</h2>
+              <p className={styles.leaderSub}>
+                The arena never sleeps. Every question answered, every stage cleared —
+                it all counts.
+              </p>
+            </div>
+
+            <div className={styles.leaderGrid}>
+
+              {/* ── Champion (left, big) */}
+              {previousChampion && (
+                <div className={styles.championCard}>
+                  <div className={styles.championGlow} aria-hidden="true" />
+                  <div className={styles.championCrownRow}>
+                    <span className={styles.championCrown}>👑</span>
+                    <span className={styles.championWeekLabel}>Last week&apos;s champion</span>
+                  </div>
+                  <div className={styles.championAvatar}>
+                    {displayName(previousChampion).charAt(0).toUpperCase()}
+                  </div>
+                  <div className={styles.championName}>{displayName(previousChampion)}</div>
+                  {previousChampion.school && (
+                    <div className={styles.championSchool}>🏫 {previousChampion.school}</div>
+                  )}
+                  <div className={styles.championXpBadge}>
+                    ⭐ {previousChampion.xpTotal.toLocaleString()} <span>XP</span>
+                  </div>
+                  <div className={styles.championRankBadge}>#1 overall</div>
+                </div>
+              )}
+
+              {/* ── This week (right, compact) */}
+              {topFive.length > 0 && (
+                <div className={styles.thisWeekPanel}>
+                  <div className={styles.thisWeekLabel}>⚡ This week&apos;s arena</div>
+                  <div className={styles.thisWeekList}>
+                    {topFive.map((entry, i) => (
+                      <div key={entry.studentId} className={styles.thisWeekRow}>
+                        <div className={styles.thisWeekRank}>
+                          {rankIcon(i)}
+                        </div>
+                        <div className={styles.thisWeekInfo}>
+                          <div className={styles.thisWeekName}>{displayName(entry)}</div>
+                          {entry.school && (
+                            <div className={styles.thisWeekSchool}>{entry.school}</div>
+                          )}
+                        </div>
+                        <div className={styles.thisWeekXp}>
+                          ⭐ {entry.xpTotal.toLocaleString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className={styles.thisWeekFooter}>
+                    <Link href="/leaderboard" className={styles.leaderLink}>
+                      See full leaderboard →
+                    </Link>
+                    <Link href="/invite" className={styles.inviteLink}>
+                      Invite a friend ✉️
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {/* If no champion but has leaderboard */}
+              {!previousChampion && topFive.length > 0 && (
+                <div className={styles.leaderFallback}>
+                  <div className={styles.thisWeekLabel}>⚡ This week&apos;s arena</div>
+                  {topFive.map((entry, i) => (
+                    <div key={entry.studentId} className={styles.thisWeekRow}>
+                      <div className={styles.thisWeekRank}>
+                        {rankIcon(i)}
+                      </div>
+                      <div className={styles.thisWeekInfo}>
+                        <div className={styles.thisWeekName}>{displayName(entry)}</div>
+                        {entry.school && <div className={styles.thisWeekSchool}>{entry.school}</div>}
+                      </div>
+                      <div className={styles.thisWeekXp}>⭐ {entry.xpTotal.toLocaleString()}</div>
+                    </div>
+                  ))}
+                  <Link href="/leaderboard" className={styles.leaderLink}>See full leaderboard →</Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── 6. STATEMENT ───────────────────────────────────────────────────── */}
       <section className={styles.statement}>
         <div className={styles.container}>
           <div className={styles.statementInner}>
@@ -193,7 +310,7 @@ export function HomePage({ gamesBySubject, currentStudentXp }: HomePageProps) {
         </div>
       </section>
 
-      {/* ── FOOTER ───────────────────────────────────────────────────────── */}
+      {/* ── FOOTER ─────────────────────────────────────────────────────────── */}
       <footer className={styles.footer}>
         <div className={`${styles.container} ${styles.footerInner}`}>
           <div className={styles.footerBrand}>

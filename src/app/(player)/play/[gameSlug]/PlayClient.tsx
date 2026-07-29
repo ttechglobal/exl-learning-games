@@ -20,6 +20,7 @@ import type { GameRow, MissionRow } from "@/types/db";
 
 export interface PlayClientProps {
   studentId: string;
+  studentName?: string | null;
   game: GameRow;
   missions: MissionRow[];
   initialMissionId: string;
@@ -51,7 +52,7 @@ const SUBJECT_FALLBACK_ACCENT: Record<string, string> = {
 /** Engine types that handle their own mode/difficulty selection internally */
 const SELF_SELECTING_ENGINES = ["stepwise-solver", "change-of-subject"];
 
-export function PlayClient({ studentId, game, missions, initialMissionId, completedMissionIds }: PlayClientProps) {
+export function PlayClient({ studentId, studentName, game, missions, initialMissionId, completedMissionIds }: PlayClientProps) {
   const router = useRouter();
   const sortedMissions = useMemo(() => [...missions].sort((a, b) => a.sequence_index - b.sequence_index), [missions]);
 
@@ -69,7 +70,11 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
   // show title + narration, then go straight to runtime (engine hub).
   const isSelfSelecting = SELF_SELECTING_ENGINES.includes(game.engine_type);
 
-  const [screen,               setScreen]             = useState<Screen>("title");
+  // Skip title/narration for games with level selection — go straight to level picker
+  const initialScreen: Screen = (!isSelfSelecting && (isLevelBased || sortedMissions.length > 1))
+    ? "levelSelect"
+    : "title";
+  const [screen,               setScreen]             = useState<Screen>(initialScreen);
   const [activeMissionId,      setActiveMissionId]    = useState(initialMissionId);
   const [playerDifficulty,     setPlayerDifficulty]   = useState<PlayerDifficulty | null>(null);
   const [locallyCompletedIds,  setLocallyCompletedIds] = useState(completedMissionIds);
@@ -111,7 +116,10 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
     setRuntimeResetKey((k) => k + 1);
     // Self-selecting engines: back button in hub triggers RESTART action,
     // which resets to hub — not to title screen. So restart goes to runtime.
-    setScreen(isSelfSelecting ? "runtime" : "entry");
+    const restartScreen: Screen = isSelfSelecting ? "runtime"
+      : (!isLevelBased && sortedMissions.length <= 1) ? "entry"
+      : "levelSelect";
+    setScreen(restartScreen);
   }
 
   function handleChangeDifficulty() {
@@ -220,6 +228,9 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
       >
         <LevelSelectScreen
           gameTitle={game.title}
+          subject={game.subject}
+          studentName={studentName ?? undefined}
+          coach={((game.shared_config ?? {}) as Record<string, unknown>)?.coach as string | undefined}
           missions={sortedMissions}
           onSelect={(missionId: string) => {
             resetConceptsSeen(game.engine_type);

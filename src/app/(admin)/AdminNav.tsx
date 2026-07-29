@@ -6,10 +6,8 @@ import styles from "./AdminNav.module.css";
 
 const NAV = [
   { href: "/admin",              icon: "▦",  label: "Dashboard" },
-  { href: "/admin/games",        icon: "🎮", label: "Games"     },
+  { href: "/admin/content",      icon: "◈",  label: "Content"   },
   { href: "/admin/games/upload", icon: "↑",  label: "Upload"    },
-  { href: "/admin/missions",     icon: "◈",  label: "Missions"  },
-  { href: "/admin/students",     icon: "◎",  label: "Students"  },
 ];
 
 export function AdminNav() {

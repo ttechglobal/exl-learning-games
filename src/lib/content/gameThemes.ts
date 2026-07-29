@@ -248,6 +248,35 @@ export const GAME_THEMES: Record<string, GameTheme> = {
 },
 };
 
+// ── Subject-level themes (used when no specific game slug matches) ──────────
+
+const SUBJECT_THEMES: Record<string, GameTheme> = {
+  chemistry: {
+    description: "",
+    preGameGradient: "linear-gradient(160deg, #041418 0%, #061e24 50%, #083028 100%)",
+    gameGradient:    "linear-gradient(160deg, #041418 0%, #061e24 100%)",
+    accent: "#00d4ff",
+  },
+  physics: {
+    description: "",
+    preGameGradient: "linear-gradient(160deg, #080820 0%, #0c1040 50%, #0a0c30 100%)",
+    gameGradient:    "linear-gradient(160deg, #080820 0%, #0c1040 100%)",
+    accent: "#4488ff",
+  },
+  biology: {
+    description: "",
+    preGameGradient: "linear-gradient(160deg, #081a06 0%, #0f2a08 50%, #0a2006 100%)",
+    gameGradient:    "linear-gradient(160deg, #081a06 0%, #0f2a08 100%)",
+    accent: "#7ecf3e",
+  },
+  mathematics: {
+    description: "",
+    preGameGradient: "linear-gradient(160deg, #fffdf5 0%, #fef9e7 50%, #fdf3cd 100%)",
+    gameGradient:    "linear-gradient(160deg, #fffdf5 0%, #fef9e7 100%)",
+    accent: "#c9a227",
+  },
+};
+
 // ── Fallback ───────────────────────────────────────────────────────────────
 
 const FALLBACK_THEME: GameTheme = {
@@ -259,8 +288,17 @@ const FALLBACK_THEME: GameTheme = {
 
 // ── Accessors ──────────────────────────────────────────────────────────────
 
-export function getGameTheme(slug: string): GameTheme {
-  return GAME_THEMES[slug] ?? FALLBACK_THEME;
+export function getGameTheme(slug: string, subject?: string): GameTheme {
+  if (GAME_THEMES[slug]) return GAME_THEMES[slug];
+  if (subject && SUBJECT_THEMES[subject]) return SUBJECT_THEMES[subject];
+  // Try to detect subject from slug prefix (e.g. "chemistry-matter")
+  const subjectFromSlug = Object.keys(SUBJECT_THEMES).find(s => slug.startsWith(s + "-"));
+  if (subjectFromSlug) return SUBJECT_THEMES[subjectFromSlug];
+  return FALLBACK_THEME;
+}
+
+export function getSubjectTheme(subject: string): GameTheme {
+  return SUBJECT_THEMES[subject] ?? FALLBACK_THEME;
 }
 
 export function getGameCardArt(slug: string): string | undefined {
@@ -286,4 +324,3 @@ export function getGameAccent(slug: string): string {
 export function getGameEnvironment(slug: string): GameEnvironment | undefined {
   return GAME_THEMES[slug]?.environment;
 }
-

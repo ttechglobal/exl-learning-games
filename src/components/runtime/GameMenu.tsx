@@ -8,6 +8,7 @@ export interface GameMenuProps {
   onRestart: () => void;
   onChangeDifficulty?: () => void;
   onReviewConcepts?: () => void;
+  onExitToLevelSelect?: () => void;
 }
 
 /**
@@ -19,7 +20,7 @@ export interface GameMenuProps {
  *   - Amber "Continue Playing" CTA matching NarrationScreen's Begin button
  *   - Amber-tinted Exit to Worlds (distinct action, different color)
  */
-export function GameMenu({ onRestart, onChangeDifficulty, onReviewConcepts }: GameMenuProps) {
+export function GameMenu({ onRestart, onChangeDifficulty, onReviewConcepts, onExitToLevelSelect }: GameMenuProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -59,9 +60,16 @@ export function GameMenu({ onRestart, onChangeDifficulty, onReviewConcepts }: Ga
               </button>
             )}
 
-            <Link href="/worlds" className={`${styles.sheetButton} ${styles.exitButton}`}>
-              ✕ Exit to Menu
-            </Link>
+            {onExitToLevelSelect ? (
+              <button className={`${styles.sheetButton} ${styles.exitButton}`}
+                onClick={() => { onExitToLevelSelect(); setOpen(false); }}>
+                ← Back to levels
+              </button>
+            ) : (
+              <Link href="/worlds" className={`${styles.sheetButton} ${styles.exitButton}`}>
+                ✕ Exit to Menu
+              </Link>
+            )}
 
             <hr className={styles.divider} />
 

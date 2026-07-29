@@ -26,6 +26,7 @@ import { LayerPeelSharedConfigSchema }   from "@/engines/physics/layer-peel/laye
 import { QuestionBankEngine }            from "@/engines/cross-subject/question-bank/QuestionBankEngine";
 import { QuestionBankSharedConfigSchema } from "@/engines/cross-subject/question-bank/questionBank.config";
 import { GuidedLessonEngine }            from "@/engines/cross-subject/guided-lesson/GuidedLessonEngine";
+import { MCQEngine }                     from "@/engines/cross-subject/mcq/MCQEngine";
 
 /**
  * registry.ts — Single source of truth for all game engines.
@@ -106,6 +107,12 @@ const layerPeelDefinition: EngineDefinition = {
 // ─── CROSS-SUBJECT ────────────────────────────────────────────────────────────
 
 
+const mcqDefinition: EngineDefinition = {
+  engineType: "mcq",
+  configSchema: z.object({}).passthrough() as z.ZodSchema<unknown>,
+  Component: MCQEngine as unknown as EngineDefinition["Component"],
+};
+
 const guidedLessonDefinition: EngineDefinition = {
   engineType: "guided_lesson",
   configSchema: z.object({}).passthrough() as z.ZodSchema<unknown>,
@@ -138,6 +145,7 @@ const registry: Record<string, EngineDefinition> = {
   "layer-peel":                layerPeelDefinition,
 
   // Cross-subject
+  "mcq":                       mcqDefinition,
   "guided_lesson":             guidedLessonDefinition,
   "question-bank":             questionBankDefinition,
 };

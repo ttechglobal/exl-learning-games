@@ -1,54 +1,54 @@
-/**
- * MissionTopBar.module.css — REDESIGNED
- *
- * Game-native visual treatment matching NarrationScreen's .nameBadge:
- * - Deep purple pill (#2e1258) with accent border and push-shadow
- * - Title in light lavender (#e8d5ff), subject in muted purple
- */
+/* FILE: src/components/runtime/MissionTopBar.module.css */
 
 .bar {
   position: relative;
   z-index: 2;
   flex: 1;
-  display: inline-flex;
+  display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 6px 18px;
-  margin: 0 auto;
-  /* Offset left for BackButton — keeps title visually centred */
-  margin-right: 42px;
+  /* Equal margin on both sides so title is truly centred between back button and edge */
+  margin: 0 42px;
+  padding: 4px 8px;
+}
 
-  /* NarrationScreen .nameBadge visual language */
-  background: #2e1258;
-  border: 1.5px solid #6a3aab;
-  border-bottom: 3px solid #150828;
-  border-radius: 12px;
-  box-shadow: 0 3px 0 #150828, 0 5px 14px rgba(0,0,0,0.4);
+.subjectPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 12px;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--accent-color, #7b4fcb) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-color, #7b4fcb) 40%, transparent);
+  margin-bottom: 5px;
+}
 
-  width: fit-content;
-  max-width: 100%;
+.subjectIcon {
+  font-size: 0.82rem;
+  line-height: 1;
+}
+
+.subjectLabel {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-color, #7b4fcb);
 }
 
 .title {
   font-family: var(--eg-font-display);
   font-weight: 800;
   font-size: 0.95rem;
-  color: #e8d5ff;
+  color: #fff;
   line-height: 1.2;
-}
-
-.subject {
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(200, 168, 255, 0.7);
-  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
 }
 
 @media (min-width: 600px) {
-  .title {
-    font-size: 1.05rem;
-  }
+  .title { font-size: 1.05rem; max-width: 320px; }
 }

@@ -12,8 +12,11 @@
  * in mission.payload.lessonFlow.
  */
 
-import { useState, lazy, Suspense } from "react";
+import React, { useState, lazy, Suspense } from "react";
 import type { EngineRuntimeProps } from "@/engines/engine-types";
+
+// Import MCQEngine for practice/challenge missions
+import { MCQEngine } from "@/engines/cross-subject/mcq/MCQEngine";
 
 // Lazy-load interaction components — same registry as CMS
 const INTERACTION_COMPONENTS: Record<string, React.ComponentType<{ config: Record<string, unknown>; colour?: string }>> = {
@@ -70,9 +73,22 @@ const SUBJECT_BG: Record<string, string> = {
 export function GuidedLessonEngine({
   config,
   onComplete,
-}: EngineRuntimeProps<GuidedLessonConfig, GuidedLessonOutcome>) {
+  menu,
+}: EngineRuntimeProps<GuidedLessonConfig, GuidedLessonOutcome> & { menu?: React.ReactNode }) {
   const shared = (config.shared ?? {}) as SharedConfig;
   const payload = (config.mission?.payload ?? {}) as MissionPayload;
+
+  // Route to MCQEngine for practice and challenge missions
+  if (payload.type === "mcq") {
+    return (
+      <MCQEngine
+        config={config as unknown as import("@/engines/cross-subject/mcq/MCQEngine").MCQConfig}
+        onComplete={onComplete as unknown as (outcome: import("@/engines/cross-subject/mcq/MCQEngine").MCQOutcome) => void}
+        menu={menu}
+      />
+    );
+  }
+
   const lessonFlow = payload.lessonFlow ?? [];
   const objectives = payload.objectives ?? [];
   const coach = shared.coach ?? "Dr. Adaobi";
@@ -102,9 +118,26 @@ export function GuidedLessonEngine({
       minHeight: "100vh",
       display: "flex",
       flexDirection: "column",
+      position: "relative",
     }}>
-      {/* Progress bar */}
-      <div style={{ height: 3, background: "rgba(255,255,255,0.06)" }}>
+      {/* Top row with menu */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px 0" }}>
+        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          {lessonFlow.map((_, i) => (
+            <div key={i} style={{
+              width: i === stepIdx ? 16 : 5, height: 5, borderRadius: 3,
+              background: i <= stepIdx ? colour : "rgba(255,255,255,0.12)",
+              transition: "all 0.2s",
+            }} />
+          ))}
+          <div style={{ marginLeft: 8, fontSize: "0.62rem", color: "rgba(255,255,255,0.3)" }}>
+            {stepIdx + 1}/{lessonFlow.length}
+          </div>
+        </div>
+        {menu && <div>{menu}</div>}
+      </div>
+      {/* Thin progress bar */}
+      <div style={{ height: 2, background: "rgba(255,255,255,0.06)", marginTop: 8 }}>
         <div style={{
           height: "100%",
           width: `${((stepIdx + 1) / lessonFlow.length) * 100}%`,
@@ -113,21 +146,7 @@ export function GuidedLessonEngine({
         }} />
       </div>
 
-      {/* Step counter */}
-      <div style={{ padding: "12px 20px 0", display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{ display: "flex", gap: 4 }}>
-          {lessonFlow.map((_, i) => (
-            <div key={i} style={{
-              width: i === stepIdx ? 16 : 5, height: 5,
-              borderRadius: 3, background: i <= stepIdx ? colour : "rgba(255,255,255,0.12)",
-              transition: "all 0.2s",
-            }} />
-          ))}
-        </div>
-        <div style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.3)", marginLeft: "auto" }}>
-          {stepIdx + 1} / {lessonFlow.length}
-        </div>
-      </div>
+
 
       {/* Content */}
       <div style={{ flex: 1, padding: "16px 20px", overflowY: "auto" }}>

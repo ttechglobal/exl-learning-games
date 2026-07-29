@@ -1,22 +1,4 @@
-/**
- * ReflectionScreen.module.css
- *
- * CARD WIDTH: uses the same calc()-based sizing fix as every other
- * pre/post-play card this session (EntryScreen, MissionObjectivesScreen,
- * ConceptSnapshot) — width:100% PLUS a side margin overflows the parent
- * by the margin amount unless the width itself subtracts it via calc().
- *
- * REWARD CHIP REMOVED per direct feedback ("+60XP is confusing") — no
- * .rewardChip/.rewardIcon/.rewardText rules anymore, not just unused
- * markup left behind.
- *
- * .linkButton REMOVED, REPLACED BY .conceptButton — "View Concept
- * Summary" was the smallest, quietest control on the screen (underlined
- * text, no fill, no border) and needed to become a real prominent
- * button per direct feedback. .conceptButton is now a solid-filled
- * button with its own accent treatment, same size class as the other
- * actions, not a quiet link squeezed in below them.
- */
+/* FILE: src/components/runtime/ReflectionScreen.module.css */
 
 .wrap {
   position: relative;
@@ -25,142 +7,143 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px 20px;
+  padding: 24px 20px 40px;
   overflow: hidden;
+}
+
+.subjectBadge {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid;
+  background: rgba(0,0,0,0.3);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  backdrop-filter: blur(6px);
 }
 
 .mascotRow {
   position: relative;
-  z-index: 1;
-  margin-bottom: -22px;
+  z-index: 2;
+  margin-bottom: -28px;
 }
 
 .card {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   box-sizing: border-box;
   width: calc(100% - 20px);
-  max-width: 460px;
+  max-width: 440px;
   margin: 0 10px;
   text-align: center;
-  background: #ffffff;
-  border: 3px solid var(--accent-color, var(--eg-subject-chemistry));
-  border-radius: 22px;
-  padding: 28px;
-  padding-top: 36px;
-  box-shadow: 0 10px 0 rgba(0, 0, 0, 0.05), 0 14px 30px rgba(43, 28, 74, 0.1);
+  border: 1.5px solid;
+  border-radius: 20px;
+  padding: 36px 24px 24px;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04),
+    0 20px 60px rgba(0,0,0,0.5);
 }
-[data-theme="dark"] .card {
-  background: #181c28;
+
+.accentLine {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 20px 20px 0 0;
 }
 
 .title {
   font-family: var(--eg-font-display);
-  font-weight: 700;
-  font-size: 1.3rem;
-  margin-bottom: 14px;
-  color: var(--eg-text-bright);
+  font-weight: 800;
+  font-size: 1.4rem;
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+
+.mascotLine {
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+  line-height: 1.5;
+  font-style: italic;
 }
 
 .lines {
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
+
 .line {
-  font-size: 0.98rem;
-  line-height: 1.7;
+  font-size: 0.92rem;
+  line-height: 1.6;
   margin-bottom: 4px;
-  color: var(--eg-text-bright);
 }
 
 .actions {
-  margin-top: 22px;
+  margin-top: 20px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-}
-
-/*
- * Review Concepts — now the FIRST action in the stack (per direct
- * feedback wanting this "big and visible," not a quiet afterthought),
- * solid-filled with its own accent color rather than the page's main
- * accent, so it's visually distinct from Next Mission while still
- * reading as a real, equally-prominent button — not a link, not smaller
- * than the others.
- */
-.conceptButton {
-  width: 100%;
-  min-height: 54px;
-  border-radius: 14px;
-  border: none;
-  background: var(--eg-gold);
-  color: #2c2410;
-  font-family: var(--eg-font-display);
-  font-weight: 700;
-  font-size: 1.02rem;
-  cursor: pointer;
-  box-shadow: 0 5px 0 color-mix(in srgb, var(--eg-gold) 60%, black);
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
-}
-.conceptButton:active {
-  transform: translateY(3px);
-  box-shadow: 0 2px 0 color-mix(in srgb, var(--eg-gold) 60%, black);
+  gap: 8px;
 }
 
 .primaryButton {
   width: 100%;
-  min-height: 54px;
-  border-radius: 14px;
+  padding: 14px 20px;
   border: none;
-  background: var(--accent-color, var(--eg-subject-chemistry));
-  color: #ffffff;
+  border-radius: 12px;
+  color: #fff;
   font-family: var(--eg-font-display);
-  font-weight: 700;
-  font-size: 1.05rem;
+  font-weight: 800;
+  font-size: 1rem;
   cursor: pointer;
-  box-shadow: 0 5px 0 color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 70%, black);
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  transition: transform 0.1s, box-shadow 0.1s;
 }
 .primaryButton:active {
   transform: translateY(3px);
-  box-shadow: 0 2px 0 color-mix(in srgb, var(--accent-color, var(--eg-subject-chemistry)) 70%, black);
+  box-shadow: none !important;
 }
+
+.conceptButton {
+  width: 100%;
+  padding: 11px 20px;
+  border-radius: 10px;
+  border: 1.5px solid;
+  background: transparent;
+  font-family: var(--eg-font-display);
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.conceptButton:hover { opacity: 0.8; }
 
 .secondaryButton {
   width: 100%;
-  min-height: 48px;
-  border-radius: 14px;
-  border: 2px solid var(--accent-color, var(--eg-subject-chemistry));
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 1px solid;
   background: transparent;
-  color: var(--accent-color, var(--eg-subject-chemistry));
-  font-family: var(--eg-font-display);
+  font-size: 0.85rem;
   font-weight: 600;
-  font-size: 0.92rem;
   cursor: pointer;
+  transition: opacity 0.15s;
 }
+.secondaryButton:hover { opacity: 0.8; }
 
-/* Back to Home — per direct feedback, a real way off this screen
- * besides replaying or advancing. Deliberately the quietest of the four
- * actions (no fill, no border, just text) since it's the "leave this
- * flow entirely" option, not a step forward in the mission loop the way
- * the other three are — but still a real full-width tappable button,
- * not a tiny link, since it needs to be easy to find and use, not just
- * technically present. */
 .homeButton {
   width: 100%;
-  min-height: 44px;
-  border-radius: 14px;
+  padding: 10px;
   border: none;
   background: transparent;
-  color: var(--eg-text-dim);
-  font-family: var(--eg-font-display);
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.35);
   cursor: pointer;
+  margin-top: 4px;
 }
-
-@media (max-width: 420px) {
-  .card {
-    padding: 24px 18px;
-    padding-top: 32px;
-  }
-}
+.homeButton:hover { color: rgba(255,255,255,0.6); }

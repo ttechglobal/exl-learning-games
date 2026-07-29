@@ -94,3 +94,36 @@
 }
 .ghostBtn:hover { color: #5a3810; }
 .ghostBtn:active { transform: scale(0.97); }
+/* Next level button — distinctive from Next Mission, signals progression */
+.nextLevelBtn {
+  display: block;
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 14px;
+  border: none;
+  border-bottom: 4px solid color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 60%, black);
+  background: color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 20%, #fff);
+  color: color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 80%, black);
+  font-family: var(--eg-font-display);
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  text-align: center;
+  transition: transform 0.1s, border-bottom 0.1s;
+  box-shadow: 0 2px 12px color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 20%, transparent);
+}
+.nextLevelBtn:active {
+  transform: translateY(3px);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 40%, black);
+}
+
+/* nextLevelBtn added */
+.nextLevelBtn {
+  display: block; width: 100%; padding: 14px 20px; border-radius: 14px;
+  border: none; border-bottom: 4px solid color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 60%, black);
+  background: color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 20%, #fff);
+  color: color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 80%, black);
+  font-family: var(--eg-font-display); font-weight: 800; font-size: 1rem;
+  cursor: pointer; text-align: center; transition: transform 0.1s, border-bottom 0.1s;
+}
+.nextLevelBtn:active { transform: translateY(3px); border-bottom: 1px solid color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 40%, black); }

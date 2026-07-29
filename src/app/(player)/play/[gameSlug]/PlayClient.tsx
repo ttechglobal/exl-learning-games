@@ -130,8 +130,8 @@ export function PlayClient({ studentId, studentName, game, missions, initialMiss
   function handleBack() {
     if (screen === "entry")         { setScreen("title");   return; }
     if (screen === "difficulty")    { setScreen("entry");   return; }
-    if (screen === "levelSelect")   { setScreen(supportsDifficultyChoice ? "difficulty" : "entry"); return; }
-    if (screen === "missionSelect") { setScreen(supportsDifficultyChoice ? "difficulty" : "entry"); return; }
+    if (screen === "levelSelect")   { router.push("/worlds"); return; }
+    if (screen === "missionSelect") { router.push("/worlds"); return; }
     router.push("/worlds");
   }
 
@@ -162,6 +162,7 @@ export function PlayClient({ studentId, studentName, game, missions, initialMiss
     <GameMenu
       onRestart={handleRestart}
       onChangeDifficulty={supportsDifficultyChoice ? handleChangeDifficulty : undefined}
+      onExitToLevelSelect={isLevelBased ? () => setScreen("levelSelect") : undefined}
     />
   );
 
@@ -219,26 +220,20 @@ export function PlayClient({ studentId, studentName, game, missions, initialMiss
   // ── LEVEL SELECT ──────────────────────────────────────────────────────────
   if (screen === "levelSelect") {
     return (
-      <PrePlayShell
-        gameSlug={game.slug}
+      <LevelSelectScreen
         gameTitle={game.title}
         subject={game.subject}
+        studentName={studentName ?? undefined}
+        coach={((game.shared_config ?? {}) as Record<string, unknown>)?.coach as string | undefined}
+        missions={sortedMissions}
+        completedMissionIds={locallyCompletedIds}
+        onSelect={(missionId: string) => {
+          resetConceptsSeen(game.engine_type);
+          setActiveMissionId(missionId);
+          setScreen("runtime");
+        }}
         onBack={handleBack}
-        backLabel="Back"
-      >
-        <LevelSelectScreen
-          gameTitle={game.title}
-          subject={game.subject}
-          studentName={studentName ?? undefined}
-          coach={((game.shared_config ?? {}) as Record<string, unknown>)?.coach as string | undefined}
-          missions={sortedMissions}
-          onSelect={(missionId: string) => {
-            resetConceptsSeen(game.engine_type);
-            setActiveMissionId(missionId);
-            setScreen("runtime");
-          }}
-        />
-      </PrePlayShell>
+      />
     );
   }
 
@@ -277,8 +272,19 @@ export function PlayClient({ studentId, studentName, game, missions, initialMiss
       engineType={game.engine_type}
       sharedConfig={{
         ...game.shared_config,
+        studentName: studentName ?? undefined,
+        // Session context — all missions of the same difficulty for MCQEngine view-all
+        currentMissionIndex: activeMissionIndex,
+        allSessionMissions: sortedMissions
+          .filter(m => m.difficulty === activeMission.difficulty)
+          .map(m => ({
+            id: m.id,
+            title: m.title,
+            missionKey: m.mission_key,
+            sequenceIndex: m.sequence_index,
+            payload: m.payload,
+          })),
         // Inject _allMissions for ALL games — engines that don't need it ignore it.
-        // This removes the need for per-engine-type conditionals here.
         _allMissions: sortedMissions.map(m => ({
           id:            m.id,
           missionKey:    m.mission_key,
@@ -305,9 +311,26 @@ export function PlayClient({ studentId, studentName, game, missions, initialMiss
         subtopicId: activeMission.subtopic_id ?? undefined,
         payload:    activeMission.payload,
       }}
-      hasNextMission={Boolean(nextMission) && !isLevelBased}
+      hasNextMission={Boolean(nextMission)}
+      studentName={studentName ?? undefined}
+      nextMissionLabel={(() => {
+        if (!nextMission) return undefined;
+        if (activeMission?.difficulty === nextMission.difficulty) {
+          const remaining = sortedMissions.filter(m => m.difficulty === activeMission?.difficulty).length - activeMissionIndex - 1;
+          return `Next question (${remaining} left) →`;
+        }
+        if (nextMission.difficulty === "MEDIUM") return "Go to Practice →";
+        if (nextMission.difficulty === "HARD")   return "Go to Challenge →";
+        return "Next →";
+      })()}
       reviewSuccessLines={[
-        `You successfully completed ${(activeMission.payload as { resultLabel?: string }).resultLabel ?? activeMission.title}.`,
+        nextMission && activeMission?.difficulty === nextMission.difficulty
+          ? `Question ${activeMissionIndex + 1} done.`
+          : activeMission?.difficulty === "EASY"
+            ? "Concept complete! Ready to practice?"
+            : activeMission?.difficulty === "MEDIUM"
+              ? "Practice done! Ready for a challenge?"
+              : "Challenge complete! Well done.",
         ...(isTrackMap && nextMission ? [`🔓 "${nextMission.title}" is now unlocked!`] : [])
       ]}
       playerDifficulty={playerDifficulty}
@@ -326,12 +349,20 @@ export function PlayClient({ studentId, studentName, game, missions, initialMiss
           } else {
             setScreen("missionSelect");
           }
-        } else if (isLevelBased) {
-          setScreen("levelSelect");
         } else if (nextMission) {
+          // Same difficulty group continues — go straight to next mission
+          const sameGroup = activeMission?.difficulty === nextMission.difficulty;
           setActiveMissionId(nextMission.id);
-          if (supportsDifficultyChoice) setScreen("difficulty");
-          else setScreen("runtime");
+          setLocallyCompletedIds(prev => new Set(prev).add(activeMission!.id));
+          if (sameGroup) {
+            setScreen("runtime");
+          } else {
+            // Difficulty changed — go back to level select to choose next stage
+            setScreen("levelSelect");
+          }
+        } else {
+          // No more missions — back to level select
+          setScreen("levelSelect");
         }
       }}
       onBackToHome={() => router.push("/worlds")}

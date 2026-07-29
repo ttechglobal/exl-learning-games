@@ -4,6 +4,7 @@ import { BackButton } from "@/components/runtime/BackButton";
 import { MissionTopBar } from "@/components/runtime/MissionTopBar";
 import { EnvironmentBackdrop } from "@/components/runtime/EnvironmentBackdrop";
 import { resolveGameEnvironmentImages, resolveGameThemeGradient } from "@/lib/content/gameEnvironments";
+import { getGameTheme } from "@/lib/content/gameThemes";
 import styles from "@/components/runtime/PrePlayShell.module.css";
 
 export interface PrePlayShellProps {
@@ -26,7 +27,8 @@ export function PrePlayShell({
   children,
 }: PrePlayShellProps) {
   const images = resolveGameEnvironmentImages(gameSlug);
-  const themeGradient = resolveGameThemeGradient(gameSlug);
+  const themeGradient = resolveGameThemeGradient(gameSlug)
+    || getGameTheme(gameSlug, subject).preGameGradient;
 
   return (
     <div

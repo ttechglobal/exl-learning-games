@@ -251,23 +251,122 @@
 /* ── LARGE DESKTOP ≥1024px ───────────────────────────────────────── */
 @media (min-width: 1024px) {
   .shell {
-    padding: 0 32px;
+    padding: 0 40px;
     padding-top: 20px;
     padding-bottom: 32px;
+    /* Two-column: sidebar (menu/stats) left, gameplay centre-right */
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    grid-template-columns: 220px 1fr;
+    grid-template-areas:
+      "sidebar  topbar"
+      "sidebar  prompt"
+      "sidebar  game";
+    column-gap: 28px;
+    align-items: start;
   }
 
-  .menuSlot,
-  .topZone {
+  /* Left sidebar owns menu + stats, stacked vertically */
+  .menuSlot {
+    grid-area: sidebar;
+    height: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding-top: 4px;
+    /* Stick to viewport top as player scrolls */
+    position: sticky;
+    top: 20px;
+  }
+
+  .menuTitleGroup {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
     width: 100%;
-    max-width: 860px;
-    margin-left: auto;
-    margin-right: auto;
   }
 
+  .gameTitleLabel {
+    position: static;
+    transform: none;
+    max-width: 100%;
+    pointer-events: auto;
+  }
+  .gameTitleLabel .titleMain {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: normal;
+    line-height: 1.3;
+  }
+
+  .statsRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+  }
+
+  /* Stats become sidebar cards on desktop */
+  .statCard {
+    width: 100%;
+    border-radius: 14px;
+    padding: 10px 14px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .statCard + .statCard {
+    border-radius: 12px;
+    padding: 8px 14px;
+  }
+
+  .statLabel {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+  }
+  .statValue {
+    font-size: 1.1rem;
+    font-weight: 900;
+  }
+
+  .statCaption {
+    display: block;
+    font-size: 0.62rem;
+    color: var(--eg-gold, #ffb23c);
+    font-weight: 700;
+    margin-top: 0;
+    line-height: 1;
+  }
+
+  /* Gameplay areas */
+  .topZone     { grid-area: prompt; }
   .gameplayFrame {
-    max-width: 860px;
-    margin: 0 auto;
+    grid-area: game;
     align-items: stretch;
+    margin: 0;
+    max-width: none;
+  }
+
+  /* Topbar row (holds any extra top-bar content if needed) */
+  .menuSlot ~ * { }
+}
+
+/* ── XL DESKTOP ≥1280px ──────────────────────────────────────────── */
+@media (min-width: 1280px) {
+  .shell {
+    grid-template-columns: 240px 1fr;
+    column-gap: 36px;
+    padding: 0 56px;
+    padding-top: 24px;
+    padding-bottom: 40px;
   }
 }
 

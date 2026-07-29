@@ -48,6 +48,9 @@ export default function MatterSorter({ config = {}, colour = "#0284c7" }: {
   const [showSummary, setShowSummary] = useState(false);
   const [airInflated, setAirInflated] = useState(false);
   const dragOver                      = useRef<"matter" | "notmatter" | null>(null);
+  const pointerTarget                 = useRef<"matter" | "notmatter" | null>(null);
+  const draggingItemRef               = useRef<string | null>(null);
+  const ghostRef                      = useRef<HTMLDivElement | null>(null);
 
   const placed       = new Set(placements.map(p => p.itemId));
   const remaining    = ITEMS.filter(i => !placed.has(i.id));
@@ -97,6 +100,72 @@ export default function MatterSorter({ config = {}, colour = "#0284c7" }: {
     setAirInflated(false);
   };
 
+  const handlePointerDown = (itemId: string, e: React.PointerEvent) => {
+    e.preventDefault();
+    setDragging(itemId);
+    draggingItemRef.current = itemId;
+
+    // Create ghost element
+    const ghost = document.createElement("div");
+    ghost.id = "__matter-ghost__";
+    const item = ITEMS.find(i => i.id === itemId)!;
+    ghost.textContent = item.emoji;
+    ghost.style.cssText = `
+      position: fixed; pointer-events: none; z-index: 9999;
+      font-size: 2rem; transform: translate(-50%, -50%);
+      opacity: 0.85; transition: none;
+    `;
+    ghost.style.left = e.clientX + "px";
+    ghost.style.top  = e.clientY + "px";
+    document.body.appendChild(ghost);
+    ghostRef.current = ghost;
+
+    const onMove = (ev: PointerEvent) => {
+      if (ghostRef.current) {
+        ghostRef.current.style.left = ev.clientX + "px";
+        ghostRef.current.style.top  = ev.clientY + "px";
+      }
+      // Hit-test drop targets
+      const els = document.querySelectorAll<HTMLElement>("[data-drop-target]");
+      let hit: "matter" | "notmatter" | null = null;
+      for (const el of Array.from(els)) {
+        const r = el.getBoundingClientRect();
+        if (ev.clientX >= r.left && ev.clientX <= r.right &&
+            ev.clientY >= r.top  && ev.clientY <= r.bottom) {
+          hit = el.dataset.dropTarget as "matter" | "notmatter";
+          break;
+        }
+      }
+      pointerTarget.current = hit;
+      // Visual feedback on containers
+      els.forEach(el => {
+        el.style.borderColor = el.dataset.dropTarget === hit
+          ? (hit === "matter" ? colour : "#7c3aed")
+          : "rgba(255,255,255,0.15)";
+      });
+    };
+
+    const onUp = () => {
+      if (ghostRef.current) { ghostRef.current.remove(); ghostRef.current = null; }
+      // Reset border colours
+      document.querySelectorAll<HTMLElement>("[data-drop-target]").forEach(el => {
+        el.style.borderColor = "";
+      });
+      if (draggingItemRef.current && pointerTarget.current) {
+        handleDrop(pointerTarget.current);
+      } else {
+        setDragging(null);
+      }
+      draggingItemRef.current = null;
+      pointerTarget.current = null;
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
   const correctMatter   = placements.filter(p => { const i = ITEMS.find(x => x.id === p.itemId); return i?.isMatter && p.correct; });
   const correctNotMatter= placements.filter(p => { const i = ITEMS.find(x => x.id === p.itemId); return !i?.isMatter && p.correct; });
 
@@ -139,8 +208,7 @@ export default function MatterSorter({ config = {}, colour = "#0284c7" }: {
 
         {/* Matter container */}
         <div
-          onDragOver={e => { e.preventDefault(); dragOver.current = "matter"; }}
-          onDrop={() => handleDrop("matter")}
+          data-drop-target="matter"
           style={{
             minHeight: 160, borderRadius: 12,
             border: `2px dashed ${dragging ? colour : "rgba(255,255,255,0.15)"}`,
@@ -201,8 +269,7 @@ export default function MatterSorter({ config = {}, colour = "#0284c7" }: {
 
         {/* Not Matter container */}
         <div
-          onDragOver={e => { e.preventDefault(); dragOver.current = "notmatter"; }}
-          onDrop={() => handleDrop("notmatter")}
+          data-drop-target="notmatter"
           style={{
             minHeight: 160, borderRadius: 12,
             border: `2px dashed ${dragging ? "#7c3aed" : "rgba(255,255,255,0.1)"}`,
@@ -246,10 +313,9 @@ export default function MatterSorter({ config = {}, colour = "#0284c7" }: {
             {remaining.map(item => (
               <div
                 key={item.id}
-                draggable
-                onDragStart={() => setDragging(item.id)}
-                onDragEnd={() => setDragging(null)}
+                onPointerDown={(e) => handlePointerDown(item.id, e)}
                 style={{
+                  touchAction: "none",
                   display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
                   padding: "8px 10px", borderRadius: 8, cursor: "grab",
                   background: dragging === item.id ? `${colour}20` : "rgba(255,255,255,0.06)",

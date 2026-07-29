@@ -350,7 +350,30 @@
 
 @media (min-width: 1100px) {
   .scene    { flex: 1 1 60%; }
-  .card     { flex: 0 0 min(480px, 38vw); padding: 56px 48px 48px; }
+  .card     { flex: 0 0 min(520px, 40vw); padding: 56px 48px 48px; }
+
+  .tierList { gap: 14px; }
+
+  /* Larger icons on big screens */
+  .tierEASY .tierIconWrap   { width: 44px; height: 44px; }
+  .tierMEDIUM .tierIconWrap { width: 50px; height: 50px; }
+  .tierHARD .tierIconWrap   { width: 54px; height: 54px; }
+
+  .tierEASY .tierEmoji   { font-size: 1.3rem; }
+  .tierMEDIUM .tierEmoji { font-size: 1.5rem; }
+  .tierHARD .tierEmoji   { font-size: 1.65rem; }
+
+  .tierEASY .tierLabel   { font-size: 1rem; }
+  .tierMEDIUM .tierLabel { font-size: 1.1rem; }
+  .tierHARD .tierLabel   { font-size: 1.18rem; }
+
+  .tierDesc { font-size: 0.82rem; }
+}
+
+@media (min-width: 1400px) {
+  .card { flex: 0 0 560px; padding: 64px 56px 56px; }
+  .cardLabel { font-size: 0.78rem; margin-bottom: 6px; }
+  .cardSub   { font-size: 0.82rem; margin-bottom: 20px; }
 }
 
 /* ── REDUCED MOTION ──────────────────────────────────────────────────────── */

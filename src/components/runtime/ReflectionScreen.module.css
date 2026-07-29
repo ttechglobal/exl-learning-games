@@ -1,149 +1,205 @@
-/* FILE: src/components/runtime/ReflectionScreen.module.css */
+/**
+ * ReflectionScreen.module.css — Mission Complete redesign
+ */
 
-.wrap {
-  position: relative;
-  min-height: 100vh;
+/* ── Hero badge ──────────────────────────────────────────── */
+.heroBadge {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 24px 20px 40px;
-  overflow: hidden;
-}
-
-.subjectBadge {
-  position: relative;
-  z-index: 2;
-  display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 14px;
-  border-radius: 20px;
-  border: 1px solid;
-  background: rgba(0,0,0,0.3);
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-  backdrop-filter: blur(6px);
-}
-
-.mascotRow {
-  position: relative;
-  z-index: 2;
-  margin-bottom: -28px;
-}
-
-.card {
-  position: relative;
-  z-index: 2;
-  box-sizing: border-box;
-  width: calc(100% - 20px);
-  max-width: 440px;
-  margin: 0 10px;
-  text-align: center;
-  border: 1.5px solid;
-  border-radius: 20px;
-  padding: 36px 24px 24px;
-  overflow: hidden;
-  backdrop-filter: blur(12px);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 30%, #1a0840) 0%,
+    #1a0840 100%
+  );
+  border: 1.5px solid color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 40%, transparent);
+  border-radius: 18px;
+  padding: 20px 20px 18px;
+  margin-bottom: 14px;
   box-shadow:
-    0 0 0 1px rgba(255,255,255,0.04),
-    0 20px 60px rgba(0,0,0,0.5);
+    0 6px 0 #0d0520,
+    0 0 32px color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 20%, transparent);
 }
 
-.accentLine {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  border-radius: 20px 20px 0 0;
+.starRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
-.title {
-  font-family: var(--eg-font-display);
-  font-weight: 800;
-  font-size: 1.4rem;
-  margin-bottom: 6px;
-  line-height: 1.2;
+.star {
+  font-size: 1.1rem;
+  color: #FFD700;
+  text-shadow: 0 0 8px #FFD70080;
+  animation: starPop 0.5s ease both;
+}
+.star:first-child { animation-delay: 0.05s; }
+.star:last-child  { animation-delay: 0.10s; }
+
+.starMid {
+  font-size: 1.5rem;
+  color: #FFD700;
+  text-shadow: 0 0 12px #FFD700aa;
+  animation: starPop 0.4s ease both;
 }
 
-.mascotLine {
-  font-size: 0.85rem;
-  margin-bottom: 16px;
-  line-height: 1.5;
+@keyframes starPop {
+  from { transform: scale(0) rotate(-20deg); opacity: 0; }
+  60%  { transform: scale(1.2) rotate(5deg); }
+  to   { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.heroTitle {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-family: var(--eg-font-display, "Baloo 2", "Space Grotesk", sans-serif);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.heroCelebLine {
+  font-size: 0.82rem;
+  color: color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 80%, white);
+  font-weight: 700;
   font-style: italic;
+  text-align: center;
+  opacity: 0.9;
 }
 
-.lines {
-  margin-bottom: 8px;
-}
-
-.line {
-  font-size: 0.92rem;
-  line-height: 1.6;
-  margin-bottom: 4px;
-}
-
-.actions {
-  margin-top: 20px;
+/* ── Result lines ────────────────────────────────────────── */
+.resultLines {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-.primaryButton {
-  width: 100%;
-  padding: 14px 20px;
-  border: none;
+  gap: 6px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
   border-radius: 12px;
-  color: #fff;
-  font-family: var(--eg-font-display);
-  font-weight: 800;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.1s;
-}
-.primaryButton:active {
-  transform: translateY(3px);
-  box-shadow: none !important;
+  padding: 12px 14px;
+  margin-bottom: 16px;
 }
 
-.conceptButton {
-  width: 100%;
-  padding: 11px 20px;
-  border-radius: 10px;
-  border: 1.5px solid;
-  background: transparent;
-  font-family: var(--eg-font-display);
+.resultLine {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.84rem;
   font-weight: 700;
-  font-size: 0.88rem;
-  cursor: pointer;
-  transition: opacity 0.15s;
+  color: rgba(255,255,255,0.88);
+  line-height: 1.5;
 }
-.conceptButton:hover { opacity: 0.8; }
 
-.secondaryButton {
-  width: 100%;
-  padding: 10px 20px;
-  border-radius: 10px;
-  border: 1px solid;
-  background: transparent;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s;
+.resultCheck {
+  color: #34d399;
+  flex-shrink: 0;
+  font-size: 0.82rem;
+  margin-top: 1px;
 }
-.secondaryButton:hover { opacity: 0.8; }
 
-.homeButton {
+/* ── Actions ─────────────────────────────────────────────── */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+/* Primary: Next mission / Play Again (no next) */
+.primaryBtn {
   width: 100%;
-  padding: 10px;
+  background: var(--accent, var(--eg-subject-chemistry));
   border: none;
+  border-radius: 50px;
+  padding: 15px 24px;
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #fff;
+  font-family: var(--eg-font-display, "Baloo 2", "Space Grotesk", sans-serif);
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  border-bottom: 4px solid color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 60%, black);
+  transition: transform 0.1s, border-bottom 0.1s, box-shadow 0.15s;
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 35%, transparent);
+}
+.primaryBtn:hover {
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 50%, transparent);
+}
+.primaryBtn:active {
+  transform: translateY(3px);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 60%, black);
+}
+
+/* Next-level variant: slightly different colour treatment */
+.nextLevelBtn {
+  composes: primaryBtn;
+  background: linear-gradient(
+    135deg,
+    var(--accent, var(--eg-subject-chemistry)),
+    color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 70%, #7c3aed)
+  );
+}
+
+/* Concept review — full width, outlined with accent */
+.conceptBtn {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 2px solid color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 55%, transparent);
+  border-radius: 50px;
+  padding: 13px 24px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 90%, white);
+  font-family: var(--eg-font-display, "Baloo 2", "Space Grotesk", sans-serif);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: background 0.15s, color 0.15s;
+}
+.conceptBtn:hover {
+  background: color-mix(in srgb, var(--accent, var(--eg-subject-chemistry)) 18%, transparent);
+}
+.conceptBtn:active { transform: scale(0.98); }
+
+/* Secondary: Try Again (when Next Mission also visible) */
+.secondaryBtn {
+  width: 100%;
   background: transparent;
-  font-size: 0.8rem;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 50px;
+  padding: 11px 24px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: rgba(255,255,255,0.6);
+  font-family: var(--eg-font-display, "Baloo 2", "Space Grotesk", sans-serif);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: border-color 0.15s, color 0.15s;
+}
+.secondaryBtn:hover {
+  border-color: rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.9);
+}
+.secondaryBtn:active { transform: scale(0.97); }
+
+/* Ghost row: small text links */
+.ghostRow {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding-top: 2px;
+  flex-wrap: wrap;
+}
+
+.ghostBtn {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
   color: rgba(255,255,255,0.35);
   cursor: pointer;
-  margin-top: 4px;
+  letter-spacing: 0.02em;
+  transition: color 0.15s;
+  font-family: inherit;
 }
-.homeButton:hover { color: rgba(255,255,255,0.6); }
+.ghostBtn:hover { color: rgba(255,255,255,0.7); }

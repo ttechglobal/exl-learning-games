@@ -96,6 +96,7 @@ const ALL_SUBJECTS = ["chemistry", "mathematics", "physics", "biology"];
 export function WorldsClient({
   bySubject,
   currentStudentXp,
+  studentName,
 }: WorldsClientProps) {
   const { theme, toggleTheme } = useTheme();
 
@@ -139,6 +140,15 @@ export function WorldsClient({
       />
 
       <div className={styles.shell}>
+
+        {/* ── WELCOME GREETING ── */}
+        {studentName && (
+          <div className={styles.welcomeHero}>
+            <span className={styles.welcomeLabel}>Welcome,</span>
+            <span className={styles.welcomeName}>{studentName.split(" ")[0]}</span>
+            <span className={styles.welcomeEmoji} aria-hidden="true">👾</span>
+          </div>
+        )}
 
         {/* ── SEARCH BAR ── */}
         <div className={styles.searchWrap}>

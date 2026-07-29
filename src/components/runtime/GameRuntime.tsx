@@ -132,6 +132,13 @@ export interface GameRuntimeProps {
    * (see PlayClient.tsx).
    */
   menu?: React.ReactNode;
+  /** Student's display name — forwarded to ReflectionScreen so the mascot
+   *  line can greet them by first name. Optional: nothing breaks if absent. */
+  studentName?: string;
+  /** Label for the "Next Mission" button on ReflectionScreen — lets PlayClient
+   *  customise it per-mission ("Go to Practice →", "Next question (3 left) →").
+   *  Falls back to "Next →" inside ReflectionScreen if omitted. */
+  nextMissionLabel?: string;
 }
 
 type Phase = "learn" | "playing" | "reflection" | "reviewingLearn" | "snapshot" | "reviewingConcepts";
@@ -203,7 +210,9 @@ export function GameRuntime({
   menu,
   accentColor = "var(--eg-subject-chemistry)",
   openInReviewMode,
-  onReviewModeConsumed
+  onReviewModeConsumed,
+  studentName,
+  nextMissionLabel
 }: GameRuntimeProps) {
   /**
    * Always starts at "snapshot" now. An EARLIER revision initialized
@@ -506,7 +515,9 @@ export function GameRuntime({
       onBackToHome={onBackToHome}
       onChangeDifficulty={onChangeDifficulty}
       gameSlug={gameSlug}
-      subject={subject}   
+      subject={subject}
+      studentName={studentName}
+      nextMissionLabel={nextMissionLabel}
       extraContent={extraContent}
     />
   );

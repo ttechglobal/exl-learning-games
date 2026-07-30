@@ -19,10 +19,11 @@ import type { EngineRuntimeProps } from "@/engines/engine-types";
 import { MCQEngine } from "@/engines/cross-subject/mcq/MCQEngine";
 
 // Lazy-load interaction components — same registry as CMS
-const INTERACTION_COMPONENTS: Record<string, React.ComponentType<{ config: Record<string, unknown>; colour?: string }>> = {
+const INTERACTION_COMPONENTS: Record<string, React.ComponentType<{ config: Record<string, unknown>; colour?: string; onGoalReached?: () => void }>> = {
   HeatSlider:           lazy(() => import("@/components/interactions/HeatSlider")),
   MatterSorter:         lazy(() => import("@/components/interactions/MatterSorter")),
   InfiniteZoomExplorer: lazy(() => import("@/components/interactions/InfiniteZoomExplorer")),
+  AtomReveal:           lazy(() => import("@/components/interactions/AtomReveal")),
 };
 
 interface FlowStep {
@@ -110,6 +111,16 @@ export function GuidedLessonEngine({
   };
 
   const colour = accentColour;
+
+  // Find the interaction component for this lesson — either from the current
+  // INTERACT step or from any INTERACT step in the flow (so it can be shown
+  // persistently across all COACH steps too).
+  const interactStep = lessonFlow.find(s => s.type === "INTERACT");
+  const persistentComponentKey = interactStep?.component ?? null;
+  const persistentConfig       = interactStep?.config ?? {};
+  const PersistentComponent    = persistentComponentKey ? INTERACTION_COMPONENTS[persistentComponentKey] : null;
+
+  // For the current step's dedicated INTERACT render
   const LiveComponent = step?.component ? INTERACTION_COMPONENTS[step.component] : null;
 
   return (
@@ -120,9 +131,12 @@ export function GuidedLessonEngine({
       flexDirection: "column",
       position: "relative",
     }}>
-      {/* Top row with menu */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px 0" }}>
-        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+      {/* Top row — menu LEFT, dots right */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px 0" }}>
+        {/* Menu button — LEFT, same pattern as MCQEngine */}
+        {menu && <div style={{ flexShrink: 0 }}>{menu}</div>}
+        {/* Progress dots */}
+        <div style={{ display: "flex", gap: 4, alignItems: "center", flex: 1 }}>
           {lessonFlow.map((_, i) => (
             <div key={i} style={{
               width: i === stepIdx ? 16 : 5, height: 5, borderRadius: 3,
@@ -134,7 +148,6 @@ export function GuidedLessonEngine({
             {stepIdx + 1}/{lessonFlow.length}
           </div>
         </div>
-        {menu && <div>{menu}</div>}
       </div>
       {/* Thin progress bar */}
       <div style={{ height: 2, background: "rgba(255,255,255,0.06)", marginTop: 8 }}>
@@ -154,6 +167,31 @@ export function GuidedLessonEngine({
         {/* COACH step */}
         {step?.type === "COACH" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+            {/* Persistent interaction — shown on every COACH step so the student
+                can interact throughout the lesson, not just on the INTERACT step */}
+            {PersistentComponent && (
+              <div style={{
+                borderRadius: 16,
+                overflow: "hidden",
+                border: `1px solid ${colour}20`,
+                background: "rgba(0,0,0,0.2)",
+                marginBottom: 4,
+              }}>
+                <Suspense fallback={
+                  <div style={{ padding: 32, textAlign: "center", color: "rgba(255,255,255,0.2)", fontSize: "0.8rem" }}>
+                    Loading…
+                  </div>
+                }>
+                  <PersistentComponent
+                    config={persistentConfig}
+                    colour={colour}
+                    onGoalReached={() => setInteractionDone(true)}
+                  />
+                </Suspense>
+              </div>
+            )}
+
             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
               <div style={{
                 width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
@@ -175,7 +213,8 @@ export function GuidedLessonEngine({
               borderLeft: step.isKeyMoment ? `4px solid ${colour}` : undefined,
             }}>
               <div style={{ fontSize: "1rem", color: "rgba(255,255,255,0.9)", lineHeight: 1.7 }}>
-                {step.text}
+                {/* Strip "CoachName: " prefix — the name badge already identifies the speaker */}
+                {(step.text ?? "").replace(/^[A-Za-z .]+:\s*/, "")}
               </div>
             </div>
           </div>
@@ -224,7 +263,7 @@ export function GuidedLessonEngine({
               border: "1px solid rgba(5,150,105,0.25)", width: "100%",
             }}>
               <div style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.85)", lineHeight: 1.7, fontStyle: "italic" }}>
-                &quot;{step.text}&quot;
+                &quot;{(step.text ?? "").replace(/^[A-Za-z .]+:\s*/, "")}&quot;
               </div>
             </div>
             {(step.objectives ?? objectives).filter(Boolean).length > 0 && (

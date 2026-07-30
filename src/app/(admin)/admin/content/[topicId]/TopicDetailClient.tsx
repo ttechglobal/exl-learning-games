@@ -120,83 +120,285 @@ function buildPrompt(topic: Topic, concept: Concept, idx: number): string {
       }).join("\n")
     : "- (none yet — if an interaction would help, describe what it should do)";
 
-  return `You are a senior curriculum expert and interactive learning designer for EXL Learning World.
+  return `You are a senior interactive learning designer for EXL Learning World.
 
 TOPIC: ${topic.name}
 SUBJECT: ${topic.subject.charAt(0).toUpperCase() + topic.subject.slice(1)}
 LEVEL: ${topic.level}
 CONCEPT ${idx + 1}: ${concept.name}
-STAGE: ${concept.stage}
 COACH: ${meta.coach}
 
-CONCEPT: ${concept.simplestTrueStatement ?? ""}
+CONCEPT STATEMENT: ${concept.simplestTrueStatement ?? ""}
 REAL-WORLD ANCHOR: ${concept.realWorldAnchor ?? "(none)"}
+MISCONCEPTION TO CONFRONT: ${concept.misconception ?? "(none)"}
 BUILD INTENT:
 - What student does: ${concept.buildIntent?.whatStudentDoes ?? "(not specified)"}
 - What system shows: ${concept.buildIntent?.whatSystemShows ?? "(not specified)"}
-- Coach opening: ${concept.buildIntent?.coachOpeningLine ?? "(not specified)"}
 - Success looks like: ${concept.buildIntent?.successLooks ?? "(not specified)"}
-MISCONCEPTION TO CONFRONT: ${concept.misconception ?? "(none)"}
 
 ---
 
-AVAILABLE INTERACTION COMPONENTS (already built and ready to use):
-${interactionList}
+IMPORTANT — TWO SEPARATE RESPONSES REQUIRED:
 
-YOUR TASK FOR interactionRef:
-1. Decide: does this concept NEED a visual interaction to be understood, or can coach cards alone explain it?
-2. If NO interaction needed: set interactionRef to null.
-3. If YES interaction needed AND an existing component fits: use it. Set componentExists: true. Provide the correct config.
-4. If YES interaction needed BUT no existing component fits: set componentExists: false. Write a clear buildPrompt describing exactly what the new component should do visually and how the student interacts with it. Do NOT force an existing component where it doesn't fit.
+Think about the lesson and the interaction together as one design
+process. The interaction should influence the guided learning, practice,
+and challenge — reason about both at the same time.
+
+However, return your answer as TWO completely separate responses:
+
+RESPONSE 1 — LESSON CONTENT ONLY
+Return the JSON lesson package. This is what gets imported into the
+application. It must include everything the application needs:
+guided learning, coach cards, practice questions, challenge questions,
+interaction reference. Do NOT include the interaction build prompt
+in this response. Output this JSON first and stop.
+
+Wait for confirmation, then continue with:
+
+RESPONSE 2 — INTERACTION BUILD PROMPT ONLY
+Return only the standalone interaction build prompt. This is NOT
+imported into the application. It is copied directly into Claude or
+ChatGPT to build the interaction component. It should be a complete,
+self-contained specification a developer can build from with no other
+document. Plain text — not JSON.
+
+The reason for splitting: both responses together exceed output limits.
+Reason about them together. Return them separately.
+
+---
+
+YOUR SINGLE OBJECTIVE:
+Design the best interaction for teaching this concept, generate the
+prompt required to build that interaction, then create the supporting
+guided explanation, practice, and challenge around it.
+
+The interaction comes first. Everything else supports it.
+
+The decision to use an interaction has already been made.
+Do not question it. Do not suggest a text-only alternative.
+Design the interaction.
+
+---
+
+STEP 1 — DESIGN THE INTERACTION
+
+Design an interaction that naturally teaches this concept.
+The student discovers the concept by doing — not by reading.
+
+Describe:
+- interactionTitle: short, descriptive name
+- learningObjective: what the student will understand by doing this
+- studentGoal: what the student is trying to accomplish (in their terms)
+- whatStudentSees: the opening visual state before they touch anything
+- whatStudentCanDo: every action available — drag / tap / slide / rotate / sort / build
+- interactionFlow: step-by-step sequence of what happens as student interacts
+  Each step: student action → system response → concept revealed
+- feedbackDuringInteraction: what the system shows as the student acts
+  (not right/wrong judgement — live visual response to every action)
+- completionCondition: exact condition that ends the interaction
+
+The interaction precedes the explanation. The coach names what the
+student already experienced — not what they are about to do.
+
+---
+
+STEP 2 — GENERATE THE INTERACTION BUILD PROMPT
+
+Every interaction needs a dedicated build prompt for the developer.
+This is not for the student. It is the blueprint for building the
+interaction component inside the application.
+
+The build prompt must fully specify:
+- Educational objective (what concept this teaches and how)
+- Interaction mechanics (every action the student can take)
+- Visual layout (what occupies each area of the screen)
+- All required objects (every element that appears — name, appearance, behaviour)
+- Animations (what animates, how, at what speed, triggered by what)
+- Drag-and-drop behaviour (if used: what is draggable, drop targets, snap behaviour)
+- Click / tap behaviour (what responds to tap, what feedback appears)
+- State changes (every state the interaction can be in, what triggers each)
+- Success rules (exact condition — what must be true for completion)
+- Failure / wrong-action rules (what happens when student does something incorrect)
+- Feedback animations (visual response to correct and incorrect actions)
+- SVG assets required (list every icon, object, illustration needed)
+- Responsive behaviour (how layout adapts from 360px mobile to desktop)
+- Accessibility requirements (touch targets minimum 44×44px, colour contrast, labels)
+
+Write this as a complete self-contained specification that a developer
+can build from with no clarifying questions.
+
+---
+
+STEP 3 — GUIDED EXPLANATION (coach cards)
+
+After the interaction, the coach explains what the student just experienced.
+The explanation reinforces the interaction — it does not replace it.
+
+Card sequence:
+- Card 1: Real-world hook connected to the interaction. No concept name yet.
+  Something the student already knows from everyday life.
+  SHORT sentences. Plain words. 14-year-old level.
+- Card 2: Name the concept. Connect it to what the student just did.
+  "You just saw... This is called..."
+- Card 3: The precise definition. Now they are ready for it.
+- Card 4 (only if genuinely needed): Name and correct the main misconception.
+
+Each card: 1–3 sentences maximum. Never textbook language. No visuals needed —
+the interaction already gave the student the visual experience.
+
+The coach's key moment line (at the peak of the interaction) and completion
+line must be written in full — warm, direct, specific. Not "great job!" —
+"You just sorted every item correctly. You now know the two things that
+every piece of matter has in common."
+
+---
+
+STEP 4 — PRACTICE QUESTIONS
+
+Practice comes immediately after the guided lesson — embedded inside the
+lesson flow, not on a separate page. The student finishes the lesson and
+the questions appear right there. No navigation needed.
+
+Purpose: test recall of what the student just learned. Simple and quick.
+Number: 2–3 questions is enough. Do not pad. Do not overthink.
+No visuals needed in the questions — the interaction provided the experience.
+
+For each question:
+- question: short, direct — tests one thing from the lesson
+- correctAnswer
+- correctExplanation: 1–2 plain sentences. Why is this right?
+  Written directly to the student.
+- wrongAnswer1 + wrongAnswer1Explanation: the misconception it targets
+- wrongAnswer2 + wrongAnswer2Explanation: the misconception it targets
+- coachHint: a guiding nudge if the student asks — never the answer
+
+---
+
+STEP 5 — CHALLENGE QUESTIONS
+
+Challenge questions are for students to come back to later.
+They test application, not recall. Harder thinking required.
+Maximum 3 questions. Plain text — no visuals needed.
+Keep them short and sharp. Do not overcomplicate.
+
+Challenge ≠ harder Practice. The student must reason, not remember.
+
+For each question:
+- question: unfamiliar scenario or application — student must think
+- correctAnswer
+- correctExplanation: 2–3 plain sentences. How to reason through this.
+- wrongAnswers: 2–3 options grounded in real misconceptions
+- wrongAnswerExplanations: one sentence each — why each is wrong
+
+---
 
 Produce the complete content spec. Respond ONLY with valid JSON. No preamble, no markdown fences.
 
 {
   "concept": "${concept.name}",
-  "stage": "${concept.stage}",
+  "interaction": {
+    "interactionTitle": "short descriptive name",
+    "learningObjective": "what the student understands by doing this",
+    "studentGoal": "what the student is trying to accomplish, in their own terms",
+    "whatStudentSees": "the opening state before any interaction",
+    "whatStudentCanDo": ["drag / tap / slide / sort / build — one per action"],
+    "interactionFlow": [
+      { "step": 1, "studentAction": "what student does", "systemResponse": "what happens on screen", "conceptRevealed": "what the student discovers" },
+      { "step": 2, "studentAction": "", "systemResponse": "", "conceptRevealed": "" }
+    ],
+    "feedbackDuringInteraction": "what the system shows as student acts — live response, not right/wrong judgement",
+    "completionCondition": "exact condition that ends the interaction"
+  },
   "guidedLearningMission": {
-    "missionName": "narrative mission name — not academic",
-    "coachBriefing": ["card 1: narrative hook — why is the student here", "card 2: what to observe or do", "card 3: the concept named and connected to what they just saw"],
-    "interaction": {
-      "whatStudentDoes": "describe the interaction",
-      "whatSystemShows": "describe the feedback",
-      "keyMoment": "the moment understanding clicks"
-    },
+    "missionName": "engaging mission name — curious, not academic",
+    "coachBriefing": [
+      "Card 1: real-world hook — no concept name yet, plain words",
+      "Card 2: name the concept, connect to what they just did",
+      "Card 3: the precise definition — now they are ready",
+      "Card 4 (only if needed): name and correct the main misconception"
+    ],
     "coachLines": {
-      "atKeyMoment": "what ${meta.coach} says at the key moment",
-      "onSuccess": "specific completion line — not generic praise"
+      "atKeyMoment": "exact line ${meta.coach} says at the peak — warm and specific",
+      "onSuccess": "exact completion line — names what the student now understands"
     },
-    "objectives": ["The student can ...", "The student can ...", "The student can ..."],
+    "objectives": ["The student can ...", "The student can ..."],
     "misconceptionConfronted": "${concept.misconception ?? ""}",
-    "howInteractionConfrontsIt": "what makes the wrong belief impossible to hold"
+    "howInteractionConfrontsIt": "what makes the wrong belief impossible to hold after this"
   },
   "interactionRef": {
-    "component": "ComponentNameOrNull",
+    "component": "ComponentNameIfExists",
     "config": {},
-    "componentExists": true,
-    "needsInteraction": true,
-    "buildPromptIfNeeded": "Only fill this if componentExists is false — describe what to build"
-  },${!isMaths && isGP ? `
-  "guidedPracticeNotes": "describe the method walkthrough",` : ""}
+    "componentExists": false,
+    "buildPromptIfNeeded": "brief description only — full spec comes in Response 2"
+  },
   "practiceQuestions": [
-    { "question": "full question", "correctAnswer": "correct", "wrongAnswer1": "wrong 1", "wrongAnswer2": "wrong 2", "coachHint": "hint that teaches", "objective": "The student can ..." },
-    { "question": "", "correctAnswer": "", "wrongAnswer1": "", "wrongAnswer2": "", "coachHint": "", "objective": "" },
-    { "question": "", "correctAnswer": "", "wrongAnswer1": "", "wrongAnswer2": "", "coachHint": "", "objective": "" },
-    { "question": "", "correctAnswer": "", "wrongAnswer1": "", "wrongAnswer2": "", "coachHint": "", "objective": "" },
-    { "question": "", "correctAnswer": "", "wrongAnswer1": "", "wrongAnswer2": "", "coachHint": "", "objective": "" }
+    {
+      "question": "short, direct question testing one thing from the lesson",
+      "correctAnswer": "",
+      "correctExplanation": "1–2 plain sentences — why this is correct, written to the student",
+      "wrongAnswer1": "",
+      "wrongAnswer1Explanation": "what misconception this represents and why it is wrong",
+      "wrongAnswer2": "",
+      "wrongAnswer2Explanation": "what misconception this represents and why it is wrong",
+      "coachHint": "nudge that guides thinking — never gives the answer"
+    },
+    {
+      "question": "",
+      "correctAnswer": "",
+      "correctExplanation": "",
+      "wrongAnswer1": "",
+      "wrongAnswer1Explanation": "",
+      "wrongAnswer2": "",
+      "wrongAnswer2Explanation": "",
+      "coachHint": ""
+    }
   ],
   "challengeQuestions": [
-    { "question": "unfamiliar scenario", "correctAnswer": "", "wrongAnswers": ["", "", ""], "reasoningPath": "", "objective": "" },
-    { "question": "", "correctAnswer": "", "wrongAnswers": ["", "", ""], "reasoningPath": "", "objective": "" },
-    { "question": "", "correctAnswer": "", "wrongAnswers": ["", "", ""], "reasoningPath": "", "objective": "" },
-    { "question": "", "correctAnswer": "", "wrongAnswers": ["", "", ""], "reasoningPath": "", "objective": "" }
+    {
+      "question": "unfamiliar scenario — student must reason, not recall",
+      "correctAnswer": "",
+      "correctExplanation": "2–3 plain sentences: how to reason through this",
+      "wrongAnswers": ["wrong 1", "wrong 2"],
+      "wrongAnswerExplanations": ["why wrong 1", "why wrong 2"]
+    }
   ]
 }
 
 Rules:
-- interactionRef.componentExists = true if HeatSlider fits this concept, false if a new component would be needed
-- If componentExists is false, describe what to build in buildPromptIfNeeded
-- Every question fully written. Wrong answers = real misconceptions. Output JSON only.`;
+- No [VISUAL] tags anywhere — the interaction provides the visual experience
+- Practice: 2–3 questions maximum, embedded in the lesson flow
+- Challenge: maximum 3 questions, plain text, application not recall
+- Every coach card: 1–3 sentences, plain language
+- Every explanation written directly to the student — plain, brief, specific
+- interactionBuildPrompt is NOT in this JSON — it comes in Response 2
+- Output JSON only for Response 1. Stop after the JSON.
+
+---
+
+After the JSON has been returned and confirmed, produce Response 2:
+
+RESPONSE 2 — INTERACTION BUILD PROMPT
+
+A complete, standalone specification for building the interaction component.
+Not JSON. Plain text for a developer or coding AI to build from directly.
+
+Cover:
+- Educational objective: what concept this teaches and how the interaction reveals it
+- Student experience: what the student sees, does, and discovers — start to finish
+- Complete interaction flow: every step — student action, system response, concept revealed, coach line
+- All interactive objects: name, appearance, behaviour
+- Visual layout: what occupies each part of the screen
+- Animations: what animates, how, speed, trigger
+- User actions: exactly what is interactive and how it responds
+- Feedback behaviour: system response for correct action, incorrect action, in-progress
+- Success and completion conditions
+- SVG assets or illustrations required
+- Implementation notes: mobile-first (360px), touch targets (44×44px min), offline-capable
+- SVG assets or illustrations required: every image, icon, or illustration
+  — name, description, approximate size
+- Implementation notes: responsive behaviour (360px mobile → desktop),
+  touch targets (minimum 44×44px), offline capability, performance notes,
+  accessibility requirements`;
 }
 
 // ── Shared styles ─────────────────────────────────────────────────────────────

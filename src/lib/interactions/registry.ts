@@ -54,6 +54,20 @@ export const INTERACTION_REGISTRY: InteractionDefinition[] = [
   },
 
   {
+    key: "AtomReveal",
+    label: "Atom Reveal",
+    description: "Tap to peel layers off an object (wood, onion, rock) until the atomic structure is revealed. Student taps through material layers, then discovers the atom, taps the nucleus, and taps an electron. Use for: atomic structure, atoms as building blocks of matter, internal structure of atoms.",
+    subjects: ["chemistry", "physics"],
+    configSchema: [
+      { key: "objectName",    label: "Object to peel",       type: "text",   default: "Wood" },
+      { key: "coachName",     label: "Coach name",           type: "text",   default: "Adaobi" },
+      { key: "electronCount", label: "Number of electrons",  type: "number", default: 3 },
+      { key: "accentColour",  label: "Accent colour (hex)",  type: "text",   default: "#00d4ff" },
+    ],
+    buildPrompt: "Already built — src/components/interactions/AtomReveal.tsx",
+  },
+
+  {
     key: "InfiniteZoomExplorer",
     label: "Infinite Zoom Explorer",
     description: "Student selects a material (metal spoon, glass, water, oil, wood, sugar, air) then scrolls/drags to zoom from macroscopic view through to particle level. Shows particle arrangement appropriate to state of matter. Tracks which materials have been explored to particle level. Ends with summary: all matter is made of particles. Use for: particle theory of matter, particle arrangement in solids/liquids/gases, why matter looks smooth at normal scale.",

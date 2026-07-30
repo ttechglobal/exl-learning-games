@@ -158,6 +158,7 @@ export function GameplayShell({
           currently only Carbon Builder. Every other engine still omits
           this prop and sees no layout change at all. */}
       <div className={styles.menuSlot}>
+        {/* Menu button — LEFT side always */}
         <div className={styles.menuTitleGroup}>
           {menu}
           {gameTitle && (

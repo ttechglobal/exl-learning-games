@@ -336,7 +336,19 @@ export function GameRuntime({
       };
 
       setLastResult(result);
-      setPhase("reflection");
+
+      // autoAdvance: true means the engine is mid-session (more questions
+      // remain in this concept group). Skip Reflection entirely and advance
+      // straight to the next mission — no Mission Complete screen between
+      // individual questions. Only the last question in a group shows
+      // Reflection. This is set by MCQEngine when currentIndex + 1 <
+      // allMissions.length.
+      const shouldAutoAdvance = rawOutcome.autoAdvance === true;
+
+      if (!shouldAutoAdvance) {
+        setPhase("reflection");
+      }
+
       // Fires immediately on success — see onMissionSucceeded's doc
       // comment on GameRuntimeProps for exactly why this can't wait for
       // onAdvanceToNextMission (the player might tap Back instead, and
@@ -346,6 +358,13 @@ export function GameRuntime({
         // After the player's first completed game, prompt for their name.
         // No-op if already set. See lib/content/localPlayerName.ts.
         requestPlayerNamePrompt();
+      }
+
+      // For auto-advance: call onAdvanceToNextMission after the attempt
+      // is saved so completion is recorded before the next mission mounts.
+      if (shouldAutoAdvance) {
+        onAdvanceToNextMission();
+        return;
       }
 
       // Flip BEFORE the mission_abandoned-on-unmount effect could ever

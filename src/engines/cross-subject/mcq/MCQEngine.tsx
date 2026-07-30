@@ -1,19 +1,7 @@
 // FILE: src/engines/cross-subject/mcq/MCQEngine.tsx
 "use client";
 
-/**
- * MCQEngine — renders a SESSION of MCQ missions for a concept.
- *
- * A "session" = all missions of the same difficulty for the same concept.
- * The engine receives ONE mission at a time from GameRuntime (the active
- * mission), but internally drives a multi-question flow by calling
- * onComplete after each answer, which advances PlayClient to the next mission.
- *
- * The session view shows all questions and locks future ones until the
- * previous is answered. Completed ones can be redone.
- */
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import type { EngineRuntimeProps } from "@/engines/engine-types";
 
 interface MCQPayload {
@@ -25,6 +13,10 @@ interface MCQPayload {
   objective?: string;
   reasoningPath?: string;
   conceptName?: string;
+  // Per-answer explanations: keyed by answer text
+  answerExplanations?: Record<string, string>;
+  // Single correct-answer explanation (shown after answering)
+  correctExplanation?: string;
 }
 
 interface SharedConfig {
@@ -34,13 +26,15 @@ interface SharedConfig {
   topicName?: string;
   studentName?: string;
   currentMissionIndex?: number;
-  allSessionMissions?: Array<{
-    id: string;
-    title: string;
-    missionKey: string;
-    sequenceIndex: number;
-    payload: MCQPayload;
-  }>;
+  allSessionMissions?: SessionMission[];
+}
+
+interface SessionMission {
+  id: string;
+  title: string;
+  missionKey: string;
+  sequenceIndex: number;
+  payload: MCQPayload;
 }
 
 export interface MCQConfig {
@@ -50,14 +44,7 @@ export interface MCQConfig {
     title?: string;
     difficulty?: string;
     xp_reward?: number;
-    // All missions in this session (same difficulty, same concept group)
-    allSessionMissions?: Array<{
-      id: string;
-      title: string;
-      missionKey: string;
-      sequenceIndex: number;
-      payload: MCQPayload;
-    }>;
+    allSessionMissions?: SessionMission[];
     currentMissionIndex?: number;
   };
 }
@@ -66,6 +53,11 @@ export interface MCQOutcome {
   success: boolean;
   correct: boolean;
   attempts: number;
+  /** When true, GameRuntime skips the Reflection screen and advances
+   *  directly to the next mission — used for mid-session questions
+   *  where showing Mission Complete between every question would break
+   *  the flow. Only the last question in a concept group sets this false. */
+  autoAdvance?: boolean;
 }
 
 const SUBJECT_ACCENT: Record<string, string> = {
@@ -86,44 +78,42 @@ function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
-interface QuestionState {
-  answered: boolean;
-  correct: boolean;
-  selectedAnswer: string | null;
-}
-
 export function MCQEngine({
   config, onComplete, menu,
 }: EngineRuntimeProps<MCQConfig, MCQOutcome> & { menu?: React.ReactNode }) {
-  const shared  = (config.shared ?? {}) as SharedConfig;
-  const mission = config.mission;
-  const payload = (mission?.payload ?? {}) as MCQPayload;
-  const subject = shared.subject ?? "chemistry";
-  const coach   = shared.coach ?? "Dr. Adaobi";
-  const accent  = shared.accentColour ?? SUBJECT_ACCENT[subject] ?? "#0284c7";
-  const bg      = SUBJECT_BG[subject] ?? SUBJECT_BG.chemistry;
-  const isMaths = subject === "mathematics";
+  const shared      = (config.shared ?? {}) as SharedConfig;
+  const mission     = config.mission;
+  const payload     = (mission?.payload ?? {}) as MCQPayload;
+  const subject     = shared.subject ?? "chemistry";
+  const coach       = shared.coach ?? "Adaobi";
+  const accent      = shared.accentColour ?? SUBJECT_ACCENT[subject] ?? "#0284c7";
+  const bg          = SUBJECT_BG[subject] ?? SUBJECT_BG.chemistry;
+  const isMaths     = subject === "mathematics";
   const isChallenge = mission?.difficulty === "HARD";
-  const conceptName = payload.conceptName ?? "";
 
   const textMain = isMaths ? "#1a0a00" : "#ffffff";
   const textDim  = isMaths ? "rgba(90,64,16,0.7)" : "rgba(255,255,255,0.55)";
-  const cardBg   = isMaths ? "rgba(255,253,240,0.95)" : "rgba(6,14,26,0.85)";
+  const cardBg   = isMaths ? "rgba(255,253,240,0.97)" : "rgba(10,22,38,0.92)";
+  const cardBorder = isMaths ? "rgba(201,162,39,0.25)" : "rgba(255,255,255,0.09)";
 
-  // Shuffle options once per mount
+  // Shuffle once per mount
   const [options] = useState(() => shuffle([
     { label: payload.correctAnswer, correct: true },
     ...(payload.wrongAnswers ?? []).filter(Boolean).map(w => ({ label: w, correct: false })),
   ]));
 
-  const [selected, setSelected] = useState<string | null>(null);
-  const [attempts, setAttempts] = useState(0);
-  const [showHint, setShowHint] = useState(false);
-  const [phase, setPhase]       = useState<"think" | "answer">(isChallenge ? "think" : "answer");
+  const [selected, setSelected]     = useState<string | null>(null);
+  const [attempts, setAttempts]     = useState(0);
+  const [showHint, setShowHint]     = useState(false);
+  const [phase, setPhase]           = useState<"think" | "answer">(isChallenge ? "think" : "answer");
   const [thinkTimer, setThinkTimer] = useState(30);
   const [showViewAll, setShowViewAll] = useState(false);
+  const [advancing, setAdvancing]   = useState(false);
 
-  // Challenge think phase countdown
+  const currentIndex = (shared.currentMissionIndex ?? mission?.currentMissionIndex) ?? 0;
+  const allMissions  = (shared.allSessionMissions ?? mission?.allSessionMissions) ?? [];
+
+  // Challenge think-phase countdown
   useEffect(() => {
     if (phase !== "think") return;
     if (thinkTimer <= 0) { setPhase("answer"); return; }
@@ -134,31 +124,47 @@ export function MCQEngine({
   const isCorrect  = selected !== null && options.find(o => o.label === selected)?.correct;
   const showResult = selected !== null;
 
+  // Resolve the explanation to show after answering
+  const getExplanation = useCallback((chosenLabel: string) => {
+    // Per-answer explanation takes priority
+    if (payload.answerExplanations?.[chosenLabel]) {
+      return payload.answerExplanations[chosenLabel];
+    }
+    // Correct answer: use correctExplanation or reasoningPath
+    const opt = options.find(o => o.label === chosenLabel);
+    if (opt?.correct) {
+      return payload.correctExplanation ?? payload.reasoningPath ?? null;
+    }
+    // Wrong answer: fall back to hint
+    return payload.coachHint ?? null;
+  }, [payload, options]);
+
   const handleSelect = (label: string) => {
     if (selected) return;
     setSelected(label);
     setAttempts(a => a + 1);
   };
 
-  const handleTryAgain = () => {
-    setSelected(null);
-    setShowHint(false);
-  };
-
   const handleNext = () => {
-    onComplete({ success: true, correct: !!isCorrect, attempts });
+    if (advancing) return;
+    setAdvancing(true);
+    // autoAdvance: true tells GameRuntime to skip the Reflection screen
+    // and go straight to the next mission when there are more questions
+    // in this session. Only the LAST question in a concept group shows
+    // the Reflection/Mission Complete screen.
+    const isLastInSession = allMissions.length === 0 || currentIndex + 1 >= allMissions.length;
+    onComplete({
+      success: true,
+      correct: !!isCorrect,
+      attempts,
+      autoAdvance: !isLastInSession,
+    });
   };
 
-  // ── View all panel ────────────────────────────────────────────────────────
-
-  // Session data comes from sharedConfig (injected by PlayClient)
-  const currentIndex = (shared.currentMissionIndex ?? mission?.currentMissionIndex) ?? 0;
-  const allMissions  = (shared.allSessionMissions ?? mission?.allSessionMissions) ?? [];
-
+  // ── View-all panel ────────────────────────────────────────────────────────
   if (showViewAll && allMissions.length > 0) {
     return (
       <div style={{ background: bg, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-        {/* Header */}
         <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 12, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           <button onClick={() => setShowViewAll(false)} style={{
             width: 36, height: 36, borderRadius: "50%", border: `1.5px solid ${accent}40`,
@@ -167,27 +173,22 @@ export function MCQEngine({
           }}>←</button>
           <div>
             <div style={{ fontSize: "0.65rem", fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-              {isChallenge ? "Challenge" : "Practice"} · {conceptName}
+              {isChallenge ? "Challenge" : "Practice"} · {payload.conceptName ?? ""}
             </div>
-            <div style={{ fontSize: "0.85rem", fontWeight: 700, color: textMain }}>
-              All questions
-            </div>
+            <div style={{ fontSize: "0.85rem", fontWeight: 700, color: textMain }}>All questions</div>
           </div>
         </div>
-
-        {/* Question list */}
         <div style={{ flex: 1, overflowY: "auto", padding: 16 }}>
           {allMissions.map((m, i) => {
             const isDone    = i < currentIndex;
             const isCurrent = i === currentIndex;
-            const isLocked  = i > currentIndex;
             return (
               <div key={m.id} style={{
                 display: "flex", alignItems: "center", gap: 12,
                 padding: "14px 16px", borderRadius: 12, marginBottom: 8,
                 background: isCurrent ? `${accent}15` : isDone ? "rgba(5,150,105,0.08)" : cardBg,
-                border: `1.5px solid ${isCurrent ? accent : isDone ? "rgba(5,150,105,0.3)" : "rgba(255,255,255,0.06)"}`,
-                opacity: isLocked ? 0.45 : 1,
+                border: `1.5px solid ${isCurrent ? accent : isDone ? "rgba(5,150,105,0.3)" : cardBorder}`,
+                opacity: i > currentIndex ? 0.45 : 1,
               }}>
                 <div style={{
                   width: 32, height: 32, borderRadius: 8, flexShrink: 0,
@@ -197,19 +198,16 @@ export function MCQEngine({
                   fontSize: "0.78rem", fontWeight: 800,
                   color: isDone ? "#34d399" : isCurrent ? accent : textDim,
                 }}>
-                  {isDone ? "✓" : isLocked ? "🔒" : i + 1}
+                  {isDone ? "✓" : i > currentIndex ? "🔒" : i + 1}
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: "0.85rem", fontWeight: 600, color: isDone ? textDim : textMain, lineHeight: 1.4 }}>
                     {(m.payload as MCQPayload).question?.slice(0, 80)}{(m.payload as MCQPayload).question?.length > 80 ? "…" : ""}
                   </div>
                   <div style={{ fontSize: "0.65rem", color: isDone ? "#34d399" : isCurrent ? accent : textDim, marginTop: 2, fontWeight: 600 }}>
-                    {isDone ? "Completed — tap to redo" : isCurrent ? "Up next" : "Complete previous to unlock"}
+                    {isDone ? "Done" : isCurrent ? "Up next" : "Locked"}
                   </div>
                 </div>
-                {(isDone || isCurrent) && (
-                  <div style={{ color: `${accent}60`, fontSize: "0.9rem" }}>›</div>
-                )}
               </div>
             );
           })}
@@ -218,37 +216,45 @@ export function MCQEngine({
     );
   }
 
-  // ── Main question UI ──────────────────────────────────────────────────────
+  // ── Main UI ───────────────────────────────────────────────────────────────
+  const explanation = selected ? getExplanation(selected) : null;
 
   return (
     <div style={{ background: bg, minHeight: "100vh", display: "flex", flexDirection: "column", position: "relative" }}>
 
-      {/* Top bar */}
+      {/* ── TOPBAR — menu LEFT, info right ── */}
       <div style={{
         display: "flex", alignItems: "center", gap: 10,
-        padding: "14px 16px",
-        borderBottom: "1px solid rgba(255,255,255,0.05)",
+        padding: "12px 16px",
+        borderBottom: `1px solid ${cardBorder}`,
+        flexShrink: 0,
       }}>
-        {/* Difficulty + concept */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: 5,
-            fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase",
-            letterSpacing: "0.12em", color: accent,
-            padding: "3px 10px", borderRadius: 20,
-            background: `${accent}15`, border: `1px solid ${accent}30`,
-            marginBottom: 3,
-          }}>
-            {isChallenge ? "⚡ Challenge" : "✏️ Practice"}
-          </div>
-          {conceptName && (
-            <div style={{ fontSize: "0.78rem", color: textDim, fontWeight: 600 }}>{conceptName}</div>
-          )}
+        {/* Menu button — LEFT */}
+        {menu && <div style={{ flexShrink: 0, marginRight: 4 }}>{menu}</div>}
+
+        {/* Difficulty badge */}
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 5,
+          fontSize: "0.6rem", fontWeight: 800, textTransform: "uppercase",
+          letterSpacing: "0.12em", color: isChallenge ? "#ef4444" : accent,
+          padding: "3px 10px", borderRadius: 20,
+          background: isChallenge ? "rgba(239,68,68,0.12)" : `${accent}15`,
+          border: `1px solid ${isChallenge ? "rgba(239,68,68,0.3)" : `${accent}30`}`,
+          flexShrink: 0,
+        }}>
+          {isChallenge ? "⚡ Challenge" : "✏️ Practice"}
         </div>
 
-        {/* Progress fraction */}
+        {/* Concept name */}
+        {payload.conceptName && (
+          <div style={{ flex: 1, fontSize: "0.75rem", color: textDim, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {payload.conceptName}
+          </div>
+        )}
+
+        {/* Progress */}
         {allMissions.length > 1 && (
-          <div style={{ fontSize: "0.72rem", color: textDim, fontWeight: 600, flexShrink: 0 }}>
+          <div style={{ fontSize: "0.72rem", color: textDim, fontWeight: 700, flexShrink: 0 }}>
             {currentIndex + 1} / {allMissions.length}
           </div>
         )}
@@ -256,19 +262,16 @@ export function MCQEngine({
         {/* View all */}
         {allMissions.length > 1 && (
           <button onClick={() => setShowViewAll(true)} style={{
-            padding: "5px 10px", borderRadius: 8, border: `1px solid ${accent}30`,
-            background: `${accent}10`, color: accent, fontSize: "0.68rem",
+            padding: "4px 10px", borderRadius: 8, border: `1px solid ${accent}30`,
+            background: `${accent}10`, color: accent, fontSize: "0.66rem",
             fontWeight: 700, cursor: "pointer", flexShrink: 0,
           }}>All ▾</button>
         )}
-
-        {/* Menu */}
-        {menu && <div style={{ flexShrink: 0 }}>{menu}</div>}
       </div>
 
       {/* Progress bar */}
       {allMissions.length > 1 && (
-        <div style={{ height: 3, background: "rgba(255,255,255,0.06)" }}>
+        <div style={{ height: 3, background: "rgba(255,255,255,0.06)", flexShrink: 0 }}>
           <div style={{
             height: "100%",
             width: `${((currentIndex + (showResult && isCorrect ? 1 : 0)) / allMissions.length) * 100}%`,
@@ -277,123 +280,218 @@ export function MCQEngine({
         </div>
       )}
 
-      {/* Challenge think phase */}
+      {/* ── THINK PHASE (Challenge only) ── */}
       {phase === "think" && (
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "20px", gap: 16 }}>
-          <div style={{ background: cardBg, borderRadius: 16, padding: 20, border: `1.5px solid ${accent}25`, backdropFilter: "blur(8px)" }}>
-            <div style={{ fontSize: "0.65rem", fontWeight: 800, color: "#ef4444", textTransform: "uppercase", marginBottom: 8 }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "24px 20px", gap: 18 }}>
+          {/* Big question card */}
+          <div style={{
+            background: cardBg, borderRadius: 20, padding: "28px 24px",
+            border: `1.5px solid rgba(239,68,68,0.25)`,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+          }}>
+            <div style={{ fontSize: "0.65rem", fontWeight: 800, color: "#ef4444", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12 }}>
               ⏱ Think first — {thinkTimer}s
             </div>
-            <div style={{ fontSize: "1rem", color: textMain, lineHeight: 1.7 }}>{payload.question}</div>
+            <div style={{ fontSize: "1.05rem", color: textMain, lineHeight: 1.75, fontWeight: 500 }}>
+              {payload.question}
+            </div>
           </div>
-          <div style={{ fontSize: "0.82rem", color: textDim, textAlign: "center", lineHeight: 1.5 }}>
-            Work it out first. When ready, pick your answer.
+          <div style={{ fontSize: "0.85rem", color: textDim, textAlign: "center", lineHeight: 1.6 }}>
+            Work it out in your head first. Take your time.
           </div>
           <button onClick={() => setPhase("answer")} style={{
-            padding: "14px", borderRadius: 12, border: "none",
-            background: accent, color: "#fff", fontSize: "0.95rem", fontWeight: 700, cursor: "pointer",
+            padding: "16px", borderRadius: 14, border: "none",
+            background: accent, color: "#fff", fontSize: "1rem", fontWeight: 800,
+            cursor: "pointer", boxShadow: `0 5px 0 ${accent}60`,
+            marginTop: "auto",
           }}>I&apos;m ready →</button>
         </div>
       )}
 
-      {/* Answer phase */}
+      {/* ── ANSWER PHASE ── */}
       {phase === "answer" && (
-        <div style={{ flex: 1, padding: "16px 20px", display: "flex", flexDirection: "column", gap: 14, overflowY: "auto" }}>
+        <div style={{ flex: 1, padding: "16px 16px 24px", display: "flex", flexDirection: "column", gap: 12, overflowY: "auto" }}>
 
-          {/* Question */}
+          {/* Question — big card */}
           <div style={{
-            background: cardBg, borderRadius: 14, padding: 18,
-            border: `1px solid ${accent}20`, backdropFilter: "blur(8px)",
+            background: cardBg,
+            borderRadius: 20,
+            padding: "22px 22px",
+            border: `1.5px solid ${cardBorder}`,
+            boxShadow: "0 4px 24px rgba(0,0,0,0.25)",
           }}>
-            <div style={{ fontSize: "1rem", color: textMain, lineHeight: 1.7 }}>{payload.question}</div>
+            <div style={{ fontSize: "1.05rem", color: textMain, lineHeight: 1.75, fontWeight: 500 }}>
+              {payload.question}
+            </div>
           </div>
 
-          {/* Options */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {/* Options — big game-feel chips */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {options.map((opt, i) => {
-              const isSel  = selected === opt.label;
-              const reveal = showResult;
-              const bgCol  = reveal
-                ? opt.correct ? `${accent}22` : isSel ? "rgba(239,68,68,0.15)" : isMaths ? "rgba(255,253,240,0.6)" : "rgba(255,255,255,0.03)"
-                : isMaths ? "rgba(255,253,240,0.9)" : "rgba(255,255,255,0.06)";
+              const isSel   = selected === opt.label;
+              const reveal  = showResult;
+              const isRight = opt.correct;
+              const isWrong = isSel && !opt.correct;
+
+              // Colours
+              let borderCol = `${accent}25`;
+              let bgCol     = cardBg;
+              let textCol   = textMain;
+              let shadowCol = "transparent";
+
+              if (reveal) {
+                if (isRight) {
+                  borderCol = "#22c55e";
+                  bgCol     = isMaths ? "rgba(34,197,94,0.1)" : "rgba(34,197,94,0.12)";
+                  textCol   = "#22c55e";
+                  shadowCol = "rgba(34,197,94,0.2)";
+                } else if (isWrong) {
+                  borderCol = "#ef4444";
+                  bgCol     = isMaths ? "rgba(239,68,68,0.08)" : "rgba(239,68,68,0.12)";
+                  textCol   = "#ef4444";
+                }
+              } else {
+                // Hover feel when not answered
+                bgCol = isMaths ? "rgba(255,253,240,0.97)" : "rgba(255,255,255,0.06)";
+              }
+
               return (
-                <button key={i} onClick={() => handleSelect(opt.label)} style={{
-                  padding: "14px 16px", borderRadius: 12, textAlign: "left",
-                  background: bgCol,
-                  border: `1.5px solid ${reveal ? opt.correct ? accent : isSel ? "#ef4444" : "rgba(255,255,255,0.06)" : `${accent}20`}`,
-                  color: reveal && opt.correct ? accent : textMain,
-                  fontSize: "0.92rem", cursor: selected ? "default" : "pointer",
-                  display: "flex", alignItems: "center", gap: 12,
-                  fontFamily: "inherit", transition: "all 0.15s", backdropFilter: "blur(4px)",
-                }}>
+                <button key={i} onClick={() => handleSelect(opt.label)}
+                  disabled={!!selected}
+                  style={{
+                    padding: "18px 20px",
+                    borderRadius: 16,
+                    textAlign: "left",
+                    background: bgCol,
+                    border: `2px solid ${borderCol}`,
+                    color: textCol,
+                    fontSize: "0.97rem",
+                    cursor: selected ? "default" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 16,
+                    fontFamily: "inherit",
+                    fontWeight: reveal && isRight ? 700 : 500,
+                    transition: "all 0.18s ease",
+                    boxShadow: reveal && isRight ? `0 4px 20px ${shadowCol}` : "none",
+                    // Push-button feel
+                    borderBottom: reveal ? `2px solid ${borderCol}` : `4px solid ${accent}30`,
+                    transform: selected && !isRight && !isSel ? "scale(0.98)" : "scale(1)",
+                    opacity: reveal && !isRight && !isSel ? 0.5 : 1,
+                  }}
+                >
+                  {/* Letter badge */}
                   <div style={{
-                    width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
-                    background: reveal && opt.correct ? accent : isSel && reveal ? "#ef4444" : `${accent}15`,
-                    border: `1.5px solid ${reveal && opt.correct ? accent : isSel && reveal ? "#ef4444" : `${accent}30`}`,
+                    width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                    background: reveal && isRight ? "#22c55e"
+                      : reveal && isWrong ? "#ef4444"
+                      : `${accent}18`,
+                    border: `2px solid ${reveal && isRight ? "#22c55e"
+                      : reveal && isWrong ? "#ef4444"
+                      : `${accent}35`}`,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "0.72rem", color: "#fff", fontWeight: 800,
+                    fontSize: reveal ? "1rem" : "0.78rem",
+                    color: reveal ? "#fff" : accent,
+                    fontWeight: 900,
+                    transition: "all 0.18s",
                   }}>
-                    {reveal && opt.correct ? "✓" : reveal && isSel && !opt.correct ? "✗" : String.fromCharCode(65 + i)}
+                    {reveal && isRight ? "✓" : reveal && isWrong ? "✗" : String.fromCharCode(65 + i)}
                   </div>
-                  <span style={{ fontWeight: reveal && opt.correct ? 700 : 400 }}>{opt.label}</span>
+                  <span style={{ flex: 1, lineHeight: 1.5 }}>{opt.label}</span>
                 </button>
               );
             })}
           </div>
 
-          {/* Hint */}
+          {/* ── POST-ANSWER EXPLANATION ── */}
+          {showResult && explanation && (
+            <div style={{
+              borderRadius: 16,
+              padding: "16px 18px",
+              background: isCorrect
+                ? "rgba(34,197,94,0.08)"
+                : "rgba(239,68,68,0.08)",
+              border: `1.5px solid ${isCorrect ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.25)"}`,
+              animation: "fadeUp 0.25s ease both",
+            }}>
+              <div style={{
+                fontSize: "0.65rem", fontWeight: 900, letterSpacing: "0.1em",
+                textTransform: "uppercase", marginBottom: 8,
+                color: isCorrect ? "#22c55e" : "#f87171",
+              }}>
+                {isCorrect ? "✓ That's right!" : "✗ Not quite"} — Here's why:
+              </div>
+              <div style={{ fontSize: "0.9rem", color: textMain, lineHeight: 1.65, fontWeight: 500 }}>
+                {explanation}
+              </div>
+              {/* Coach attribution */}
+              <div style={{ fontSize: "0.65rem", color: textDim, marginTop: 8, fontWeight: 600 }}>
+                — {coach}
+              </div>
+            </div>
+          )}
+
+          {/* Hint (pre-answer, practice only) */}
           {!isChallenge && !selected && payload.coachHint && (
             <button onClick={() => setShowHint(h => !h)} style={{
-              background: "none", border: `1px dashed ${accent}30`, borderRadius: 10,
-              padding: "9px 14px", color: textDim, fontSize: "0.8rem",
+              background: "none",
+              border: `1.5px dashed ${accent}30`,
+              borderRadius: 12, padding: "10px 14px",
+              color: textDim, fontSize: "0.82rem",
               cursor: "pointer", textAlign: "left",
             }}>
               {showHint ? "Hide hint ↑" : `💡 Hint from ${coach}`}
             </button>
           )}
           {showHint && payload.coachHint && (
-            <div style={{ background: `${accent}12`, border: `1px solid ${accent}25`, borderRadius: 10, padding: 14 }}>
-              <div style={{ fontSize: "0.7rem", color: accent, fontWeight: 800, marginBottom: 5 }}>🧑‍🔬 {coach}</div>
-              <div style={{ fontSize: "0.88rem", color: textMain, lineHeight: 1.6 }}>{payload.coachHint}</div>
-            </div>
-          )}
-
-          {/* Challenge reasoning */}
-          {isChallenge && showResult && isCorrect && payload.reasoningPath && (
-            <div style={{ background: "rgba(5,150,105,0.1)", borderRadius: 10, padding: 14, border: "1px solid rgba(5,150,105,0.2)" }}>
-              <div style={{ fontSize: "0.7rem", fontWeight: 800, color: "#34d399", marginBottom: 5 }}>Reasoning</div>
-              <div style={{ fontSize: "0.85rem", color: textMain, lineHeight: 1.6 }}>{payload.reasoningPath}</div>
-            </div>
-          )}
-
-          {/* Result actions */}
-          {showResult && (
-            isCorrect ? (
-              <button onClick={handleNext} style={{
-                padding: "14px", borderRadius: 12, border: "none",
-                background: accent, color: "#fff", fontSize: "0.95rem", fontWeight: 800,
-                cursor: "pointer", boxShadow: `0 5px 0 ${accent}50`,
-              }}>Next →</button>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <div style={{ fontSize: "0.82rem", color: "#f87171", textAlign: "center", fontWeight: 600 }}>
-                  Not quite — {payload.coachHint && !showHint ? "check the hint!" : "have another go."}
-                </div>
-                <button onClick={handleTryAgain} style={{
-                  padding: "12px", borderRadius: 12, border: "none",
-                  background: `${accent}20`, color: accent,
-                  fontSize: "0.88rem", fontWeight: 700, cursor: "pointer",
-                }}>Try again</button>
-                <button onClick={handleNext} style={{
-                  padding: "10px", borderRadius: 10, border: `1px solid rgba(255,255,255,0.1)`,
-                  background: "transparent", color: textDim,
-                  fontSize: "0.82rem", cursor: "pointer",
-                }}>Skip this one →</button>
+            <div style={{
+              background: `${accent}10`,
+              border: `1.5px solid ${accent}25`,
+              borderRadius: 14, padding: "14px 16px",
+            }}>
+              <div style={{ fontSize: "0.68rem", color: accent, fontWeight: 800, marginBottom: 6 }}>
+                🧑‍🔬 {coach}
               </div>
-            )
+              <div style={{ fontSize: "0.9rem", color: textMain, lineHeight: 1.65 }}>
+                {payload.coachHint}
+              </div>
+            </div>
+          )}
+
+          {/* ── NEXT BUTTON — always shown after answering, whether right or wrong ── */}
+          {showResult && (
+            <button
+              onClick={handleNext}
+              disabled={advancing}
+              style={{
+                padding: "18px",
+                borderRadius: 16,
+                border: "none",
+                background: isCorrect ? "#22c55e" : accent,
+                color: "#fff",
+                fontSize: "1rem",
+                fontWeight: 900,
+                cursor: advancing ? "default" : "pointer",
+                boxShadow: `0 5px 0 ${isCorrect ? "#15803d" : accent}80`,
+                transition: "transform 0.1s, box-shadow 0.1s",
+                opacity: advancing ? 0.7 : 1,
+                marginTop: 4,
+                letterSpacing: "0.02em",
+                fontFamily: "var(--eg-font-display, 'Baloo 2', sans-serif)",
+              }}
+            >
+              {currentIndex + 1 >= allMissions.length ? "Finish ✓" : "Next question →"}
+            </button>
           )}
         </div>
       )}
+
+      <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

@@ -19,8 +19,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     // One game per TOPIC (not per concept)
     const topicSlug = `${slugify(topic.subject)}-${slugify(topic.name)}`;
-    const coachName = topic.subject === "physics" ? "Prof. Emeka"
-      : topic.subject === "mathematics" ? "Ms. Chidera" : "Dr. Adaobi";
+    const coachName = topic.subject === "physics" ? "Emeka"
+      : topic.subject === "mathematics" ? "Ms. Chidera" : "Adaobi";
 
     // Check if game already exists
     const { data: existingGame } = await supabaseServer()
@@ -115,6 +115,17 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       // 2. Practice questions — individual missions
       const pqs = (c.practiceQuestions as Array<Record<string, unknown>> ?? []).filter((q: Record<string, unknown>) => q.question);
       pqs.forEach((q: Record<string, unknown>, qi: number) => {
+        // Build per-answer explanation map (keyed by answer text)
+        const answerExplanations: Record<string, string> = {};
+        if (q.correctExplanation && q.correctAnswer) {
+          answerExplanations[q.correctAnswer as string] = q.correctExplanation as string;
+        }
+        if (q.wrongAnswer1Explanation && q.wrongAnswer1) {
+          answerExplanations[q.wrongAnswer1 as string] = q.wrongAnswer1Explanation as string;
+        }
+        if (q.wrongAnswer2Explanation && q.wrongAnswer2) {
+          answerExplanations[q.wrongAnswer2 as string] = q.wrongAnswer2Explanation as string;
+        }
         allMissions.push({
           game_id: gameId,
           mission_key: `pq-${index}-${qi}-${topicSlug}`,
@@ -129,7 +140,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
             conceptName,
             question: q.question,
             correctAnswer: q.correctAnswer,
+            correctExplanation: q.correctExplanation ?? null,
             wrongAnswers: [q.wrongAnswer1, q.wrongAnswer2].filter(Boolean),
+            answerExplanations: Object.keys(answerExplanations).length > 0 ? answerExplanations : undefined,
             coachHint: q.coachHint,
             objective: q.objective,
           },
@@ -139,6 +152,16 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       // 3. Challenge questions
       const cqs = (c.challengeQuestions as Array<Record<string, unknown>> ?? []).filter((q: Record<string, unknown>) => q.question);
       cqs.forEach((q: Record<string, unknown>, qi: number) => {
+        // Build per-answer explanation map for challenge questions
+        const cAnswerExplanations: Record<string, string> = {};
+        if (q.correctExplanation && q.correctAnswer) {
+          cAnswerExplanations[q.correctAnswer as string] = q.correctExplanation as string;
+        }
+        const wrongAnswers = (q.wrongAnswers as string[] ?? []);
+        const wrongExps    = (q.wrongAnswerExplanations as string[] ?? []);
+        wrongAnswers.forEach((wa: string, wi: number) => {
+          if (wa && wrongExps[wi]) cAnswerExplanations[wa] = wrongExps[wi];
+        });
         allMissions.push({
           game_id: gameId,
           mission_key: `cq-${index}-${qi}-${topicSlug}`,
@@ -153,7 +176,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
             conceptName,
             question: q.question,
             correctAnswer: q.correctAnswer,
-            wrongAnswers: q.wrongAnswers ?? [],
+            correctExplanation: q.correctExplanation ?? q.reasoningPath ?? null,
+            wrongAnswers,
+            answerExplanations: Object.keys(cAnswerExplanations).length > 0 ? cAnswerExplanations : undefined,
             reasoningPath: q.reasoningPath,
             objective: q.objective,
           },

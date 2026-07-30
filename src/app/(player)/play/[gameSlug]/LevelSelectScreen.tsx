@@ -1,7 +1,7 @@
 // FILE: src/app/(player)/play/[gameSlug]/LevelSelectScreen.tsx
 "use client";
 
-import { useState } from "react";
+
 import type { MissionRow } from "@/types/db";
 
 export interface LevelSelectScreenProps {
@@ -42,7 +42,7 @@ export function LevelSelectScreen({
   gameTitle, subject = "chemistry", studentName, coach, missions,
   completedMissionIds, onSelect, onBack,
 }: LevelSelectScreenProps) {
-  const [expandedStage, setExpandedStage] = useState<string | null>(null);
+  // No expand state needed — Guided Learning shows next concept inline always
 
   const meta = SUBJECT_META[subject] ?? SUBJECT_META.chemistry;
   const isMaths = subject === "mathematics";
@@ -78,30 +78,29 @@ export function LevelSelectScreen({
   return (
     <div style={{ background: meta.gradient, minHeight: "100vh", display: "flex", flexDirection: "column", padding: "0 0 40px", position: "relative" }}>
 
-      {/* Back button */}
+      {/* Back button — absolute top-left, doesn't affect header layout */}
       {onBack && (
-        <div style={{ position: "absolute", top: 16, left: 16, zIndex: 10 }}>
-          <button onClick={onBack} style={{
-            width: 40, height: 40, borderRadius: "50%", border: `1.5px solid ${meta.accent}40`,
-            background: `${meta.accent}15`, color: meta.accent,
-            fontSize: "1rem", cursor: "pointer", display: "flex",
-            alignItems: "center", justifyContent: "center",
-          }}>←</button>
-        </div>
+        <button onClick={onBack} style={{
+          position: "absolute", top: 16, left: 16, zIndex: 10,
+          width: 40, height: 40, borderRadius: "50%", border: `1.5px solid ${meta.accent}40`,
+          background: `${meta.accent}15`, color: meta.accent,
+          fontSize: "1rem", cursor: "pointer", display: "flex",
+          alignItems: "center", justifyContent: "center",
+        }}>←</button>
       )}
 
-      {/* Header */}
-      <div style={{ padding: "20px 20px 0", paddingLeft: onBack ? "68px" : "20px" }}>
-        <div style={{ fontSize: "0.6rem", fontWeight: 800, color: `${meta.accent}99`, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 4 }}>
+      {/* Header — centred, with back button floating above */}
+      <div style={{ padding: "20px 20px 0", textAlign: "center", position: "relative" }}>
+        <div style={{ fontSize: "0.62rem", fontWeight: 800, color: `${meta.accent}bb`, textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: 6 }}>
           {subject.charAt(0).toUpperCase() + subject.slice(1)}
         </div>
-        <div style={{ fontSize: "1.15rem", fontWeight: 800, color: textMain, lineHeight: 1.3 }}>
+        <div style={{ fontSize: "1.4rem", fontWeight: 900, color: textMain, lineHeight: 1.25, letterSpacing: "-0.01em" }}>
           {gameTitle}
         </div>
       </div>
 
       {/* Coach greeting */}
-      <div style={{ padding: "16px 20px" }}>
+      <div style={{ padding: "22px 20px 18px" }}>
         <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
           <div style={{
             width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
@@ -123,7 +122,7 @@ export function LevelSelectScreen({
       </div>
 
       {/* Stage cards */}
-      <div style={{ padding: "0 20px", display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ padding: "0 20px 40px", display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ fontSize: "0.6rem", fontWeight: 700, color: textDim, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 2 }}>
           Choose your level
         </div>
@@ -131,31 +130,25 @@ export function LevelSelectScreen({
         {stages.map(difficulty => {
           const stageMeta = STAGE_META[difficulty] ?? { label: difficulty, sublabel: "", icon: "▶", colour: meta.accent };
           const stageMissions = grouped[difficulty] ?? [];
-          const isExpanded = expandedStage === difficulty;
           const totalXp = stageMissions.reduce((s, m) => s + (m.xp_reward ?? 0), 0);
           const isGL = difficulty === "EASY";
           const completedCount = stageMissions.filter(m => completedMissionIds?.has(m.id)).length;
           const progressPct = stageMissions.length > 0 ? (completedCount / stageMissions.length) * 100 : 0;
           const nextMission = firstIncomplete(stageMissions);
+          const nextIndex = stageMissions.findIndex(m => m.id === nextMission.id);
 
           return (
-            <div key={difficulty}>
-              {/* Stage header button */}
+            <div key={difficulty} style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+
+              {/* Stage header — always tappable, goes straight in */}
               <button
-                onClick={() => {
-                  if (isGL && stageMissions.length > 1) {
-                    // GL with multiple missions — expand to show list
-                    setExpandedStage(isExpanded ? null : difficulty);
-                  } else {
-                    // Single mission — go straight in from where left off
-                    onSelect(nextMission.id);
-                  }
-                }}
+                onClick={() => onSelect(nextMission.id)}
                 style={{
                   display: "flex", alignItems: "center", gap: 14,
                   padding: "15px 16px", width: "100%", cursor: "pointer",
-                  borderRadius: isExpanded ? "14px 14px 0 0" : 14,
+                  borderRadius: isGL ? "14px 14px 0 0" : 14,
                   border: `1.5px solid ${stageMeta.colour}30`,
+                  borderBottom: isGL ? "none" : `1.5px solid ${stageMeta.colour}30`,
                   background: cardBg, backdropFilter: "blur(8px)",
                   textAlign: "left", transition: "all 0.15s",
                   WebkitTapHighlightColor: "transparent",
@@ -175,7 +168,6 @@ export function LevelSelectScreen({
                     {stageMeta.sublabel}
                     {stageMissions.length > 1 && ` · ${stageMissions.length} ${isGL ? "concepts" : "questions"}`}
                   </div>
-                  {/* Progress bar */}
                   {completedCount > 0 && (
                     <div style={{ height: 3, background: "rgba(255,255,255,0.1)", borderRadius: 2, overflow: "hidden" }}>
                       <div style={{ height: "100%", width: `${progressPct}%`, background: stageMeta.colour, borderRadius: 2, transition: "width 0.3s" }} />
@@ -190,57 +182,50 @@ export function LevelSelectScreen({
                   }}>+{totalXp} XP</div>
                 )}
 
-                <div style={{ color: `${stageMeta.colour}70`, fontSize: "1rem", flexShrink: 0 }}>
-                  {isGL && stageMissions.length > 1 ? (isExpanded ? "▲" : "▼") : "›"}
-                </div>
+                <div style={{ color: `${stageMeta.colour}70`, fontSize: "1rem", flexShrink: 0 }}>›</div>
               </button>
 
-              {/* Expanded GL mission list */}
-              {isExpanded && isGL && (
-                <div style={{
-                  background: `${cardBg}`,
-                  border: `1.5px solid ${stageMeta.colour}20`,
-                  borderTop: "none",
-                  borderRadius: "0 0 14px 14px",
-                  overflow: "hidden",
-                  backdropFilter: "blur(8px)",
-                }}>
-                  {stageMissions.map((m, i) => {
-                    const isDone = completedMissionIds?.has(m.id) ?? false;
-                    const isNext = !isDone && !stageMissions.slice(0, i).every(prev => completedMissionIds?.has(prev.id) ?? false) === false;
-                    return (
-                      <button
-                        key={m.id}
-                        onClick={() => onSelect(m.id)}
-                        style={{
-                          display: "flex", alignItems: "center", gap: 12,
-                          padding: "12px 16px", width: "100%", cursor: "pointer",
-                          background: isDone ? `${stageMeta.colour}08` : "transparent",
-                          border: "none",
-                          borderTop: i > 0 ? `1px solid rgba(255,255,255,0.05)` : "none",
-                          textAlign: "left",
-                          WebkitTapHighlightColor: "transparent",
-                          opacity: 1,
-                        }}
-                      >
-                        <div style={{
-                          width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-                          background: isDone ? `${stageMeta.colour}30` : `${stageMeta.colour}15`,
-                          border: `1px solid ${stageMeta.colour}${isDone ? "60" : "30"}`,
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          fontSize: "0.72rem", fontWeight: 800, color: stageMeta.colour,
-                        }}>{isDone ? "✓" : i + 1}</div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: isDone ? textDim : textMain, lineHeight: 1.3 }}>
-                            {m.learning_goal ?? m.title}
-                          </div>
-                          {isDone && <div style={{ fontSize: "0.65rem", color: stageMeta.colour, marginTop: 2 }}>Completed</div>}
-                        </div>
-                        <div style={{ color: `${stageMeta.colour}60`, fontSize: "0.9rem" }}>›</div>
-                      </button>
-                    );
-                  })}
-                </div>
+              {/* Guided Learning: show only the NEXT concept, always visible */}
+              {isGL && (
+                <button
+                  onClick={() => onSelect(nextMission.id)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 12,
+                    padding: "13px 16px 14px",
+                    width: "100%", cursor: "pointer",
+                    background: `${stageMeta.colour}0a`,
+                    border: `1.5px solid ${stageMeta.colour}25`,
+                    borderTop: `1px solid ${stageMeta.colour}18`,
+                    borderRadius: "0 0 14px 14px",
+                    textAlign: "left",
+                    WebkitTapHighlightColor: "transparent",
+                  }}
+                >
+                  {/* Step indicator */}
+                  <div style={{
+                    width: 30, height: 30, borderRadius: 9, flexShrink: 0,
+                    background: completedCount > nextIndex
+                      ? `${stageMeta.colour}35`
+                      : `${stageMeta.colour}18`,
+                    border: `1.5px solid ${stageMeta.colour}${completedCount > nextIndex ? "70" : "35"}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "0.72rem", fontWeight: 900, color: stageMeta.colour,
+                  }}>
+                    {completedMissionIds?.has(nextMission.id) ? "✓" : nextIndex + 1}
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {/* "Up next" label */}
+                    <div style={{ fontSize: "0.58rem", fontWeight: 800, color: stageMeta.colour, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>
+                      {completedMissionIds?.has(nextMission.id) ? "Replay" : completedCount === 0 ? "Start here" : "Continue"}
+                    </div>
+                    <div style={{ fontSize: "0.88rem", fontWeight: 700, color: textMain, lineHeight: 1.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {nextMission.learning_goal ?? nextMission.title}
+                    </div>
+                  </div>
+
+                  <div style={{ color: `${stageMeta.colour}80`, fontSize: "1rem", flexShrink: 0 }}>›</div>
+                </button>
               )}
             </div>
           );

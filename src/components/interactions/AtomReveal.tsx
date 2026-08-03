@@ -197,35 +197,35 @@ export default function AtomReveal({ config, onGoalReached, colour = "#00d4ff" }
     <div style={{
       display: "flex", flexDirection: "column", alignItems: "center",
       gap: 0, padding: "0 0 16px",
-      fontFamily: "var(--eg-font-body, 'Inter', sans-serif)",
+      fontFamily: "var(--eg-font-body, 'Space Grotesk', sans-serif)",
       userSelect: "none",
       WebkitUserSelect: "none",
     }}>
 
-      {/* ── Coach panel ── */}
+      {/* ── Header — title (coach line) + subtitle (contextual hint) ── */}
       <div style={{
-        width: "100%", maxWidth: 340,
-        background: "rgba(255,255,255,0.05)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: 14, padding: "12px 16px",
-        marginBottom: 12,
-        display: "flex", alignItems: "flex-start", gap: 10,
+        width: "100%",
+        background: "rgba(255,255,255,0.025)",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        padding: "14px 18px 12px",
+        textAlign: "center",
+        transition: "opacity 0.3s",
       }}>
-        {/* Avatar placeholder */}
         <div style={{
-          width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
-          background: `${accent}22`,
-          border: `2px solid ${accent}55`,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "1rem",
-        }}>🧑‍🔬</div>
-        <div>
-          <div style={{ fontSize: "0.58rem", fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 3 }}>
-            {coachName}
-          </div>
-          <div style={{ fontSize: "0.86rem", color: "rgba(255,255,255,0.88)", lineHeight: 1.55, transition: "opacity 0.3s" }}>
-            {coachLine}
-          </div>
+          fontFamily: "var(--eg-font-display, \'Outfit\', \'Space Grotesk\', sans-serif)",
+          fontSize: "1.05rem", fontWeight: 900,
+          color: "#fff", lineHeight: 1.25, marginBottom: 4,
+          letterSpacing: "-0.01em",
+        }}>
+          {coachLine}
+        </div>
+        <div style={{
+          fontFamily: "var(--eg-font-body, \'Space Grotesk\', sans-serif)",
+          fontSize: "0.75rem", fontWeight: 500,
+          color: "rgba(255,255,255,0.48)",
+          lineHeight: 1.4,
+        }}>
+          {instruction}
         </div>
       </div>
 
@@ -368,9 +368,19 @@ export default function AtomReveal({ config, onGoalReached, colour = "#00d4ff" }
                     fill={nucleusTapped ? "#ff9f43" : "rgba(255,255,255,0.5)"}
                     style={{ pointerEvents: "none", transition: "fill 0.3s" }}
                   >
-                    {nucleusTapped ? "NUCLEUS ✓" : "← tap nucleus"}
+                    {nucleusTapped ? "← tap nucleus" : "← tap nucleus"}
                   </text>
                 )}
+              {/* NUCLEUS label — appears prominently when tapped */}
+              {nucleusTapped && (
+                <g style={{ pointerEvents: "none" }}>
+                  <rect x={CX - 44} y={CY - 42} width={88} height={26} rx={8}
+                    fill="#ff9f43" opacity={0.95} />
+                  <text x={CX} y={CY - 24}
+                    textAnchor="middle" fontSize={12} fontWeight={900} fill="#1a0800"
+                  >NUCLEUS</text>
+                </g>
+              )}
               </g>
 
               {/* Electrons */}
@@ -397,13 +407,13 @@ export default function AtomReveal({ config, onGoalReached, colour = "#00d4ff" }
                       filter={isTapped ? "url(#electronGlow)" : undefined}
                     />
                     {isTapped && (
-                      <text x={ex + 12} y={ey - 8}
-                        fontSize={8} fontWeight={700}
-                        fill="#fff"
-                        style={{ pointerEvents: "none" }}
-                      >
-                        e⁻
-                      </text>
+                      <g style={{ pointerEvents: "none" }}>
+                        <rect x={ex + 8} y={ey - 22} width={68} height={20} rx={6}
+                          fill={accent} opacity={0.95} />
+                        <text x={ex + 42} y={ey - 8}
+                          textAnchor="middle" fontSize={10} fontWeight={900} fill="#fff"
+                        >ELECTRON</text>
+                      </g>
                     )}
                   </g>
                 );
@@ -466,18 +476,21 @@ export default function AtomReveal({ config, onGoalReached, colour = "#00d4ff" }
         </svg>
       </div>
 
-      {/* ── Instruction bar ── */}
+      {/* ── Bottom action label ── */}
       <div style={{
-        marginTop: 8,
-        fontSize: "0.8rem",
-        fontWeight: 700,
-        color: atomStep === 3 ? "#34d399" : "rgba(255,255,255,0.55)",
-        letterSpacing: "0.04em",
+        marginTop: 4,
+        fontFamily: "var(--eg-font-body, 'Space Grotesk', sans-serif)",
+        fontSize: "0.6rem", fontWeight: 800,
+        color: "rgba(255,255,255,0.28)",
+        letterSpacing: "0.14em",
+        textTransform: "uppercase",
         textAlign: "center",
-        transition: "color 0.3s",
-        minHeight: 20,
       }}>
-        {instruction}
+        {!allLayersPeeled
+          ? `TAP THE ${objectName.toUpperCase()}`
+          : atomStep === 1 ? "TAP THE NUCLEUS"
+          : atomStep === 2 ? "TAP AN ELECTRON"
+          : "DISCOVERY COMPLETE"}
       </div>
 
       {/* ── Progress dots (layers) ── */}

@@ -9,12 +9,16 @@
  */
 
 .container {
-  max-width: 1280px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 20px;
   position: relative;
   z-index: 1;
 }
+
+@media (min-width: 700px)  { .container { padding: 0 40px; } }
+@media (min-width: 1100px) { .container { padding: 0 56px; } }
+@media (min-width: 1400px) { .container { padding: 0 72px; } }
 
 .fd {
   font-family: var(--eg-font-display);

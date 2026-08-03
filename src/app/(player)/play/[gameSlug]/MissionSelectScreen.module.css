@@ -13,12 +13,25 @@
 
 .wrap {
   width: 100%;
-  max-width: 640px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 12px 14px 32px;
+  padding: 20px 24px 40px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+}
+
+@media (min-width: 700px) {
+  .wrap {
+    padding: 32px 40px 48px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .wrap {
+    padding: 40px 56px 56px;
+    max-width: 1100px;
+  }
 }
 
 /* ── HEADER ───────────────────────────────────────────────────────────────── */
@@ -36,7 +49,7 @@
 }
 
 .headerTitle {
-  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-family: var(--eg-font-display, "Space Grotesk", sans-serif);
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -45,7 +58,7 @@
 }
 
 .headerCount {
-  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-family: var(--eg-font-display, "Space Grotesk", sans-serif);
   font-size: 0.7rem;
   font-weight: 700;
   color: rgba(255,255,255,0.45);
@@ -76,6 +89,15 @@
 
 @media (min-width: 480px) {
   .grid { grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+}
+
+@media (min-width: 900px) {
+  .grid { grid-template-columns: repeat(4, 1fr); gap: 16px; }
+}
+
+@media (min-width: 1200px) {
+  .grid { grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .card { min-height: 220px; }
 }
 
 /* ── CARD ─────────────────────────────────────────────────────────────────── */
@@ -180,7 +202,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-family: var(--eg-font-display, "Space Grotesk", sans-serif);
   font-size: 0.92rem;
   font-weight: 800;
   color: rgba(255,255,255,0.8);
@@ -225,7 +247,7 @@
 /* ── CARD CONTENT ─────────────────────────────────────────────────────────── */
 
 .cardTitle {
-  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-family: var(--eg-font-display, "Space Grotesk", sans-serif);
   font-size: 0.88rem;
   font-weight: 800;
   color: rgba(255,255,255,0.92);
@@ -276,7 +298,7 @@
 
 .cardCta {
   padding: 10px 12px;
-  font-family: var(--eg-font-display, "Fredoka", sans-serif);
+  font-family: var(--eg-font-display, "Space Grotesk", sans-serif);
   font-size: 0.78rem;
   font-weight: 800;
   color: #fff;

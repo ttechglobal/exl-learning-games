@@ -20,7 +20,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-family: var(--eg-font-display, "Nunito", "Space Grotesk", sans-serif);
+  font-family: var(--eg-font-body, "Space Grotesk", sans-serif);
   background: #0a1808;
 }
 
@@ -460,4 +460,13 @@
     right: 24px;
     max-width: 240px;
   }
+}
+
+/* Responsive padding — desktop */
+@media (min-width: 700px) {
+  .dialogue { padding-left: 40px !important; padding-right: 40px !important; }
+}
+@media (min-width: 1100px) {
+  .dialogue { padding-left: 56px !important; padding-right: 56px !important; max-width: 100%; }
+  .dialogue > * { max-width: 760px; margin-left: auto; margin-right: auto; width: 100%; }
 }

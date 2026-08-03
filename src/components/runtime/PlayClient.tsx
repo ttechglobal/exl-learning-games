@@ -1,23 +1,5 @@
 "use client";
 
-/**
- * components/runtime/PlayClient.tsx
- *
- * This is the version of PlayClient used in the components/runtime path.
- * The canonical version is src/app/(player)/play/[gameSlug]/PlayClient.tsx
- * which is the one actually imported by page.tsx.
- *
- * This file is kept in sync to avoid TypeScript build errors from orphaned
- * files being type-checked even when not imported.
- *
- * SCREEN FLOW (corrected):
- *   title → entry (narration) → difficulty (stage picker) → missionSelect → runtime
- *
- * For levelSelect games:   title → entry → difficulty → levelSelect → runtime
- * For linear games:        title → entry → difficulty → runtime
- * For trackMap games:      title → entry → difficulty → missionSelect → runtime
- */
-
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { GameRuntime } from "@/components/runtime/GameRuntime";
@@ -33,18 +15,32 @@ import { getLocalPlayerName } from "@/lib/content/localPlayerName";
 import { engineSupportsDifficultyChoice, type PlayerDifficulty } from "@/lib/content/difficultyModifiers";
 import { getElementByAtomicNumber, CATEGORY_COLORS } from "@/motion/periodicTableData";
 import { track } from "@/lib/analytics/track";
-import { getGameTheme } from "@/lib/content/gameThemes";
+import { resetLearnSeen } from "@/lib/content/contentPrefs";
 import type { GameRow, MissionRow } from "@/types/db";
 
 export interface PlayClientProps {
   studentId: string;
+  studentName?: string | null;
   game: GameRow;
   missions: MissionRow[];
   initialMissionId: string;
   completedMissionIds: Set<string>;
 }
 
-type Screen = "title" | "levelSelect" | "missionSelect" | "difficultyTrack" | "entry" | "difficulty" | "runtime";
+/**
+ * SCREEN FLOW (all game types):
+ *
+ *   title → entry (narration) → difficulty (stage picker) → [levelSelect | missionSelect] → runtime
+ *
+ * Linear games:    title → entry → difficulty → runtime
+ * LevelSelect:     title → entry → difficulty → levelSelect → runtime
+ * TrackMap:        title → entry → difficulty → missionSelect → runtime
+ *
+ * stepwise-solver: title → entry (narration) → runtime
+ *   The engine's own hub handles mode selection — no separate difficulty screen.
+ *   The hub has its own back button that returns to this title screen.
+ */
+type Screen = "title" | "entry" | "difficulty" | "levelSelect" | "missionSelect" | "runtime";
 
 const SUBJECT_FALLBACK_ACCENT: Record<string, string> = {
   chemistry:   "var(--eg-subject-chemistry)",
@@ -53,7 +49,10 @@ const SUBJECT_FALLBACK_ACCENT: Record<string, string> = {
   mathematics: "var(--eg-subject-mathematics)"
 };
 
-export function PlayClient({ studentId, game, missions, initialMissionId, completedMissionIds }: PlayClientProps) {
+/** Engine types that handle their own mode/difficulty selection internally */
+const SELF_SELECTING_ENGINES = ["stepwise-solver", "change-of-subject"];
+
+export function PlayClient({ studentId, studentName, game, missions, initialMissionId, completedMissionIds }: PlayClientProps) {
   const router = useRouter();
   const sortedMissions = useMemo(() => [...missions].sort((a, b) => a.sequence_index - b.sequence_index), [missions]);
 
@@ -66,13 +65,22 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
   const isLevelBased = progressionMode === "levelSelect";
   const isTrackMap   = progressionMode === "trackMap";
   const supportsDifficultyChoice = engineSupportsDifficultyChoice(game.engine_type);
-  const skipPreGameScreens = game.engine_type === "change-of-subject";
 
-  const [screen,             setScreen]             = useState<Screen>(skipPreGameScreens ? "runtime" : "title");
-  const [activeMissionId,    setActiveMissionId]    = useState(initialMissionId);
-  const [playerDifficulty,   setPlayerDifficulty]   = useState<PlayerDifficulty | null>(null);
-  const [locallyCompletedIds, setLocallyCompletedIds] = useState(completedMissionIds);
-  const [runtimeResetKey,    setRuntimeResetKey]    = useState(0);
+  // stepwise-solver handles its own mode selection — skip difficulty screen,
+  // show title + narration, then go straight to runtime (engine hub).
+  const isSelfSelecting = SELF_SELECTING_ENGINES.includes(game.engine_type);
+
+  // Skip title/narration for games with level selection — go straight to level picker
+  const initialScreen: Screen = (!isSelfSelecting && (isLevelBased || sortedMissions.length > 1))
+    ? "levelSelect"
+    : "title";
+  const [screen,               setScreen]             = useState<Screen>(initialScreen);
+  const [activeMissionId,      setActiveMissionId]    = useState(initialMissionId);
+  const [playerDifficulty,     setPlayerDifficulty]   = useState<PlayerDifficulty | null>(null);
+  const [locallyCompletedIds,  setLocallyCompletedIds] = useState(completedMissionIds);
+  const [runtimeResetKey,      setRuntimeResetKey]    = useState(0);
+  const [openInReview,         setOpenInReview]        = useState(false);
+  const isPaused = false;
 
   const activeMissionIndex = sortedMissions.findIndex((m) => m.id === activeMissionId);
   const activeMission      = sortedMissions[activeMissionIndex];
@@ -92,7 +100,7 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
   }, [screen, activeMission?.id, studentId, game.id]);
 
   if (!activeMission) {
-    return <div style={{ textAlign: "center", padding: 60 }}>Mission not found.</div>;
+    return <div style={{ textAlign: "center", padding: 60, color: "var(--eg-text-dim)" }}>Mission not found.</div>;
   }
 
   function resolveAccentColor(): string {
@@ -100,15 +108,18 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
     const protonCount = target?.proton;
     const element    = typeof protonCount === "number" ? getElementByAtomicNumber(protonCount) : undefined;
     if (element) return CATEGORY_COLORS[element.category];
-    const gameAccent = getGameTheme(game.slug).accent;
-    if (gameAccent && gameAccent !== "var(--eg-brand)") return gameAccent;
     return SUBJECT_FALLBACK_ACCENT[game.subject] ?? "var(--eg-subject-chemistry)";
   }
 
   function handleRestart() {
     setPlayerDifficulty(null);
     setRuntimeResetKey((k) => k + 1);
-    setScreen("entry");
+    // Self-selecting engines: back button in hub triggers RESTART action,
+    // which resets to hub — not to title screen. So restart goes to runtime.
+    const restartScreen: Screen = isSelfSelecting ? "runtime"
+      : (!isLevelBased && sortedMissions.length <= 1) ? "entry"
+      : "levelSelect";
+    setScreen(restartScreen);
   }
 
   function handleChangeDifficulty() {
@@ -119,13 +130,41 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
   function handleBack() {
     if (screen === "entry")         { setScreen("title");   return; }
     if (screen === "difficulty")    { setScreen("entry");   return; }
-    if (screen === "levelSelect")   { setScreen(supportsDifficultyChoice ? "difficulty" : "entry"); return; }
-    if (screen === "missionSelect") { setScreen(supportsDifficultyChoice ? "difficulty" : "entry"); return; }
-    if (screen === "title")         { router.push("/worlds"); return; }
+    if (screen === "levelSelect")   { router.push("/worlds"); return; }
+    if (screen === "missionSelect") { router.push("/worlds"); return; }
     router.push("/worlds");
   }
 
-  const menu = <GameMenu onRestart={handleRestart} onChangeDifficulty={supportsDifficultyChoice ? handleChangeDifficulty : undefined} />;
+  /** What screen comes after the narration briefing */
+  function afterNarration() {
+    if (isSelfSelecting) {
+      // Skip difficulty picker — engine handles mode selection in its own hub
+      setScreen("runtime");
+    } else {
+      setScreen("difficulty");
+    }
+  }
+
+  /** What screen comes after the stage (difficulty) picker */
+  function afterStagePicker(difficulty: PlayerDifficulty) {
+    setPlayerDifficulty(difficulty);
+    if (isLevelBased) {
+      resetConceptsSeen(game.engine_type);
+      setScreen("levelSelect");
+    } else if (isTrackMap) {
+      setScreen("missionSelect");
+    } else {
+      setScreen("runtime");
+    }
+  }
+
+  const menu = (
+    <GameMenu
+      onRestart={handleRestart}
+      onChangeDifficulty={supportsDifficultyChoice ? handleChangeDifficulty : undefined}
+      onExitToLevelSelect={isLevelBased ? () => setScreen("levelSelect") : undefined}
+    />
+  );
 
   // ── TITLE SCREEN ──────────────────────────────────────────────────────────
   if (screen === "title") {
@@ -137,13 +176,20 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
         missionTitle={activeMission.title}
         missionCount={sortedMissions.length}
         xpReward={totalXp}
-        onPlay={() => setScreen("entry")}
+        onPlay={() => {
+          // stepwise-solver: skip narration — hub is the welcome + mode selector
+          if (isSelfSelecting) {
+            setScreen("runtime");
+          } else {
+            setScreen("entry");
+          }
+        }}
         onBack={() => router.push("/worlds")}
       />
     );
   }
 
-  // ── NARRATION (entry) ─────────────────────────────────────────────────────
+  // ── NARRATION ─────────────────────────────────────────────────────────────
   if (screen === "entry") {
     return (
       <NarrationScreen
@@ -151,60 +197,47 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
         gameSlug={game.slug}
         subject={game.subject}
         mission={activeMission}
-        onStart={() => setScreen("difficulty")}
+        onStart={afterNarration}
         onBack={handleBack}
         backLabel="Back"
       />
     );
   }
 
-  // ── STAGE PICKER (difficulty) ─────────────────────────────────────────────
+  // ── STAGE PICKER ──────────────────────────────────────────────────────────
   if (screen === "difficulty") {
     return (
       <DifficultySelectScreen
         subject={game.subject}
         accentColor={resolveAccentColor()}
-        onSelect={(difficulty) => {
-          setPlayerDifficulty(difficulty);
-          if (isLevelBased) {
-            resetConceptsSeen(game.engine_type);
-            setScreen("levelSelect");
-          } else if (isTrackMap) {
-            setScreen("missionSelect");
-          } else {
-            setScreen("runtime");
-          }
-        }}
+        onSelect={afterStagePicker}
         onBack={handleBack}
         playerName={getLocalPlayerName() ?? undefined}
       />
     );
   }
 
-  // ── LEVEL SELECT (levelSelect games — Atom Forge etc.) ───────────────────
+  // ── LEVEL SELECT ──────────────────────────────────────────────────────────
   if (screen === "levelSelect") {
     return (
-      <PrePlayShell
-        gameSlug={game.slug}
+      <LevelSelectScreen
         gameTitle={game.title}
         subject={game.subject}
+        studentName={studentName ?? undefined}
+        coach={((game.shared_config ?? {}) as Record<string, unknown>)?.coach as string | undefined}
+        missions={sortedMissions}
+        completedMissionIds={locallyCompletedIds}
+        onSelect={(missionId: string) => {
+          resetConceptsSeen(game.engine_type);
+          setActiveMissionId(missionId);
+          setScreen("runtime");
+        }}
         onBack={handleBack}
-        backLabel="Back"
-      >
-        <LevelSelectScreen
-          gameTitle={game.title}
-          missions={sortedMissions}
-          onSelect={(missionId: string) => {
-            resetConceptsSeen(game.engine_type);
-            setActiveMissionId(missionId);
-            setScreen("runtime");
-          }}
-        />
-      </PrePlayShell>
+      />
     );
   }
 
-  // ── MISSION SELECT (trackMap games — vertical list, no swiping) ──────────
+  // ── MISSION SELECT ────────────────────────────────────────────────────────
   if (screen === "missionSelect") {
     return (
       <PrePlayShell
@@ -237,7 +270,37 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
       subject={game.subject}
       studentId={studentId}
       engineType={game.engine_type}
-      sharedConfig={game.shared_config}
+      sharedConfig={{
+        ...game.shared_config,
+        studentName: studentName ?? undefined,
+        // Session context — all missions of the same difficulty for MCQEngine view-all
+        currentMissionIndex: activeMissionIndex,
+        allSessionMissions: sortedMissions
+          .filter(m => m.difficulty === activeMission.difficulty)
+          .map(m => ({
+            id: m.id,
+            title: m.title,
+            missionKey: m.mission_key,
+            sequenceIndex: m.sequence_index,
+            payload: m.payload,
+          })),
+        // Inject _allMissions for ALL games — engines that don't need it ignore it.
+        _allMissions: sortedMissions.map(m => ({
+          id:            m.id,
+          missionKey:    m.mission_key,
+          title:         m.title,
+          difficulty:    m.difficulty,
+          sequenceIndex: m.sequence_index,
+          xpReward:      m.xp_reward,
+          topicId:       m.topic_id,
+          subtopicId:    m.subtopic_id ?? undefined,
+          payload:       m.payload,
+        })),
+        _studentId:   studentId,
+        _gameId:      game.id,
+        _topicId:     activeMission.topic_id,
+        _onBack:      () => setScreen("title"),
+      }}
       snapshot={game.snapshot}
       mission={{
         id:         activeMission.id,
@@ -248,13 +311,30 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
         subtopicId: activeMission.subtopic_id ?? undefined,
         payload:    activeMission.payload,
       }}
-      hasNextMission={Boolean(nextMission) && !isLevelBased}
+      hasNextMission={Boolean(nextMission)}
+      studentName={studentName ?? undefined}
+      nextMissionLabel={(() => {
+        if (!nextMission) return undefined;
+        if (activeMission?.difficulty === nextMission.difficulty) {
+          const remaining = sortedMissions.filter(m => m.difficulty === activeMission?.difficulty).length - activeMissionIndex - 1;
+          return `Next question (${remaining} left) →`;
+        }
+        if (nextMission.difficulty === "MEDIUM") return "Go to Practice →";
+        if (nextMission.difficulty === "HARD")   return "Go to Challenge →";
+        return "Next →";
+      })()}
       reviewSuccessLines={[
-        `You successfully completed ${activeMission.title}.`,
+        nextMission && activeMission?.difficulty === nextMission.difficulty
+          ? `Question ${activeMissionIndex + 1} done.`
+          : activeMission?.difficulty === "EASY"
+            ? "Concept complete! Ready to practice?"
+            : activeMission?.difficulty === "MEDIUM"
+              ? "Practice done! Ready for a challenge?"
+              : "Challenge complete! Well done.",
         ...(isTrackMap && nextMission ? [`🔓 "${nextMission.title}" is now unlocked!`] : [])
       ]}
       playerDifficulty={playerDifficulty}
-      isPaused={false}
+      isPaused={isPaused}
       menu={menu}
       onMissionSucceeded={() => {
         if (isTrackMap) {
@@ -269,18 +349,24 @@ export function PlayClient({ studentId, game, missions, initialMissionId, comple
           } else {
             setScreen("missionSelect");
           }
-        } else if (isLevelBased) {
-          setScreen("levelSelect");
         } else if (nextMission) {
           setActiveMissionId(nextMission.id);
-          if (supportsDifficultyChoice) setScreen("difficulty");
-          else setScreen("runtime");
+          setLocallyCompletedIds(prev => new Set(prev).add(activeMission!.id));
+          // Always go straight to runtime — practice follows guided seamlessly,
+          // no level select screen in between. The reflection/mission-complete
+          // screen is the natural break point for difficulty transitions.
+          setScreen("runtime");
+        } else {
+          // No more missions — back to level select
+          setScreen("levelSelect");
         }
       }}
       onBackToHome={() => router.push("/worlds")}
       onChangeDifficulty={supportsDifficultyChoice ? handleChangeDifficulty : undefined}
       onBackFromConcepts={() => setScreen("runtime")}
       accentColor={resolveAccentColor()}
+      openInReviewMode={openInReview}
+      onReviewModeConsumed={() => setOpenInReview(false)}
     />
   );
 }

@@ -92,6 +92,22 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
           ? [{ type: "INTERACT", component: ref.component, config: ref.config ?? {} }] : [];
         const coachLines = (gl.coachLines as Record<string, string>) ?? {};
         const keyMoment = coachLines.atKeyMoment ? [{ type: "COACH", text: coachLines.atKeyMoment, isKeyMoment: true }] : [];
+        // Quick check questions embedded as QUESTION steps inside the lesson flow.
+        // Replaces old standalone practice MCQ missions.
+        const qcRaw = (c.quickCheckQuestions as Array<Record<string, unknown>> ?? [])
+          .filter((q: Record<string, unknown>) => q.question);
+        const questionSteps = qcRaw.map((q: Record<string, unknown>) => ({
+          type: "QUESTION",
+          question: q.question as string,
+          options: [
+            { text: q.correctAnswer as string,  correct: true,  explanation: q.correctExplanation as string | undefined },
+            { text: q.wrongAnswer1 as string,   correct: false, explanation: q.wrongAnswer1Explanation as string | undefined },
+            { text: q.wrongAnswer2 as string,   correct: false, explanation: q.wrongAnswer2Explanation as string | undefined },
+          ].filter((o: { text: string }) => Boolean(o.text)),
+          correctExplanation: q.correctExplanation as string | undefined,
+          wrongExplanation:   q.wrongAnswer1Explanation as string | undefined,
+        }));
+
         const success = coachLines.onSuccess ? [{ type: "SUCCESS", text: coachLines.onSuccess, objectives: gl.objectives ?? [] }] : [];
 
         allMissions.push({
@@ -106,13 +122,13 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
           payload: {
             type: "guided_lesson",
             conceptName,
-            lessonFlow: [...coachCards, ...interactStep, ...keyMoment, ...success],
+            lessonFlow: [...coachCards, ...interactStep, ...keyMoment, ...questionSteps, ...success],
             objectives: gl.objectives ?? [],
           },
         });
       }
 
-      // 2. Practice questions — individual missions
+      // [REMOVED — quick check questions now embedded in lessonFlow above]
       const pqs = (c.practiceQuestions as Array<Record<string, unknown>> ?? []).filter((q: Record<string, unknown>) => q.question);
       pqs.forEach((q: Record<string, unknown>, qi: number) => {
         // Build per-answer explanation map (keyed by answer text)
@@ -149,7 +165,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         });
       });
 
-      // 3. Challenge questions
+      // 2. Challenge questions — standalone MCQ missions
       const cqs = (c.challengeQuestions as Array<Record<string, unknown>> ?? []).filter((q: Record<string, unknown>) => q.question);
       cqs.forEach((q: Record<string, unknown>, qi: number) => {
         // Build per-answer explanation map for challenge questions

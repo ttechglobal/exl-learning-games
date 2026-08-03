@@ -76,32 +76,51 @@ export function LevelSelectScreen({
   const cardBorder= isMaths ? "rgba(201,162,39,0.3)" : "rgba(255,255,255,0.08)";
 
   return (
-    <div style={{ background: meta.gradient, minHeight: "100vh", display: "flex", flexDirection: "column", padding: "0 0 40px", position: "relative" }}>
+    <div style={{
+      background: meta.gradient, minHeight: "100vh",
+      display: "flex", flexDirection: "column",
+      fontFamily: "var(--eg-font-body, 'Space Grotesk', sans-serif)",
+      position: "relative",
+    }}>
 
-      {/* Back button — absolute top-left, doesn't affect header layout */}
-      {onBack && (
-        <button onClick={onBack} style={{
-          position: "absolute", top: 16, left: 16, zIndex: 10,
-          width: 40, height: 40, borderRadius: "50%", border: `1.5px solid ${meta.accent}40`,
-          background: `${meta.accent}15`, color: meta.accent,
-          fontSize: "1rem", cursor: "pointer", display: "flex",
-          alignItems: "center", justifyContent: "center",
-        }}>←</button>
-      )}
+      {/* Single responsive column — all content aligned here */}
+      <div className="exl-page-col" style={{
+        paddingTop: "24px", paddingBottom: "48px",
+        display: "flex", flexDirection: "column", gap: 0,
+      }}>
 
-      {/* Header — centred, with back button floating above */}
-      <div style={{ padding: "20px 20px 0", textAlign: "center", position: "relative" }}>
-        <div style={{ fontSize: "0.62rem", fontWeight: 800, color: `${meta.accent}bb`, textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: 6 }}>
-          {subject.charAt(0).toUpperCase() + subject.slice(1)}
+
+        {/* Back + header row */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+          {onBack && (
+            <button onClick={onBack} style={{
+              width: 38, height: 38, borderRadius: "50%", flexShrink: 0,
+              border: `1.5px solid ${meta.accent}40`,
+              background: `${meta.accent}15`, color: meta.accent,
+              fontSize: "1rem", cursor: "pointer", display: "flex",
+              alignItems: "center", justifyContent: "center",
+            }}>←</button>
+          )}
+          <div>
+            <div style={{
+              fontSize: "0.6rem", fontWeight: 800, color: `${meta.accent}bb`,
+              textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: 3,
+              fontFamily: "var(--eg-font-body, 'Space Grotesk', sans-serif)",
+            }}>
+              {subject.charAt(0).toUpperCase() + subject.slice(1)}
+            </div>
+            <div style={{
+              fontSize: "1.5rem", fontWeight: 900, color: textMain,
+              lineHeight: 1.15, letterSpacing: "-0.02em",
+              fontFamily: "var(--eg-font-body, 'Space Grotesk', sans-serif)",
+            }}>
+              {gameTitle}
+            </div>
+          </div>
         </div>
-        <div style={{ fontSize: "1.4rem", fontWeight: 900, color: textMain, lineHeight: 1.25, letterSpacing: "-0.01em" }}>
-          {gameTitle}
-        </div>
-      </div>
 
-      {/* Coach greeting */}
-      <div style={{ padding: "22px 20px 18px" }}>
-        <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+        {/* Coach greeting */}
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 24 }}>
           <div style={{
             width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
             background: `${meta.accent}20`, border: `2px solid ${meta.accent}60`,
@@ -111,19 +130,24 @@ export function LevelSelectScreen({
             background: isMaths ? "rgba(255,253,240,0.9)" : "rgba(255,255,255,0.06)",
             border: `1px solid ${meta.accent}30`,
             borderRadius: "4px 14px 14px 14px",
-            padding: "10px 14px", flex: 1,
+            padding: "12px 16px", flex: 1,
           }}>
-            <div style={{ fontSize: "0.72rem", fontWeight: 700, color: meta.accent, marginBottom: 4 }}>{coachName}</div>
-            <div style={{ fontSize: "0.88rem", color: textMain, lineHeight: 1.5 }}>
+            <div style={{
+              fontSize: "0.75rem", fontWeight: 800, color: meta.accent, marginBottom: 4,
+              fontFamily: "var(--eg-font-body, 'Space Grotesk', sans-serif)",
+            }}>{coachName}</div>
+            <div style={{
+              fontSize: "0.9rem", color: textMain, lineHeight: 1.55,
+              fontFamily: "var(--eg-font-body, 'Space Grotesk', sans-serif)",
+            }}>
               {firstName ? `Hey ${firstName}! ` : "Hey! "}{greeting}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Stage cards */}
-      <div style={{ padding: "0 20px 40px", display: "flex", flexDirection: "column", gap: 14 }}>
-        <div style={{ fontSize: "0.6rem", fontWeight: 700, color: textDim, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 2 }}>
+        {/* Stage cards */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ fontSize: "0.6rem", fontWeight: 700, color: textDim, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 2, fontFamily: "var(--eg-font-body, 'Space Grotesk', sans-serif)" }}>
           Choose your level
         </div>
 
@@ -161,10 +185,10 @@ export function LevelSelectScreen({
                 }}>{stageMeta.icon}</div>
 
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "0.95rem", fontWeight: 800, color: textMain, marginBottom: 2 }}>
+                  <div style={{ fontSize: "0.95rem", fontWeight: 800, color: textMain, marginBottom: 2, fontFamily: "var(--eg-font-body, 'Space Grotesk', sans-serif)" }}>
                     {stageMeta.label}
                   </div>
-                  <div style={{ fontSize: "0.72rem", color: textDim, lineHeight: 1.4, marginBottom: completedCount > 0 ? 6 : 0 }}>
+                  <div style={{ fontSize: "0.72rem", color: textDim, lineHeight: 1.4, fontFamily: "var(--eg-font-body, 'Space Grotesk', sans-serif)", marginBottom: completedCount > 0 ? 6 : 0 }}>
                     {stageMeta.sublabel}
                     {stageMissions.length > 1 && ` · ${stageMissions.length} ${isGL ? "concepts" : "questions"}`}
                   </div>
@@ -177,7 +201,7 @@ export function LevelSelectScreen({
 
                 {totalXp > 0 && (
                   <div style={{
-                    fontSize: "0.7rem", fontWeight: 800, color: "#f59e0b",
+                    fontSize: "0.7rem", fontWeight: 800, color: "#f59e0b", fontFamily: "var(--eg-font-body, 'Space Grotesk', sans-serif)",
                     background: "rgba(245,158,11,0.1)", padding: "3px 8px", borderRadius: 8, flexShrink: 0,
                   }}>+{totalXp} XP</div>
                 )}
@@ -216,10 +240,10 @@ export function LevelSelectScreen({
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     {/* "Up next" label */}
-                    <div style={{ fontSize: "0.58rem", fontWeight: 800, color: stageMeta.colour, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>
+                    <div style={{ fontSize: "0.58rem", fontWeight: 800, color: stageMeta.colour, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3, fontFamily: "var(--eg-font-body, 'Space Grotesk', sans-serif)" }}>
                       {completedMissionIds?.has(nextMission.id) ? "Replay" : completedCount === 0 ? "Start here" : "Continue"}
                     </div>
-                    <div style={{ fontSize: "0.88rem", fontWeight: 700, color: textMain, lineHeight: 1.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <div style={{ fontSize: "0.88rem", fontWeight: 700, color: textMain, lineHeight: 1.3, fontFamily: "var(--eg-font-body, 'Space Grotesk', sans-serif)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {nextMission.learning_goal ?? nextMission.title}
                     </div>
                   </div>
@@ -230,7 +254,8 @@ export function LevelSelectScreen({
             </div>
           );
         })}
-      </div>
+        </div>{/* end stage cards */}
+      </div>{/* end exl-page-col */}
     </div>
   );
 }

@@ -191,20 +191,56 @@ export default function HeatSlider({ config, onGoalReached, colour = "#f5a623" }
     gas: "Gas — particles move freely and fast",
   };
 
+  const stateTitle = state === "solid"
+    ? "Particles locked in place"
+    : state === "liquid"
+    ? "Particles flowing freely"
+    : "Particles escaping as gas";
+
+  const stateHint = state === "solid"
+    ? `${substanceName} is solid — drag up to add heat`
+    : state === "liquid"
+    ? `${substanceName} has melted — keep heating to boil it`
+    : `${substanceName} is now a gas — all particles are free`;
+
   return (
     <div style={{
-      background: "linear-gradient(160deg, #0c1a2e 0%, #080f1e 100%)",
+      background: "linear-gradient(160deg, #0a1220 0%, #060d18 100%)",
       borderRadius: 12,
-      padding: 20,
+      overflow: "hidden",
       display: "flex",
       flexDirection: "column",
-      gap: 14,
+      gap: 0,
       userSelect: "none",
     }}>
-      {/* Title */}
-      <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "rgba(255,255,255,0.5)" }}>
-        {substanceName}
+      {/* ── Prototype-style header: bold title + dim subtitle ── */}
+      <div style={{
+        background: "rgba(255,255,255,0.025)",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        padding: "14px 18px 12px",
+        textAlign: "center",
+        transition: "opacity 0.25s",
+      }}>
+        <div style={{
+          fontFamily: "var(--eg-font-display, 'Space Grotesk', sans-serif)",
+          fontSize: "1.05rem", fontWeight: 900,
+          color: "#fff", lineHeight: 1.25, marginBottom: 4,
+          letterSpacing: "-0.01em",
+          transition: "all 0.25s",
+        }}>
+          {stateTitle}
+        </div>
+        <div style={{
+          fontFamily: "var(--eg-font-body, 'Space Grotesk', sans-serif)",
+          fontSize: "0.75rem", fontWeight: 500,
+          color: "rgba(255,255,255,0.45)",
+          lineHeight: 1.4, transition: "all 0.25s",
+        }}>
+          {stateHint}
+        </div>
       </div>
+
+      <div style={{ padding: "14px 16px 0", display: "flex", flexDirection: "column", gap: 12 }}>
 
       {/* Canvas */}
       <div style={{ position: "relative" }}>
@@ -314,6 +350,8 @@ export default function HeatSlider({ config, onGoalReached, colour = "#f5a623" }
           }}>{m.label}</div>
         ))}
       </div>
+      </div>{/* end inner padding div */}
     </div>
+    
   );
 }

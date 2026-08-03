@@ -528,14 +528,40 @@ Using the contracts you defined in Step 1, build the complete game JSON.
          "topicId":       "...",
          "learningGoal":  "one precise sentence",
          "payload": {
-           /* Implement the PAYLOAD CONTRACT from Step 1 exactly.
-              Same field names. Same structure. Same types.
-              Do not invent fields not in the contract.
+           /* ══ PAYLOAD CONTRACT ══
 
-              If using formula-excavation, operation values MUST be one of:
+              FOR stepwise-equation-solver (simultaneous equations, change of subject):
+              Each mission payload must have a "steps" array. Every step MUST have:
+
+              {
+                "lbl": "Step 1 — Eliminate y",          ← shown in stage card header
+                "beats": [["Coach speech", "mood"],...], ← sequential coach messages
+                "stageLines": [[{"t":"x + y = 8"}],      ← equation token rows
+                               [{"t":"x − y = 2"}]],    ← multiple rows for stacked eqs
+
+                ONE of these three action types:
+                "ops": [{"l":"Add both equations","s":"+","correct":true},   ← operation buttons
+                        {"l":"Subtract","s":"−","correct":false,"note":"..."}],
+
+                "isOpts": true,                                               ← value pick
+                "opts": [{"l":"5","c":true},{"l":"4","c":false,"n":"..."}],
+
+                "isMulti": true,                                              ← term-by-term
+                "termIndices": [0, 2, 4],
+                "lockLabels": ["2x", "0", "10"],
+                "multiSpeeches": [["What does x+x become?","Your guide"],...],
+                "multiOpts": [[{"l":"2x","c":true},{"l":"x","c":false,"n":"..."}],...],
+
+                "trailLabel": "Added both equations",   ← shown in solution trail
+                "trailDetail": "x + x + y − y = 8 + 2",
+                "resultText": "x + x + y − y = 8 + 2", ← revealed in stage after correct
+                "afterSpeech": "Now simplify."          ← coach says this after correct
+              }
+
+              FOR formula-excavation: operation values MUST be one of:
               "divide_both" | "multiply_both" | "subtract_both" | "add_both" |
               "square_root" | "square_both" | "cube_root" | "cube_both"
-              — nothing else. Invented strings like "remove_square" cause crashes. */
+              — nothing else. */
          }
        }
     */

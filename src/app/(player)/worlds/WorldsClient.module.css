@@ -63,7 +63,8 @@
   font-family: var(--eg-font-display, "Baloo 2", "Space Grotesk", sans-serif);
   font-size: 1.5rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.45);
+  /* Dark mode: dim white. Light mode: dim dark. */
+  color: rgba(0, 0, 0, 0.35);
   letter-spacing: -0.01em;
   line-height: 1;
 }
@@ -72,14 +73,23 @@
   font-family: var(--eg-font-display, "Baloo 2", "Space Grotesk", sans-serif);
   font-size: 2rem;
   font-weight: 900;
-  color: var(--wc, #fff);
+  color: var(--wc, var(--eg-brand, #7b4fcb));
   letter-spacing: -0.02em;
   line-height: 1;
-  /* Subject-coloured glow — changes with active tab */
+  text-shadow:
+    0 0 24px rgba(var(--wrgb, 123,79,203), 0.35),
+    0 1px 0 rgba(0, 0, 0, 0.1);
+  transition: color 0.4s ease, text-shadow 0.4s ease;
+}
+
+/* Dark mode overrides */
+[data-theme="dark"] .welcomeLabel {
+  color: rgba(255, 255, 255, 0.45);
+}
+[data-theme="dark"] .welcomeName {
   text-shadow:
     0 0 24px rgba(var(--wrgb, 123,79,203), 0.55),
     0 2px 0 rgba(0, 0, 0, 0.35);
-  transition: color 0.4s ease, text-shadow 0.4s ease;
 }
 
 .welcomeEmoji {

@@ -1,19 +1,5 @@
 "use client";
 
-/**
- * StepwiseMissionComplete.tsx
- *
- * Shown when a student finishes ALL questions in a learning mode
- * (Guided / Practice / Challenge). Maths-specific — separate from the
- * generic ReflectionScreen used by other engines.
- *
- * Shows:
- * - Ms. Chidera celebrating with a personalised message
- * - XP earned this session
- * - Progress summary across all three modes
- * - Next action (move to next mode, replay, or return to hub)
- */
-
 import React from "react";
 import { ChideraAvatar } from "./ChideraAvatar";
 import type { StepMode } from "./StepwiseSolverEngine";
@@ -32,79 +18,36 @@ export interface StepwiseMissionCompleteProps {
   onBackToHub: () => void;
 }
 
-const MODE_LABEL: Record<StepMode, string> = {
-  guided: "Guided Learning",
-  practice: "Practice",
-  challenge: "Challenge",
-  mastery: "Mastery",
-};
-
-const MODE_ICON: Record<StepMode, string> = {
-  guided: "📖",
-  practice: "⚡",
-  challenge: "🔥",
-  mastery: "🏅",
-};
-
 const CHIDERA_LINES: Record<StepMode, string[]> = {
   guided: [
-    "You followed every step — that's how real understanding is built!",
-    "Step by step is exactly the right pace. You're doing brilliantly!",
-    "Following the working carefully is a superpower. Well done!",
+    "You followed every step — that's how real understanding is built.",
+    "Step by step is exactly the right pace. You're doing brilliantly.",
+    "Following the working carefully is a superpower. Well done.",
   ],
   practice: [
-    "You worked it out yourself — that's the real test of understanding!",
-    "Brilliant! You didn't just watch, you actually did the maths.",
-    "That's practice done. You've earned every point of that XP!",
+    "You worked it out yourself — that's the real test of understanding.",
+    "Brilliant. You didn't just watch, you actually did the maths.",
+    "That's practice done. You've earned every point of that XP.",
   ],
   challenge: [
-    "You solved it under pressure — that's exam-level thinking!",
-    "Challenge complete! That's the kind of confidence that wins exams.",
-    "You tackled the hardest level. Absolutely brilliant work!",
+    "You solved it under pressure — that's exam-level thinking.",
+    "Challenge complete. That's the kind of confidence that wins exams.",
+    "You tackled the hardest level. Absolutely brilliant work.",
   ],
   mastery: [
-    "Mastery level — you are ready for anything this topic throws at you!",
+    "Mastery level — you are ready for anything this topic throws at you.",
   ],
+};
+
+const MODE_CONFIG: Record<StepMode, { label: string; icon: string; colour: string }> = {
+  guided:    { label: "Guided Learning", icon: "📖", colour: "#ffb23c" },
+  practice:  { label: "Practice",        icon: "⚡", colour: "#2f9bd6" },
+  challenge: { label: "Challenge",       icon: "🔥", colour: "#ef5d4e" },
+  mastery:   { label: "Mastery",         icon: "🏅", colour: "#4cde80" },
 };
 
 function randomLine(lines: string[]): string {
   return lines[Math.floor(Math.random() * lines.length)];
-}
-
-interface ModeProgressRowProps {
-  mode: StepMode;
-  questions: HubQuestion[];
-  isCompleted: boolean;
-}
-
-function ModeProgressRow({ mode, questions, isCompleted }: ModeProgressRowProps) {
-  if (questions.length === 0) return null;
-  const done = questions.filter((q) => q.done).length;
-  const pct = Math.round((done / questions.length) * 100);
-
-  return (
-    <div className={styles.progressRow}>
-      <div className={styles.progressRowLeft}>
-        <span className={styles.progressIcon}>{MODE_ICON[mode]}</span>
-        <span className={styles.progressLabel}>{MODE_LABEL[mode]}</span>
-      </div>
-      <div className={styles.progressBarWrap}>
-        <div className={styles.progressBar}>
-          <div
-            className={[
-              styles.progressBarFill,
-              isCompleted ? styles.progressBarComplete : "",
-            ].join(" ")}
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-        <span className={styles.progressFraction}>
-          {done}/{questions.length}
-        </span>
-        {isCompleted && <span className={styles.progressCheck}>✓</span>}
-      </div>
-    </div>
-  );
 }
 
 export function StepwiseMissionComplete({
@@ -118,87 +61,93 @@ export function StepwiseMissionComplete({
   onReplay,
   onBackToHub,
 }: StepwiseMissionCompleteProps) {
-  const [chideraLine] = React.useState(() =>
-    randomLine(CHIDERA_LINES[completedMode])
-  );
+  const [line] = React.useState(() => randomLine(CHIDERA_LINES[completedMode]));
 
-  const modesDone: Record<StepMode, boolean> = {
-    guided:    guidedQuestions.length > 0 && guidedQuestions.every((q) => q.done),
-    practice:  practiceQuestions.length > 0 && practiceQuestions.every((q) => q.done),
-    challenge: challengeQuestions.length > 0 && challengeQuestions.every((q) => q.done),
-    mastery:   false,
+  const cfg = MODE_CONFIG[completedMode];
+
+  const modesDone = {
+    guided:    guidedQuestions.length > 0 && guidedQuestions.every(q => q.done),
+    practice:  practiceQuestions.length > 0 && practiceQuestions.every(q => q.done),
+    challenge: challengeQuestions.length > 0 && challengeQuestions.every(q => q.done),
   };
-
   const allDone = modesDone.guided && modesDone.practice && modesDone.challenge;
+
+  const stagesToShow = [
+    { mode: "guided"    as StepMode, qs: guidedQuestions },
+    { mode: "practice"  as StepMode, qs: practiceQuestions },
+    { mode: "challenge" as StepMode, qs: challengeQuestions },
+  ].filter(s => s.qs.length > 0);
 
   return (
     <div className={styles.root}>
       <div className={styles.bg} />
 
       <div className={styles.content}>
-        {/* ── Header ── */}
-        <div className={styles.header}>
-          <div className={styles.badge}>
-            {allDone ? "🏆 Topic Complete!" : `${MODE_ICON[completedMode]} Stage Complete!`}
-          </div>
-          <div className={styles.modeName}>{MODE_LABEL[completedMode]}</div>
+
+        {/* ── Stage badge ── */}
+        <div className={styles.stageBadge} style={{ color: cfg.colour }}>
+          {cfg.icon} {allDone ? "Topic Complete!" : `${cfg.label} Complete`}
+        </div>
+
+        {/* ── XP burst ── */}
+        <div className={styles.xpBurst}>
+          <div className={styles.xpNumber}>+{xpEarned}</div>
+          <div className={styles.xpUnit}>XP</div>
         </div>
 
         {/* ── Ms. Chidera ── */}
-        <div className={styles.teacherCard}>
-          <ChideraAvatar size={52} />
-          <div className={styles.teacherBubble}>
-            <div className={styles.teacherName}>Ms. Chidera</div>
-            <div className={styles.teacherLine}>{chideraLine}</div>
+        <div className={styles.coachRow}>
+          <div className={styles.coachAvatar}><ChideraAvatar size={44} mood="celebrate" /></div>
+          <div className={styles.coachBubble}>
+            <span className={styles.coachName}>Ms. Chidera</span>
+            <span className={styles.coachLine}>{line}</span>
           </div>
         </div>
 
-        {/* ── XP earned ── */}
-        <div className={styles.xpCard}>
-          <span className={styles.xpStar}>⭐</span>
-          <div className={styles.xpAmount}>+{xpEarned} XP</div>
-          <div className={styles.xpLabel}>earned this session</div>
-        </div>
-
-        {/* ── Progress across all modes ── */}
-        <div className={styles.progressSection}>
-          <div className={styles.progressTitle}>Your progress</div>
-          <ModeProgressRow
-            mode="guided"
-            questions={guidedQuestions}
-            isCompleted={modesDone.guided}
-          />
-          <ModeProgressRow
-            mode="practice"
-            questions={practiceQuestions}
-            isCompleted={modesDone.practice}
-          />
-          <ModeProgressRow
-            mode="challenge"
-            questions={challengeQuestions}
-            isCompleted={modesDone.challenge}
-          />
+        {/* ── Stage progress pills ── */}
+        <div className={styles.stages}>
+          {stagesToShow.map(({ mode, qs }) => {
+            const done  = qs.filter(q => q.done).length;
+            const mc    = MODE_CONFIG[mode];
+            const isCurrent = mode === completedMode;
+            return (
+              <div key={mode} className={`${styles.stageRow} ${isCurrent ? styles.stageRowCurrent : ""}`}>
+                <span className={styles.stageIcon}>{mc.icon}</span>
+                <span className={styles.stageLabel}>{mc.label}</span>
+                <span className={styles.stageFrac}>{done}/{qs.length}</span>
+                <div className={styles.stageBar}>
+                  <div
+                    className={styles.stageBarFill}
+                    style={{
+                      width: `${(done / qs.length) * 100}%`,
+                      background: qs.every(q => q.done) ? "#4cde80" : mc.colour,
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* ── Actions ── */}
         <div className={styles.actions}>
-          {nextMode && !modesDone[nextMode] && (
-            <button className={styles.btnPrimary} onClick={onNextMode}>
-              Move to {MODE_ICON[nextMode]} {MODE_LABEL[nextMode]} →
+          {nextMode && !modesDone[nextMode as keyof typeof modesDone] && (
+            <button className={styles.btnPrimary} onClick={onNextMode}
+              style={{ background: MODE_CONFIG[nextMode].colour }}>
+              {MODE_CONFIG[nextMode].icon} Start {MODE_CONFIG[nextMode].label} →
             </button>
           )}
           {allDone && (
-            <div className={styles.allDoneMessage}>
-              🎉 You&apos;ve completed all stages for this topic!
-            </div>
+            <div className={styles.allDone}>🎉 All stages complete!</div>
           )}
           <button className={styles.btnSecondary} onClick={onReplay}>
-            Replay {MODE_ICON[completedMode]} {MODE_LABEL[completedMode]}
+            Replay {cfg.icon} {cfg.label}
           </button>
           <button className={styles.btnGhost} onClick={onBackToHub}>
-            ← Back to learning modes
+            ← Back to hub
           </button>
         </div>
+
       </div>
     </div>
   );

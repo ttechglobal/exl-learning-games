@@ -221,13 +221,16 @@ export function MCQEngine({
 
   return (
     <div style={{ background: bg, minHeight: "100vh", display: "flex", flexDirection: "column", position: "relative" }}>
+      <style>{`
+        .mcq-col { width: 100%; }
+        .mcq-body { padding-left: 0 !important; padding-right: 0 !important; }
+      `}</style>
 
       {/* ── TOPBAR — menu LEFT, info right ── */}
-      <div style={{
+      <div style={{ borderBottom: `1px solid ${cardBorder}`, flexShrink: 0 }}>
+      <div className="exl-page-col" style={{
         display: "flex", alignItems: "center", gap: 10,
-        padding: "12px 16px",
-        borderBottom: `1px solid ${cardBorder}`,
-        flexShrink: 0,
+        padding: "12px 0",
       }}>
         {/* Menu button — LEFT */}
         {menu && <div style={{ flexShrink: 0, marginRight: 4 }}>{menu}</div>}
@@ -267,7 +270,8 @@ export function MCQEngine({
             fontWeight: 700, cursor: "pointer", flexShrink: 0,
           }}>All ▾</button>
         )}
-      </div>
+      </div>{/* end exl-page-col */}
+      </div>{/* end topbar border div */}
 
       {/* Progress bar */}
       {allMissions.length > 1 && (
@@ -282,7 +286,8 @@ export function MCQEngine({
 
       {/* ── THINK PHASE (Challenge only) ── */}
       {phase === "think" && (
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "24px 20px", gap: 18 }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "24px 0", gap: 18 }}>
+          <div className="exl-page-col mcq-col" style={{ display: "flex", flexDirection: "column", gap: 18, flex: 1 }}>
           {/* Big question card */}
           <div style={{
             background: cardBg, borderRadius: 20, padding: "28px 24px",
@@ -305,12 +310,14 @@ export function MCQEngine({
             cursor: "pointer", boxShadow: `0 5px 0 ${accent}60`,
             marginTop: "auto",
           }}>I&apos;m ready →</button>
+          </div>{/* end mcq-col */}
         </div>
       )}
 
       {/* ── ANSWER PHASE ── */}
       {phase === "answer" && (
-        <div style={{ flex: 1, padding: "16px 16px 24px", display: "flex", flexDirection: "column", gap: 12, overflowY: "auto" }}>
+        <div style={{ flex: 1, padding: "16px 0 24px", display: "flex", flexDirection: "column", gap: 12, overflowY: "auto" }}>
+          <div className="exl-page-col mcq-col" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
 
           {/* Question — big card */}
           <div style={{
@@ -477,12 +484,13 @@ export function MCQEngine({
                 opacity: advancing ? 0.7 : 1,
                 marginTop: 4,
                 letterSpacing: "0.02em",
-                fontFamily: "var(--eg-font-display, 'Baloo 2', sans-serif)",
+                fontFamily: "var(--eg-font-body, 'Space Grotesk', sans-serif)",
               }}
             >
               {currentIndex + 1 >= allMissions.length ? "Finish ✓" : "Next question →"}
             </button>
           )}
+          </div>{/* end mcq-col */}
         </div>
       )}
 

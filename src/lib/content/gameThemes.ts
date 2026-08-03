@@ -237,6 +237,19 @@ export const GAME_THEMES: Record<string, GameTheme> = {
 },
  
 /**
+ * Atomic Structure
+ * World: subatomic exploration — peel back layers of matter to reveal
+ * the atom's internal structure. Tap to discover the nucleus and electrons.
+ * Palette: deep space-black → electric cyan → nucleus orange
+ */
+"atomic-structure": {
+  description: "Peel back the layers of matter and discover what's really inside — tap through to reveal the atom's nucleus and orbiting electrons.",
+  preGameGradient: "linear-gradient(160deg, #030a14 0%, #061828 50%, #041020 100%)",
+  gameGradient:    "linear-gradient(160deg, #030a14 0%, #0a1a2e 100%)",
+  accent: "#00d4ff",
+},
+
+/**
  * Symbol Drop (coming soon)
  * Slug: "symbol-drop"
  */

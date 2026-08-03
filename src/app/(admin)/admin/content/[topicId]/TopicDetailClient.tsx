@@ -17,7 +17,7 @@ interface BuildIntent {
   successLooks: string;
 }
 
-interface PracticeQuestion {
+interface QuickCheckQuestion {
   question: string;
   correctAnswer: string;
   wrongAnswer1: string;
@@ -54,7 +54,7 @@ interface Concept {
   buildIntent?: BuildIntent;
   guidedLearningMission?: GuidedLearningMission;
   guidedPracticeNotes?: string;
-  practiceQuestions?: PracticeQuestion[];
+  quickCheckQuestions?: QuickCheckQuestion[];
   challengeQuestions?: ChallengeQuestion[];
   interactionRef?: InteractionRef | null;
 }
@@ -89,7 +89,7 @@ const SUBJECT_META: Record<string, { colour: string; coach: string }> = {
 function getMissing(c: Concept): string[] {
   const m: string[] = [];
   if (!c.guidedLearningMission) m.push("GL");
-  if (!c.practiceQuestions?.length) m.push("PQ");
+  if (!c.quickCheckQuestions?.length) m.push("PQ");
   if (!c.challengeQuestions?.length) m.push("CQ");
   return m;
 }
@@ -170,13 +170,26 @@ Reason about them together. Return them separately.
 YOUR SINGLE OBJECTIVE:
 Design the best interaction for teaching this concept, generate the
 prompt required to build that interaction, then create the supporting
-guided explanation, practice, and challenge around it.
+guided explanation, quick check, and challenge around it.
 
 The interaction comes first. Everything else supports it.
 
 The decision to use an interaction has already been made.
 Do not question it. Do not suggest a text-only alternative.
 Design the interaction.
+
+SCIENTIFIC LANGUAGE — NON-NEGOTIABLE:
+Do not reduce complexity. Clarity of delivery is not the same as
+reduction of depth. These rules apply everywhere in your output:
+- Keep all technical terms. Define them through interaction and
+  context, not by replacing them with informal substitutes.
+- Name the science: atoms, molecules, kinetic energy, intermolecular
+  forces, lattice structure, sublimation — use these words correctly.
+  The student learns the vocabulary by encountering it used precisely.
+- Do not write "simply put" or "in simple terms." If simplification
+  is needed, use an analogy or a concrete example — not imprecision.
+- A student preparing for WAEC or IGCSE must encounter the same
+  terminology in this lesson that will appear in their exam.
 
 ---
 
@@ -236,41 +249,66 @@ The explanation reinforces the interaction — it does not replace it.
 
 Card sequence:
 - Card 1: Real-world hook connected to the interaction. No concept name yet.
-  Something the student already knows from everyday life.
+  Use the REAL-WORLD ANCHOR provided above if one is given.
+  If not given, choose something universally recognisable — food, weather,
+  the body, everyday objects anyone anywhere would know (chocolate melting,
+  ice cream on a warm day, steam from a hot drink, a ball rolling downhill).
+  Do not use examples that require a laboratory or specific cultural context.
   SHORT sentences. Plain words. 14-year-old level.
 - Card 2: Name the concept. Connect it to what the student just did.
   "You just saw... This is called..."
 - Card 3: The precise definition. Now they are ready for it.
 - Card 4 (only if genuinely needed): Name and correct the main misconception.
 
-Each card: 1–3 sentences maximum. Never textbook language. No visuals needed —
-the interaction already gave the student the visual experience.
+Each card: 1–2 sentences maximum. One is often better than two.
+Never textbook language. No visuals needed — the interaction already gave
+the student the visual experience.
 
-The coach's key moment line (at the peak of the interaction) and completion
-line must be written in full — warm, direct, specific. Not "great job!" —
-"You just sorted every item correctly. You now know the two things that
-every piece of matter has in common."
+COACH VOICE RULES — follow all of these:
+- Speak directly to the student ("you", "let's", "notice that")
+- Never passive voice ("the particles are heated" → "you're heating those particles")
+- Never say "as you can see", "basically", "it is important to note"
+- Use analogies naturally — do not announce them ("think of it like...")
+  Just use the analogy as the obvious way to say the thing
+- Keep technical terms — define them through context, never replace them
+  with informal substitutes ("intermolecular forces" stays, not "particles sticking")
+- Name scientists and discoveries where relevant — Avogadro, Dalton,
+  kinetic theory — these are part of the student's scientific vocabulary
+- Acknowledge the counterintuitive: "I know this seems backwards — here's why it isn't"
+
+The key moment line and completion line must be written in full — warm, specific,
+scientifically precise. Not "great job!" — "You just moved those particles past
+their melting point. That is exactly what heat does to every solid on Earth."
 
 ---
 
-STEP 4 — PRACTICE QUESTIONS
+STEP 4 — QUICK CHECK QUESTIONS
 
-Practice comes immediately after the guided lesson — embedded inside the
-lesson flow, not on a separate page. The student finishes the lesson and
-the questions appear right there. No navigation needed.
+Quick check questions are embedded at the end of the guided lesson —
+they appear after the final coach card, before the completion screen.
+The student answers right there without leaving the lesson. No navigation.
 
-Purpose: test recall of what the student just learned. Simple and quick.
-Number: 2–3 questions is enough. Do not pad. Do not overthink.
-No visuals needed in the questions — the interaction provided the experience.
+These are NOT practice questions. They are shorter, simpler recall checks
+of what the student just experienced in the guided interaction above.
+The student has just done the interaction — these questions confirm they
+understood what they saw.
+
+Purpose: immediate recall of the interaction just completed.
+Number: exactly 2 questions. No more, no less.
+Difficulty: recall or single-step application only.
+Wrong answers must each be grounded in the specific misconception
+listed above — not random filler. A student who has the misconception
+should be genuinely tempted by the wrong option.
 
 For each question:
-- question: short, direct — tests one thing from the lesson
+- question: short, direct — tests one thing from what was just shown
 - correctAnswer
-- correctExplanation: 1–2 plain sentences. Why is this right?
-  Written directly to the student.
-- wrongAnswer1 + wrongAnswer1Explanation: the misconception it targets
-- wrongAnswer2 + wrongAnswer2Explanation: the misconception it targets
-- coachHint: a guiding nudge if the student asks — never the answer
+- correctExplanation: 1–2 plain sentences written directly to the student.
+  Confirm WHY it is right — the scientific reason, not just "correct!"
+  Use the same precise language as the coach cards above.
+- wrongAnswer1 + wrongAnswer1Explanation: name the misconception it targets
+- wrongAnswer2 + wrongAnswer2Explanation: name the misconception it targets
+- coachHint: a guiding nudge — teaches the concept, never gives the answer
 
 ---
 
@@ -312,10 +350,10 @@ Produce the complete content spec. Respond ONLY with valid JSON. No preamble, no
   "guidedLearningMission": {
     "missionName": "engaging mission name — curious, not academic",
     "coachBriefing": [
-      "Card 1: real-world hook — no concept name yet, plain words",
-      "Card 2: name the concept, connect to what they just did",
-      "Card 3: the precise definition — now they are ready",
-      "Card 4 (only if needed): name and correct the main misconception"
+      "Card 1: real-world hook using the anchor above — no concept name yet",
+      "Card 2: name the concept, connect it to what the student just did",
+      "Card 3: the precise scientific definition — now they are ready for it",
+      "Card 4 (only if genuinely needed): correct the main misconception directly"
     ],
     "coachLines": {
       "atKeyMoment": "exact line ${meta.coach} says at the peak — warm and specific",
@@ -331,19 +369,19 @@ Produce the complete content spec. Respond ONLY with valid JSON. No preamble, no
     "componentExists": false,
     "buildPromptIfNeeded": "brief description only — full spec comes in Response 2"
   },
-  "practiceQuestions": [
+  "quickCheckQuestions": [
     {
-      "question": "short, direct question testing one thing from the lesson",
-      "correctAnswer": "",
-      "correctExplanation": "1–2 plain sentences — why this is correct, written to the student",
-      "wrongAnswer1": "",
-      "wrongAnswer1Explanation": "what misconception this represents and why it is wrong",
-      "wrongAnswer2": "",
-      "wrongAnswer2Explanation": "what misconception this represents and why it is wrong",
-      "coachHint": "nudge that guides thinking — never gives the answer"
+      "question": "tests one thing from the guided interaction just completed",
+      "correctAnswer": "full text of correct option",
+      "correctExplanation": "1–2 sentences to the student: WHY this is right, scientifically precise",
+      "wrongAnswer1": "plausible wrong option grounded in the misconception above",
+      "wrongAnswer1Explanation": "what the student who picks this is thinking, and the precise correction",
+      "wrongAnswer2": "second plausible wrong option, grounded in a different aspect of the misconception",
+      "wrongAnswer2Explanation": "what the student who picks this is thinking, and the precise correction",
+      "coachHint": "one sentence that guides thinking without giving the answer"
     },
     {
-      "question": "",
+      "question": "second recall question — tests a different part of the same interaction",
       "correctAnswer": "",
       "correctExplanation": "",
       "wrongAnswer1": "",
@@ -535,10 +573,10 @@ function GLEditor({ concept, onChange, onInteractionChange, colour, readOnly, su
 function PQEditor({ concept, onChange, readOnly }: {
   concept: Concept; onChange: (c: Concept) => void; readOnly: boolean;
 }) {
-  const pqs = concept.practiceQuestions ?? [];
-  const setPQ = (i: number, patch: Partial<PracticeQuestion>) => {
+  const pqs = concept.quickCheckQuestions ?? [];
+  const setPQ = (i: number, patch: Partial<QuickCheckQuestion>) => {
     const qs = [...pqs]; qs[i] = { ...qs[i], ...patch };
-    onChange({ ...concept, practiceQuestions: qs });
+    onChange({ ...concept, quickCheckQuestions: qs });
   };
 
   if (!pqs.length) return (
@@ -657,7 +695,7 @@ function ConceptPanel({ concept, index, topic, onUpdate }: {
   const meta       = SUBJECT_META[topic.subject] ?? { colour: "#64748b", coach: "the coach" };
   const statusMeta = STATUS_META[concept.status] ?? STATUS_META["not-started"];
   const missing    = getMissing(concept);
-  const hasContent = !!concept.guidedLearningMission || (concept.practiceQuestions?.length ?? 0) > 0;
+  const hasContent = !!concept.guidedLearningMission || (concept.quickCheckQuestions?.length ?? 0) > 0;
   const prompt     = buildPrompt(topic, concept, index);
 
   const copyPrompt = () => {
@@ -721,7 +759,7 @@ function ConceptPanel({ concept, index, topic, onUpdate }: {
   // Tab config
   const TABS: { key: ContentTab; label: string; done: boolean; colour: string }[] = [
     { key: "gl", label: "Guided Learning", done: !!concept.guidedLearningMission, colour: meta.colour },
-    { key: "pq", label: `Practice (${concept.practiceQuestions?.length ?? 0})`, done: (concept.practiceQuestions?.length ?? 0) > 0, colour: "#7c3aed" },
+    { key: "pq", label: `Practice (${concept.quickCheckQuestions?.length ?? 0})`, done: (concept.quickCheckQuestions?.length ?? 0) > 0, colour: "#7c3aed" },
     { key: "cq", label: `Challenge (${concept.challengeQuestions?.length ?? 0})`, done: (concept.challengeQuestions?.length ?? 0) > 0, colour: "#ef4444" },
   ];
 

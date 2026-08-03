@@ -15,7 +15,7 @@
  * - Drill-down question list panel
  */
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import type { StepMode } from "./StepwiseSolverEngine";
 import { ChideraAvatar } from "./ChideraAvatar";
 import styles from "./StepwiseSolverEngine.module.css";
@@ -92,7 +92,22 @@ export function StepwiseHub({
   practiceQuestions,
   challengeQuestions,
 }: StepwiseHubProps) {
-  const [showMissions, setShowMissions] = React.useState(false);
+  const [showMissions, setShowMissions] = useState(false);
+
+  // Onboarding — show once, on first ever visit. localStorage key: exl:onboardingSeen
+  const [onboardingSlide, setOnboardingSlide] = useState<number | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const seen = localStorage.getItem("exl:onboardingSeen");
+    if (!seen) setOnboardingSlide(0);
+  }, []);
+
+  const ONBOARDING_SLIDES = [
+    { text: `Hey${studentName ? ", " + studentName : ""}! I'm Ms. Chidera. I'll walk you through every step of each question — you never have to guess alone.` },
+    { text: "Each question shows you an equation. Your job is to rearrange it — step by step — until the subject is on its own." },
+    { text: "I'll explain each move before you choose. When you pick correctly, you'll see exactly how the algebra works." },
+    { text: "Ready to begin? Pick Guided Learning to start — I'll be with you the whole way." },
+  ];
 
   const questionsFor: Record<StepMode, HubQuestion[]> = {
     guided: guidedQuestions,
@@ -103,6 +118,51 @@ export function StepwiseHub({
 
   const activeQuestions = questionsFor[currentMode] ?? [];
   const doneCount = activeQuestions.filter((q) => q.done).length;
+
+  // ── Onboarding overlay ─────────────────────────────────────────────────────
+  if (onboardingSlide !== null) {
+    const slide = ONBOARDING_SLIDES[onboardingSlide];
+    const isLast = onboardingSlide === ONBOARDING_SLIDES.length - 1;
+    const dismiss = () => {
+      if (typeof window !== "undefined") localStorage.setItem("exl:onboardingSeen", "1");
+      setOnboardingSlide(null);
+    };
+    return (
+      <div className={styles.onboardRoot}>
+        <div className={styles.hubBg} />
+        {/* Dimmed hub content behind */}
+        <div className={styles.onboardOverlay} />
+        {/* Chidera + bubble, centred */}
+        <div className={styles.onboardContent}>
+          <div className={styles.onboardAvatar}>
+            <ChideraAvatar size={80} mood="explain" />
+          </div>
+          <div className={styles.onboardBubble}>
+            <div className={styles.onboardName}>Ms. Chidera</div>
+            <div className={styles.onboardText}>{slide.text}</div>
+            <div className={styles.onboardDots}>
+              {ONBOARDING_SLIDES.map((_, i) => (
+                <div
+                  key={i}
+                  className={[
+                    styles.onboardDot,
+                    i === onboardingSlide ? styles.onboardDotActive : "",
+                  ].join(" ")}
+                />
+              ))}
+            </div>
+            <button
+              className={styles.onboardBtn}
+              onClick={() => isLast ? dismiss() : setOnboardingSlide(s => (s ?? 0) + 1)}
+            >
+              {isLast ? "Let's go →" : "Next →"}
+            </button>
+          </div>
+          <button className={styles.onboardSkip} onClick={dismiss}>Skip intro</button>
+        </div>
+      </div>
+    );
+  }
 
   // ── Question drill-down panel ──────────────────────────────────────────────
   if (showMissions) {

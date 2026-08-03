@@ -32,13 +32,24 @@ export async function insertAttempt(result: AttemptResult, xpAwarded: number): P
   return data as AttemptRow;
 }
 
-export async function listAttemptsForStudent(studentId: string, topicId?: string): Promise<AttemptRow[]> {
+export async function listAttemptsForStudent(
+  studentId: string,
+  topicId?: string,
+  options?: { includeRawOutcome?: boolean }
+): Promise<AttemptRow[]> {
+  // Supabase typed client requires a literal string for select().
+  // We always fetch all columns but strip raw_outcome post-fetch when not needed.
   let query = supabaseServer().from("attempt").select("*").eq("student_id", studentId);
   if (topicId) query = query.eq("topic_id", topicId);
 
   const { data, error } = await query.order("completed_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []) as AttemptRow[];
+  const rows = (data ?? []) as AttemptRow[];
+  if (!options?.includeRawOutcome) {
+    // Strip the large raw_outcome field to keep memory/serialization lean
+    return rows.map(r => { const { raw_outcome: _raw, ...rest } = r as AttemptRow & { raw_outcome?: unknown }; return rest as AttemptRow; });
+  }
+  return rows;
 }
 
 /**

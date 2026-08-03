@@ -48,10 +48,14 @@ export default async function PlayPage({ params }: { params: { gameSlug: string 
     );
   }
 
-  const student = await resolveCurrentStudent();
+  // Run student resolution and mission fetch in parallel — both are independent
+  // of each other (we already have game.id from above)
+  const [student, missions] = await Promise.all([
+    resolveCurrentStudent().catch(() => null),
+    getMissionsForGame(game.id),
+  ]);
   const studentId = student?.id ?? EPHEMERAL_FALLBACK_STUDENT_ID;
 
-  const missions = await getMissionsForGame(game.id);
   const firstMission = await fixedOrderPolicy.pickNextMission(studentId, missions);
 
   if (!firstMission) {

@@ -516,6 +516,7 @@ export function GameRuntime({
     <ReflectionScreen
       successLines={reviewSuccessLines}
       hasNextMission={hasNextMission}
+      xpEarned={effectiveMission?.xpReward ?? (lastResult?.rawOutcome?.xpEarned as number | undefined)}
       onPlayAgain={() => {
         // Re-arm both tracking refs — Play Again is a genuinely NEW
         // attempt at the same mission within the same GameRuntime

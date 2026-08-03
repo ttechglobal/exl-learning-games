@@ -72,9 +72,11 @@ export async function getMissionsForGame(gameId: string): Promise<MissionRow[]> 
 export async function getMissionsForGames(gameIds: string[]): Promise<Record<string, MissionRow[]>> {
   if (gameIds.length === 0) return {};
 
+  // Select only metadata columns — NOT payload (payload is 2-4KB per mission
+  // and worlds/catalog pages only need counts + difficulty + XP for summaries)
   const { data, error } = await supabaseServer()
     .from("mission")
-    .select("*")
+    .select("id, game_id, difficulty, xp_reward, estimated_minutes, sequence_index, is_active, topic_id, subtopic_id")
     .in("game_id", gameIds)
     .eq("is_active", true)
     .order("sequence_index", { ascending: true });

@@ -32,16 +32,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        {/* Preconnects — cuts DNS + TLS time for external resources */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+        {/* KaTeX CSS preloaded — math renders without flash of unstyled content */}
+        <link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" as="style" crossOrigin="anonymous" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossOrigin="anonymous" />
+        {/* Google Fonts — weights 400-900 so bold UI text renders instantly */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600&display=swap"
           rel="stylesheet"
         />
-          <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
-    crossOrigin="anonymous"
-  />
       </head>
       <body
         style={{

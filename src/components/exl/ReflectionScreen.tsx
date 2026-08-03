@@ -1,4 +1,3 @@
-// FILE: src/components/exl/ReflectionScreen.tsx
 "use client";
 
 import { useMemo } from "react";
@@ -20,6 +19,7 @@ export interface ReflectionScreenProps {
   extraContent?: React.ReactNode;
   gameSlug?: string;
   onViewConceptSummary?: () => void;
+  xpEarned?: number;          // XP from this mission
 }
 
 export function ReflectionScreen({
@@ -34,11 +34,11 @@ export function ReflectionScreen({
   studentName,
   nextMissionLabel,
   extraContent,
+  xpEarned,
 }: ReflectionScreenProps) {
   const celebLine = useMemo(() => {
     const line = pickMascotLine("celebrate");
     const firstName = studentName?.split(" ")[0];
-    // Insert name naturally if the line starts with a common opener
     if (firstName) {
       return line.replace(
         /^(Great|Nice|Well done|Amazing|Excellent|Brilliant|Fantastic|Perfect)/,
@@ -48,7 +48,6 @@ export function ReflectionScreen({
     return line;
   }, [studentName]);
 
-  // Determine next button label
   const nextLabel = nextMissionLabel ?? "Next →";
   const isNextLevel = nextLabel.toLowerCase().includes("practice") ||
     nextLabel.toLowerCase().includes("challenge") ||
@@ -56,15 +55,27 @@ export function ReflectionScreen({
 
   return (
     <EXLShell subject={subject} pose="celebrate">
-      {/* Celebration header */}
-      <div className={styles.completeBadge} aria-label="Mission complete">
+      {/* Celebration banner — uses subject accent colour */}
+      <div
+        className={styles.completeBadge}
+        style={{ "--accent": accentColor } as React.CSSProperties}
+        aria-label="Mission complete"
+      >
         <span className={styles.completeStar} aria-hidden="true">★</span>
         <span className={styles.completeLabel}>Mission complete!</span>
         <span className={styles.completeStar} aria-hidden="true">★</span>
       </div>
 
-      {/* Mascot line */}
+      {/* Mascot celebrate line */}
       <p className={styles.celebLine}>{celebLine}</p>
+
+      {/* XP earned — shown when available */}
+      {xpEarned !== undefined && xpEarned > 0 && (
+        <div className={styles.xpRow} style={{ "--accent": accentColor } as React.CSSProperties}>
+          <span className={styles.xpStar}>⭐</span>
+          <span className={styles.xpAmount}>+{xpEarned} XP</span>
+        </div>
+      )}
 
       {/* Success lines */}
       {successLines.length > 0 && (

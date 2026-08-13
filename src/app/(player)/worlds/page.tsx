@@ -1,9 +1,25 @@
+/**
+ * app/(player)/worlds/page.tsx
+ *
+ * Server component. Fetches games, missions, student identity,
+ * and now also the student's most recently played game (for the
+ * "Continue" shortcut in WorldsClient).
+ *
+ * lastPlayedGameSlug: derived from the most recent attempt row for
+ * this student. Passed as a prop — WorldsClient uses it to render
+ * the Continue bar if the game is still in bySubject.
+ *
+ * lastPlayedMissionNumber / lastPlayedMissionTotal: nice-to-have
+ * context for the Continue bar ("Mission 3 of 5"). Both can be null
+ * without breaking anything — the bar still renders without them.
+ */
+
 import { listGames, getMissionsForGames } from "@/lib/db/queries/games";
 import { resolveCurrentStudent } from "@/lib/identity/deviceId";
+import { listAttemptsForStudent } from "@/lib/db/queries/attempts";
 import { WorldsClient, type GameSummary } from "@/app/(player)/worlds/WorldsClient";
 import type { MissionRow, Difficulty } from "@/types/db";
 
-// Needs a live DB connection per-request; not meaningful to prerender at build time.
 export const dynamic = "force-dynamic";
 
 const DIFFICULTY_ORDER: Record<Difficulty, number> = { EASY: 0, MEDIUM: 1, HARD: 2 };
@@ -41,11 +57,49 @@ export default async function WorldsPage() {
     return acc;
   }, {});
 
+  // ── Last-played game for the Continue shortcut ──
+  // Fetch the most recent attempt for this student (limit 1).
+  // Fail gracefully — the Continue bar simply won't render if this is null.
+  let lastPlayedGameSlug: string | undefined;
+  let lastPlayedMissionNumber: number | undefined;
+  let lastPlayedMissionTotal: number | undefined;
+
+  if (student?.id) {
+    try {
+      const recentAttempts = await listAttemptsForStudent(student.id);
+      const mostRecent = recentAttempts[0]; // already ordered by completed_at desc
+
+      if (mostRecent?.game_id) {
+        const game = games.find((g) => g.id === mostRecent.game_id);
+        if (game) {
+          lastPlayedGameSlug = game.slug;
+
+          // Work out which mission number they were on
+          if (mostRecent.mission_id) {
+            const gameMissions = missionsByGame[game.id] ?? [];
+            // Missions are ordered by difficulty then by insertion order —
+            // find the 1-indexed position of the last-played mission
+            const missionIndex = gameMissions.findIndex((m) => m.id === mostRecent.mission_id);
+            if (missionIndex >= 0) {
+              lastPlayedMissionNumber = missionIndex + 1;
+              lastPlayedMissionTotal = gameMissions.length;
+            }
+          }
+        }
+      }
+    } catch {
+      // Swallow — Continue bar is non-critical
+    }
+  }
+
   return (
     <WorldsClient
       bySubject={bySubject}
       currentStudentXp={student?.xp_total ?? 0}
       studentName={student?.display_name ?? undefined}
+      lastPlayedGameSlug={lastPlayedGameSlug}
+      lastPlayedMissionNumber={lastPlayedMissionNumber}
+      lastPlayedMissionTotal={lastPlayedMissionTotal}
     />
   );
 }
